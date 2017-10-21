@@ -35,7 +35,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-import ete2
+# import ete2
+import ete3
 # import ete3 as ete2
 
 from abstar import run as run_abstar
@@ -431,9 +432,9 @@ class Lineage(object):
             a list of Sequence objects.
         just_pairs: if True, compute the phylogeny using only paired sequences.
             Default (False) will use all sequences of the appropriate chain, paired or not.
-        scale: passed to ete2.TreeStyle() to set the scale of the tree figure. Increased
+        scale: passed to ete3.TreeStyle() to set the scale of the tree figure. Increased
             scale results in a wider tree.
-        branch_vert_margin: passed to ete2.TreeStyle() to set the branch_vertical_margin of
+        branch_vert_margin: passed to ete3.TreeStyle() to set the branch_vertical_margin of
             the tree figure. Increased branch_vert_margin results in a taller tree.
         fontsize: size of the leaf labels. Default is 12.
         show_names: show names of leaf nodes. Options are True (show labels for all leaf nodes),
@@ -547,10 +548,10 @@ class Lineage(object):
         if show_root_name is True:
             show_names.append(root_name)
         if linked_alignment is not None:
-            t = ete2.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
-            ete2.faces.SequenceItem = MySequenceItem
+            t = ete3.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
+            ete3.faces.SequenceItem = MySequenceItem
         else:
-            t = ete2.Tree(tree)
+            t = ete3.Tree(tree)
         t.set_outgroup(t&root_name)
         # style the nodes
         for node in t.traverse():
@@ -570,7 +571,7 @@ class Lineage(object):
                 node.add_feature('fontsize', fontsize)
                 node.add_feature('format', 'seq')
                 node.add_feature('scale_factor', scale_factor)
-            style = ete2.NodeStyle()
+            style = ete3.NodeStyle()
             style['size'] = 0
             style['vt_line_width'] = float(linewidth)
             style['hz_line_width'] = float(linewidth)
@@ -599,7 +600,7 @@ class Lineage(object):
                 else:
                     node_color = '#000000'
                 node_name = node.name if rename_function is None else rename_function(node.name)
-                tf = ete2.TextFace(node_name,
+                tf = ete3.TextFace(node_name,
                                    fsize=fontsize,
                                    fgcolor=node_color)
                 # tf.fsize = fontsize
@@ -607,13 +608,13 @@ class Lineage(object):
                 # style['fgcolor'] = hex_to_rgb(node_color)
             # else:
             #     if hasattr(node, "sequence"):
-            #         node.add_face(ete2.SeqMotifFace(seq=node.sequence,
+            #         node.add_face(ete3.SeqMotifFace(seq=node.sequence,
             #                                         seqtype="aa",
             #                                         height=50,
             #                                         seq_format="seq"), column=0, position="aligned")
             node.set_style(style)
         t.dist = 0
-        ts = ete2.TreeStyle()
+        ts = ete3.TreeStyle()
         if linked_alignment is not None:
             ts.layout_fn = self._phyloalignment_layout_function
         ts.orientation = tree_orientation
@@ -656,18 +657,18 @@ class Lineage(object):
                 if node.name == 'root':
                     bg_colors, fg_colors = self._get_phyloalignment_colors(root=True)
                     node.img_style["fgcolor"] = '#d3d3d3'
-                    SequenceFace = ete2.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
+                    SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
                         height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
-                    ete2.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
+                    ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
                     node.name = ' UCA  '
-                    ete2.faces.add_face_to_node(ete2.faces.AttrFace("name", "Arial", node.fontsize, '#000000', None),
+                    ete3.faces.add_face_to_node(ete3.faces.AttrFace("name", "Arial", node.fontsize, '#000000', None),
                                                 node, 0)
                 else:
                     bg_colors, fg_colors = self._get_phyloalignment_colors()
                     node.img_style["fgcolor"] = '#000000'
-                    SequenceFace = ete2.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
+                    SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
                         height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
-                    ete2.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
+                    ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
         else:
             node.img_style["size"] = 0
 
