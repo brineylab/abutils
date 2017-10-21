@@ -25,9 +25,9 @@
 
 from __future__ import print_function
 
+from io import StringIO
 import logging
 import os
-from StringIO import StringIO
 import subprocess as sp
 import tempfile
 import traceback

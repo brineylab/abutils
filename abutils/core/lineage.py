@@ -35,9 +35,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-# import ete2
 import ete3
-# import ete3 as ete2
 
 from abstar import run as run_abstar
 
