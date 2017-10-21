@@ -3,4 +3,5 @@ include requirements.txt
 include docs/*.txt
 include abutils/core/*
 include abutils/plots/*
+include abutils/utils/*
 include abutils/utils/matrices/*
