@@ -103,7 +103,7 @@ class Sequence(object):
         self.id = None
         self.sequence = None
         self.qual = None
-        self._mongo = None
+        self._annotations = None
         self._fasta = None
         self._fastq = None
         self._reverse_complement = None
@@ -135,28 +135,28 @@ class Sequence(object):
     def __contains__(self, item):
         '''
         bool: If the instance was initialzed with a dictonary (which means
-            the ``mongo`` attribute is not empty), ``__contains__(key)``
-            will return ``True`` if ``key`` is in ``mongo.keys()``. If ``mongo``
+            the ``annotations`` attribute is not empty), ``__contains__(key)``
+            will return ``True`` if ``key`` is in ``annotations.keys()``. If ``annotations``
             is an empty dict, indicating instantiation without a dictionary,
             ``__contains__(motif)`` will return True if ``motif`` is in the
             ``sequence attribute.
 
         '''
-        if self.mongo:
-            return item in self.mongo.keys()
+        if self.annotations:
+            return item in self.annotations.keys()
         return item in self.sequence
 
     def __getitem__(self, key):
         if type(key) == slice:
             return self.sequence[key]
-        elif key in self.mongo.keys():
-            return self.mongo.get(key, None)
+        elif key in self.annotations.keys():
+            return self.annotations.get(key, None)
         elif type(key) == int:
             return self.sequence[key]
         return None
 
     def __setitem__(self, key, val):
-        self.mongo[key] = val
+        self.annotations[key] = val
 
     def __eq__(self, other):
         if all([hasattr(other, 'sequence'), hasattr(other, 'id')]):
@@ -200,14 +200,14 @@ class Sequence(object):
         return self._reverse_complement
 
     @property
-    def mongo(self):
-        if self._mongo is None:
-            self._mongo = {}
-        return self._mongo
+    def annotations(self):
+        if self._annotations is None:
+            self._annotations = {}
+        return self._annotations
 
-    @mongo.setter
-    def mongo(self, val):
-        self._mongo = val
+    @annotations.setter
+    def annotations(self, val):
+        self._annotations = val
 
     @property
     def strand(self):
@@ -224,7 +224,7 @@ class Sequence(object):
     #     name = None
     #     sequence = None
     #     if name_field is not None:
-    #         name = self.mongo[name_field]
+    #         name = self.annotations[name_field]
     #     if name_field is not None:
     #         sequence = self.monO[seq_field]
     #     if name is None:
@@ -257,15 +257,15 @@ class Sequence(object):
 
 
     def keys(self):
-        return self.mongo.keys()
+        return self.annotations.keys()
 
 
     def values(self):
-        return self.mongo.values()
+        return self.annotations.values()
 
 
     def get(self, key, default=None):
-        return self.mongo.get(key, default)
+        return self.annotations.get(key, default)
 
 
     def _get_reverse_complement(self):
@@ -289,7 +289,7 @@ class Sequence(object):
             self.sequence = seq.sequence
             self._input_sequence = self.sequence
             self.qual = seq.qual
-            self._mongo = seq._mongo
+            self._annotations = seq._annotations
         elif type(seq) in [list, tuple]:
             self.id = str(seq[0])
             self.sequence = str(seq[1]).upper()
@@ -312,4 +312,4 @@ class Sequence(object):
             self.sequence = seq[self.seq_key]
             self._input_sequence = self.sequence
             self.qual = qual
-            self._mongo = seq
+            self._annotations = seq
