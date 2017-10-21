@@ -275,7 +275,7 @@ class Sequence(object):
 
 
     def _process_input(self, seq, id, qual):
-        if type(seq) in [str, unicode]:
+        if type(seq) in [str, ]:
             self.sequence = str(seq).upper()
             self._input_sequence = self.sequence
             if id is None:
