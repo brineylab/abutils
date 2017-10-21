@@ -147,9 +147,11 @@ class Sequence(object):
         return item in self.sequence
 
     def __getitem__(self, key):
-        if key in self.mongo.keys():
+        if type(key) == slice:
+            return self.sequence[key]
+        elif key in self.mongo.keys():
             return self.mongo.get(key, None)
-        elif type(key) in [int, slice]:
+        elif type(key) == int:
             return self.sequence[key]
         return None
 
