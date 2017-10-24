@@ -34,7 +34,7 @@ import traceback
 
 from skbio.alignment import StripedSmithWaterman
 
-import nwalign as nw
+import nwalign3 as nw
 
 from Bio import AlignIO, pairwise2
 from Bio.SeqRecord import SeqRecord
