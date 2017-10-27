@@ -25,10 +25,12 @@
 
 from __future__ import print_function
 
+from copy import copy, deepcopy
 from io import StringIO
 import logging
 import os
 import subprocess as sp
+import sys
 import tempfile
 import traceback
 
@@ -41,6 +43,11 @@ from Bio.SeqRecord import SeqRecord
 
 from .pipeline import list_files
 from ..core.sequence import Sequence
+
+if sys.version_info[0] > 2:
+    STR_TYPES = [str, ]
+else:
+    STR_TYPES = [str, unicode]
 
 
 
@@ -199,7 +206,7 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
                       stderr=sp.PIPE,
                       universal_newlines=True,
                       shell=True)
-    alignment = muscle.communicate(input=fasta_string)[0]
+    alignment = unicode(muscle.communicate(input=fasta_string)[0], 'utf-8')
     aln = AlignIO.read(StringIO(alignment), fmt)
     if as_file:
         if not alignment_file:
@@ -482,6 +489,15 @@ def global_alignment(query, target=None, targets=None, match=3, mismatch=-2, gap
     if target is not None:
         return alignments[0]
     return alignments
+
+
+
+# -------------------------------------
+#
+#           MODELS
+#
+# -------------------------------------
+
 
 
 class BaseAlignment(object):
@@ -879,3 +895,147 @@ class NWAlignment(BaseAlignment):
             err += 'Built in matrices are: {}'.format(', '.join(matrices))
             raise RuntimeError()
         return os.path.join(matrix_dir, matrix_name.lower())
+
+
+
+
+# -------------------------------------
+#
+#       VISUAL ALIGNMENT
+#
+# -------------------------------------
+
+
+
+def dot_alignment(sequences, seq_field=None, name_field=None, root=None, root_name=None,
+        cluster_threshold=0.75, as_fasta=False, just_alignment=False):
+    '''
+    Creates a dot alignment (dots indicate identity, mismatches are represented by the mismatched
+    residue) for a list of sequences.
+
+    Args:
+
+        sequence (list(Sequence)): A list of Sequence objects to be aligned.
+
+        seq_field (str): Name of the sequence field key. Default is ``vdj_nt``.
+
+        name_field (str): Name of the name field key. Default is ``seq_id``.
+
+        root (str, Sequence): The sequence used to 'root' the alignment. This sequence will be at the
+            top of the alignment and is the sequence against which dots (identity) will be evaluated.
+            Can be provided either as a string corresponding to the name of one of the sequences in
+            ``sequences`` or as a Sequence object. If not provided, ``sequences`` will be clustered
+            at ``cluster_threshold`` and the centroid of the largest cluster will be used.
+
+        root_name (str): Name of the root sequence. If not provided, the existing name of the root
+            sequence (``name_field``) will be used. If ``root`` is not provided, the default ``root_name``
+            is ``'centroid'``.
+
+        cluster_threshold (float): Threshold with which to cluster sequences if ``root`` is not provided.
+            Default is ``0.75``.
+
+        as_fasta (bool): If ``True``, returns the dot alignment as a FASTA-formatted string, rather than
+            a string formatted for human readability.
+
+        just_alignment (bool): If ``True``, returns just the dot-aligned sequences as a list.
+
+    Returns:
+
+        If ``just_alignment`` is ``True``, a list of dot-aligned sequences (without sequence names) will be returned.
+        If ``as_fasta`` is ``True``, a string containing the dot-aligned sequences in FASTA format will be returned.
+        Otherwise, a formatted string containing the aligned sequences (with sequence names) will be returned.
+    '''
+    import abstar
+
+    from .cluster import cluster
+
+    sequences = deepcopy(sequences)
+    root = copy(root)
+
+    # if custom seq_field is specified, copy to the .seq attribute
+    if seq_field is not None:
+        if not all([seq_field in list(s.annotations.keys()) for s in sequences]):
+            print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(seq_field))
+            sys.exit(1)
+        for s in sequences:
+            s.alignment_sequence = s[seq_field]
+    else:
+        for s in sequences:
+            s.alignment_sequence = s.sequence
+
+    # if custom name_field is specified, copy to the .id attribute
+    if name_field is not None:
+        if not all([name_field in list(s.annotations.keys()) for s in sequences]):
+            print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(name_field))
+            sys.exit(1)
+        for s in sequences:
+            s.alignment_id = s[name_field]
+    else:
+        for s in sequences:
+            s.alignment_id = s.id
+
+    # parse the root sequence
+    if all([root is None, root_name is None]):
+        clusters = cluster(sequences, threshold=cluster_threshold, quiet=True)
+        clusters = sorted(clusters, key=lambda x: x.size, reverse=True)
+        centroid = clusters[0].centroid
+        root = abstar.run(('centroid', centroid.sequence))
+        root.alignment_id = 'centroid'
+        root.alignment_sequence = root[seq_field]
+    elif type(root) in STR_TYPES:
+        root = [s for s in sequences if s.alignment_id == root][0]
+        if not root:
+            print('\nERROR: The name of the root sequence ({}) was not found in the list of input sequences.'.format(root))
+            print('\n')
+            sys.exit(1)
+        sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
+    elif type(root) == Sequence:
+        if seq_field is not None:
+            if seq_field not in list(root.anotations.keys()):
+                print('\nERROR: {} is not present in the supplied root sequence.\n'.format(seq_field))
+                sys.exit(1)
+            root.alignment_sequence = root[seq_field]
+        if name_field is not None:
+            if name_field not in list(root.anotations.keys()):
+                print('\nERROR: {} is not present in the supplied root sequence.\n'.format(name_field))
+                sys.exit(1)
+            root.alignment_id = root[name_field]
+        sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
+    else:
+        print('\nERROR: If root is provided, it must be the name of a sequence \
+              found in the supplied list of sequences or it must be a Sequence object.')
+        print('\n')
+        sys.exit(1)
+
+    if root_name is not None:
+        root.alignment_id = root_name
+    else:
+        root_name = root.alignment_id
+
+    # compute and parse the alignment
+    seqs = [(root.alignment_id, root.alignment_sequence)]
+    seqs += [(s.alignment_id, s.alignment_sequence) for s in sequences]
+    aln = muscle(seqs)
+    g_aln = [a for a in aln if a.id == root_name][0]
+    dots = [(root_name, str(g_aln.seq)), ]
+    for seq in [a for a in aln if a.id != root_name]:
+        s_aln = ''
+        for g, q in zip(str(g_aln.seq), str(seq.seq)):
+            if g == q == '-':
+                s_aln += '-'
+            elif g == q:
+                s_aln += '.'
+            else:
+                s_aln += q
+        dots.append((seq.id, s_aln))
+    if just_alignment:
+            return [d[1] for d in dots]
+    name_len = max([len(d[0]) for d in dots]) + 2
+    dot_aln = []
+    for d in dots:
+        if as_fasta:
+            dot_aln.append('>{}\n{}'.format(d[0], d[1]))
+        else:
+            spaces = name_len - len(d[0])
+            dot_aln.append(d[0] + ' ' * spaces + d[1])
+    return '\n'.join(dot_aln)
