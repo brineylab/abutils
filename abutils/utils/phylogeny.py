@@ -40,15 +40,17 @@ from matplotlib.colors import ListedColormap
 
 import ete3
 
-import abstar
-from abstar.core.germline import get_germlines
+from Bio import AlignIO, Phylo
 
-from .pair import Pair
-from .sequence import Sequence
-from ..utils.alignment import mafft, muscle
-from ..utils.cluster import cluster
-from ..utils.color import hex_to_rgb, get_cmap
-from ..utils.decorators import lazy_property
+import abstar
+from abstar.core.germline import get_imgt_germlines
+
+from ..core.pair import Pair
+from ..core.sequence import Sequence
+from .alignment import mafft, muscle
+from .cluster import cluster
+from .color import hex_to_rgb, get_cmap
+from .decorators import lazy_property
 
 # imports to overload ete3's SequenceItem class
 from PyQt4.QtGui import (QGraphicsRectItem, QPen, QColor, QBrush, QFont)
@@ -61,9 +63,10 @@ else:
     STR_TYPES = [str, unicode]
 
 
-def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None, seq_field=None, name_field=None, aa=False, species='human',
-        root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None, order_dict=None, order_function=None,
-        color_node_labels=False, label_colors=None,
+def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
+        seq_field=None, name_field=None, aa=False, species='human',
+        root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
+        order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
         scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
         mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
         linked_alignment=None, alignment_fontsize=11, scale_factor=1, rename_function=None,
@@ -82,18 +85,21 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             provided ``seq_field``).
 
         project_dir (str): directory into which all phylogeny files will be deposited,
-            including alignment, tree and figure files
+            including alignment, tree and figure files.
 
         name (str): Name to be used for naming alignment, tree, and phylogeny files. If not
             provided, a random name will be generated.
 
         aln_file (str): if a multiple sequence alignment has already been calculated,
-            passing the path to the alignment file will force Lineage.phylogeny()
+            passing the path to the alignment file (in FASTA format) will force Lineage.phylogeny()
             to use the supplied msa instead of computing a new one.
 
         tree_file (str): if a tree file has already been calculated, passing the path
-            to the pre-computed tree file will force Lineage.phylogeny() to use
-            the supplied tree file instead of computing a new one.
+            to the pre-computed tree file will force ``phylogeny()`` to use
+            the supplied tree file instead of computing a new one. It is important to note that
+            only sequence names will be parsed from the tree_file, so if ``order_function`` or
+            ``color_function`` is also provided, ensure that these functions only require the
+            sequence ID rather than the entire sequence.
 
         aa (bool): if True, use amino acid sequences to compute the phylogeny.
             Default is False.
@@ -104,7 +110,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             either ``aln_file`` or ``tree_file`` are provided, the root must be provided
             as the sequence name, not as a ``Sequence`` object (as the root sequence must
             already be included in either ``aln_file`` or ``tree_file``. If the root is not
-            provided, the germline V-gene sequence of the 
+            provided, the germline V-gene sequence of the
 
         color_dict (dict): Dictionary with sequence IDs as keys and colors (hex format) as values. If any
             sequence IDs are not found in the dict, they will be colored black. If neither ``color_dict`` nor
@@ -238,26 +244,103 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
         else:
             print('\nERROR: If root is provided, it must be the name of a sequence \
-                  found in the supplied list of sequences or it must be a Sequence object.')
+            found in the supplied list of sequences or it must be a Sequence object.')
             print('\n')
             sys.exit(1)
         if root_name is not None:
             root.alignment_id = root_name
+        else:
+            root_name = root.alignment_id
+        sequences.append(root)
+
+    # parse sequences from aln_file, if provided
+    elif aln_file is not None:
+        if type(root) not in STR_TYPES:
+            print('\nERROR: If providing an aln_file, the name of the root sequence must \
+            be provided (as a string) using the root keyword argument')
+            print('\n')
+            sys.exit(1)
+        _sequences = []
+        _root = None
+        for rec in AlignIO.read(open(aln_file), 'fasta'):
+            s = str(rec.seq).replace('-', '')
+            if rec.id == root:
+                _root = Sequence(s, rec.id)
+                _root.alignment_id = _root.id
+            else:
+                _s = Sequence(s, id=rec.id)
+                _s.alignment_id = rec.id
+                _sequences.append(_s)
+        if sequences is None:
+            sequences = _sequences
+        else:
+            sequence_ids = [s.id for s in sequences]
+            if any([_s.alignment_id not in sequence_ids for _s in _sequences]):
+                print('\nWARNING: Sequences were found in the alignment file that were not included \
+                      in the input sequence list. This may cause problems.')
+            for s in sequences:
+                s.alignment_id = s.id
+                s.alignment_sequence = s.sequence
+        if _root is None:
+            print('\nERROR: The specified root ({}) was not found in the provided alignment file.'.format(root))
+            print('\n')
+            sys.exit(1)
+        root = _root
+        if root_name is not None:
+            root.alignment_id = root_name
+        else:
+            root_name = root.alignment_id
+        sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
+        sequences.append(root)
+
+    # parse sequences from tree_file, if provided
+    elif tree_file is not None:
+        if type(root) not in STR_TYPES:
+            print('\nERROR: If providing a tree_file, the name of the root sequence must \
+            be provided (as a string) using the root keyword argument')
+            print('\n')
+            sys.exit(1)
+        _sequences = []
+        _root = None
+        tree = Phylo.read(open(tree_file), 'newick')
+        for leaf in tree.get_terminals():
+            s = ''
+            if leaf.name == root:
+                _root = Sequence(s, leaf.name)
+                _root.alignment_id = _root.id
+            else:
+                _s = Sequence(s, id=leaf.name)
+                _s.alignment_id = leaf.name
+                _sequences.append(_s)
+        if sequences is None:
+            sequences = _sequences
+        else:
+            sequence_ids = [s.id for s in sequences]
+            if any([_s.alignment_id not in sequence_ids for _s in _sequences]):
+                print('\nWARNING: Sequences were found in the alignment file that were not included \
+                      in the input sequence list. This may cause problems.')
+            for s in sequences:
+                s.alignment_id = s.id
+                s.alignment_sequence = s.sequence
+        if _root is None:
+            print('\nERROR: The specified root ({}) was not found in the provided tree file.'.format(root))
+            print('\n')
+            sys.exit(1)
+        root = _root
+        if root_name is not None:
+            root.alignment_id = root_name
+        else:
+            root_name = root.alignment_id
+        sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
         sequences.append(root)
 
     # set up colors and color ordering
-    if all([sequences is None, order_function is not None]):
-        print('\norder_function can only be used if sequences are provided.')
-    if all([sequences is None, order_function is not None]):
-        print('\ncolor_function can only be used if sequences are provided.')
-    if sequences is not None:
-        # sequences are required to use color_function or order_function
-        if order_dict is None:
-            if order_function is not None:
-                order_dict = {seq.alignment_id: order_function(seq) for seq in sequences}
-        if color_dict is None:
-            if color_function is not None:
-                color_dict = {seq.alignment_id: color_function(seq) for seq in sequences}
+    if order_dict is None:
+        if order_function is not None:
+            order_dict = {seq.alignment_id: order_function(seq) for seq in sequences}
+    if color_dict is None:
+        if color_function is not None:
+            color_dict = {seq.alignment_id: color_function(seq) for seq in sequences}
     if color_dict is None:
         color_dict = {}
 
@@ -268,7 +351,8 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         do_print = False if quiet else True
         if do_print:
             print('\n')
-        mafft(sequences, aln_file, as_file=True, print_stdout=do_print, print_stderr=do_print)
+        seqs = [(s.alignment_id, s.alignment_sequence) for s in sequences]
+        mafft(seqs, aln_file, as_file=True, print_stdout=do_print, print_stderr=do_print)
 
     # make treefile (if necessary)
     if tree_file is None:
