@@ -24,9 +24,16 @@
 
 
 from collections import OrderedDict
+import sys
 import uuid
 
 from Bio.SeqRecord import SeqRecord
+
+
+if sys.version_info[0] > 2:
+    STR_TYPES = [str, ]
+else:
+    STR_TYPES = [str, unicode]
 
 
 class Sequence(object):
@@ -277,7 +284,7 @@ class Sequence(object):
 
 
     def _process_input(self, seq, id, qual):
-        if type(seq) in [str, ]:
+        if type(seq) in STR_TYPES:
             self.sequence = str(seq).upper()
             self._input_sequence = self.sequence
             if id is None:
