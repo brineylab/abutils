@@ -65,7 +65,7 @@ else:
 
 
 def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
-        seq_field=None, name_field=None, aa=False, species='human',
+        seq_field=None, name_field=None, aa=False, species='human', unrooted=False,
         root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
         order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
         scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
@@ -200,7 +200,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                 s.alignment_id = s.id
 
         # parse the root sequence
-        if root is None:
+        if unrooted:
+            root = None
+            root_name = None
+        elif root is None:
             if not quiet:
                 print('\nRoot sequence was was not provided. Using the germline V-gene.')
             if not all(['v_gene' in list(s.annotations.keys()) for s in sequences]):
@@ -248,11 +251,12 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             found in the supplied list of sequences or it must be a Sequence object.')
             print('\n')
             sys.exit(1)
-        if root_name is not None:
-            root.alignment_id = root_name
-        else:
-            root_name = root.alignment_id
-        sequences.append(root)
+        if not unrooted:
+            if root_name is not None:
+                root.alignment_id = root_name
+            else:
+                root_name = root.alignment_id
+            sequences.append(root)
 
     # parse sequences from aln_file, if provided
     elif aln_file is not None:
@@ -282,17 +286,21 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             for s in sequences:
                 s.alignment_id = s.id
                 s.alignment_sequence = s.sequence
-        if _root is None:
-            print('\nERROR: The specified root ({}) was not found in the provided alignment file.'.format(root))
-            print('\n')
-            sys.exit(1)
-        root = _root
-        if root_name is not None:
-            root.alignment_id = root_name
+        if unrooted:
+            root = None
+            root_name = None
         else:
-            root_name = root.alignment_id
-        sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
-        sequences.append(root)
+            if _root is None:
+                print('\nERROR: The specified root ({}) was not found in the provided alignment file.'.format(root))
+                print('\n')
+                sys.exit(1)
+            root = _root
+            if root_name is not None:
+                root.alignment_id = root_name
+            else:
+                root_name = root.alignment_id
+            sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
+            sequences.append(root)
 
     # parse sequences from tree_file, if provided
     elif tree_file is not None:
@@ -327,13 +335,17 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             print('\nERROR: The specified root ({}) was not found in the provided tree file.'.format(root))
             print('\n')
             sys.exit(1)
-        root = _root
-        if root_name is not None:
-            root.alignment_id = root_name
+        if unrooted:
+            root = None
+            root_name = None
         else:
-            root_name = root.alignment_id
-        sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
-        sequences.append(root)
+            root = _root
+            if root_name is not None:
+                root.alignment_id = root_name
+            else:
+                root_name = root.alignment_id
+            sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
+            sequences.append(root)
 
     # set up colors and color ordering
     if order_dict is None:
@@ -368,7 +380,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       fig_file,
                       color_dict,
                       order_dict,
-                      root.alignment_id,
+                      None if root is None else root.alignment_id,
                       rename_function=rename_function,
                       show_names=show_names,
                       name_field=name_field,
@@ -416,7 +428,8 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         ete3.faces.SequenceItem = MySequenceItem
     else:
         t = ete3.Tree(tree)
-    t.set_outgroup(t&root_name)
+    if root_name is not None:
+        t.set_outgroup(t&root_name)
     # style the nodes
     for node in t.traverse():
         if orders is not None:
