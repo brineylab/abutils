@@ -53,8 +53,9 @@ from .color import hex_to_rgb, get_cmap
 from .decorators import lazy_property
 
 # imports to overload ete3's SequenceItem class
-from PyQt4.QtGui import (QGraphicsRectItem, QPen, QColor, QBrush, QFont)
-from PyQt4.QtCore import Qt
+from PyQt5.QtWidgets import QGraphicsRectItem
+from PyQt5.QtGui import QPen, QColor, QBrush, QFont
+from PyQt5.QtCore import Qt
 
 
 if sys.version_info[0] > 2:

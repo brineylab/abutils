@@ -7,5 +7,6 @@ numpy
 nwalign
 pandas
 pymongo
+PyQt5
 scikit-bio<=0.4.2
 seaborn
