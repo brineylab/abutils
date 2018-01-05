@@ -103,9 +103,10 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
     if sequences:
         fasta_string = _get_fasta_string(sequences)
         fasta_file = tempfile.NamedTemporaryFile(delete=False)
-        fasta_file.write(fasta_string)
-        ffile = fasta_file.name
         fasta_file.close()
+        ffile = fasta_file.name
+        with open(ffile, 'w') as f:
+            f.write(fasta_string)
     elif fasta:
         ffile = fasta
     if alignment_file is None:
