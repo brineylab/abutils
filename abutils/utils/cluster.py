@@ -305,7 +305,7 @@ def _make_cdhit_input(seqs, temp_dir):
     ifile = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
     ifile.close()
     fastas = [s.fasta for s in seqs]
-    with open(ifile, 'w') as f:
+    with open(ifile.name, 'w') as f:
         f.write('\n'.join(fastas))
     return ifile.name
 
