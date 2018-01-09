@@ -183,7 +183,7 @@ class Cluster(object):
 
     @staticmethod
     def _chunker(l, size=900):
-        return (l[pos:pos + size] for pos in xrange(0, len(l), size))
+        return (l[pos:pos + size] for pos in range(0, len(l), size))
 
 
 def cluster(seqs, threshold=0.975, out_file=None, make_db=True, temp_dir=None,
