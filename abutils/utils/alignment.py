@@ -84,7 +84,7 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         fasta (str): Path to a FASTA-formatted file of sequences. Used as an
             alternative to ``sequences`` when suppling a FASTA file.
 
-        fmt (str): Format of the alignment. Options are 'fasta' and 'clustal'. Default
+        fmt (str): Format of the alignment. Options are 'fasta', 'phylip', and 'clustal'. Default
             is 'fasta'.
 
         threads (int): Number of threads for MAFFT to use. Default is ``-1``, which
@@ -112,8 +112,10 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
     if alignment_file is None:
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     aln_format = ''
-    if fmt == 'clustal':
+    if fmt.lower() == 'clustal':
         aln_format = '--clustalout '
+    if fmt.lower() == 'phylip':
+        aln_format = '--phylipout '
     mafft_cline = 'mafft --thread {} {}{} > {}'.format(threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,

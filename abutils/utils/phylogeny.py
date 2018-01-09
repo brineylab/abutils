@@ -53,9 +53,13 @@ from .color import hex_to_rgb, get_cmap
 from .decorators import lazy_property
 
 # imports to overload ete3's SequenceItem class
-from PyQt5.QtWidgets import QGraphicsRectItem
-from PyQt5.QtGui import QPen, QColor, QBrush, QFont
-from PyQt5.QtCore import Qt
+if sys.version_info[0] > 2:
+    from PyQt5.QtWidgets import QGraphicsRectItem
+    from PyQt5.QtGui import QPen, QColor, QBrush, QFont
+    from PyQt5.QtCore import Qt
+else:
+    from PyQt4.QtGui import QGraphicsRectItem, QPen, QColor, QBrush, QFont
+    from PyQt4.QtCore import Qt
 
 
 if sys.version_info[0] > 2:
@@ -65,7 +69,7 @@ else:
 
 
 def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
-        seq_field=None, name_field=None, aa=False, species='human', unrooted=False,
+        seq_field=None, name_field=None, aa=False, species='human', unrooted=False, ladderize=True,
         root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
         order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
         scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
@@ -260,7 +264,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
     # parse sequences from aln_file, if provided
     elif aln_file is not None:
-        if type(root) not in STR_TYPES:
+        if not unrooted and type(root) not in STR_TYPES:
             print('\nERROR: If providing an aln_file, the name of the root sequence must \
             be provided (as a string) using the root keyword argument')
             print('\n')
@@ -304,7 +308,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
     # parse sequences from tree_file, if provided
     elif tree_file is not None:
-        if type(root) not in STR_TYPES:
+        if not unrooted and type(root) not in STR_TYPES:
             print('\nERROR: If providing a tree_file, the name of the root sequence must \
             be provided (as a string) using the root keyword argument')
             print('\n')
@@ -331,13 +335,13 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             for s in sequences:
                 s.alignment_id = s.id
                 s.alignment_sequence = s.sequence
-        if _root is None:
-            print('\nERROR: The specified root ({}) was not found in the provided tree file.'.format(root))
-            print('\n')
-            sys.exit(1)
         if unrooted:
             root = None
             root_name = None
+        elif _root is None:
+            print('\nERROR: The specified root ({}) was not found in the provided tree file.'.format(root))
+            print('\n')
+            sys.exit(1)
         else:
             root = _root
             if root_name is not None:
@@ -399,7 +403,8 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       show_scale=show_scale,
                       compact_alignment=compact_alignment,
                       scale_factor=scale_factor,
-                      linewidth=linewidth)
+                      linewidth=linewidth,
+                      ladderize=ladderize)
 
 
 def fast_tree(alignment, tree, is_aa, quiet=True):
@@ -420,7 +425,7 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
         tree_orientation=0, min_order_fraction=0.1, show_root_name=False, chain=None,
         linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
-        compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False):
+        compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True):
     if show_root_name is True:
         show_names.append(root_name)
     if linked_alignment is not None:
@@ -474,7 +479,8 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     if branch_vert_margin is not None:
         ts.branch_vertical_margin = float(branch_vert_margin)
     ts.show_scale = show_scale
-    t.ladderize()
+    if ladderize:
+        t.ladderize()
     t.render(fig, tree_style=ts)
 
 

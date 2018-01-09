@@ -7,6 +7,6 @@ numpy
 nwalign
 pandas
 pymongo
-PyQt5
+PyQt5; python_version >= '3.0'
 scikit-bio<=0.4.2
 seaborn

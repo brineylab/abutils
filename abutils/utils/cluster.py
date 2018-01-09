@@ -242,6 +242,7 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
         print('CD-HIT: clustering {} seqeunces'.format(len(seqs)))
     if out_file is None:
         out_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
+        out_file.close()
         ofile = out_file.name
     else:
         ofile = os.path.expanduser(out_file)
@@ -302,9 +303,10 @@ def parse_clusters(out_file, clust_file, seq_db=None, db_path=None, seq_dict=Non
 
 def _make_cdhit_input(seqs, temp_dir):
     ifile = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
-    fastas = [s.fasta for s in seqs]
-    ifile.write('\n'.join(fastas))
     ifile.close()
+    fastas = [s.fasta for s in seqs]
+    with open(ifile, 'w') as f:
+        f.write('\n'.join(fastas))
     return ifile.name
 
 
