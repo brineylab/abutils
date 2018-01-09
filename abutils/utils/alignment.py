@@ -209,7 +209,10 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
                       stderr=sp.PIPE,
                       universal_newlines=True,
                       shell=True)
-    alignment = unicode(muscle.communicate(input=fasta_string)[0], 'utf-8')
+    if sys.version_info[0] > 2:
+        alignment = muscle.communicate(input=fasta_string)[0]
+    else:
+        alignment = unicode(muscle.communicate(input=fasta_string)[0], 'utf-8')
     aln = AlignIO.read(StringIO(alignment), fmt)
     if as_file:
         if not alignment_file:
