@@ -1,0 +1,12 @@
+biopython
+celery
+ete3
+matplotlib
+nose
+numpy
+nwalign
+pandas
+pymongo
+PyQt4
+scikit-bio<=0.4.2
+seaborn
