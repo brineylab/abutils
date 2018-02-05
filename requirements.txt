@@ -1,12 +1,15 @@
-nose
 biopython
 celery
 ete3
 matplotlib
+nose
 numpy
-nwalign
+nwalign3;python_version>='3.0'
+nwalign;python_version<'3.0'
 pandas
 pymongo
-PyQt5; python_version >= '3.0'
-scikit-bio<=0.4.2
+PyQt5;python_version>='3.0'
+PyQt4;python_version<'3.0'
+scikit-bio;python_version>='3.0'
+scikit-bio<=0.4.2;python_version<'3.0'
 seaborn

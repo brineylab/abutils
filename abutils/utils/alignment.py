@@ -36,8 +36,6 @@ import traceback
 
 from skbio.alignment import StripedSmithWaterman
 
-import nwalign3 as nw
-
 from Bio import AlignIO, pairwise2
 from Bio.SeqRecord import SeqRecord
 
@@ -46,8 +44,10 @@ from ..core.sequence import Sequence
 
 if sys.version_info[0] > 2:
     STR_TYPES = [str, ]
+    import nwalign3 as nw
 else:
     STR_TYPES = [str, unicode]
+    import nwalign as nw
 
 
 
