@@ -4,12 +4,9 @@ ete3
 matplotlib
 nose
 numpy
-nwalign3;python_version>='3.0'
-nwalign;python_version<'3.0'
+nwalign3
 pandas
 pymongo
-PyQt5;python_version>='3.0'
-PyQt4;python_version<'3.0'
-scikit-bio;python_version>='3.0'
-scikit-bio<=0.4.2;python_version<'3.0'
+PyQt5
+scikit-bio
 seaborn
