@@ -227,18 +227,19 @@ class Sequence(object):
         self._strand = strand
 
 
-    # def as_fasta(self, name_field=None, seq_field=None):
-    #     name = None
-    #     sequence = None
-    #     if name_field is not None:
-    #         name = self.annotations[name_field]
-    #     if name_field is not None:
-    #         sequence = self.monO[seq_field]
-    #     if name is None:
-    #         name = self.id
-    #     if sequence is None:
-    #         sequence = self.sequence
-    #     return '>{}\n{}'.format(name, sequence)
+    def as_fasta(self, name_field=None, seq_field=None):
+        name = None
+        sequence = None
+        if name_field is not None:
+            name = self.annotations[name_field]
+        if name_field is not None:
+            sequence = self.monO[seq_field]
+        if name is None:
+            name = self.id
+        if sequence is None:
+            sequence = self.sequence
+        return '>{}\n{}'.format(name, sequence)
+
 
     def region(self, start=0, end=None):
         '''
