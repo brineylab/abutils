@@ -84,7 +84,7 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         fasta (str): Path to a FASTA-formatted file of sequences. Used as an
             alternative to ``sequences`` when suppling a FASTA file.
 
-        fmt (str): Format of the alignment. Options are 'fasta' and 'clustal'. Default
+        fmt (str): Format of the alignment. Options are 'fasta', 'phylip', and 'clustal'. Default
             is 'fasta'.
 
         threads (int): Number of threads for MAFFT to use. Default is ``-1``, which
@@ -103,16 +103,19 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
     if sequences:
         fasta_string = _get_fasta_string(sequences)
         fasta_file = tempfile.NamedTemporaryFile(delete=False)
-        fasta_file.write(fasta_string)
-        ffile = fasta_file.name
         fasta_file.close()
+        ffile = fasta_file.name
+        with open(ffile, 'w') as f:
+            f.write(fasta_string)
     elif fasta:
         ffile = fasta
     if alignment_file is None:
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     aln_format = ''
-    if fmt == 'clustal':
+    if fmt.lower() == 'clustal':
         aln_format = '--clustalout '
+    if fmt.lower() == 'phylip':
+        aln_format = '--phylipout '
     mafft_cline = 'mafft --thread {} {}{} > {}'.format(threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,
@@ -206,7 +209,10 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
                       stderr=sp.PIPE,
                       universal_newlines=True,
                       shell=True)
-    alignment = unicode(muscle.communicate(input=fasta_string)[0], 'utf-8')
+    if sys.version_info[0] > 2:
+        alignment = muscle.communicate(input=fasta_string)[0]
+    else:
+        alignment = unicode(muscle.communicate(input=fasta_string)[0], 'utf-8')
     aln = AlignIO.read(StringIO(alignment), fmt)
     if as_file:
         if not alignment_file:

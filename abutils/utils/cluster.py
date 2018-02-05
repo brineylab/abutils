@@ -183,7 +183,7 @@ class Cluster(object):
 
     @staticmethod
     def _chunker(l, size=900):
-        return (l[pos:pos + size] for pos in xrange(0, len(l), size))
+        return (l[pos:pos + size] for pos in range(0, len(l), size))
 
 
 def cluster(seqs, threshold=0.975, out_file=None, make_db=True, temp_dir=None,
@@ -242,6 +242,7 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
         print('CD-HIT: clustering {} seqeunces'.format(len(seqs)))
     if out_file is None:
         out_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
+        out_file.close()
         ofile = out_file.name
     else:
         ofile = os.path.expanduser(out_file)
@@ -302,9 +303,10 @@ def parse_clusters(out_file, clust_file, seq_db=None, db_path=None, seq_dict=Non
 
 def _make_cdhit_input(seqs, temp_dir):
     ifile = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
-    fastas = [s.fasta for s in seqs]
-    ifile.write('\n'.join(fastas))
     ifile.close()
+    fastas = [s.fasta for s in seqs]
+    with open(ifile.name, 'w') as f:
+        f.write('\n'.join(fastas))
     return ifile.name
 
 
