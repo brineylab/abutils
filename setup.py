@@ -34,7 +34,7 @@ config = {
     'url': 'https://www.github.com/briney/abutils',
     # 'download_url': 'www.github.com/briney/abtools/',
     'author_email': 'briney@scripps.edu',
-    'version': '0.0.2',
+    'version': '0.0.3',
     'install_requires': install_requires,
     'packages': ['abutils'],
     'scripts': [],
