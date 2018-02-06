@@ -59,12 +59,12 @@ def progress_bar(finished, total, start_time=None):
 
     '''
     pct = int(100. * finished / total)
-    ticks = pct / 2
-    spaces = 50 - ticks
+    ticks = int(pct / 2)
+    spaces = int(50 - ticks)
     if start_time is not None:
         elapsed = (datetime.now() - start_time).seconds
-        minutes = elapsed / 60
-        seconds = elapsed % 60
+        minutes = int(elapsed / 60)
+        seconds = int(elapsed % 60)
         minute_str = '0' * (2 - len(str(minutes))) + str(minutes)
         second_str = '0' * (2 - len(str(seconds))) + str(seconds)
         prog_bar = '\r({}/{}) |{}{}|  {}% ({}:{})'.format(finished, total,
