@@ -32,7 +32,6 @@ config = {
     'description': 'Utilities for analysis of antibody NGS data',
     'author': 'Bryan Briney',
     'url': 'https://www.github.com/briney/abutils',
-    # 'download_url': 'www.github.com/briney/abtools/',
     'author_email': 'briney@scripps.edu',
     'version': '0.0.3',
     'install_requires': install_requires,
