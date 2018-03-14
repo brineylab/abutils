@@ -23,6 +23,8 @@
 #
 
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import copy
 import sys
 import traceback
@@ -33,6 +35,12 @@ from Bio.Alphabet import generic_dna
 from .sequence import Sequence
 from ..utils import germlines
 from ..utils.alignment import global_alignment
+
+
+if sys.version_info[0] > 2:
+    STR_TYPES = [str, ]
+else:
+    STR_TYPES = [str, unicode]
 
 
 class Pair(object):
@@ -217,8 +225,8 @@ class Pair(object):
                 self._refine_j(seq, species)
                 self._retranslate(seq)
             except:
-                print('REFINEMENT FAILED: {}, {} chain'.format(s['seq_id'], s['chain']))
-                print(traceback.format_exception_only(sys.exc_type, sys.exc_value))
+                print('REFINEMENT FAILED: {}, {} chain'.format(seq['seq_id'], seq['chain']))
+                print(traceback.format_exception_only(*sys.exc_info()[:2]))
 
 
     @staticmethod
@@ -338,17 +346,17 @@ def get_pairs(db, collection, experiment=None, subject=None, group=None, name='s
     if subject is not None:
         if type(subject) in (list, tuple):
             match['subject'] = {'$in': subject}
-        elif type(subject) in (str, unicode):
+        elif type(subject) in STR_TYPES:
             match['subject'] = subject
     if group is not None:
         if type(group) in (list, tuple):
             match['group'] = {'$in': group}
-        elif type(group) in (str, unicode):
+        elif type(group) in STR_TYPES:
             match['group'] = group
     if experiment is not None:
         if type(experiment) in (list, tuple):
             match['experiment'] = {'$in': experiment}
-        elif type(experiment) in (str, unicode):
+        elif type(experiment) in STR_TYPES:
             match['experiment'] = experiment
     seqs = list(db[collection].find(match))
     return assign_pairs(seqs, name=name, delim=delim,

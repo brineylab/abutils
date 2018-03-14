@@ -23,6 +23,9 @@
 #
 
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+
 def lazy_property(func):
     '''
     Wraps a property to provide lazy evaluation. Eliminates boilerplate.

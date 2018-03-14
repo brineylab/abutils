@@ -23,6 +23,8 @@
 #
 
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from collections import OrderedDict
 import sys
 import uuid
@@ -232,8 +234,8 @@ class Sequence(object):
         sequence = None
         if name_field is not None:
             name = self.annotations[name_field]
-        if name_field is not None:
-            sequence = self.monO[seq_field]
+        if seq_field is not None:
+            sequence = self.annotations[seq_field]
         if name is None:
             name = self.id
         if sequence is None:
