@@ -29,7 +29,8 @@ import sys
 from datetime import datetime
 
 
-def progress_bar(finished, total, start_time=None):
+def progress_bar(finished, total, start_time=None, extra_info=None,
+                 complete=False, completion_string='/n/n'):
     '''
     Prints an ASCII progress bar.
 
@@ -56,6 +57,16 @@ def progress_bar(finished, total, start_time=None):
         start_time (datetime): Start time, as a ``datetime.datetime`` object.
             Only required if you want to display execution time alongside
             the progress bar. If not provided, execution time is not shown.
+        
+        extra_info (str): A string containing extra information to be displayed
+            at the end of the progbar string. Examples include the number of failed
+            jobs, the name of the job batch currently being processed, etc.
+
+        complete (bool): If `True`, will append `completion_string` to the end
+            of the progbar string.
+
+        completion_string (str): Will be appended to the progbar string if
+            `complete` is `True`. Default is `'\n\n'`.
 
     '''
     pct = int(100. * finished / total)
@@ -67,10 +78,14 @@ def progress_bar(finished, total, start_time=None):
         seconds = int(elapsed % 60)
         minute_str = '0' * (2 - len(str(minutes))) + str(minutes)
         second_str = '0' * (2 - len(str(seconds))) + str(seconds)
-        prog_bar = '\r({}/{}) |{}{}|  {}% ({}:{})'.format(finished, total,
+        prog_bar = '\r({}/{}) |{}{}|  {}%  ({}:{})  '.format(finished, total,
             '|' * ticks, ' ' * spaces, pct, minute_str, second_str)
     else:
         prog_bar = '\r({}/{}) |{}{}|  {}%  '.format(finished, total,
             '|' * ticks, ' ' * spaces, pct)
+    if extra_info is not None:
+        prog_bar += str(extra_info)
+    if complete:
+        prog_bar += completion_string
     sys.stdout.write(prog_bar)
     sys.stdout.flush()
