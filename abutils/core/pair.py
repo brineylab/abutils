@@ -83,12 +83,17 @@ class Pair(object):
     @property
     def heavy(self):
         if self._heavy is None:
-            # self._heavies = [s for s in self._seqs if s['chain'] == 'heavy']
             if len(self._heavies) > 0:
                 if self._select_heavy is not None:
-                    self._heavy = Sequence(self._select_heavy(self._heavies))
+                    h = self._select_heavy(self._heavies)
+                    if all([h is not None, type(h) != Sequence]):
+                        h = Sequence(h)
+                    self._heavy = h
                 else:
-                    self._heavy = Sequence(self._heavies[0])
+                    h = self._heavies[0]
+                    if type(h) != Sequence:
+                        h = Sequence(h)
+                    self._heavy = h
             else:
                 self._heavy = None
         return self._heavy
@@ -100,12 +105,17 @@ class Pair(object):
     @property
     def light(self):
         if self._light is None:
-            # self._lights = [s for s in self._seqs if s['chain'] in ['kappa', 'lambda']]
             if len(self._lights) > 0:
                 if self._select_light is not None:
-                    self._light = Sequence(self._select_light(self._lights))
+                    l = self._select_light(self._lights)
+                    if all([l is not None, type(l) != Sequence]):
+                        l = Sequence(l)
+                    self._light = l
                 else:
-                    self._light = Sequence(self._lights[0])
+                    l = self._lights[0]
+                    if type(l) != Sequence:
+                        l = Sequence(l)
+                    self._light = l
             else:
                 self._light = None
         return self._light
@@ -129,10 +139,10 @@ class Pair(object):
     @property
     def vrc01_like(self):
         if self._vrc01_like is None:
-        	if any([self.heavy is None, self.light is None]):
-        		self._vrc01_like = False
-        	else:
-	            self._vrc01_like = all([self.heavy['v_gene']['gene'] == 'IGHV1-2', self.light['cdr3_len'] == 5])
+            if any([self.heavy is None, self.light is None]):
+                self._vrc01_like = False
+            else:
+                self._vrc01_like = all([self.heavy['v_gene']['gene'] == 'IGHV1-2', self.light['cdr3_len'] == 5])
         return self._vrc01_like
 
     @property
@@ -316,7 +326,7 @@ class Pair(object):
 
 
 def get_pairs(db, collection, experiment=None, subject=None, group=None, name='seq_id',
-    delim=None, delim_occurance=1, pairs_only=False):
+    delim=None, delim_occurance=1, pairs_only=False, h_selection_func=None, l_selection_func=None):
     '''
     Gets sequences and assigns them to the appropriate mAb pair, based on the sequence name.
 
@@ -360,10 +370,12 @@ def get_pairs(db, collection, experiment=None, subject=None, group=None, name='s
             match['experiment'] = experiment
     seqs = list(db[collection].find(match))
     return assign_pairs(seqs, name=name, delim=delim,
-        delim_occurance=delim_occurance, pairs_only=pairs_only)
+        delim_occurance=delim_occurance, pairs_only=pairs_only,
+        h_selection_function=h_selection_func, l_selection_func=l_selection_func)
 
 
-def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=False):
+def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=False,
+                 h_selection_func=None, l_selection_func=None):
     '''
     Assigns sequences to the appropriate mAb pair, based on the sequence name.
 
@@ -393,7 +405,9 @@ def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=
             pdict[pname] = [s, ]
         else:
             pdict[pname].append(s)
-    pairs = [Pair(pdict[n], name=n) for n in pdict.keys()]
+    pairs = [Pair(pdict[n], name=n,
+                  h_selection_function=h_selection_func,
+                  l_selection_func=l_selection_func) for n in pdict.keys()]
     if pairs_only:
         pairs = [p for p in pairs if p.is_pair]
     return pairs
