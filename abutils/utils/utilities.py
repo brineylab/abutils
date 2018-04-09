@@ -43,6 +43,34 @@ else:
 
 
 def nested_dict_lookup(d, key_list):
-    return reduce(operator.getitem, key_list, d)
+    '''
+    Retrieves a nested value from a dictionary given a list of keys::
+
+        mydict = {'key1a': {'key1b': 'val1b}, 'key2a': {'key2b': {'key2c': 'val2c}}}
+
+        keylist1 = ['key1a', 'key1b']
+        nested_dict_lookup(mydict, keylist1)
+        >>> val1b
+
+        keylist2 = ['key2a', 'key2b', 'key2c']
+        nested_dict_lookup(mydict, keylist2)
+        >>> val2c
+
+    Args:
+
+        d (dict): Nested dictionary
+
+        keylist (list(str)): list of strings that correspond to dict keys (in nested order)
+
+
+    Returns:
+
+        Value from the nested dictionary. If one or more of the nested keys is not present
+        in the nested dictionary, `None` will be returned.
+    '''
+    try:
+        return reduce(operator.getitem, key_list, d)
+    except KeyError:
+        return None
 
 
