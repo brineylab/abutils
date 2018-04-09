@@ -79,7 +79,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
         linked_alignment=None, alignment_fontsize=11, scale_factor=1, rename_function=None,
         alignment_height=50, alignment_width=50, compact_alignment=False, linewidth=1.0,
-        quiet=True):
+        delete_nodes=None, quiet=True):
     '''
     Generates a lineage phylogeny figure.
 
@@ -377,7 +377,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
     # make treefile (if necessary)
     if tree_file is None:
         tree_file = os.path.abspath(os.path.join(project_dir, '{}.nw'.format(name)))
-        fast_tree(aln_file, tree_file, is_aa=aa, quiet=quiet)
+        fasttree(aln_file, tree_file, is_aa=aa, quiet=quiet)
 
     # make phylogeny
     prefix = '' if figname_prefix is None else figname_prefix
@@ -407,21 +407,46 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       compact_alignment=compact_alignment,
                       scale_factor=scale_factor,
                       linewidth=linewidth,
-                      ladderize=ladderize)
+                      ladderize=ladderize,
+                      delete_nodes=delete_nodes)
 
 
-def fast_tree(alignment, tree, is_aa, quiet=True):
+def fasttree(alignment, tree_file, is_aa=False, quiet=True):
     if is_aa:
-        ft_cmd = 'fasttree {} > {}'.format(alignment, tree)
+        ft_cmd = 'fasttree {} > {}'.format(alignment, tree_file)
     else:
-        ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree)
+        ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree_file)
     ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = ft.communicate()
     if not quiet:
         print(ft_cmd)
         print(stdout)
         print(stderr)
-    return tree
+    return tree_file
+
+
+def lsd(tree, output_file=None, dates_file=None, outgroup_file=None,
+        with_constraints=True, with_weights=True, reestimate_root_position=None, quiet=True):
+    lsd_cmd = 'lsd -i {}'.format(os.path.abspath(tree))
+    if output_file is not None:
+        lsd_cmd += ' -o {}'.format(os.path.abspath(output_file))
+    if dates_file is not None:
+        lsd_cmd += ' -d {}'.format(os.path.abspath(dates_file))
+    if outgroup_file is not None:
+        lsd_cmd += ' -g {}'.format(os.path.abspath(outgroup_file))
+    if with_constraints:
+        lsd_cmd += ' -c'
+    if with_weights:
+        lsd_cmd += ' -v'
+    if reestimate_root_position is not None:
+        lsd_cmd += ' -r {}'.format(reestimate_root_position)
+    p = sp.Popen(lsd_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if not quiet:
+        print(lsd_cmd)
+        print(stdout)
+        print(stderr)
+    return output_file
 
 
 def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
@@ -472,7 +497,11 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
         tree_orientation=0, min_order_fraction=0.1, show_root_name=False, chain=None,
         linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
-        compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True):
+        compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True, delete_nodes=None):
+    if delete_nodes is None:
+        delete_nodes = []
+    elif type(delete_nodes) in STR_TYPES:
+        delete_nodes = [delete_nodes, ]
     if show_root_name is True:
         show_names.append(root_name)
     if linked_alignment is not None:
@@ -484,6 +513,9 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         t.set_outgroup(t&root_name)
     # style the nodes
     for node in t.traverse():
+        if node.name in delete_nodes:
+            node.delete()
+            continue
         if orders is not None:
             leaves = node.get_leaf_names()
             order_count = Counter([orders[l] for l in leaves])
