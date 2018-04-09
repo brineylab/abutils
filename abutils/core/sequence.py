@@ -26,14 +26,19 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import OrderedDict
+import json
+import operator
 import sys
 import uuid
 
+from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+from ..utils.utilities import nested_dict_lookup
 
 if sys.version_info[0] > 2:
     STR_TYPES = [str, ]
+    from functools import reduce
 else:
     STR_TYPES = [str, unicode]
 
@@ -323,3 +328,43 @@ class Sequence(object):
             self._input_sequence = self.sequence
             self.qual = qual
             self._annotations = seq
+
+
+def read_json(json_file, match=None):
+    if match is None:
+        match = {}
+    sequences = []
+    with open(json_file, 'r') as f:
+        for line in f:
+            j = json.loads(line.strip)
+            try:
+                if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):
+                    sequences.append(Sequence(j))
+            except KeyError:
+                continue
+    return sequences
+
+
+def read_fasta(fasta_file):
+    with open(fasta_file) as f:
+        sequences = [Sequence(s) for s in SeqIO.parse(f, 'fasta')]
+    return sequences
+
+
+def from_mongodb(db, collection, match=None, project=None, limit=None):
+    if match is None:
+        match = {}
+    if project is None:
+        project = {}
+    if limit is not None:
+        results = db[collection].find(match, project, limit=limit)
+    else:
+        results = db[collection].find(match, project)
+    return [Sequence(r) for r in results]
+
+            
+
+
+
+
+
