@@ -25,12 +25,17 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import sys
+
 import seaborn as sns
 
 import numpy as np
 
 from matplotlib import pyplot as plt
 from matplotlib import cm, colors
+
+if sys.version_info[0] > 2:
+    basestring = str
 
 
 cmaps = {'heatmap': sns.diverging_palette(240, 10, as_cmap=True)}
