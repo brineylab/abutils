@@ -406,7 +406,7 @@ def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=
         else:
             pdict[pname].append(s)
     pairs = [Pair(pdict[n], name=n,
-                  h_selection_function=h_selection_func,
+                  h_selection_func=h_selection_func,
                   l_selection_func=l_selection_func) for n in pdict.keys()]
     if pairs_only:
         pairs = [p for p in pairs if p.is_pair]
