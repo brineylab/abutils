@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# filename: alignment.py
+# filename: utilities.py
 
 
 #
@@ -25,31 +25,52 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import time
+import operator
+import sys
 
-from . import progbar
-
-
-def monitor_mp_jobs(results, start_time=None, completion_string='\n'):
-    finished = 0
-    jobs = len(results)
-    while finished < jobs:
-        time.sleep(1)
-        ready = [ar for ar in results if ar.ready()]
-        finished = len(ready)
-        progbar.progress_bar(finished, jobs, start_time=start_time)
-    progbar.progress_bar(finished, jobs, start_time=start_time,
-                         complete=True, completion_string=completion_string)
+if sys.version_info[0] > 2:
+    STR_TYPES = [str, ]
+    from functools import reduce
+else:
+    STR_TYPES = [str, unicode]
 
 
-def monitor_celery_jobs(results, start_time=None, completion_string='\n'):
-    finished = 0
-    jobs = len(results)
-    while finished < jobs:
-        time.sleep(1)
-        succeeded = [ar for ar in results if ar.successful()]
-        failed = [ar for ar in results if ar.failed()]
-        finished = len(succeeded) + len(failed)
-        progbar.progress_bar(finished, jobs, start_time=start_time)
-    progbar.progress_bar(finished, jobs, start_time=start_time,
-                         complete=True, completion_string=completion_string)
+
+
+#================================
+#       USEFUL SNIPPITS
+#================================
+
+
+def nested_dict_lookup(d, key_list):
+    '''
+    Retrieves a nested value from a dictionary given a list of keys::
+
+        mydict = {'key1a': {'key1b': 'val1b}, 'key2a': {'key2b': {'key2c': 'val2c}}}
+
+        keylist1 = ['key1a', 'key1b']
+        nested_dict_lookup(mydict, keylist1)
+        >>> val1b
+
+        keylist2 = ['key2a', 'key2b', 'key2c']
+        nested_dict_lookup(mydict, keylist2)
+        >>> val2c
+
+    Args:
+
+        d (dict): Nested dictionary
+
+        keylist (list(str)): list of strings that correspond to dict keys (in nested order)
+
+
+    Returns:
+
+        Value from the nested dictionary. If one or more of the nested keys is not present
+        in the nested dictionary, `None` will be returned.
+    '''
+    try:
+        return reduce(operator.getitem, key_list, d)
+    except KeyError:
+        return None
+
+

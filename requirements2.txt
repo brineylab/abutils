@@ -6,6 +6,7 @@ nose
 numpy
 nwalign
 pandas
+paramiko
 pymongo
 PyQt4
 scikit-bio<=0.4.2

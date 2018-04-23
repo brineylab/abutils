@@ -193,13 +193,13 @@ def cluster(seqs, threshold=0.975, out_file=None, make_db=True, temp_dir=None,
 
     Args:
 
-        seqs (list): An iterable of sequences, in any format that abtools.sequence.Sequence()
+        seqs (list): An iterable of sequences, in any format that abutils.utils.sequence.Sequence()
             can handle
 
         threshold (float): Clustering identity threshold. Default is 0.975.
 
         out_file (str): Path to the clustering output file. Default is to use
-            tempfile.NamedTempraryFile to generate an output file name.
+            tempfile.NamedTemporaryFile to generate an output file name.
 
         temp_dir (str): Path to the temporary directory. If not provided, '/tmp' is used.
 
@@ -224,7 +224,7 @@ def cluster(seqs, threshold=0.975, out_file=None, make_db=True, temp_dir=None,
         return parse_clusters(ofile, cfile, seq_dict=seq_dict, return_just_seq_ids=return_just_seq_ids)
 
 
-def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, quiet=False, threads=0, max_memory=800, debug=False):
+def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, quiet=False, sleep_time=1, threads=0, max_memory=800, debug=False):
     # '''
     # Perform CD-HIT clustering on a set of sequences.
 
@@ -257,6 +257,8 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
                        stdout=sp.PIPE,
                        stderr=sp.PIPE)
     stdout, stderr = cluster.communicate()
+    end_time = time.time()
+    time.sleep(sleep_time)
     if debug:
         print(stdout)
         print(stderr)
@@ -264,7 +266,7 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
         os.unlink(ifile)
     if not quiet:
         # logger.info('CD-HIT: clustering took {:.2f} seconds'.format(time.time() - start_time))
-        print('CD-HIT: clustering took {:.2f} seconds'.format(time.time() - start_time))
+        print('CD-HIT: clustering took {:.2f} seconds'.format(end_time - start_time))
     cfile = ofile + '.clstr'
     if make_db:
         if not quiet:

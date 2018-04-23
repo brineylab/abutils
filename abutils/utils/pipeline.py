@@ -27,8 +27,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import glob
 import os
+import sys
 
 from . import log
+
+if sys.version_info[0] > 2:
+    STR_TYPES = [str, ]
+else:
+    STR_TYPES = [str, unicode]
 
 
 def initialize(log_file, project_dir=None, debug=False):
@@ -99,7 +105,7 @@ def list_files(d, extension=None):
     else:
         files = [d, ]
     if extension is not None:
-        if type(extension) in [str, unicode]:
+        if type(extension) in STR_TYPES:
             extension = [extension, ]
         files = [f for f in files if any([f.split('.')[-1] in extension,
                                           f.split('.')[-1].upper() in extension,
