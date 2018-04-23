@@ -33,7 +33,7 @@ config = {
     'author': 'Bryan Briney',
     'url': 'https://www.github.com/briney/abutils',
     'author_email': 'briney@scripps.edu',
-    'version': '0.0.3',
+    'version': '0.0.4',
     'install_requires': install_requires,
     'packages': ['abutils'],
     'scripts': [],
