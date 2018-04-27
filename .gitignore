@@ -57,4 +57,4 @@ docs/_build/
 target/
 
 *.sublime-*
-.vscode
+.DS_Store
