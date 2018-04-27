@@ -34,6 +34,11 @@ from pymongo import MongoClient
 
 from . import log
 
+if sys.version_info[0] > 2:
+    STR_TYPES = [str, ]
+else:
+    STR_TYPES = [str, unicode]
+
 
 def get_connection(ip='localhost', port=27017, user=None, password=None):
     '''
@@ -337,12 +342,12 @@ def index(db, collection, fields, directions=None, desc=False, background=False)
             database will not be locked.
     '''
     import pymongo
-    if type(fields) == str:
+    if type(fields) in STR_TYPES:
         fields = [fields, ]
     if directions is None:
         _dir = pymongo.DESCENDING if desc else pymongo.ASCENDING
         directions = [_dir] * len(fields)
-    field_tuples = zip(fields, directions)
+    field_tuples = list(zip(fields, directions))
     coll = db[collection]
     coll.create_index(field_tuples, background=background)
 
