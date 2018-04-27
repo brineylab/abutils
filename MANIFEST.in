@@ -1,5 +1,6 @@
 include README.md
 include requirements.txt
+include requirements2.txt
 include docs/*.txt
 include abutils/core/*
 include abutils/plots/*
