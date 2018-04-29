@@ -827,8 +827,8 @@ class NWAlignment(BaseAlignment):
     def _get_matrix_file(self, match=None, mismatch=None, matrix=None):
         matrix_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'matrices')
         builtins = ['blosum62', 'match3mismatch2', 'match1mismatch0']
-        if self._matrix is not None:
-            matrix_name = self._matrix
+        if matrix is not None:
+            matrix_name = matrix
         else:
             matrix_name = 'match{}mismatch{}'.format(abs(match), abs(mismatch))
         if matrix_name.lower() in builtins:
