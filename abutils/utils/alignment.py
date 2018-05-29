@@ -29,6 +29,7 @@ from copy import copy, deepcopy
 from io import StringIO
 import logging
 import os
+import platform
 import subprocess as sp
 import sys
 import tempfile
@@ -116,7 +117,9 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         aln_format = '--clustalout '
     if fmt.lower() == 'phylip':
         aln_format = '--phylipout '
-    mafft_cline = 'mafft --thread {} {}{} > {}'.format(threads, aln_format, ffile, alignment_file)
+    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    mafft_bin = os.path.join(mod_dir, 'bin/mafft_{}'.format(platform.system().lower()))
+    mafft_cline = '{} --thread {} {}{} > {}'.format(mafft_bin, threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,
                      stderr=sp.PIPE,
@@ -193,10 +196,12 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
         fasta_string = _get_fasta_string(sequences)
     elif fasta:
         fasta_string = open(fasta, 'r').read()
+    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    muscle_bin = os.path.join(mod_dir, 'bin/muscle_{}'.format(platform.system().lower()))
     aln_format = ''
     if fmt == 'clustal':
         aln_format = ' -clwstrict'
-    muscle_cline = 'muscle{} '.format(aln_format)
+    muscle_cline = '{}{} '.format(muscle_bin, aln_format)
     if maxiters is not None:
         muscle_cline += ' -maxiters {}'.format(maxiters)
     if diags:
@@ -958,7 +963,7 @@ def dot_alignment(sequences, seq_field=None, name_field=None, root=None, root_na
     sequences = deepcopy(sequences)
     root = copy(root)
 
-    # if custom seq_field is specified, copy to the .seq attribute
+    # if custom seq_field is specified, copy to the .alignment_sequence attribute
     if seq_field is not None:
         if not all([seq_field in list(s.annotations.keys()) for s in sequences]):
             print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(seq_field))
