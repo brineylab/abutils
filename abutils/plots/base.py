@@ -76,7 +76,7 @@ def barplot(x, y, colors, fig_file=None, xlabel=None, ylabel=None, rotate_xtick_
 
 
 
-    def heatmap(df, fig_file=None):
+def heatmap(df, fig_file=None):
     sns.set()
     # set up plot, determine plot size
     h, w = df.shape
