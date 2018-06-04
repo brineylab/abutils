@@ -43,6 +43,34 @@ from .decorators import lazy_property
 from ..core.sequence import Sequence
 
 
+class CDHITResult(object):
+    '''
+    Docstring for CDHITResult.
+    '''
+    def __init__(self, clusters, seq_db=None, db_path=None, seq_dict=None):
+        self.clusters = sorted(clusters, key = lambda x: x.size, reverse=True)
+        self.seq_db = seq_db
+        self.db_path = db_path
+        self.seq_dict = seq_dict
+    
+    def __len__(self):
+        return len(self.clusters)
+
+    def __iter__(self):
+        for cluster in self.clusters:
+            yield cluster
+
+
+    @property
+    def largest_cluster(self):
+        return self.clusters[0]
+
+    
+    def delete(self):
+        self.seq_db.connection.close()
+        os.unlink(self.db_path)
+
+
 class Cluster(object):
     """
     Data and methods for a cluster of sequences.
@@ -357,7 +385,7 @@ def parse_clusters(out_file, clust_file, seq_db=None, db_path=None, seq_dict=Non
 
     Returns:
 
-        list: A list of `Cluster` objects (or a 2D list of sequence IDs, if `return_just_seq_ids` is `True`).
+        A CDHITResult object, or a 2D list of sequence IDs, if `return_just_seq_ids` is `True`.
     '''
     raw_clusters = [c.split('\n') for c in open(clust_file, 'r').read().split('\n>')]
     if return_just_seq_ids:
@@ -373,7 +401,8 @@ def parse_clusters(out_file, clust_file, seq_db=None, db_path=None, seq_dict=Non
         return ids
     os.unlink(out_file)
     os.unlink(clust_file)
-    return [Cluster(rc, seq_db, db_path, seq_dict) for rc in raw_clusters]
+    clusters = [Cluster(rc, seq_db, db_path, seq_dict) for rc in raw_clusters]
+    return CDHITResult(clusters, seq_db=seq_db, db_path=db_path, seq_dict=seq_dict)
 
 
 def _make_cdhit_input(seqs, temp_dir):
