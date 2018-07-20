@@ -18,5 +18,6 @@ install:
 # command to run tests
 script:
   - df -h
-  - echo $MAFFT_BINARIES
+  - which mafft
+  - unset MAFFT_BINARIES
   - pytest # or py.test for Python versions 3.5 and below
