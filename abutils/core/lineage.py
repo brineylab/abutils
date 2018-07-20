@@ -785,7 +785,7 @@ def fast_tree(alignment, tree, is_aa, show_output=False):
 
 
 def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_color=None, singleton_color='lightgrey', shuffle_colors=False, seed=1234,
-          text_kws={}, pie_kws={}):
+          text_kws={}, pie_kws={}, fontsize=28):
     lineages = sorted(lineages, key=lambda x: x.size(pairs_only), reverse=True)
     non_singletons = [l for l in lineages if l.size(pairs_only) > 1]
     singleton_count = sum([1 for l in lineages if l.size(pairs_only) == 1])
@@ -827,7 +827,7 @@ def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_c
     for w in inside:
         w.set_linewidth(2)
 
-    kwargs = dict(size=28, color='k', va='center', fontweight='bold')
+    kwargs = dict(size=fontsize, color='k', va='center', fontweight='bold')
     for k, v in text_kws.items():
         kwargs[k] = v
     ax.text(0, 0, str(sum(lineage_sizes)), ha='center', **kwargs)
