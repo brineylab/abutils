@@ -17,7 +17,4 @@ install:
   - pip install -r $REQUIREMENTS
 # command to run tests
 script:
-  - df -h
-  - which mafft
-  - unset MAFFT_BINARIES
   - pytest # or py.test for Python versions 3.5 and below
