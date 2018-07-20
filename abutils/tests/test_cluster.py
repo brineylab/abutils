@@ -16,12 +16,14 @@ CENTROID = 'ATGCATGCATGCATGCATGCATGC'
 
 def test_cdhit():
     ofile, cfile = cluster.cdhit(CLUSTER_SEQS, make_db=False)
-    files_exist = False
-    if all([os.path.getsize(ofile), os.path.getsize(cfile)]):
-        files_exist = True
+    errors = []
+    if not os.path.getsize(ofile):
+        errors.append('CDHIT output file ({}) is empty'.format(ofile))
+    if not os.path.getsize(cfile):
+        errors.append('CDHIT cluster file ({}) is empty'.format(cfile))
     os.unlink(ofile)
     os.unlink(cfile)
-    assert files_exist
+    assert len(errors) == 0, '\n'.join(errors)
 
 
 def test_parse_clusters():
