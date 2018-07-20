@@ -261,11 +261,7 @@ def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True,
     if make_db:
         ofile, cfile, seq_db, db_path = cdhit(seqs, out_file=out_file, temp_dir=temp_dir,
                                               threshold=threshold, make_db=True, quiet=quiet,
-                                              threads=threads, max_memory=max_memory, debug=debug)
-        while not all([os.path.getsize(ofile), os.path.getsize(cfile)]):
-            ofile, cfile, seq_db, db_path = cdhit(seqs, out_file=out_file, temp_dir=temp_dir,
-                                                  threshold=threshold, make_db=True, quiet=True,
-                                                  threads=threads, max_memory=max_memory, debug=debug)
+                                              threads=threads, max_memory=max_memory, debug=debug)            
         return parse_clusters(ofile, cfile, seq_db=seq_db, db_path=db_path, return_just_seq_ids=return_just_seq_ids)
     else:
         seqs = [Sequence(s) for s in seqs]
@@ -273,14 +269,10 @@ def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True,
         ofile, cfile, = cdhit(seqs, out_file=out_file, temp_dir=temp_dir, threads=threads,
                               threshold=threshold, make_db=False, quiet=quiet,
                               max_memory=max_memory, debug=debug)
-        while not all([os.path.getsize(ofile), os.path.getsize(cfile)]):
-            ofile, cfile, = cdhit(seqs, out_file=out_file, temp_dir=temp_dir, threads=threads,
-                                  threshold=threshold, make_db=False, quiet=True,
-                                  max_memory=max_memory, debug=debug)
         return parse_clusters(ofile, cfile, seq_dict=seq_dict, return_just_seq_ids=return_just_seq_ids)
 
 
-def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, quiet=False, threads=0, max_memory=800, debug=False):
+def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, quiet=False, threads=0, max_memory=800, retries=5, debug=False):
     '''
     Run CD-HIT.
 
@@ -327,6 +319,9 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
         ofile = out_file.name
     else:
         ofile = os.path.expanduser(out_file)
+    cfile = ofile + '.clstr'
+    with open(ofile, 'w') as f: f.write('')
+    with open(cfile, 'w') as f: f.write('')
     ifile = _make_cdhit_input(seqs, temp_dir)
     cdhit_bin = os.path.abspath(os.path.join(BINARY_DIR, 'cdhit_{}'.format(platform.system().lower())))
     cdhit_cmd = '{} -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(cdhit_bin,
@@ -335,11 +330,15 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
                                                                     threshold,
                                                                     threads,
                                                                     max_memory)
-    cluster = sp.Popen(cdhit_cmd,
-                       shell=True,
-                       stdout=sp.PIPE,
-                       stderr=sp.PIPE)
-    stdout, stderr = cluster.communicate()
+    while not all([os.path.getsize(cfile), os.path.getsize(cfile)]):
+        cluster = sp.Popen(cdhit_cmd,
+                        shell=True,
+                        stdout=sp.PIPE,
+                        stderr=sp.PIPE)
+        stdout, stderr = cluster.communicate()
+        if not retries:
+            break
+        retries -= 1
     end_time = time.time()
     if debug:
         print(stdout)
@@ -348,7 +347,6 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
         os.unlink(ifile)
     if not quiet:
         print('CD-HIT: clustering took {:.2f} seconds'.format(end_time - start_time))
-    cfile = ofile + '.clstr'
     if make_db:
         if not quiet:
             print('CD-HIT: building a SQLite3 database')
