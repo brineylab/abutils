@@ -1,0 +1,26 @@
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+# pick the appropriate requirements file for 2.7 or 3.x
+matrix:
+  include:
+    - python "2.7"
+      env REQUIREMENTS=requirements2.txt
+    - python "3.3"
+      env REQUIREMENTS=requirements.txt
+    - python "3.4"
+      env REQUIREMENTS=requirements.txt
+    - python "3.5"
+      env REQUIREMENTS=requirements.txt
+    - python "3.6"
+      env REQUIREMENTS=requirements.txt
+# command to install dependencies
+install:
+  - pip install -r $REQUIREMENTS
+# command to run tests
+script:
+  - pytest # or py.test for Python versions 3.5 and below
