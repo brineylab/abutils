@@ -6,7 +6,7 @@ from ..core.sequence import Sequence, read_fasta, read_json
 
 
 def test_read_fasta():
-    seqs = read_fasta(os.path.abspath('tests/data/PG9.fasta'))
+    seqs = read_fasta('data/PG9.fasta')
     assert len(seqs) == 1 and seqs[0].id == 'PG9'
 
 
