@@ -320,11 +320,11 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
     with open(ofile, 'w') as f: f.write('')
     with open(cfile, 'w') as f: f.write('')
     ifile = _make_cdhit_input(seqs, temp_dir)
-    cdhit_cmd = 'cd-hit -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(ifile,
-                                                                        ofile,
-                                                                        threshold,
-                                                                        threads,
-                                                                        max_memory)
+    cdhit_cmd = 'cdhit -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(ifile,
+                                                                       ofile,
+                                                                       threshold,
+                                                                       threads,
+                                                                       max_memory)
     while not all([os.path.getsize(cfile), os.path.getsize(cfile)]):
         cluster = sp.Popen(cdhit_cmd,
                         shell=True,
