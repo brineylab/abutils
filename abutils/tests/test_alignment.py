@@ -1,6 +1,11 @@
 #!usr/env/python
 # filename: test_alignment.py
 
+import os
+from tempfile import NamedTemporaryFile
+
+from Bio import SeqIO
+
 from ..core.sequence import Sequence
 from ..utils import alignment
 
@@ -15,6 +20,18 @@ def test_muscle():
     aln = alignment.muscle(sequences=[QUERY, TARGET])
     aln_query = [a for a in aln if a.id == 'query'][0]
     aln_target = [a for a in aln if a.id == 'target'][0]
+    assert str(aln_query.seq) == ALN_QUERY and str(aln_target.seq) == ALN_TARGET
+
+
+def test_muscle_as_file():
+    aln_file = NamedTemporaryFile(delete=False)
+    aln_file.close()
+    aln = alignment.muscle(sequences=[QUERY, TARGET], as_file=True, alignment_file=aln_file.name)
+    with open(aln) as f:
+        seqs = [s for s in SeqIO.parse(f, 'fasta')]
+    os.unlink(aln)
+    aln_query = [a for a in seqs if a.id == 'query'][0]
+    aln_target = [a for a in seqs if a.id == 'target'][0]
     assert str(aln_query.seq) == ALN_QUERY and str(aln_target.seq) == ALN_TARGET
 
 

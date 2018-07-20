@@ -191,7 +191,7 @@ class Cluster(object):
 
     def _get_centroid(self):
         for line in self._raw_cluster:
-            if '*' in line:
+           if '*' in line:
                 centroid_id = line.split()[2][1:-3]
                 break
         centroid = [s for s in self.sequences if s.id == centroid_id][0]
@@ -256,13 +256,23 @@ def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True,
     '''
     if make_db:
         ofile, cfile, seq_db, db_path = cdhit(seqs, out_file=out_file, temp_dir=temp_dir,
-            threshold=threshold, make_db=True, quiet=quiet, threads=threads, max_memory=max_memory, debug=debug)
+                                              threshold=threshold, make_db=True, quiet=quiet,
+                                              threads=threads, max_memory=max_memory, debug=debug)
+        while not all([os.path.getsize(ofile), os.path.getsize(cfile)]):
+            ofile, cfile, seq_db, db_path = cdhit(seqs, out_file=out_file, temp_dir=temp_dir,
+                                                  threshold=threshold, make_db=True, quiet=True,
+                                                  threads=threads, max_memory=max_memory, debug=debug)
         return parse_clusters(ofile, cfile, seq_db=seq_db, db_path=db_path, return_just_seq_ids=return_just_seq_ids)
     else:
         seqs = [Sequence(s) for s in seqs]
         seq_dict = {s.id: s for s in seqs}
         ofile, cfile, = cdhit(seqs, out_file=out_file, temp_dir=temp_dir, threads=threads,
-            threshold=threshold, make_db=False, quiet=quiet, max_memory=max_memory, debug=debug)
+                              threshold=threshold, make_db=False, quiet=quiet,
+                              max_memory=max_memory, debug=debug)
+        while not all([os.path.getsize(ofile), os.path.getsize(cfile)]):
+            ofile, cfile, = cdhit(seqs, out_file=out_file, temp_dir=temp_dir, threads=threads,
+                                  threshold=threshold, make_db=False, quiet=True,
+                                  max_memory=max_memory, debug=debug)
         return parse_clusters(ofile, cfile, seq_dict=seq_dict, return_just_seq_ids=return_just_seq_ids)
 
 
