@@ -51,6 +51,9 @@ else:
     import nwalign as nw
 
 
+from .. import BINARY_DIR
+
+
 
 # -------------------------------------
 #
@@ -126,8 +129,8 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
     if reorder:
         aln_format += '--reorder '
     if mafft_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        mafft_bin = os.path.join(mod_dir, 'bin/mafft_{}'.format(platform.system().lower()))
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        mafft_bin = os.path.join(BINARY_DIR, 'mafft_{}'.format(platform.system().lower()))
     mafft_cline = '{} --thread {} {}{} > {}'.format(mafft_bin, threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,
@@ -208,8 +211,8 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
     elif fasta:
         fasta_string = open(fasta, 'r').read()
     if muscle_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        muscle_bin = os.path.join(mod_dir, 'bin/muscle_{}'.format(platform.system().lower()))
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        muscle_bin = os.path.join(BINARY_DIR, 'muscle_{}'.format(platform.system().lower()))
     aln_format = ''
     if fmt == 'clustal':
         aln_format = ' -clwstrict'

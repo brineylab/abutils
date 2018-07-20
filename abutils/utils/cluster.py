@@ -27,6 +27,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import multiprocessing as mp
 import os
+import platform
 import random
 import sqlite3
 import string
@@ -41,6 +42,9 @@ from Bio.Align import AlignInfo
 from .alignment import mafft
 from .decorators import lazy_property
 from ..core.sequence import Sequence
+
+
+from .. import BINARY_DIR
 
 
 class CDHITResult(object):
@@ -324,11 +328,13 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
     else:
         ofile = os.path.expanduser(out_file)
     ifile = _make_cdhit_input(seqs, temp_dir)
-    cdhit_cmd = 'cd-hit -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(ifile,
-                                                                        ofile,
-                                                                        threshold,
-                                                                        threads,
-                                                                        max_memory)
+    cdhit_bin = os.path.abspath(os.path.join(BINARY_DIR, 'cdhit_{}'.format(platform.system().lower())))
+    cdhit_cmd = '{} -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(cdhit_bin,
+                                                                    ifile,
+                                                                    ofile,
+                                                                    threshold,
+                                                                    threads,
+                                                                    max_memory)
     cluster = sp.Popen(cdhit_cmd,
                        shell=True,
                        stdout=sp.PIPE,
