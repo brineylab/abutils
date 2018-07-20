@@ -1,8 +1,4 @@
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
 # pick the appropriate requirements file for 2.7 or 3.x
 matrix:
   include:
@@ -12,6 +8,10 @@ matrix:
       env: REQUIREMENTS=requirements.txt
     - python: "3.6"
       env: REQUIREMENTS=requirements.txt
+# install system dependencies
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq build-essential muscle mafft cd-hit
 # command to install dependencies
 install:
   - pip install -r $REQUIREMENTS

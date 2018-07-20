@@ -130,8 +130,8 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         aln_format += '--reorder '
     if mafft_bin is None:
         # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        mafft_bin = os.path.join(BINARY_DIR, 'mafft_{}'.format(platform.system().lower()))
-    mafft_cline = '{} --thread {} {}{} > {}'.format(mafft_bin, threads, aln_format, ffile, alignment_file)
+        # mafft_bin = os.path.join(BINARY_DIR, 'mafft_{}'.format(platform.system().lower()))
+    mafft_cline = 'mafft --thread {} {}{} > {}'.format(threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,
                      stderr=sp.PIPE,
