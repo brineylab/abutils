@@ -35,11 +35,11 @@ def test_muscle_as_file():
     assert str(aln_query.seq) == ALN_QUERY and str(aln_target.seq) == ALN_TARGET
 
 
-# def test_mafft():
-#     aln = alignment.mafft(sequences=[QUERY, TARGET], print_stdout=True, print_stderr=True)
-#     aln_query = [a for a in aln if a.id == 'query'][0]
-#     aln_target = [a for a in aln if a.id == 'target'][0]
-#     assert str(aln_query.seq).upper() == '---ATGCATGC' and str(aln_target.seq).upper() == 'ATGATGC----'
+def test_mafft():
+    aln = alignment.mafft(sequences=[QUERY, TARGET], print_stdout=True, print_stderr=True)
+    aln_query = [a for a in aln if a.id == 'query'][0]
+    aln_target = [a for a in aln if a.id == 'target'][0]
+    assert str(aln_query.seq).upper() == '---ATGCATGC' and str(aln_target.seq).upper() == 'ATGATGC----'
 
 
 def test_local_alignment():
