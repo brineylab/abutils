@@ -7,7 +7,6 @@ nwalign
 pandas
 paramiko
 pymongo
-PyQt4
 pytest
 scikit-bio<=0.4.2
 seaborn
