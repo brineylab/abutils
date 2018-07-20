@@ -12,10 +12,11 @@ CLUSTER_SEQS = [Sequence('ATGCATGCATGCATGCATGCATGC', id='seq1'),
                 Sequence('ATGCATCCATGCATGCATGCATGC', id='seq3')]
 CONSENSUS = 'ATGCATGCATGCATGCATGCATGC'
 CENTROID = 'ATGCATGCATGCATGCATGCATGC'
+TEMP = os.path.abspath('./')
 
 
 def test_cdhit():
-    ofile, cfile = cluster.cdhit(CLUSTER_SEQS, make_db=False)
+    ofile, cfile = cluster.cdhit(CLUSTER_SEQS, make_db=False, temp_dir=TEMP)
     errors = []
     if not os.path.getsize(ofile):
         errors.append('CDHIT output file ({}) is empty'.format(ofile))
@@ -28,18 +29,18 @@ def test_cdhit():
 
 def test_parse_clusters():
     seq_dict = {s.id: s for s in CLUSTER_SEQS}
-    ofile, cfile = cluster.cdhit(CLUSTER_SEQS, make_db=False, threshold=0.9)
+    ofile, cfile = cluster.cdhit(CLUSTER_SEQS, make_db=False, threshold=0.9, temp_dir=TEMP)
     cdhit_result = cluster.parse_clusters(ofile, cfile, seq_dict=seq_dict)
     assert len(cdhit_result) == 1
 
 
 def test_cluster_centroid():
-    cdhit_result = cluster.cluster(CLUSTER_SEQS, make_db=False, threshold=0.9)
+    cdhit_result = cluster.cluster(CLUSTER_SEQS, make_db=False, threshold=0.9, temp_dir=TEMP)
     c = cdhit_result.clusters[0]
     assert c.centroid.sequence == CENTROID
 
 
 def test_cluster_consensus():
-    cdhit_result = cluster.cluster(CLUSTER_SEQS, make_db=False, threshold=0.9)
+    cdhit_result = cluster.cluster(CLUSTER_SEQS, make_db=False, threshold=0.9, temp_dir=TEMP)
     c = cdhit_result.clusters[0]
     assert c.consensus.sequence == CONSENSUS
