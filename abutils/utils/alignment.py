@@ -724,10 +724,12 @@ class SSWAlignment(BaseAlignment):
         self.aligned_target = self._alignment.aligned_target_sequence
         self.alignment_midline = self._alignment_midline()
         self.score = self._alignment.optimal_alignment_score
+        self.cigar = self._alignment.cigar
         self.query_begin = self._alignment.query_begin
         self.query_end = self._alignment.query_end
         self.target_begin = self._alignment.target_begin
         self.target_end = self._alignment.target_end_optimal
+        self._alignment = None
 
     def _align(self):
         aligner = StripedSmithWaterman(self.query.sequence,
