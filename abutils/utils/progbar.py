@@ -30,7 +30,7 @@ from datetime import datetime
 
 
 def progress_bar(finished, total, start_time=None, extra_info=None,
-                 complete=False, completion_string='/n/n'):
+                 autocomplete=True, completion_string='/n'):
     '''
     Prints an ASCII progress bar.
 
@@ -85,7 +85,7 @@ def progress_bar(finished, total, start_time=None, extra_info=None,
             '|' * ticks, ' ' * spaces, pct)
     if extra_info is not None:
         prog_bar += str(extra_info)
-    if complete:
+    if autocomplete and finished == total:
         prog_bar += completion_string
     sys.stdout.write(prog_bar)
     sys.stdout.flush()
