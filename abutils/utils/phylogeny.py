@@ -55,14 +55,14 @@ from .cluster import cluster
 from .color import hex_to_rgb, get_cmap
 from .decorators import lazy_property
 
-# imports to overload ete3's SequenceItem class
-if sys.version_info[0] > 2:
-    from PyQt5.QtWidgets import QGraphicsRectItem
-    from PyQt5.QtGui import QPen, QColor, QBrush, QFont
-    from PyQt5.QtCore import Qt
-else:
-    from PyQt4.QtGui import QGraphicsRectItem, QPen, QColor, QBrush, QFont
-    from PyQt4.QtCore import Qt
+# # imports to overload ete3's SequenceItem class
+# if sys.version_info[0] > 2:
+#     from PyQt5.QtWidgets import QGraphicsRectItem
+#     from PyQt5.QtGui import QPen, QColor, QBrush, QFont
+#     from PyQt5.QtCore import Qt
+# else:
+#     from PyQt4.QtGui import QGraphicsRectItem, QPen, QColor, QBrush, QFont
+#     from PyQt4.QtCore import Qt
 
 
 if sys.version_info[0] > 2:
@@ -77,8 +77,8 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
         scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
         mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
-        linked_alignment=None, alignment_fontsize=11, scale_factor=1, rename_function=None,
-        alignment_height=50, alignment_width=50, compact_alignment=False, linewidth=1.0,
+        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50, 
+        compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1.0,
         delete_nodes=None, quiet=True):
     '''
     Generates a lineage phylogeny figure.
@@ -399,10 +399,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       tree_orientation=1 if mirror else 0,
                       fontsize=fontsize,
                       min_order_fraction=min_order_fraction,
-                      linked_alignment=linked_alignment,
-                      alignment_fontsize=alignment_fontsize,
-                      alignment_height=alignment_height,
-                      alignment_width=alignment_width,
+                    #   linked_alignment=linked_alignment,
+                    #   alignment_fontsize=alignment_fontsize,
+                    #   alignment_height=alignment_height,
+                    #   alignment_width=alignment_width,
                       show_scale=show_scale,
                       compact_alignment=compact_alignment,
                       scale_factor=scale_factor,
@@ -496,7 +496,7 @@ def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
 def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None,
         fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
         tree_orientation=0, min_order_fraction=0.1, show_root_name=False, chain=None,
-        linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
+        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
         compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True, delete_nodes=None):
     if delete_nodes is None:
         delete_nodes = []
@@ -504,9 +504,9 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         delete_nodes = [delete_nodes, ]
     if show_root_name is True:
         show_names.append(root_name)
-    if linked_alignment is not None:
-        t = ete3.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
-        ete3.faces.SequenceItem = MySequenceItem
+    # if linked_alignment is not None:
+    #     t = ete3.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
+    #     ete3.faces.SequenceItem = MySequenceItem
     else:
         t = ete3.Tree(tree)
     if root_name is not None:
@@ -549,8 +549,8 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         node.set_style(style)
     t.dist = 0
     ts = ete3.TreeStyle()
-    if linked_alignment is not None:
-        ts.layout_fn = _phyloalignment_layout_function
+    # if linked_alignment is not None:
+    #     ts.layout_fn = _phyloalignment_layout_function
     ts.orientation = tree_orientation
     ts.show_leaf_name = False
     if scale is not None:
@@ -582,162 +582,162 @@ def _build_node_text_face(node, color_node_labels, color, label_colors, fontsize
     return tf
 
 
-def _phyloalignment_layout_function(node):
-    leaf_color = "#000000"
-    node.img_style["shape"] = "circle"
-    if hasattr(node, "evoltype"):
-        if node.evoltype == 'D':
-            node.img_style["fgcolor"] = "#FF0000"
-            node.img_style["hz_line_color"] = "#FF0000"
-            node.img_style["vt_line_color"] = "#FF0000"
-        elif node.evoltype == 'S':
-            node.img_style["fgcolor"] = "#1d176e"
-            node.img_style["hz_line_color"] = "#1d176e"
-            node.img_style["vt_line_color"] = "#1d176e"
-        elif node.evoltype == 'L':
-            node.img_style["fgcolor"] = "#777777"
-            node.img_style["vt_line_color"] = "#777777"
-            node.img_style["hz_line_color"] = "#777777"
-            node.img_style["hz_line_type"] = 1
-            node.img_style["vt_line_type"] = 1
-            leaf_color = "#777777"
+# def _phyloalignment_layout_function(node):
+#     leaf_color = "#000000"
+#     node.img_style["shape"] = "circle"
+#     if hasattr(node, "evoltype"):
+#         if node.evoltype == 'D':
+#             node.img_style["fgcolor"] = "#FF0000"
+#             node.img_style["hz_line_color"] = "#FF0000"
+#             node.img_style["vt_line_color"] = "#FF0000"
+#         elif node.evoltype == 'S':
+#             node.img_style["fgcolor"] = "#1d176e"
+#             node.img_style["hz_line_color"] = "#1d176e"
+#             node.img_style["vt_line_color"] = "#1d176e"
+#         elif node.evoltype == 'L':
+#             node.img_style["fgcolor"] = "#777777"
+#             node.img_style["vt_line_color"] = "#777777"
+#             node.img_style["hz_line_color"] = "#777777"
+#             node.img_style["hz_line_type"] = 1
+#             node.img_style["vt_line_type"] = 1
+#             leaf_color = "#777777"
 
-    if node.is_leaf():
-        node.img_style["shape"] = "square"
-        node.img_style["size"] = 0
-        if hasattr(node, "sequence"):
-            if node.name == 'root':
-                bg_colors, fg_colors = _get_phyloalignment_colors(root=True)
-                node.img_style["fgcolor"] = '#d3d3d3'
-                SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
-                    height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
-                ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
-                node.name = ' UCA  '
-                ete3.faces.add_face_to_node(ete3.faces.AttrFace("name", "Arial", node.fontsize, '#000000', None),
-                                            node, 0)
-            else:
-                bg_colors, fg_colors = _get_phyloalignment_colors()
-                node.img_style["fgcolor"] = '#000000'
-                SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
-                    height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
-                ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
-    else:
-        node.img_style["size"] = 0
-
-
-def _get_phyloalignment_colors(root=False):
-        bg = '#000000'
-        fg = '#FFFFFF'
-        bg_colors = {c: bg for c in string.ascii_uppercase}
-        bg_colors['.'] = '#FFFFFF'
-        bg_colors['-'] = '#d3d3d3'
-        fg_colors = {c: fg for c in string.ascii_uppercase}
-        fg_colors['.'] = '#000000'
-        fg_colors['-'] = '#000000'
-        return bg_colors, fg_colors
+#     if node.is_leaf():
+#         node.img_style["shape"] = "square"
+#         node.img_style["size"] = 0
+#         if hasattr(node, "sequence"):
+#             if node.name == 'root':
+#                 bg_colors, fg_colors = _get_phyloalignment_colors(root=True)
+#                 node.img_style["fgcolor"] = '#d3d3d3'
+#                 SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
+#                     height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
+#                 ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
+#                 node.name = ' UCA  '
+#                 ete3.faces.add_face_to_node(ete3.faces.AttrFace("name", "Arial", node.fontsize, '#000000', None),
+#                                             node, 0)
+#             else:
+#                 bg_colors, fg_colors = _get_phyloalignment_colors()
+#                 node.img_style["fgcolor"] = '#000000'
+#                 SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
+#                     height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
+#                 ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
+#     else:
+#         node.img_style["size"] = 0
 
 
-class MySequenceItem(QGraphicsRectItem):
-    def __init__(self, seq, seqtype="aa", poswidth=1, posheight=10,
-                 draw_text=False):
-        QGraphicsRectItem.__init__(self)
-        self.seq = seq
-        self.seqtype = seqtype
-        self.poswidth = poswidth
-        self.posheight = posheight
-        if draw_text:
-            self.poswidth = poswidth
-        self.draw_text = draw_text
-        if seqtype == "aa":
-            self.fg = _aafgcolors
-            self.bg = _aabgcolors
-        elif seqtype == "nt":
-            self.fg = _ntfgcolors
-            self.bg = _ntbgcolors
-        self.setRect(0, 0, len(seq) * poswidth, posheight)
-
-    def paint(self, p, option, widget):
-        x, y = 0, 0
-        qfont = QFont("Courier")
-        current_pixel = 0
-        blackPen = QPen(QColor("black"))
-        for letter in self.seq:
-            if x >= current_pixel:
-                if self.draw_text and self.poswidth >= 5:
-                    br = QBrush(QColor(self.bg.get(letter, "white")))
-                    p.setPen(blackPen)
-                    p.fillRect(x, 0, self.poswidth, self.posheight, br)
-                    qfont.setPixelSize(min(self.posheight, self.poswidth))
-                    p.setFont(qfont)
-                    p.setBrush(QBrush(QColor("black")))
-                    p.drawText(x, 0, self.poswidth, self.posheight,
-                               Qt.AlignCenter | Qt.AlignVCenter,
-                               letter)
-                elif letter == "-" or letter == ".":
-                    p.setPen(blackPen)
-                    p.drawLine(x, self.posheight / 2, x + self.poswidth, self.posheight / 2)
-
-                else:
-                    br = QBrush(QColor(self.bg.get(letter, "white")))
-                    p.fillRect(x, 0, max(1, self.poswidth), self.posheight, br)
-                    # p.setPen(QPen(QColor(self.bg.get(letter, "black"))))
-                    # p.drawLine(x, 0, x, self.posheight)
-                current_pixel = int(x)
-            x += self.poswidth
+# def _get_phyloalignment_colors(root=False):
+#         bg = '#000000'
+#         fg = '#FFFFFF'
+#         bg_colors = {c: bg for c in string.ascii_uppercase}
+#         bg_colors['.'] = '#FFFFFF'
+#         bg_colors['-'] = '#d3d3d3'
+#         fg_colors = {c: fg for c in string.ascii_uppercase}
+#         fg_colors['.'] = '#000000'
+#         fg_colors['-'] = '#000000'
+#         return bg_colors, fg_colors
 
 
-_aafgcolors = {
-    'A': "#000000",
-    'R': "#000000",
-    'N': "#000000",
-    'D': "#000000",
-    'C': "#000000",
-    'Q': "#000000",
-    'E': "#000000",
-    'G': "#000000",
-    'H': "#000000",
-    'I': "#000000",
-    'L': "#000000",
-    'K': "#000000",
-    'M': "#000000",
-    'F': "#000000",
-    'P': "#000000",
-    'S': "#000000",
-    'T': "#000000",
-    'W': "#000000",
-    'Y': "#000000",
-    'V': "#000000",
-    'B': "#000000",
-    'Z': "#000000",
-    'X': "#000000",
-    '.': "#000000",
-    '-': "#000000",
-}
+# class MySequenceItem(QGraphicsRectItem):
+#     def __init__(self, seq, seqtype="aa", poswidth=1, posheight=10,
+#                  draw_text=False):
+#         QGraphicsRectItem.__init__(self)
+#         self.seq = seq
+#         self.seqtype = seqtype
+#         self.poswidth = poswidth
+#         self.posheight = posheight
+#         if draw_text:
+#             self.poswidth = poswidth
+#         self.draw_text = draw_text
+#         if seqtype == "aa":
+#             self.fg = _aafgcolors
+#             self.bg = _aabgcolors
+#         elif seqtype == "nt":
+#             self.fg = _ntfgcolors
+#             self.bg = _ntbgcolors
+#         self.setRect(0, 0, len(seq) * poswidth, posheight)
 
-_aabgcolors = {
-    'A': "#C8C8C8",
-    'R': "#145AFF",
-    'N': "#00DCDC",
-    'D': "#E60A0A",
-    'C': "#E6E600",
-    'Q': "#00DCDC",
-    'E': "#E60A0A",
-    'G': "#EBEBEB",
-    'H': "#8282D2",
-    'I': "#0F820F",
-    'L': "#0F820F",
-    'K': "#145AFF",
-    'M': "#E6E600",
-    'F': "#3232AA",
-    'P': "#DC9682",
-    'S': "#FA9600",
-    'T': "#FA9600",
-    'W': "#B45AB4",
-    'Y': "#3232AA",
-    'V': "#0F820F",
-    'B': "#FF69B4",
-    'Z': "#FF69B4",
-    'X': "#BEA06E",
-    '.': "#FFFFFF",
-    '-': "#FFFFFF",
-}
+#     def paint(self, p, option, widget):
+#         x, y = 0, 0
+#         qfont = QFont("Courier")
+#         current_pixel = 0
+#         blackPen = QPen(QColor("black"))
+#         for letter in self.seq:
+#             if x >= current_pixel:
+#                 if self.draw_text and self.poswidth >= 5:
+#                     br = QBrush(QColor(self.bg.get(letter, "white")))
+#                     p.setPen(blackPen)
+#                     p.fillRect(x, 0, self.poswidth, self.posheight, br)
+#                     qfont.setPixelSize(min(self.posheight, self.poswidth))
+#                     p.setFont(qfont)
+#                     p.setBrush(QBrush(QColor("black")))
+#                     p.drawText(x, 0, self.poswidth, self.posheight,
+#                                Qt.AlignCenter | Qt.AlignVCenter,
+#                                letter)
+#                 elif letter == "-" or letter == ".":
+#                     p.setPen(blackPen)
+#                     p.drawLine(x, self.posheight / 2, x + self.poswidth, self.posheight / 2)
+
+#                 else:
+#                     br = QBrush(QColor(self.bg.get(letter, "white")))
+#                     p.fillRect(x, 0, max(1, self.poswidth), self.posheight, br)
+#                     # p.setPen(QPen(QColor(self.bg.get(letter, "black"))))
+#                     # p.drawLine(x, 0, x, self.posheight)
+#                 current_pixel = int(x)
+#             x += self.poswidth
+
+
+# _aafgcolors = {
+#     'A': "#000000",
+#     'R': "#000000",
+#     'N': "#000000",
+#     'D': "#000000",
+#     'C': "#000000",
+#     'Q': "#000000",
+#     'E': "#000000",
+#     'G': "#000000",
+#     'H': "#000000",
+#     'I': "#000000",
+#     'L': "#000000",
+#     'K': "#000000",
+#     'M': "#000000",
+#     'F': "#000000",
+#     'P': "#000000",
+#     'S': "#000000",
+#     'T': "#000000",
+#     'W': "#000000",
+#     'Y': "#000000",
+#     'V': "#000000",
+#     'B': "#000000",
+#     'Z': "#000000",
+#     'X': "#000000",
+#     '.': "#000000",
+#     '-': "#000000",
+# }
+
+# _aabgcolors = {
+#     'A': "#C8C8C8",
+#     'R': "#145AFF",
+#     'N': "#00DCDC",
+#     'D': "#E60A0A",
+#     'C': "#E6E600",
+#     'Q': "#00DCDC",
+#     'E': "#E60A0A",
+#     'G': "#EBEBEB",
+#     'H': "#8282D2",
+#     'I': "#0F820F",
+#     'L': "#0F820F",
+#     'K': "#145AFF",
+#     'M': "#E6E600",
+#     'F': "#3232AA",
+#     'P': "#DC9682",
+#     'S': "#FA9600",
+#     'T': "#FA9600",
+#     'W': "#B45AB4",
+#     'Y': "#3232AA",
+#     'V': "#0F820F",
+#     'B': "#FF69B4",
+#     'Z': "#FF69B4",
+#     'X': "#BEA06E",
+#     '.': "#FFFFFF",
+#     '-': "#FFFFFF",
+# }

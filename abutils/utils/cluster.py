@@ -27,6 +27,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import multiprocessing as mp
 import os
+import platform
 import random
 import sqlite3
 import string
@@ -41,6 +42,34 @@ from Bio.Align import AlignInfo
 from .alignment import mafft
 from .decorators import lazy_property
 from ..core.sequence import Sequence
+
+
+class CDHITResult(object):
+    '''
+    Docstring for CDHITResult.
+    '''
+    def __init__(self, clusters, seq_db=None, db_path=None, seq_dict=None):
+        self.clusters = sorted(clusters, key = lambda x: x.size, reverse=True)
+        self.seq_db = seq_db
+        self.db_path = db_path
+        self.seq_dict = seq_dict
+    
+    def __len__(self):
+        return len(self.clusters)
+
+    def __iter__(self):
+        for cluster in self.clusters:
+            yield cluster
+
+
+    @property
+    def largest_cluster(self):
+        return self.clusters[0]
+
+    
+    def delete(self):
+        self.seq_db.connection.close()
+        os.unlink(self.db_path)
 
 
 class Cluster(object):
@@ -163,7 +192,7 @@ class Cluster(object):
 
     def _get_centroid(self):
         for line in self._raw_cluster:
-            if '*' in line:
+           if '*' in line:
                 centroid_id = line.split()[2][1:-3]
                 break
         centroid = [s for s in self.sequences if s.id == centroid_id][0]
@@ -186,59 +215,100 @@ class Cluster(object):
         return (l[pos:pos + size] for pos in range(0, len(l), size))
 
 
-def cluster(seqs, threshold=0.975, out_file=None, make_db=True, temp_dir=None,
+def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True,
             quiet=False, threads=0, return_just_seq_ids=False, max_memory=800, debug=False):
     '''
     Perform sequence clustering with CD-HIT.
 
     Args:
 
-        seqs (list): An iterable of sequences, in any format that abutils.utils.sequence.Sequence()
+        seqs (list): An iterable of sequences, in any format that `abutils.utils.sequence.Sequence()`
             can handle
 
-        threshold (float): Clustering identity threshold. Default is 0.975.
+        threshold (float): Clustering identity threshold. Default is `0.975`.
 
         out_file (str): Path to the clustering output file. Default is to use
-            tempfile.NamedTemporaryFile to generate an output file name.
+            `tempfile.NamedTemporaryFile` to generate an output file name.
 
-        temp_dir (str): Path to the temporary directory. If not provided, '/tmp' is used.
+        temp_dir (str): Path to the temporary directory. If not provided, `'/tmp'` is used.
 
         make_db (bool): Whether to build a SQlite database of sequence information. Required
             if you want to calculate consensus/centroid sequences for the resulting
             clusters or if you need to access the clustered sequences (not just sequence IDs)
-            Default is True.
+            Default is `True`.
+        
+        quiet (bool): If `True`, surpresses printing of output/progress info. Default is `False`.
+
+        threads (int): Number of threads (CPU cores) to be used for clustering. Default is `0`,
+            which results in all available cores being used.
+        
+        return_just_seq_ids (bool): If `True`, will return a 2D list of sequence IDs
+            (a list containing a list of sequence IDs for each cluster) rather than returning a
+            list of `Cluster` objects.
+
+        max_memory (int): Max memory (in MB) for CD-HIT. Will be passed directly to CD-HIT through
+            the `-M` runtime option. Default is `800`.
+
+        debug (bool): If `True`, print standard output and standard error from CD-HIT. Default is `False`.
 
     Returns:
 
-        list: A list of Cluster objects, one per cluster.
+        list: A list of `Cluster` objects (or a 2D list of sequence IDs, if `return_just_seq_ids` is `True`).
     '''
     if make_db:
         ofile, cfile, seq_db, db_path = cdhit(seqs, out_file=out_file, temp_dir=temp_dir,
-            threshold=threshold, make_db=True, quiet=quiet, threads=threads, max_memory=max_memory, debug=debug)
+                                              threshold=threshold, make_db=True, quiet=quiet,
+                                              threads=threads, max_memory=max_memory, debug=debug)            
         return parse_clusters(ofile, cfile, seq_db=seq_db, db_path=db_path, return_just_seq_ids=return_just_seq_ids)
     else:
         seqs = [Sequence(s) for s in seqs]
         seq_dict = {s.id: s for s in seqs}
         ofile, cfile, = cdhit(seqs, out_file=out_file, temp_dir=temp_dir, threads=threads,
-            threshold=threshold, make_db=False, quiet=quiet, max_memory=max_memory, debug=debug)
+                              threshold=threshold, make_db=False, quiet=quiet,
+                              max_memory=max_memory, debug=debug)
         return parse_clusters(ofile, cfile, seq_dict=seq_dict, return_just_seq_ids=return_just_seq_ids)
 
 
-def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, quiet=False, sleep_time=1, threads=0, max_memory=800, debug=False):
-    # '''
-    # Perform CD-HIT clustering on a set of sequences.
+def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, quiet=False, threads=0, max_memory=800, retries=5, debug=False):
+    '''
+    Run CD-HIT.
 
-    # Inputs are an iterable of sequences, which can be in any format that abtools.sequence.Sequence
-    # can handle.
+    Args:
 
-    # Returns the centroid file name and cluster file name (from CD-HIT).
-    # If ::make_db:: is True (default), a SQLite3 connection and database path are also returned.
-    # '''
-    # logger = log.get_logger('cluster')
+        seqs (list): An iterable of sequences, in any format that `abutils.utils.sequence.Sequence()`
+            can handle
+
+        threshold (float): Clustering identity threshold. Default is `0.975`.
+
+        out_file (str): Path to the clustering output file. Default is to use
+            `tempfile.NamedTemporaryFile` to generate an output file name.
+
+        temp_dir (str): Path to the temporary directory. If not provided, `'/tmp'` is used.
+
+        make_db (bool): Whether to build a SQlite database of sequence information. Required
+            if you want to calculate consensus/centroid sequences for the resulting
+            clusters or if you need to access the clustered sequences (not just sequence IDs)
+            Default is `True`.
+        
+        quiet (bool): If `True`, surpresses printing of output/progress info. Default is `False`.
+
+        threads (int): Number of threads (CPU cores) to be used for clustering. Default is `0`,
+            which results in all available cores being used.
+
+        max_memory (int): Max memory (in MB) for CD-HIT. Will be passed directly to CD-HIT through
+            the `-M` runtime option. Default is `800`.
+
+        debug (bool): If `True`, print standard output and standard error from CD-HIT. Default is `False`.
+
+    Returns:
+
+        If `make_db` is `True`, returns the CD-HIT output file path, the CD-HIT cluster file path,
+            a `sqlite3` database connection object, and the database path. If `make_db` is `False`, only the
+            CD-HIT output file path and CD-HIT cluster file path are returned.
+    '''
     start_time = time.time()
     seqs = [Sequence(s) for s in seqs]
     if not quiet:
-        # logger.info('CD-HIT: clustering {} seqeunces'.format(len(seqs)))
         print('CD-HIT: clustering {} seqeunces'.format(len(seqs)))
     if out_file is None:
         out_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False)
@@ -246,31 +316,34 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
         ofile = out_file.name
     else:
         ofile = os.path.expanduser(out_file)
+    cfile = ofile + '.clstr'
+    with open(ofile, 'w') as f: f.write('')
+    with open(cfile, 'w') as f: f.write('')
     ifile = _make_cdhit_input(seqs, temp_dir)
-    cdhit_cmd = 'cd-hit -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(ifile,
-                                                                        ofile,
-                                                                        threshold,
-                                                                        threads,
-                                                                        max_memory)
-    cluster = sp.Popen(cdhit_cmd,
-                       shell=True,
-                       stdout=sp.PIPE,
-                       stderr=sp.PIPE)
-    stdout, stderr = cluster.communicate()
+    cdhit_cmd = 'cdhit -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(ifile,
+                                                                       ofile,
+                                                                       threshold,
+                                                                       threads,
+                                                                       max_memory)
+    while not all([os.path.getsize(cfile), os.path.getsize(cfile)]):
+        cluster = sp.Popen(cdhit_cmd,
+                        shell=True,
+                        stdout=sp.PIPE,
+                        stderr=sp.PIPE)
+        stdout, stderr = cluster.communicate()
+        if not retries:
+            break
+        retries -= 1
     end_time = time.time()
-    time.sleep(sleep_time)
     if debug:
         print(stdout)
         print(stderr)
     else:
         os.unlink(ifile)
     if not quiet:
-        # logger.info('CD-HIT: clustering took {:.2f} seconds'.format(time.time() - start_time))
         print('CD-HIT: clustering took {:.2f} seconds'.format(end_time - start_time))
-    cfile = ofile + '.clstr'
     if make_db:
         if not quiet:
-            # logger.info('CD-HIT: building a SQLite3 database')
             print('CD-HIT: building a SQLite3 database')
         seq_db, db_path = _build_seq_db(seqs, direc=temp_dir)
         return ofile, cfile, seq_db, db_path
@@ -278,14 +351,51 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True, qui
 
 
 def parse_clusters(out_file, clust_file, seq_db=None, db_path=None, seq_dict=None, return_just_seq_ids=False):
-    # '''
-    # Parses clustered sequences.
+    '''
+    Parses CD-HIT output.
 
-    # Inputs are a CD-HIT cluster file (ends with '.clstr') and a connection to a
-    # SQLite3 database of sequence IDs and sequences.
+    Args:
 
-    # Returns a list of Cluster objects (one per cluster).
-    # '''
+        out_file (str): Path to the CD-HIT output file. Required.
+
+        clust_file (str): Path to the CD-HIT cluster file. Required.
+
+        seq_db (sqlite.Connection): SQLite3 `Connection` object. Default is `None`. If not provided and
+            `return_just_seq_ids` is False, the returned `Cluster` objects will not contain any sequence
+            information beyond the sequence ID.
+
+        db_path (str): Path to a SQLite3 database file. Default is `None`. Must be provided if
+            `seq_db` is also provided.
+
+        seq_dict (dict): A `dict` mapping sequence IDs to `abutils.core.sequence.Sequence` objects. Default
+            is `None`. Typically used when a relatively small number of sequences are being clustered and
+            creating a `sqlite3` database would be overkill.
+
+        temp_dir (str): Path to the temporary directory. If not provided, `'/tmp'` is used.
+
+        make_db (bool): Whether to build a SQlite database of sequence information. Required
+            if you want to calculate consensus/centroid sequences for the resulting
+            clusters or if you need to access the clustered sequences (not just sequence IDs)
+            Default is `True`.
+        
+        quiet (bool): If `True`, surpresses printing of output/progress info. Default is `False`.
+
+        threads (int): Number of threads (CPU cores) to be used for clustering. Default is `0`,
+            which results in all available cores being used.
+        
+        return_just_seq_ids (bool): If `True`, will return a 2D list of sequence IDs
+            (a list containing a list of sequence IDs for each cluster) rather than returning a
+            list of `Cluster` objects.
+
+        max_memory (int): Max memory (in MB) for CD-HIT. Will be passed directly to CD-HIT through
+            the `-M` runtime option. Default is `800`.
+
+        debug (bool): If `True`, print standard output and standard error from CD-HIT. Default is `False`.
+
+    Returns:
+
+        A CDHITResult object, or a 2D list of sequence IDs, if `return_just_seq_ids` is `True`.
+    '''
     raw_clusters = [c.split('\n') for c in open(clust_file, 'r').read().split('\n>')]
     if return_just_seq_ids:
         ids = []
@@ -300,7 +410,8 @@ def parse_clusters(out_file, clust_file, seq_db=None, db_path=None, seq_dict=Non
         return ids
     os.unlink(out_file)
     os.unlink(clust_file)
-    return [Cluster(rc, seq_db, db_path, seq_dict) for rc in raw_clusters]
+    clusters = [Cluster(rc, seq_db, db_path, seq_dict) for rc in raw_clusters]
+    return CDHITResult(clusters, seq_db=seq_db, db_path=db_path, seq_dict=seq_dict)
 
 
 def _make_cdhit_input(seqs, temp_dir):

@@ -51,6 +51,9 @@ else:
     import nwalign as nw
 
 
+from .. import BINARY_DIR
+
+
 
 # -------------------------------------
 #
@@ -61,11 +64,9 @@ else:
 
 
 def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=-1, as_file=False,
-        print_stdout=False, print_stderr=False):
+          reorder=True, print_stdout=False, print_stderr=False, mafft_bin=None):
     '''
     Performs multiple sequence alignment with MAFFT.
-
-    MAFFT is a required dependency.
 
     Args:
 
@@ -94,6 +95,14 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         as_file (bool): If ``True``, returns a path to the alignment file. If ``False``,
             returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
             ``Bio.AlignIO.read()`` on the alignment file).
+        
+        print_stdout (bool): If ``True``, prints MAFFT's standard output. Default is ``False``.
+
+        print_stderr (bool): If ``True``, prints MAFFT's standard error. Default is ``False``.
+
+        mafft_bin (str): Path to MAFFT executable. ``abutils`` includes built-in MAFFT binaries
+            for MacOS and Linux, however, if a different MAFFT binary can be provided. Default is
+            ``None``, which results in using the appropriate built-in MAFFT binary.
 
     Returns:
 
@@ -117,8 +126,12 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         aln_format = '--clustalout '
     if fmt.lower() == 'phylip':
         aln_format = '--phylipout '
-    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    mafft_bin = os.path.join(mod_dir, 'bin/mafft_{}'.format(platform.system().lower()))
+    if reorder:
+        aln_format += '--reorder '
+    if mafft_bin is None:
+        mafft_bin = 'mafft'
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # mafft_bin = os.path.join(BINARY_DIR, 'mafft_{}'.format(platform.system().lower()))
     mafft_cline = '{} --thread {} {}{} > {}'.format(mafft_bin, threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,
@@ -143,11 +156,9 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
 
 def muscle(sequences=None, alignment_file=None, fasta=None,
     fmt='fasta', as_file=False, maxiters=None, diags=False,
-    gap_open=None, gap_extend=None):
+    gap_open=None, gap_extend=None, muscle_bin=None):
     '''
     Performs multiple sequence alignment with MUSCLE.
-
-    MUSCLE is a required dependency.
 
     Args:
 
@@ -170,8 +181,8 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
         fmt (str): Format of the alignment. Options are 'fasta' and 'clustal'. Default
             is 'fasta'.
 
-        threads (int): Number of threads for MAFFT to use. Default is ``-1``, which
-            results in MAFFT using ``multiprocessing.cpu_count()`` threads.
+        threads (int): Number of threads (CPU cores) for MUSCLE to use. Default is ``-1``, which
+            results in MUSCLE using all available cores.
 
         as_file (bool): If ``True``, returns a path to the alignment file. If ``False``,
             returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
@@ -187,6 +198,10 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
         gap_extend (float): Passed directly to MUSCLE using the ``-gapextend`` flag. Ignored
             if ``gap_open`` is not also provided.
 
+        muscle_bin (str): Path to MUSCLE executable. ``abutils`` includes built-in MUSCLE binaries
+            for MacOS and Linux, however, if a different MUSCLE binary can be provided. Default is
+            ``None``, which results in using the appropriate built-in MUSCLE binary.
+
     Returns:
 
         Returns a BioPython ``MultipleSeqAlignment`` object, unless ``as_file`` is ``True``,
@@ -196,8 +211,9 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
         fasta_string = _get_fasta_string(sequences)
     elif fasta:
         fasta_string = open(fasta, 'r').read()
-    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    muscle_bin = os.path.join(mod_dir, 'bin/muscle_{}'.format(platform.system().lower()))
+    if muscle_bin is None:
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        muscle_bin = os.path.join(BINARY_DIR, 'muscle_{}'.format(platform.system().lower()))
     aln_format = ''
     if fmt == 'clustal':
         aln_format = ' -clwstrict'
@@ -708,10 +724,12 @@ class SSWAlignment(BaseAlignment):
         self.aligned_target = self._alignment.aligned_target_sequence
         self.alignment_midline = self._alignment_midline()
         self.score = self._alignment.optimal_alignment_score
+        self.cigar = self._alignment.cigar
         self.query_begin = self._alignment.query_begin
         self.query_end = self._alignment.query_end
         self.target_begin = self._alignment.target_begin
         self.target_end = self._alignment.target_end_optimal
+        self._alignment = None
 
     def _align(self):
         aligner = StripedSmithWaterman(self.query.sequence,

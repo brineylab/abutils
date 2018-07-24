@@ -2,12 +2,11 @@ biopython
 celery
 ete3
 matplotlib
-nose
 numpy
 nwalign3
 pandas
 paramiko
 pymongo
-PyQt5
+pytest
 scikit-bio
 seaborn
