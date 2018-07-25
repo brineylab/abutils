@@ -732,14 +732,20 @@ class SSWAlignment(BaseAlignment):
         self._alignment = None
 
     def _align(self):
-        aligner = StripedSmithWaterman(self.query.sequence,
+        if sys.version_info[0] == 2:
+            query = self.query.sequence.encode('ascii') if isinstance(self.query.sequence, unicode) else self.query.sequence
+            target = self.target.sequence.encode('ascii') if isinstance(self.target.sequence, unicode) else self.target.sequence
+        else:
+            query = self.query.sequence
+            target = self.target.sequence
+        aligner = StripedSmithWaterman(query,
                                        match_score=self._match,
                                        mismatch_score=self._mismatch,
                                        gap_open_penalty=self._gap_open,
                                        gap_extend_penalty=self._gap_extend,
                                        substitution_matrix=self._matrix,
                                        protein=self._aa)
-        return aligner(self.target.sequence)
+        return aligner(target)
 
 
 class BiopythonAlignment(BaseAlignment):
