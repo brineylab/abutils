@@ -28,7 +28,7 @@ else:
     install_requires = [str(r.req) for r in reqs]
 
 # read version
-exec(open('abstar/version.py').read())
+exec(open('abutils/version.py').read())
 
 config = {
     'description': 'Utilities for analysis of antibody NGS data',
