@@ -27,13 +27,15 @@ else:
         reqs = parse_requirements(req_file)
     install_requires = [str(r.req) for r in reqs]
 
+# read version
+exec(open('abstar/version.py').read())
 
 config = {
     'description': 'Utilities for analysis of antibody NGS data',
     'author': 'Bryan Briney',
     'url': 'https://www.github.com/briney/abutils',
     'author_email': 'briney@scripps.edu',
-    'version': '0.0.4',
+    'version': __version__,
     'install_requires': install_requires,
     'packages': ['abutils'],
     'scripts': [],

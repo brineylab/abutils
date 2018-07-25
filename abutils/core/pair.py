@@ -371,7 +371,7 @@ def get_pairs(db, collection, experiment=None, subject=None, group=None, name='s
     seqs = list(db[collection].find(match))
     return assign_pairs(seqs, name=name, delim=delim,
         delim_occurance=delim_occurance, pairs_only=pairs_only,
-        h_selection_function=h_selection_func, l_selection_func=l_selection_func)
+        h_selection_func=h_selection_func, l_selection_func=l_selection_func)
 
 
 def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=False,
