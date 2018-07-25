@@ -293,40 +293,63 @@ class Sequence(object):
 
     def _process_input(self, seq, id, qual):
         if type(seq) in STR_TYPES:
-            self.sequence = str(seq).upper()
-            self._input_sequence = self.sequence
             if id is None:
                 id = uuid.uuid4()
-            self.id = id
-            self.qual = qual
-        elif type(seq) == Sequence:
-            self.id = seq.id
-            self.sequence = seq.sequence
+            if sys.version_info[0] == 2:
+                self.id = id.encode('ascii') if isinstance(id, unicode) else id
+                self.sequence = str(seq).encode('ascii').upper() if isinstance(str(seq), unicode) else str(seq).upper()
+                self.qual = qual.encode('ascii') if isinstance(qual, unicode) else qual
+            else:
+                self.sequence = str(seq).upper()
+                self.id = id
+                self.qual = qual
             self._input_sequence = self.sequence
-            self.qual = seq.qual
+        elif type(seq) == Sequence:
+            if sys.version_info[0] == 2:
+                self.id = seq.id.encode('ascii') if isinstance(seq.id, unicode) else seq.id
+                self.sequence = seq.sequence.encode('ascii') if isinstance(seq.sequence, unicode) else seq.sequence
+                self.qual = seq.qual.encode('ascii') if isinstance(seq.qual, unicode) else seq.qual
+            else:
+                self.id = seq.id
+                self.sequence = seq.sequence
+                self.qual = seq.qual
+            self._input_sequence = self.sequence
             self._annotations = seq._annotations
         elif type(seq) in [list, tuple]:
-            self.id = str(seq[0])
-            self.sequence = str(seq[1]).upper()
-            self._input_sequence = self.sequence
-            self.qual = qual
-        elif type(seq) == SeqRecord:
-            self.id = str(seq.id)
-            self.sequence = str(seq.seq).upper()
-            self._input_sequence = self.sequence
-            if qual:
-                self.qual = qual
-            elif 'phred_quality' in seq.letter_annotations:
-                self.qual = seq.letter_annotations['phred_quality']
-            elif 'solexa_quality' in seq.letter_annotations:
-                self.qual = seq.letter_annotations['solexa_quality']
+            if sys.version_info[0] == 2:
+                self.id = str(seq[0]).encode('ascii').upper() if isinstance(str(seq[0]), unicode) else str(seq[0])
+                self.sequence = str(seq[1]).encode('ascii').upper() if isinstance(str(seq[1]), unicode) else str(seq[1]).upper()
+                self.qual = self.qual.encode('ascii') if isinstance(qual, unicode) else qual
             else:
-                self.qual = None
-        elif type(seq) in [dict, OrderedDict]:
-            self.id = seq[self.id_key]
-            self.sequence = seq[self.seq_key]
+                self.id = str(seq[0])
+                self.sequence = str(seq[1]).upper()
+                self.qual = qual
             self._input_sequence = self.sequence
-            self.qual = qual
+        elif type(seq) == SeqRecord:
+            if qual is None:
+                if 'phred_quality' in seq.letter_annotations:
+                    qual = seq.letter_annotations['phred_quality']
+                elif 'solexa_quality' in seq.letter_annotations:
+                    qual = seq.letter_annotations['solexa_quality']
+            if sys.version_info[0] == 2:
+                self.id = str(seq.id).encode('ascii') if isinstance(str(seq.id), unicode) else str(seq.id)
+                self.sequence = str(seq.seq).encode('ascii').upper() if isinstance(str(seq.seq), unicode) else str(seq.seq).upper()
+                self.qual = qual.encode('ascii') if isinstance(qual, unicode) else qual
+            else:
+                self.id = str(seq.id)
+                self.sequence = str(seq.seq).upper()
+                self.qual = qual
+            self._input_sequence = self.sequence
+        elif type(seq) in [dict, OrderedDict]:
+            if sys.version_info[0] == 2:
+                self.id = seq[self.id_key].encode('ascii') if isinstance(seq[self.id_key], unicode) else seq[self.id_key]
+                self.sequence = seq[self.seq_key].encode('ascii').upper() if isinstance(seq[self.seq_key], unicode) else seq[self.seq_key].upper()
+                self.qual = qual if isinstance(qual, unicode) else qual
+            else:
+                self.id = seq[self.id_key]
+                self.sequence = seq[self.seq_key]
+                self.qual = qual
+            self._input_sequence = self.sequence
             self._annotations = seq
 
 
