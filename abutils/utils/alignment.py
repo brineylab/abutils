@@ -145,10 +145,10 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
     if print_stderr:
         print(stderr)
     os.unlink(ffile)
-    if as_file:
-        return alignment_file
     if os.stat(alignment_file).st_size == 0:
         return None
+    if as_file:
+        return alignment_file
     aln = AlignIO.read(open(alignment_file), fmt)
     os.unlink(alignment_file)
     return aln
