@@ -68,7 +68,7 @@ class CDHITResult(object):
 
     def confidence(self):
         if len(self.clusters) > 1:
-            return 1. - (self.clusters[0].size/self.clusters[1].size)
+            return 1. - (self.clusters[1].size/self.clusters[0].size)
         else:
             return 1.
 
