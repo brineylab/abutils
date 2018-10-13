@@ -66,7 +66,12 @@ class CDHITResult(object):
     def largest_cluster(self):
         return self.clusters[0]
 
-    
+    def confidence(self):
+        if len(self.clusters) > 1:
+            return 1. - (self.clusters[0].size/self.clusters[1].size)
+        else:
+            return 1.
+
     def delete(self):
         self.seq_db.connection.close()
         os.unlink(self.db_path)
@@ -145,6 +150,7 @@ class Cluster(object):
             raise RuntimeError(err)
         return self._make_consensus()
 
+
     @lazy_property
     def centroid(self):
         if all([self._seq_db is None, self._seq_dict is None]):
@@ -203,13 +209,14 @@ class Cluster(object):
             return self.sequences[0]
         aln = mafft(self.sequences)
         if aln is None:
-            print("ERROR: Failed to generate a consensus sequence. Is MAFFT installed? Skipping this well.")
+            print("ERROR: Failed to generate an alignmnet for a consensus sequence. Skipping this well.")
             return None
         summary_align = AlignInfo.SummaryInfo(aln)
         consensus = summary_align.gap_consensus(threshold=0.51, ambiguous='n')
         consensus_string = str(consensus).replace('-', '')
         consensus_seq = Sequence(consensus_string.upper())
         return consensus_seq
+
 
     @staticmethod
     def _chunker(l, size=900):
