@@ -118,7 +118,7 @@ class Cluster(object):
         centroid (Sequence): Centroid sequence, as calculated by
             CD-HIT.
     """
-    def __init__(self, raw_cluster, seq_db=None, db_path=None, seq_dict=None, cluster_fraction = None):
+    def __init__(self, raw_cluster, seq_db=None, db_path=None, seq_dict=None, cluster_fraction = 0):
         super(Cluster, self).__init__()
         self._raw_cluster = raw_cluster
         self._seq_db = seq_db
