@@ -118,12 +118,13 @@ class Cluster(object):
         centroid (Sequence): Centroid sequence, as calculated by
             CD-HIT.
     """
-    def __init__(self, raw_cluster, seq_db=None, db_path=None, seq_dict=None):
+    def __init__(self, raw_cluster, seq_db=None, db_path=None, seq_dict=None, cluster_fraction = None):
         super(Cluster, self).__init__()
         self._raw_cluster = raw_cluster
         self._seq_db = seq_db
         self._seq_db_path = db_path
         self._seq_dict = seq_dict
+        self._cluster_fraction = cluster_fraction
 
 
     @lazy_property
@@ -150,6 +151,13 @@ class Cluster(object):
             raise RuntimeError(err)
         return self._make_consensus()
 
+    @lazy_property
+    def cluster_fraction(self):
+        return self._cluster_fraction
+
+    @cluster_fraction.setter
+    def cluster_fraction(self, frac):
+        self._cluster_fraction = frac
 
     @lazy_property
     def centroid(self):
