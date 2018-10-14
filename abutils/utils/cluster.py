@@ -155,8 +155,7 @@ class Cluster(object):
     def cluster_fraction(self):
         return self._cluster_fraction
 
-    @cluster_fraction.setter
-    def cluster_fraction(self, frac):
+    def set_cluster_fraction(self, frac = 0):
         self._cluster_fraction = frac
 
     @lazy_property
