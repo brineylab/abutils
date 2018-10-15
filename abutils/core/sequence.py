@@ -124,6 +124,7 @@ class Sequence(object):
         self._strand = None
         self.id_key = id_key
         self.seq_key = seq_key
+        self.description = None
 
         self._process_input(seq, id, qual)
 
@@ -278,14 +279,6 @@ class Sequence(object):
     def values(self):
         return self.annotations.values()
 
-    def description(self):
-        return self.description
-
-    def full_name(self):
-        if len(self.description) > 0:
-            return self.id + self.description
-        else:
-            return self.id
 
     def get(self, key, default=None):
         return self.annotations.get(key, default)
@@ -320,6 +313,7 @@ class Sequence(object):
             else:
                 self.id = seq.id
                 self.sequence = seq.sequence
+                self.description = seq.description
                 self.qual = seq.qual
             self._input_sequence = self.sequence
             self._annotations = seq._annotations
