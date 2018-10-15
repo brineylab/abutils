@@ -278,6 +278,14 @@ class Sequence(object):
     def values(self):
         return self.annotations.values()
 
+    def description(self):
+        return self.description
+
+    def full_name(self):
+        if len(self.description) > 0:
+            return self.id + self.description
+        else:
+            return self.id
 
     def get(self, key, default=None):
         return self.annotations.get(key, default)
@@ -333,10 +341,12 @@ class Sequence(object):
                     qual = seq.letter_annotations['solexa_quality']
             if sys.version_info[0] == 2:
                 self.id = str(seq.id).encode('ascii') if isinstance(str(seq.id), unicode) else str(seq.id)
+                self.description = str(seq.description).encode('ascii') if isinstance(str(seq.description), unicode) else str(seq.description)
                 self.sequence = str(seq.seq).encode('ascii').upper() if isinstance(str(seq.seq), unicode) else str(seq.seq).upper()
                 self.qual = qual.encode('ascii') if isinstance(qual, unicode) else qual
             else:
                 self.id = str(seq.id)
+                self.description = str(seq.description)
                 self.sequence = str(seq.seq).upper()
                 self.qual = qual
             self._input_sequence = self.sequence
