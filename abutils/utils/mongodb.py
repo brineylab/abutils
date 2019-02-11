@@ -43,7 +43,7 @@ else:
 
 def get_connection(ip='localhost', port=27017, user=None, password=None):
     '''
-    Returns a pymongo MongoClient object.
+    Returns a pymongo ``MongoClient`` object.
 
     .. note:
 
@@ -78,7 +78,7 @@ def get_connection(ip='localhost', port=27017, user=None, password=None):
 
 def get_db(db, ip='localhost', port=27017, user=None, password=None):
     '''
-    Returns a pymongo Database object.
+    Returns a pymongo ``Database`` object.
 
     .. note:
 
@@ -157,7 +157,7 @@ def rename_collection(db, collection, new_name):
 
     Arguments:
 
-        db (Database): A pymongo Database object. Can be obtained
+        db (Database): A pymongo ``Database`` object. Can be obtained
             with ``get_db``.
 
         collection (str): Name of the collection to be renamed.
@@ -193,7 +193,7 @@ def update(field, value, db, collection, match=None):
 
         value (str): Update value.
 
-        db (Database): A pymongo Database object.
+        db (Database): A pymongo ``Database`` object.
 
         collection (str): Collection name.
 
