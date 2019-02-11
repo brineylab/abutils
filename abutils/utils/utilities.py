@@ -42,7 +42,7 @@ else:
 #================================
 
 
-def nested_dict_lookup(d, key_list):
+def nested_dict_lookup(d, key_list, missing=None):
     '''
     Retrieves a nested value from a dictionary given a list of keys::
 
@@ -71,6 +71,6 @@ def nested_dict_lookup(d, key_list):
     try:
         return reduce(operator.getitem, key_list, d)
     except KeyError:
-        return None
+        return missing
 
 
