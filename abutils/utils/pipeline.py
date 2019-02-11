@@ -73,7 +73,7 @@ def initialize(log_file, project_dir=None, debug=False):
 
 def make_dir(d):
     '''
-    Makes a directory, if it doesn't already exist.
+    Makes a directory, if it doesn't already exist. 
 
     Args:
 
