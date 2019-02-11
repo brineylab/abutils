@@ -272,7 +272,7 @@ def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True, m
                                               threads=threads, max_memory=max_memory, debug=debug)            
         return parse_clusters(ofile, cfile, seq_db=seq_db, db_path=db_path, return_just_seq_ids=return_just_seq_ids)
     else:
-        if isinstance(seqs, [list, tuple]):
+        if isinstance(seqs, (list, tuple)):
             seqs = [Sequence(s) for s in seqs]
             seq_dict = {s.id: s for s in seqs}
         elif os.path.exists(seqs):
@@ -340,7 +340,7 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True,
     cfile = ofile + '.clstr'
     with open(ofile, 'w') as f: f.write('')
     with open(cfile, 'w') as f: f.write('')
-    if isinstance(seqs, [list, tuple]):
+    if isinstance(seqs, (list, tuple)):
         seqs = [Sequence(s) for s in seqs]
         ifile = _make_cdhit_input(seqs, temp_dir)
     elif os.path.exists(seqs):
