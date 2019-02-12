@@ -32,6 +32,7 @@ import sys
 from Bio import SeqIO
 
 from . import mongodb
+from .decorators import lazy_property
 from .pipeline import list_files
 from ..core.sequence import Sequence
 
