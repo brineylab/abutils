@@ -79,8 +79,8 @@ class BaseInput():
 
     @property
     @abstractmethod
-    'Returns the data type'
     def data_type(self):
+        'Returns the data type'
         pass
 
     @property
