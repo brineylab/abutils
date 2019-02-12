@@ -66,7 +66,18 @@ def read_input(input, data_type,
 
         projection (dict): Projection to specify fields to be retuired from a MongoDB database.
     '''
-
+    if data_type.lower() == 'mongodb':
+        return MongoDBInput(database=input, collection=collection, ip=mongo_ip, port=mongo_port,
+                            user=mongo_user, password=mongo_password, query=query, projection=projection)
+    elif data_type.lower() == 'json':
+        retun JSONInput(input)
+    elif data_type.lower() == 'fasta':
+        retun FASTAInput(input)
+    else:
+        err = '\n\nERROR: data_type must be one of the following:\n'
+        err += 'json, mongodb, or fasta\n\n'
+        print(err)
+        sys.exit(1)
 
 
 class BaseInput():
@@ -103,8 +114,8 @@ class FASTAInput(BaseInput):
     Representation of FASTA input data.
     '''
 
-    def __init__(self, input_file):
-        self.input_file = input_file
+    def __init__(self, data):
+        self.input = data
 
     @property
     def data_type(self):
@@ -112,13 +123,13 @@ class FASTAInput(BaseInput):
 
     @property
     def files(self):
-        if type(self.input_file) in STR_TYPES:
-            if os.path.isdir(self.input_file):
-                return list_files(self.input_file, 'json')
+        if type(self.input) in STR_TYPES:
+            if os.path.isdir(self.input):
+                return list_files(self.input, 'json')
             else:
-                return [self.input_file, ]
+                return [self.input, ]
         else:
-            return self.input_file
+            return self.input
 
     @lazy_property
     def as_list(self):
@@ -142,8 +153,8 @@ class JSONInput(BaseInput):
     Representation of JSON input data
     '''
 
-    def __init__(self, input_file):
-        self.input_file = input_file
+    def __init__(self, data):
+        self.input = data
 
     @property
     def data_type(self):
@@ -151,13 +162,13 @@ class JSONInput(BaseInput):
 
     @property
     def files(self):
-        if type(self.input_file) in STR_TYPES:
-            if os.path.isdir(self.input_file):
-                return list_files(self.input_file, 'json')
+        if type(self.input) in STR_TYPES:
+            if os.path.isdir(self.input):
+                return list_files(self.input, 'json')
             else:
-                return [self.input_file, ]
+                return [self.input, ]
         else:
-            return self.input_file
+            return self.input
 
     @lazy_property
     def as_list(self):
