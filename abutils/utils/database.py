@@ -38,13 +38,13 @@ else:
 
 class SQLiteDatabase():
     """
-    base Database class
+    base SQLiteDatabase class
     """
 
     __metaclass__ = ABCMeta
     
     def __init__(self, name=None, direc=None, in_memory=False, table_name=None):
-        super(Database, self).__init__()
+        super(SQLiteDatabase, self).__init__()
         self.name = name
         if all([name is not None, direc is not None]):
             self.dir = os.path.abspath(direc)
@@ -201,7 +201,7 @@ class SQLiteDatabase():
 
 
 
-class KeyValueStore(Database):
+class KeyValueStore(SQLiteDatabase):
     """
     A simple Database with a single key/value per entry. Values are pickled upon insert and
     unpickled upon retrieval, so any pickleable object can be stored. Also provides dictionary-style
@@ -209,7 +209,7 @@ class KeyValueStore(Database):
     """
     
     def __init__(self, name=None, direc=None, in_memory=False, table_name=None):
-        super(KeyValueDatabase, self).__init__(name=name, direc=direc,
+        super(KeyValueStore, self).__init__(name=name, direc=direc,
                                                in_memory=in_memory, table_name=table_name)
     
     def __getitem__(self, key):
