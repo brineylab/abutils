@@ -95,54 +95,61 @@ class SQLiteDatabase():
         self._cursor = cursor
 
     @property
+    def count(self):
+        result = self.cursor.execute('SELECT COUNT(*) FROM {}'.format(self.table_name))
+        return result.fetchone()[0]
+
+    @property
     def create_table_cmd(self):
         if self._create_table_cmd is None:
             field_string = ', '.join([' '.join(s) for s in self.structure])
             self._create_table_cmd = 'CREATE TABLE {} ({})'.format(self.table_name,
                 field_string)
         return self._create_table_cmd
+    
 
-    @abstractmethod
-    def insert_one(self, data, value=None):
-        '''
-        Inserts a single database entry
-        '''
-        pass
 
-    @abstractmethod
-    def insert_many(self, data):
-        '''
-        Inserts multiple database entries.
-        '''
-        pass
+    # @abstractmethod
+    # def insert_one(self, data, value=None):
+    #     '''
+    #     Inserts a single database entry
+    #     '''
+    #     pass
 
-    @abstractmethod
-    def find_one(self):
-        '''
-        Returns a single match.
-        '''
-        pass
+    # @abstractmethod
+    # def insert_many(self, data):
+    #     '''
+    #     Inserts multiple database entries.
+    #     '''
+    #     pass
 
-    @abstractmethod
-    def find_many(self):
-        '''
-        Returns multiple matches.
-        '''
-        pass
+    # @abstractmethod
+    # def find_one(self):
+    #     '''
+    #     Returns a single match.
+    #     '''
+    #     pass
 
-    @abstractmethod
-    def find_all(self):
-        '''
-        Returns all values in a SQLite database.
-        '''
-        pass
+    # @abstractmethod
+    # def find_many(self):
+    #     '''
+    #     Returns multiple matches.
+    #     '''
+    #     pass
 
-    @abstractmethod
-    def delete(self):
-        '''
-        Deletes matching database entries
-        '''
-        pass
+    # @abstractmethod
+    # def find_all(self):
+    #     '''
+    #     Returns all values in a SQLite database.
+    #     '''
+    #     pass
+
+    # @abstractmethod
+    # def delete(self):
+    #     '''
+    #     Deletes matching database entries
+    #     '''
+    #     pass
 
     def commit(self):
         self.connection.commit()
