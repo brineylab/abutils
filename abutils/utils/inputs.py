@@ -27,6 +27,7 @@
 from abc import ABCMeta, abstractmethod
 import json
 import os
+import sys
 
 from Bio import SeqIO
 
