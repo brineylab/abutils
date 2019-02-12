@@ -70,9 +70,9 @@ def read_input(input, data_type,
         return MongoDBInput(database=input, collection=collection, ip=mongo_ip, port=mongo_port,
                             user=mongo_user, password=mongo_password, query=query, projection=projection)
     elif data_type.lower() == 'json':
-        retun JSONInput(input)
+        return JSONInput(input)
     elif data_type.lower() == 'fasta':
-        retun FASTAInput(input)
+        return FASTAInput(input)
     else:
         err = '\n\nERROR: data_type must be one of the following:\n'
         err += 'json, mongodb, or fasta\n\n'
