@@ -185,7 +185,7 @@ class JSONInput(BaseInput):
         for input_file in self.files:
             with open(input_file, 'r') as f:
                 for line in f:
-                    j = json.loads(line.strip().lstrip(']').rstrip(']').rstrip(','))
+                    j = json.loads(line.strip().lstrip('[').rstrip(']').rstrip().rstrip(','))
                     yield Sequence(j)
 
 
