@@ -346,11 +346,13 @@ def cdhit(seqs, out_file=None, temp_dir=None, threshold=0.975, make_db=True,
     elif os.path.exists(seqs):
         ifile = seqs
         delete_input = False
-    cdhit_cmd = 'cdhit -i {} -o {} -c {} -n 5 -d 0 -T {} -M {}'.format(ifile,
-                                                                       ofile,
-                                                                       threshold,
-                                                                       threads,
-                                                                       max_memory)
+    word_size = _get_cdhit_wordsize(threshold)
+    cdhit_cmd = 'cdhit -i {} -o {} -c {} -n {} -d 0 -T {} -M {}'.format(ifile,
+                                                                        ofile,
+                                                                        threshold,
+                                                                        word_size,
+                                                                        threads,
+                                                                        max_memory)
     while not all([os.path.getsize(cfile), os.path.getsize(cfile)]):
         cluster = sp.Popen(cdhit_cmd,
                         shell=True,
@@ -430,6 +432,16 @@ def _make_cdhit_input(seqs, temp_dir):
     with open(ifile.name, 'w') as f:
         f.write('\n'.join(fastas))
     return ifile.name
+
+
+def _get_cdhit_wordsize(threshold):
+    if threshold > 0.7:
+        return 5
+    elif threshold > 0.6:
+        return 4
+    elif threshold > 0.5:
+        return 3
+    return 2
 
 
 def _build_seq_db(seqs, direc=None):
