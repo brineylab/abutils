@@ -175,8 +175,9 @@ class JSONInput(BaseInput):
     Representation of JSON input data
     '''
 
-    def __init__(self, data, verbose=False):
+    def __init__(self, data, seq_field=s'vdj_nt', verbose=False):
         self.input = data
+        self.seq_field = seq_field
         self.verbose = verbose
 
     @property
@@ -202,7 +203,7 @@ class JSONInput(BaseInput):
             with open(input_file, 'r') as f:
                 for line in f:
                     j = json.loads(line.strip().lstrip(']').rstrip(']').rstrip(','))
-                    sequences.append(Sequence(j))
+                    sequences.append(Sequence(j, seq_key=self.seq_field))
         return sequences
 
     @property
@@ -213,7 +214,7 @@ class JSONInput(BaseInput):
             with open(input_file, 'r') as f:
                 for line in f:
                     j = json.loads(line.strip().lstrip('[').rstrip(']').rstrip().rstrip(','))
-                    yield Sequence(j)
+                    yield Sequence(j, seq_key=self.seq_field)
 
 
 class MongoDBInput(BaseInput):
@@ -222,7 +223,8 @@ class MongoDBInput(BaseInput):
     '''
 
 
-    def __init__(self, database, collection, ip, port, user, password, query, projection, verbose=False):
+    def __init__(self, database, collection, ip, port, user, password,
+                 query, projection, seq_field='vdj_nt', verbose=False):
         self.db_name = database
         self.raw_collections = collection
         self.ip = ip
@@ -231,6 +233,7 @@ class MongoDBInput(BaseInput):
         self.password = password
         self.query = query
         self.projection = projection
+        self.seq_field = seq_field
         self.verbose = verbose
 
     @property
@@ -259,7 +262,7 @@ class MongoDBInput(BaseInput):
                 print(collection)
             res = self.db[collection].find(self.query, self.projection)
             for r in res:
-                sequences.append(Sequence(r))
+                sequences.append(Sequence(r, seq_key=self.seq_field))
         return sequences
 
     @property
@@ -269,7 +272,7 @@ class MongoDBInput(BaseInput):
                 print(collection)
             res = self.db[collection].find(self.query, self.projection)
             for r in res:
-                yield Sequence(r)
+                yield Sequence(r, seq_key=self.seq_field)
 
         
     def _process_collections(self, collection):
