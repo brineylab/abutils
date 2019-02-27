@@ -84,15 +84,15 @@ def from_fasta(fasta_file, verbose=False):
     return FASTAInput(fasta_file, verbose=verbose)
 
 
-def from_json(json_file, verbose=False):
-    return JSONInput(json_file, verbose=verbose)
+def from_json(json_file, seq_field='vdj_nt', verbose=False):
+    return JSONInput(json_file, seq_field=seq_field, verbose=verbose)
 
 
 def from_mongodb(db, collection=None, ip='localhost', port=27017, user=None, password=None,
-                 query=None, projection=None, verbose=False):
+                 query=None, projection=None, seq_field='vdj_nt', verbose=False):
     return MongoDBInput(database=db, collection=collection, ip=ip, port=port,
                         user=user, password=password, query=query, projection=projection,
-                        verbose=verbose)
+                        seq_field=seq_field, verbose=verbose)
 
 
 
