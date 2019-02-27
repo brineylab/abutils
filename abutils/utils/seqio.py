@@ -90,8 +90,8 @@ def from_json(json_file, verbose=False):
 
 def from_mongodb(db, collection=None, ip='localhost', port=27017, user=None, password=None,
                  query=None, projection=None, verbose=False):
-    return MongoDBInput(database=db, collection=collection, ip=mongo_ip, port=mongo_port,
-                        user=mongo_user, password=mongo_password, query=query, projection=projection,
+    return MongoDBInput(database=db, collection=collection, ip=ip, port=port,
+                        user=user, password=password, query=query, projection=projection,
                         verbose=verbose)
 
 
