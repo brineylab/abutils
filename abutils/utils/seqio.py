@@ -175,7 +175,7 @@ class JSONInput(BaseInput):
     Representation of JSON input data
     '''
 
-    def __init__(self, data, seq_field=s'vdj_nt', verbose=False):
+    def __init__(self, data, seq_field='vdj_nt', verbose=False):
         self.input = data
         self.seq_field = seq_field
         self.verbose = verbose
