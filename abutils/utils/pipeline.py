@@ -80,7 +80,7 @@ def make_dir(d):
         d (str): Path to a directory.
     '''
     if not os.path.exists(d):
-        os.makedirs(d)
+        os.makedirs(os.path.abspath(d))
 
 
 def list_files(d, extension=None):
