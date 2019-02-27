@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# filename: inputs.py
+# filename: seqio.py
 
 
 #
@@ -44,40 +44,57 @@ else:
 
 
 
-def read_input(input, data_type,
-               collection=None, mongo_ip='localhost', mongo_port=27017, mongo_user=None, mongo_password=None,
-               query=None, projection=None, **kwargs):
-    '''
-    Returns an Input class based on the data information provided.
+# def read_input(input, data_type,
+#                collection=None, mongo_ip='localhost', mongo_port=27017, mongo_user=None, mongo_password=None,
+#                query=None, projection=None, verbose=False, **kwargs):
+#     '''
+#     Returns an Input class based on the data information provided.
 
-    Args:
+#     Args:
 
-        data_type (str): One of the following: `'fasta'`, `'json'`, or `'mongodb'`.
+#         data_type (str): One of the following: `'fasta'`, `'json'`, or `'mongodb'`.
 
-        input (str): Path to an input file for FASTA or JSON data types, or the database name for MongoDB data.
+#         input (str): Path to an input file for FASTA or JSON data types, or the database name for MongoDB data.
 
-        collection (str): Name of a MongoDB collection. Required for the MongoDB data type.
+#         collection (str): Name of a MongoDB collection. Required for the MongoDB data type.
 
-        mongo_ip (str): IP address of the MongoDB server. Default is `'localhost'` if not provided.
+#         mongo_ip (str): IP address of the MongoDB server. Default is `'localhost'` if not provided.
 
-        mongo_port (int): Port of the MongoDB server. Default is `27017` if not provided.
+#         mongo_port (int): Port of the MongoDB server. Default is `27017` if not provided.
 
-        query (dict): Query to limit the results returned from a MongoDB database.
+#         query (dict): Query to limit the results returned from a MongoDB database.
 
-        projection (dict): Projection to specify fields to be retuired from a MongoDB database.
-    '''
-    if data_type.lower() == 'mongodb':
-        return MongoDBInput(database=input, collection=collection, ip=mongo_ip, port=mongo_port,
-                            user=mongo_user, password=mongo_password, query=query, projection=projection)
-    elif data_type.lower() == 'json':
-        return JSONInput(input)
-    elif data_type.lower() == 'fasta':
-        return FASTAInput(input)
-    else:
-        err = '\n\nERROR: data_type must be one of the following:\n'
-        err += 'json, mongodb, or fasta\n\n'
-        print(err)
-        sys.exit(1)
+#         projection (dict): Projection to specify fields to be retuired from a MongoDB database.
+#     '''
+#     if data_type.lower() == 'mongodb':
+#         return MongoDBInput(database=input, collection=collection, ip=mongo_ip, port=mongo_port,
+#                             user=mongo_user, password=mongo_password, query=query, projection=projection)
+#     elif data_type.lower() == 'json':
+#         return JSONInput(input)
+#     elif data_type.lower() == 'fasta':
+#         return FASTAInput(input)
+#     else:
+#         err = '\n\nERROR: data_type must be one of the following:\n'
+#         err += 'json, mongodb, or fasta\n\n'
+#         print(err)
+#         sys.exit(1)
+
+
+def from_fasta(fasta_file, verbose=False):
+    return FASTAInput(fasta_file, verbose=verbose)
+
+
+def from_json(json_file, verbose=False):
+    return JSONInput(json_file, verbose=verbose)
+
+
+def from_mongodb(db, collection=None, ip='localhost', port=27017, user=None, password=None,
+                 query=None, projection=None, verbose=False):
+    return MongoDBInput(database=db, collection=collection, ip=mongo_ip, port=mongo_port,
+                        user=mongo_user, password=mongo_password, query=query, projection=projection,
+                        verbose=verbose)
+
+
 
 
 class BaseInput():
@@ -114,8 +131,9 @@ class FASTAInput(BaseInput):
     Representation of FASTA input data.
     '''
 
-    def __init__(self, data):
+    def __init__(self, data, verbose=False):
         self.input = data
+        self.verbose = verbose
 
     @property
     def data_type(self):
@@ -135,6 +153,8 @@ class FASTAInput(BaseInput):
     def as_list(self):
         sequences = []
         for input_file in self.files:
+            if self.verbose:
+                print(input_file)
             with open(input_file, 'r') as f:
                 for seq in SeqIO.parse(f, 'fasta'):
                     sequences.append(Sequence(str(seq.seq), id=seq.id))
@@ -143,6 +163,8 @@ class FASTAInput(BaseInput):
     @property
     def as_generator(self):
         for input_file in self.files:
+            if self.verbose:
+                print(input_file)
             with open(input_file, 'r') as f:
                 for seq in SeqIO.parse(f, 'fasta'):
                     yield Sequence(str(seq.seq), id=seq.id)
@@ -153,8 +175,9 @@ class JSONInput(BaseInput):
     Representation of JSON input data
     '''
 
-    def __init__(self, data):
+    def __init__(self, data, verbose=False):
         self.input = data
+        self.verbose = verbose
 
     @property
     def data_type(self):
@@ -174,6 +197,8 @@ class JSONInput(BaseInput):
     def as_list(self):
         sequences = []
         for input_file in self.files:
+            if self.verbose:
+                print(input_file)
             with open(input_file, 'r') as f:
                 for line in f:
                     j = json.loads(line.strip().lstrip(']').rstrip(']').rstrip(','))
@@ -183,6 +208,8 @@ class JSONInput(BaseInput):
     @property
     def as_generator(self):
         for input_file in self.files:
+            if self.verbose:
+                print(input_file)
             with open(input_file, 'r') as f:
                 for line in f:
                     j = json.loads(line.strip().lstrip('[').rstrip(']').rstrip().rstrip(','))
@@ -195,7 +222,7 @@ class MongoDBInput(BaseInput):
     '''
 
 
-    def __init__(self, database, collection, ip, port, user, password, query, projection):
+    def __init__(self, database, collection, ip, port, user, password, query, projection, verbose=False):
         self.db_name = database
         self.raw_collections = collection
         self.ip = ip
@@ -204,6 +231,7 @@ class MongoDBInput(BaseInput):
         self.password = password
         self.query = query
         self.projection = projection
+        self.verbose = verbose
 
     @property
     def data_type(self):
@@ -227,6 +255,8 @@ class MongoDBInput(BaseInput):
     def as_list(self):
         sequences = []
         for collection in self.collections:
+            if self.verbose:
+                print(collection)
             res = self.db[collection].find(self.query, self.projection)
             for r in res:
                 sequences.append(Sequence(r))
@@ -235,6 +265,8 @@ class MongoDBInput(BaseInput):
     @property
     def as_generator(self):
         for collection in self.collections:
+            if self.verbose:
+                print(collection)
             res = self.db[collection].find(self.query, self.projection)
             for r in res:
                 yield Sequence(r)
