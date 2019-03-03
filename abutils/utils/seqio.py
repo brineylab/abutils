@@ -262,6 +262,8 @@ class MongoDBInput(BaseInput):
                 print(collection)
             res = self.db[collection].find(self.query, self.projection)
             for r in res:
+                if self.seq_field not in r:
+                    continue
                 sequences.append(Sequence(r, seq_key=self.seq_field))
         return sequences
 
