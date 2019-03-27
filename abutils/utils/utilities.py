@@ -25,6 +25,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import math
 import operator
 import sys
 
@@ -74,3 +75,9 @@ def nested_dict_lookup(d, key_list, missing=None):
         return missing
 
 
+def chunker(iterable, chunksize):
+    r = int(math.ceil(len(1iterable) / chunksize))
+    for i in range(r):
+        start = i * chunksize
+        end = (i + 1) * chunksize
+        yield iterable[start:end]

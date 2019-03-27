@@ -25,6 +25,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from contextlib import contextmanager
+import multiprocessing as mp
 import time
 
 from . import progbar
@@ -53,3 +55,10 @@ def monitor_celery_jobs(results, start_time=None, completion_string='\n'):
         progbar.progress_bar(finished, jobs, start_time=start_time)
     progbar.progress_bar(finished, jobs, start_time=start_time,
                          complete=True, completion_string=completion_string)
+
+
+@contextmanager
+def poolcontext(*args, **kwargs):
+    pool = mp.Pool(*args, **kwargs)
+    yield pool
+    pool.terminate()

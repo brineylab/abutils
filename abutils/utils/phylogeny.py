@@ -28,7 +28,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import colorsys
 from collections import Counter
 from copy import copy, deepcopy
+import itertools
 import math
+import multiprocessing as mp
 import os
 import random
 import shutil
@@ -37,9 +39,15 @@ import subprocess as sp
 import sys
 
 import numpy as np
+import scipy as sp
+import pandas as pd
+
+from scipy.ndimage import gaussian_filter1d
+from scipy.special import rel_entr
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+import seaborn as sns
 
 import ete3
 
@@ -55,20 +63,106 @@ from .cluster import cluster
 from .color import hex_to_rgb, get_cmap
 from .decorators import lazy_property
 
-# # imports to overload ete3's SequenceItem class
-# if sys.version_info[0] > 2:
-#     from PyQt5.QtWidgets import QGraphicsRectItem
-#     from PyQt5.QtGui import QPen, QColor, QBrush, QFont
-#     from PyQt5.QtCore import Qt
-# else:
-#     from PyQt4.QtGui import QGraphicsRectItem, QPen, QColor, QBrush, QFont
-#     from PyQt4.QtCore import Qt
-
-
 if sys.version_info[0] > 2:
     STR_TYPES = [str, ]
 else:
     STR_TYPES = [str, unicode]
+
+
+
+
+#--------------------------------
+#  PHYLOGENETIC RECONSTRUCTION
+#--------------------------------
+
+
+def fasttree(alignment, tree_file, is_aa=False, quiet=True):
+    if is_aa:
+        ft_cmd = 'fasttree {} > {}'.format(alignment, tree_file)
+    else:
+        ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree_file)
+    ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = ft.communicate()
+    if not quiet:
+        print(ft_cmd)
+        print(stdout)
+        print(stderr)
+    return tree_file
+
+
+def lsd(tree, output_file=None, dates_file=None, outgroup_file=None,
+        with_constraints=True, with_weights=True, reestimate_root_position=None, quiet=True):
+    lsd_cmd = 'lsd -i {}'.format(os.path.abspath(tree))
+    if output_file is not None:
+        lsd_cmd += ' -o {}'.format(os.path.abspath(output_file))
+    if dates_file is not None:
+        lsd_cmd += ' -d {}'.format(os.path.abspath(dates_file))
+    if outgroup_file is not None:
+        lsd_cmd += ' -g {}'.format(os.path.abspath(outgroup_file))
+    if with_constraints:
+        lsd_cmd += ' -c'
+    if with_weights:
+        lsd_cmd += ' -v'
+    if reestimate_root_position is not None:
+        lsd_cmd += ' -r {}'.format(reestimate_root_position)
+    p = sp.Popen(lsd_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if not quiet:
+        print(lsd_cmd)
+        print(stdout)
+        print(stderr)
+    return output_file
+
+
+def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
+    '''
+    Computes a phylogenetic tree using IgPhyML.
+
+    .. note::
+        
+        IgPhyML must be installed. It can be downloaded from https://github.com/kbhoehn/IgPhyML.
+
+    Args:
+
+        input_file (str): Path to a Phylip-formatted multiple sequence alignment. Required.
+
+        tree_file (str): Path to the output tree file.
+
+        root (str): Name of the root sequence. Required.
+
+        verbose (bool): If `True`, prints the standard output and standard error for each IgPhyML run. 
+            Default is `False`.
+    '''
+
+    if shutil.which('igphyml') is None:
+        raise RuntimeError('It appears that IgPhyML is not installed.\nPlease install and try again.')
+    
+    # first, tree topology is estimated with the M0/GY94 model
+    igphyml_cmd1 = 'igphyml -i {} -m GY -w M0 -t e --run_id gy94'.format(aln_file)
+    p1 = sp.Popen(igphyml_cmd1, stdout=sp.PIPE, stderr=sp.PIPE)
+    stdout1, stderr1 = p1.communicate()
+    if verbose:
+        print(stdout1 + '\n')
+        print(stderr1 + '\n\n')
+    intermediate = input_file + '_igphyml_tree.txt_gy94'
+
+    # now  we fit the HLP17 model once the tree topology is fixed
+    igphyml_cmd2 = 'igphyml -i {0} -m HLP17 --root {1} -o lr -u {}_igphyml_tree.txt_gy94 -o {}'.format(input_file,
+                                                                                                       root,
+                                                                                                       tree_file)
+    p2 = sp.Popen(igphyml_cmd2, stdout=sp.PIPE, stderr=sp.PIPE)
+    stdout2, stderr2 = p2.communicate()
+    if verbose:
+        print(stdout2 + '\n')
+        print(stderr2 + '\n')
+    return tree_file + '_igphyml_tree.txt'
+
+
+
+
+#--------------------------------
+#      PHYLOGENETIC TREES
+#--------------------------------
 
 
 def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
@@ -411,88 +505,6 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       delete_nodes=delete_nodes)
 
 
-def fasttree(alignment, tree_file, is_aa=False, quiet=True):
-    if is_aa:
-        ft_cmd = 'fasttree {} > {}'.format(alignment, tree_file)
-    else:
-        ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree_file)
-    ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = ft.communicate()
-    if not quiet:
-        print(ft_cmd)
-        print(stdout)
-        print(stderr)
-    return tree_file
-
-
-def lsd(tree, output_file=None, dates_file=None, outgroup_file=None,
-        with_constraints=True, with_weights=True, reestimate_root_position=None, quiet=True):
-    lsd_cmd = 'lsd -i {}'.format(os.path.abspath(tree))
-    if output_file is not None:
-        lsd_cmd += ' -o {}'.format(os.path.abspath(output_file))
-    if dates_file is not None:
-        lsd_cmd += ' -d {}'.format(os.path.abspath(dates_file))
-    if outgroup_file is not None:
-        lsd_cmd += ' -g {}'.format(os.path.abspath(outgroup_file))
-    if with_constraints:
-        lsd_cmd += ' -c'
-    if with_weights:
-        lsd_cmd += ' -v'
-    if reestimate_root_position is not None:
-        lsd_cmd += ' -r {}'.format(reestimate_root_position)
-    p = sp.Popen(lsd_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = p.communicate()
-    if not quiet:
-        print(lsd_cmd)
-        print(stdout)
-        print(stderr)
-    return output_file
-
-
-def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
-    '''
-    Computes a phylogenetic tree using IgPhyML.
-
-    .. note::
-        
-        IgPhyML must be installed. It can be downloaded from https://github.com/kbhoehn/IgPhyML.
-
-    Args:
-
-        input_file (str): Path to a Phylip-formatted multiple sequence alignment. Required.
-
-        tree_file (str): Path to the output tree file.
-
-        root (str): Name of the root sequence. Required.
-
-        verbose (bool): If `True`, prints the standard output and standard error for each IgPhyML run. 
-            Default is `False`.
-    '''
-
-    if shutil.which('igphyml') is None:
-        raise RuntimeError('It appears that IgPhyML is not installed.\nPlease install and try again.')
-    
-    # first, tree topology is estimated with the M0/GY94 model
-    igphyml_cmd1 = 'igphyml -i {} -m GY -w M0 -t e --run_id gy94'.format(aln_file)
-    p1 = sp.Popen(igphyml_cmd1, stdout=sp.PIPE, stderr=sp.PIPE)
-    stdout1, stderr1 = p1.communicate()
-    if verbose:
-        print(stdout1 + '\n')
-        print(stderr1 + '\n\n')
-    intermediate = input_file + '_igphyml_tree.txt_gy94'
-
-    # now  we fit the HLP17 model once the tree topology is fixed
-    igphyml_cmd2 = 'igphyml -i {0} -m HLP17 --root {1} -o lr -u {}_igphyml_tree.txt_gy94 -o {}'.format(input_file,
-                                                                                                       root,
-                                                                                                       tree_file)
-    p2 = sp.Popen(igphyml_cmd2, stdout=sp.PIPE, stderr=sp.PIPE)
-    stdout2, stderr2 = p2.communicate()
-    if verbose:
-        print(stdout2 + '\n')
-        print(stderr2 + '\n')
-    return tree_file + '_igphyml_tree.txt'
-
-
 def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None,
         fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
         tree_orientation=0, min_order_fraction=0.1, show_root_name=False, chain=None,
@@ -525,13 +537,13 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
                     break
         else:
             color = colors.get(node.name, '#000000')
-        if linked_alignment is not None:
-            node.add_feature('aln_fontsize', alignment_fontsize)
-            node.add_feature('aln_height', alignment_height)
-            node.add_feature('aln_width', alignment_width)
-            node.add_feature('fontsize', fontsize)
-            node.add_feature('format', 'seq')
-            node.add_feature('scale_factor', scale_factor)
+        # if linked_alignment is not None:
+        #     node.add_feature('aln_fontsize', alignment_fontsize)
+        #     node.add_feature('aln_height', alignment_height)
+        #     node.add_feature('aln_width', alignment_width)
+        #     node.add_feature('fontsize', fontsize)
+        #     node.add_feature('format', 'seq')
+        #     node.add_feature('scale_factor', scale_factor)
         style = ete3.NodeStyle()
         style['size'] = 0
         style['vt_line_width'] = float(linewidth)
@@ -582,162 +594,197 @@ def _build_node_text_face(node, color_node_labels, color, label_colors, fontsize
     return tf
 
 
-# def _phyloalignment_layout_function(node):
-#     leaf_color = "#000000"
-#     node.img_style["shape"] = "circle"
-#     if hasattr(node, "evoltype"):
-#         if node.evoltype == 'D':
-#             node.img_style["fgcolor"] = "#FF0000"
-#             node.img_style["hz_line_color"] = "#FF0000"
-#             node.img_style["vt_line_color"] = "#FF0000"
-#         elif node.evoltype == 'S':
-#             node.img_style["fgcolor"] = "#1d176e"
-#             node.img_style["hz_line_color"] = "#1d176e"
-#             node.img_style["vt_line_color"] = "#1d176e"
-#         elif node.evoltype == 'L':
-#             node.img_style["fgcolor"] = "#777777"
-#             node.img_style["vt_line_color"] = "#777777"
-#             node.img_style["hz_line_color"] = "#777777"
-#             node.img_style["hz_line_type"] = 1
-#             node.img_style["vt_line_type"] = 1
-#             leaf_color = "#777777"
-
-#     if node.is_leaf():
-#         node.img_style["shape"] = "square"
-#         node.img_style["size"] = 0
-#         if hasattr(node, "sequence"):
-#             if node.name == 'root':
-#                 bg_colors, fg_colors = _get_phyloalignment_colors(root=True)
-#                 node.img_style["fgcolor"] = '#d3d3d3'
-#                 SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
-#                     height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
-#                 ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
-#                 node.name = ' UCA  '
-#                 ete3.faces.add_face_to_node(ete3.faces.AttrFace("name", "Arial", node.fontsize, '#000000', None),
-#                                             node, 0)
-#             else:
-#                 bg_colors, fg_colors = _get_phyloalignment_colors()
-#                 node.img_style["fgcolor"] = '#000000'
-#                 SequenceFace = ete3.faces.SeqMotifFace(node.sequence, seqtype="aa", seq_format='seq',
-#                     height=node.aln_height, width=node.aln_width, scale_factor=node.scale_factor)
-#                 ete3.faces.add_face_to_node(SequenceFace, node, 1, aligned=True)
-#     else:
-#         node.img_style["size"] = 0
 
 
-# def _get_phyloalignment_colors(root=False):
-#         bg = '#000000'
-#         fg = '#FFFFFF'
-#         bg_colors = {c: bg for c in string.ascii_uppercase}
-#         bg_colors['.'] = '#FFFFFF'
-#         bg_colors['-'] = '#d3d3d3'
-#         fg_colors = {c: fg for c in string.ascii_uppercase}
-#         fg_colors['.'] = '#000000'
-#         fg_colors['-'] = '#000000'
-#         return bg_colors, fg_colors
+#-----------------------------------------
+#      PHYLOGENETIC LAPLACIAN SPECTRA
+#-----------------------------------------
 
 
-# class MySequenceItem(QGraphicsRectItem):
-#     def __init__(self, seq, seqtype="aa", poswidth=1, posheight=10,
-#                  draw_text=False):
-#         QGraphicsRectItem.__init__(self)
-#         self.seq = seq
-#         self.seqtype = seqtype
-#         self.poswidth = poswidth
-#         self.posheight = posheight
-#         if draw_text:
-#             self.poswidth = poswidth
-#         self.draw_text = draw_text
-#         if seqtype == "aa":
-#             self.fg = _aafgcolors
-#             self.bg = _aabgcolors
-#         elif seqtype == "nt":
-#             self.fg = _ntfgcolors
-#             self.bg = _ntbgcolors
-#         self.setRect(0, 0, len(seq) * poswidth, posheight)
+class PLS():
+    '''
+    Object representing a collection of Phylogenetic Laplacian Spectra.
+    '''
+    def __init__(self, spectral_trees, n_processes=0):
+        self.trees = spectral_trees
+        self.n_processes = mp.cpu_count() if n_processes == 0 else n_processes
+        self.compute_kdes()
 
-#     def paint(self, p, option, widget):
-#         x, y = 0, 0
-#         qfont = QFont("Courier")
-#         current_pixel = 0
-#         blackPen = QPen(QColor("black"))
-#         for letter in self.seq:
-#             if x >= current_pixel:
-#                 if self.draw_text and self.poswidth >= 5:
-#                     br = QBrush(QColor(self.bg.get(letter, "white")))
-#                     p.setPen(blackPen)
-#                     p.fillRect(x, 0, self.poswidth, self.posheight, br)
-#                     qfont.setPixelSize(min(self.posheight, self.poswidth))
-#                     p.setFont(qfont)
-#                     p.setBrush(QBrush(QColor("black")))
-#                     p.drawText(x, 0, self.poswidth, self.posheight,
-#                                Qt.AlignCenter | Qt.AlignVCenter,
-#                                letter)
-#                 elif letter == "-" or letter == ".":
-#                     p.setPen(blackPen)
-#                     p.drawLine(x, self.posheight / 2, x + self.poswidth, self.posheight / 2)
-
-#                 else:
-#                     br = QBrush(QColor(self.bg.get(letter, "white")))
-#                     p.fillRect(x, 0, max(1, self.poswidth), self.posheight, br)
-#                     # p.setPen(QPen(QColor(self.bg.get(letter, "black"))))
-#                     # p.drawLine(x, 0, x, self.posheight)
-#                 current_pixel = int(x)
-#             x += self.poswidth
+    
+    @lazy_property
+    def distance_matrix(self):
+        dist = {}
+        p = mp.Pool(processes=self.n_processes)
+        async_results = []
+        for t in self.trees:
+            async_results.append(p.apply_async(self.calc_distance_row, args=(t, self.trees)))
+        dists = [ar.get() for ar in async_results]
+        p.close()
+        p.join()
+        for t1, row in zip(self.trees, dists):
+            for t2, d in zip(self.trees, row):
+                dist[t1.name][t2.name] = d
+        return pd.DataFrame(dist)
 
 
-# _aafgcolors = {
-#     'A': "#000000",
-#     'R': "#000000",
-#     'N': "#000000",
-#     'D': "#000000",
-#     'C': "#000000",
-#     'Q': "#000000",
-#     'E': "#000000",
-#     'G': "#000000",
-#     'H': "#000000",
-#     'I': "#000000",
-#     'L': "#000000",
-#     'K': "#000000",
-#     'M': "#000000",
-#     'F': "#000000",
-#     'P': "#000000",
-#     'S': "#000000",
-#     'T': "#000000",
-#     'W': "#000000",
-#     'Y': "#000000",
-#     'V': "#000000",
-#     'B': "#000000",
-#     'Z': "#000000",
-#     'X': "#000000",
-#     '.': "#000000",
-#     '-': "#000000",
-# }
+        # for t1, t2 in itertools.product(self.trees, repeat=2):
+        #     dist[t1.name] = {}
+        #     if t1.name not in dist:
+        #         dist[t1.name] = {}
+        #     dist[t1.name][t2.name] = self.compare_trees(t1, t2)
+        # return pd.DataFrame(dist)
 
-# _aabgcolors = {
-#     'A': "#C8C8C8",
-#     'R': "#145AFF",
-#     'N': "#00DCDC",
-#     'D': "#E60A0A",
-#     'C': "#E6E600",
-#     'Q': "#00DCDC",
-#     'E': "#E60A0A",
-#     'G': "#EBEBEB",
-#     'H': "#8282D2",
-#     'I': "#0F820F",
-#     'L': "#0F820F",
-#     'K': "#145AFF",
-#     'M': "#E6E600",
-#     'F': "#3232AA",
-#     'P': "#DC9682",
-#     'S': "#FA9600",
-#     'T': "#FA9600",
-#     'W': "#B45AB4",
-#     'Y': "#3232AA",
-#     'V': "#0F820F",
-#     'B': "#FF69B4",
-#     'Z': "#FF69B4",
-#     'X': "#BEA06E",
-#     '.': "#FFFFFF",
-#     '-': "#FFFFFF",
-# }
+
+    def calc_distance_row(self, t1, trees):
+        dists = []
+        for t2 in trees:
+            dists.append(self.compare_trees(t1, t2))
+        return dists
+
+
+    def compare_trees(self, t1, t2, n_points=100):
+        maxw = max([t1.principal_eigenvalue, t2.principal_eigenvalue])
+        x = np.linspace(0, maxw, n_points)
+        p = t1.pdf(x)
+        q = t2.pdf(x)
+        return self.jensenshannon(p, q)
+
+    @staticmethod
+    def jensenshannon(p, q, base=None):
+        p = np.asarray(p)
+        q = np.asarray(q)
+        p = p / np.sum(p, axis=0)
+        q = q / np.sum(q, axis=0)
+        m = (p + q) / 2.0
+        left = rel_entr(p, m)
+        right = rel_entr(q, m)
+        js = np.sum(left, axis=0) + np.sum(right, axis=0)
+        if base is not None:
+            js /= np.log(base)
+        return np.sqrt(js / 2.0)
+
+
+    def compute_kdes(self):
+        if self.n_processes == 1:
+            self._compute_kdes_sp()
+        else:
+            self._compute_kdes_mp()
+
+    def _compute_kdes_sp(self):
+        for t in self.trees:
+            kde = t.kde
+
+    def _compute_kdes_mp(self):
+        p = mp.Pool(processes=self.n_processes)
+        async_results = []
+        for t in self.trees:
+            async_results.append(p.apply_async(self.compute_kde, args=(t,)))
+        kdes = [ar.get() for ar in async_results]
+        for t, kde in zip(self.trees, kdes):
+            t.kde = kde
+        p.close()
+        p.join()
+
+    @staticmethod
+    def compute_kde(tree):
+        '''
+        For a SpectralTree, computes the KDE.
+
+        Args:
+
+            tree (SpectralTree): tree for which the KDE will be computed
+
+        Returns:
+
+            the KDE function
+        '''
+        return tree.kde
+
+    
+    def clustermap(self, cmap=None, figfile=None):
+        cm = sns.clustermap(self.distance_matrix, cmap=cmap)
+        if figfile is not None:
+            cm.savefig(figfile)
+        else:
+            plt.show()
+
+
+class SpectralTree():
+    
+    def __init__(self, tree_file, subject=None):
+        self.subject = subject
+        self.name = os.path.basename(tree_file)
+        self.tree_file = tree_file
+        self.t = ete3.Tree(tree_file)
+        
+    
+    @lazy_property
+    def nodes(self):
+        num = 0
+        nodes = []
+        for n in self.t.traverse():
+            if not n.name:
+                n.name = str(num)
+                num += 1
+            nodes.append(n)
+        return nodes
+    
+    @lazy_property
+    def node_names(self):
+        return [n.name for n in self.nodes]
+    
+    @lazy_property
+    def distances(self):
+        distances = []
+        for n1 in self.nodes:
+            dist = {}
+            for n2 in self.nodes:
+                if n1 == n2:
+                    continue
+                dist[n2] = self.t.get_distance(n1, n2)
+            dist[n1] = -1. * sum(dist.values())
+            distances.append([dist[n] for n in self.nodes])
+        return np.asarray(distances)
+    
+    @lazy_property
+    def eigenvalues(self):
+        gl = sp.sparse.csgraph.laplacian(self.distances)
+        w, v = np.linalg.eig(gl)
+        return [e for e in sorted(w, reverse=True) if e >= 1]
+    
+    @lazy_property
+    def log_eigenvalues(self):
+        return np.real(np.log(self.eigenvalues))
+    
+    @property
+    def principal_eigenvalue(self):
+        return max(self.eigenvalues)
+
+    @lazy_property
+    def kde(self):
+        return sp.stats.gaussian_kde(self.eigenvalues)
+
+    
+    def pdf(self, x):
+        return [v.real for v in self.kde.pdf(x)]
+ 
+
+    def plot(self, xs=None, figfile=None, xlim=None):
+        if xs is None:
+            xs = np.linspace(-0.5, self.principal_eigenvalue, 200)
+        ys = self.pdf(xs)
+        # initialize and plot
+        plt.figure(figsize=[3, 4])
+        plt.plot(xs, ys, lw=2)
+        plt.fill_between(xs, ys, alpha=0.2)
+        # style
+        ax = plt.gca()
+        ax.set_xlabel('eigenvalue (ln)')
+        ax.set_ylabel('density')
+        if xlim is not None:
+            ax.set_xlim(xlim)
+        if figfile is not None:
+            plt.tight_layout()
+            plt.savefig(figfile)
+        else:
+            plt.show()
