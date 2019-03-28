@@ -76,7 +76,7 @@ def nested_dict_lookup(d, key_list, missing=None):
 
 
 def chunker(iterable, chunksize):
-    r = int(math.ceil(len(1iterable) / chunksize))
+    r = int(math.ceil(len(iterable) / chunksize))
     for i in range(r):
         start = i * chunksize
         end = (i + 1) * chunksize
