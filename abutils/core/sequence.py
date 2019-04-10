@@ -124,6 +124,7 @@ class Sequence(object):
         self._strand = None
         self.id_key = id_key
         self.seq_key = seq_key
+        self.description = None
 
         self._process_input(seq, id, qual)
 
@@ -312,6 +313,7 @@ class Sequence(object):
             else:
                 self.id = seq.id
                 self.sequence = seq.sequence
+                self.description = seq.description
                 self.qual = seq.qual
             self._input_sequence = self.sequence
             self._annotations = seq._annotations
@@ -333,10 +335,12 @@ class Sequence(object):
                     qual = seq.letter_annotations['solexa_quality']
             if sys.version_info[0] == 2:
                 self.id = str(seq.id).encode('ascii') if isinstance(str(seq.id), unicode) else str(seq.id)
+                self.description = str(seq.description).encode('ascii') if isinstance(str(seq.description), unicode) else str(seq.description)
                 self.sequence = str(seq.seq).encode('ascii').upper() if isinstance(str(seq.seq), unicode) else str(seq.seq).upper()
                 self.qual = qual.encode('ascii') if isinstance(qual, unicode) else qual
             else:
                 self.id = str(seq.id)
+                self.description = str(seq.description)
                 self.sequence = str(seq.seq).upper()
                 self.qual = qual
             self._input_sequence = self.sequence
