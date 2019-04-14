@@ -46,14 +46,16 @@ class SQLiteDatabase():
     def __init__(self, name=None, direc=None, in_memory=False, table_name=None):
         super(SQLiteDatabase, self).__init__()
         self.name = name
+        self.initialized = False
         if all([name is not None, direc is not None]):
             self.dir = os.path.abspath(direc)
             self.path = os.path.join(self.dir, self.name)
+            if os.path.isfile(self.path):
+                self.initialized = True
         elif in_memory:
             self.dir = None
             self.path = ':memory:'
         self.table_name = 'seqs' if table_name is None else table_name
-        self.initialized = False
         self._connection = None
         self._cursor = None
         self._create_table_cmd = None
