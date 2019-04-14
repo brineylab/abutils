@@ -238,6 +238,27 @@ class KeyValueStore(SQLiteDatabase):
                 ','.join(['?'] * len(self.structure)))
 
 
+    def keys(self):
+        results = self.cursor.execute(
+            '''SELECT {0}.key
+               FROM {0}'''.format(self.table_name))
+        return [r[0] for r in results]
+
+
+    def values(self):
+        results = self.cursor.execute(
+            '''SELECT {0}.value
+               FROM {0}'''.format(self.table_name))
+        return [pickle.loads(r[0]) for r in results]
+
+    
+    def items(self):
+        results = self.cursor.execute(
+            '''SELECT {0}.key, {0}.value
+               FROM {0}'''.format(self.table_name))
+        return [(r[0], pickle.loads(r[1])) for r in results]
+
+
     def insert_one(self, data, value=None):
         '''
         Inserts a single key/value pair
