@@ -306,7 +306,10 @@ class KeyValueStore(SQLiteDatabase):
                        FROM {0}
                        WHERE {0}.key LIKE ?'''.format(self.table_name)
         self.cursor.execute(query_str, (key, ))
-        return pickle.loads(self.cursor.fetchone()[1])
+        try:
+            return pickle.loads(self.cursor.fetchone()[1])
+        except TypeError:
+            return None
 
 
     def find_many(self, keys):
