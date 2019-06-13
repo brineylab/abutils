@@ -1031,12 +1031,12 @@ def dot_alignment(sequences, seq_field=None, name_field=None, root=None, root_na
         sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
     elif type(root) == Sequence:
         if seq_field is not None:
-            if seq_field not in list(root.anotations.keys()):
+            if seq_field not in list(root.annotations.keys()):
                 print('\nERROR: {} is not present in the supplied root sequence.\n'.format(seq_field))
                 sys.exit(1)
             root.alignment_sequence = root[seq_field]
         if name_field is not None:
-            if name_field not in list(root.anotations.keys()):
+            if name_field not in list(root.annotations.keys()):
                 print('\nERROR: {} is not present in the supplied root sequence.\n'.format(name_field))
                 sys.exit(1)
             root.alignment_id = root[name_field]
