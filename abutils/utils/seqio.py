@@ -80,6 +80,10 @@ else:
 #         sys.exit(1)
 
 
+def read_fasta(fasta_file, verbose=False):
+    return FASTAInput(fasta_file, verbose=verbose)
+
+
 def from_fasta(fasta_file, verbose=False):
     return FASTAInput(fasta_file, verbose=verbose)
 
