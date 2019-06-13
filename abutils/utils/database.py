@@ -173,17 +173,17 @@ class SQLiteDatabase():
         if self.path != ':memory:':
             os.unlink(self.path)
     
-    def insert(self, *args, **kwargs):
-        '''
-        Alias for ``insert_many``
-        '''
-        return self.insert_many(*args, **kwargs)
+    # def insert(self, *args, **kwargs):
+    #     '''
+    #     Alias for ``insert_many``
+    #     '''
+    #     return self.insert_many(*args, **kwargs)
     
-    def find(self, *args, **kwargs):
-        '''
-        Alias for ``find_many``
-        '''
-        return self.find_many(*args, **kwargs)
+    # def find(self, *args, **kwargs):
+    #     '''
+    #     Alias for ``find_many``
+    #     '''
+    #     return self.find_many(*args, **kwargs)
 
     def index(self, fields):
         '''
