@@ -1,4 +1,5 @@
 biopython
+celery
 ete3
 matplotlib
 numpy
