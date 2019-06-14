@@ -118,7 +118,11 @@ class Clusters():
 
 def cluster(sequences, threshold=0.975, temp_dir='/tmp', in_memory_db=True, debug=False):
     # preflight
-    if os.path.isfile(sequences):
+    if isinstance(sequences, Sequence):
+        sequences = [sequences, ]
+    elif isinstance(sequences, (list, tuple)):
+        pass
+    elif os.path.isfile(sequences):
         sequences = read_fasta(sequences)
     ts = datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
     temp_dir = os.path.join(temp_dir, 'clustering_{}'.format(ts))
