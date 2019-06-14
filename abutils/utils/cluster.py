@@ -171,10 +171,12 @@ def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir='/tmp', debug=False):
     fasta_file = os.path.abspath(fasta_file)
     temp_dir = os.path.join(temp_dir, 'mmseqs')
     make_dir(temp_dir)
+    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    mmseqs_bin = os.path.join(mod_dir, 'bin/mmseqs_{}'.format(platform.system().lower()))
 
     # create the sequence DB
     db_file = os.path.join(temp_dir, 'DB')
-    db_cmd = 'mmseqs createdb {} {}'.format(fasta_file, db_file)
+    db_cmd = '{} createdb {} {}'.format(mmseqs_bin, fasta_file, db_file)
     p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, encoding='utf-8')
     stdout, stderr = p.communicate()
     if debug:
@@ -184,7 +186,7 @@ def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir='/tmp', debug=False):
 
     # do the clustering
     clu_file = os.path.join(temp_dir, 'CLU')
-    cluster_cmd = 'mmseqs cluster {} {} {} --min-seq-id {}'.format(db_file, clu_file, temp_dir, min_seq_id)
+    cluster_cmd = '{} cluster {} {} {} --min-seq-id {}'.format(mmseqs_bin, db_file, clu_file, temp_dir, min_seq_id)
     p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, encoding='utf-8')
     stdout, stderr = p.communicate()
     if debug:
@@ -194,7 +196,7 @@ def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir='/tmp', debug=False):
 
     # generate TSV-formatted output
     tsv_file = os.path.join(temp_dir, 'CLU.tsv')
-    tsv_cmd = 'mmseqs createtsv {0} {0} {1} {2}'.format(db_file, clu_file, tsv_file)
+    tsv_cmd = '{0} createtsv {1} {1} {2} {3}'.format(mmseqs_bin, db_file, clu_file, tsv_file)
     p = sp.Popen(tsv_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, encoding='utf-8')
     stdout, stderr = p.communicate()
     if debug:
