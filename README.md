@@ -23,19 +23,19 @@ To run the test suite, clone or download the repository and run `pytest ./` from
   
 
 ### requirements  
-Python 3.5+
-biopython
-celery
-ete3
-matplotlib
-numpy
-nwalign3
-pandas
-paramiko
-pymongo
-pytest
-`scikit bio`
-seaborn  
+Python 3.5+  
+biopython  
+celery  
+ete3  
+matplotlib  
+numpy  
+nwalign3  
+pandas  
+paramiko  
+pymongo  
+pytest  
+scikit bio  
+seaborn   
   
 All of the above dependencies can be installed with pip, and will be installed automatically when installing abstar with pip.  
 If you're new to Python, a great way to get started is to install the [Anaconda Python distribution](https://www.continuum.io/downloads), which includes pip as well as a ton of useful scientific Python packages.
