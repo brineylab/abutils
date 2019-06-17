@@ -79,7 +79,7 @@ class Cluster():
         consensus_string = str(consensus).replace('-', '')
         consensus_seq = Sequence(consensus_string.upper())
         os.unlink(_aln)
-        return consensus_seq1
+        return consensus_seq
 
 
 class Clusters():
