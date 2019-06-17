@@ -5,3 +5,15 @@
 ![](https://img.shields.io/badge/license-MIT-blue.svg)
 
 # abutils
+
+Models and general-purpose utilities for working with antibody repertoire data.
+abutils is a core component of the ab\[x\] toolkit for antibody sequence analysis.
+  
+  - Source code: [github.com/briney/abutils](https://github.com/briney/abutils)  
+  - Documentation: [abutils.readthedocs.org](http://abutils.readthedocs.org)  
+  - Download: [pypi.python.org/pypi/abutils](https://pypi.python.org/pypi/abutils)  
+  - Docker: [hub.docker.com/r/briney/abstar/](https://hub.docker.com/r/briney/abstar/)  
+  
+### install  
+`pip install abutils`  
+
