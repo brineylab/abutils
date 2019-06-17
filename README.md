@@ -18,6 +18,10 @@ abutils is a core component of the ab\[x\] toolkit for antibody sequence analysi
 `pip install abutils`  
 
 
+### api  
+The intended use of abutils is through the public API, enabling incorporation of abutils' methods and utilities into integrated analysis pipelines, other standalone software tools, or for interative analysis of antibody repertoires. See the abutils [documentation](http://abutils.readthedocs.org) for more detail about the API.  
+
+
 ### testing  
 To run the test suite, clone or download the repository and run `pytest ./` from the top-level directory.  
   
