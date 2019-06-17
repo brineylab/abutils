@@ -1,7 +1,7 @@
 install
 =======
 
-The easiest way to install abutils locally (on OSX or Linux) is to use pip::
+The easiest way to install abutils locally (on macOS or Linux) is to use pip::
 
     $ pip install abutils
 
@@ -38,19 +38,18 @@ You can manually install the latest version of abstar with::
 requirements
 ------------
 
-* Python 2.7 or 3.5+
+* Python 3.5+
 * biopython_
 * celery_
 * ete3_
 * matplotlib_
-* mock (Python 2.7 only)
 * numpy_
-* nwalign3_ (nwalign_ for Python 2.7)
+* nwalign3_
 * pandas_
 * paramiko_
 * pymongo_
 * pytest_
-* `scikit bio`_ (<=0.4.2 for Python 2.7)
+* `scikit bio`_
 * seaborn_
 
 
@@ -61,7 +60,6 @@ abutils has a few additional non-python dependencies that are not required for i
 but are necessary for specific functions:
 
 * ``abutils.alignment.mafft`` requires MAFFT_
-* several functions in ``abutils.cluster`` require CD-HIT_
 * ``abutils.mongodb.mongoimport`` requires MongoDB_
 * ``abutils.phylogeny.fasttree`` requires FastTree_
 * ``abutils.phylogeny.igphyml`` requires IgPhyML_
@@ -86,12 +84,10 @@ If using Docker, all of the the optional dependencies are included.
 .. _matplotlib: https://matplotlib.org/
 .. _numpy: http://www.numpy.org/
 .. _nwalign3: https://github.com/briney/nwalign3
-.. _nwalign: https://pypi.org/project/nwalign/
 .. _pandas: https://pandas.pydata.org/
 .. _paramiko: http://www.paramiko.org/
 .. _seaborn: https://seaborn.pydata.org/
 .. _MAFFT: https://mafft.cbrc.jp/alignment/software/
-.. _CD-HIT: http://weizhongli-lab.org/cd-hit/
 .. _s3cmd: https://s3tools.org/s3cmd
 .. _FastTree: http://www.microbesonline.org/fasttree/
 .. _IgPhyML: https://github.com/kbhoehn/IgPhyML
