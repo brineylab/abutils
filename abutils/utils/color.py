@@ -97,7 +97,7 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=256):
 
     Args:
 
-    	cmap (colormap): Colormap to be truncated
+    	cmap (colormap): Colormap to be truncated.
 
     	minval (float): Lower bound. Should be a float betwee 0 and 1.
 

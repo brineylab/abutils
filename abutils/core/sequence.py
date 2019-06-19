@@ -363,6 +363,8 @@ def read_json(json_file, match=None):
     sequences = []
     with open(json_file, 'r') as f:
         for line in f:
+            if not line.strip():
+                continue
             j = json.loads(line.strip())
             try:
                 if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):

@@ -50,9 +50,10 @@ else:
     STR_TYPES = [str, unicode]
     import nwalign as nw
 
+# from .. import BINARY_DIR
 
-from .. import BINARY_DIR
 
+__all__ = ['mafft', 'muscle', 'local_alignment', 'global_alignment', 'dot_alignment', 'SSWAlignment', 'NWAlignment']
 
 
 # -------------------------------------
@@ -76,7 +77,7 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
 
             2. a list of BioPython ``SeqRecord`` objects
 
-            3. a list of AbTools ``Sequence`` objects
+            3. a list of abutils ``Sequence`` objects
 
             4. a list of lists/tuples, of the format ``[sequence_id, sequence]``
 
@@ -100,9 +101,8 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
 
         print_stderr (bool): If ``True``, prints MAFFT's standard error. Default is ``False``.
 
-        mafft_bin (str): Path to MAFFT executable. ``abutils`` includes built-in MAFFT binaries
-            for MacOS and Linux, however, if a different MAFFT binary can be provided. Default is
-            ``None``, which results in using the appropriate built-in MAFFT binary.
+        mafft_bin (str): Path to MAFFT executable. Default is ``None``, which results in 
+            using the default system MAFFT binary.
 
     Returns:
 
@@ -130,8 +130,6 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
         aln_format += '--reorder '
     if mafft_bin is None:
         mafft_bin = 'mafft'
-        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        # mafft_bin = os.path.join(BINARY_DIR, 'mafft_{}'.format(platform.system().lower()))
     mafft_cline = '{} --thread {} {}{} > {}'.format(mafft_bin, threads, aln_format, ffile, alignment_file)
     mafft = sp.Popen(str(mafft_cline),
                      stdout=sp.PIPE,
@@ -156,7 +154,7 @@ def mafft(sequences=None, alignment_file=None, fasta=None, fmt='fasta', threads=
 
 def muscle(sequences=None, alignment_file=None, fasta=None,
     fmt='fasta', as_file=False, maxiters=None, diags=False,
-    gap_open=None, gap_extend=None, muscle_bin=None):
+    gap_open=None, gap_extend=None, muscle_bin=None, debug=False):
     '''
     Performs multiple sequence alignment with MUSCLE.
 
@@ -199,7 +197,7 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
             if ``gap_open`` is not also provided.
 
         muscle_bin (str): Path to MUSCLE executable. ``abutils`` includes built-in MUSCLE binaries
-            for MacOS and Linux, however, if a different MUSCLE binary can be provided. Default is
+            for MacOS and Linux, however, a different MUSCLE binary can be provided. Default is
             ``None``, which results in using the appropriate built-in MUSCLE binary.
 
     Returns:
@@ -212,8 +210,8 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
     elif fasta:
         fasta_string = open(fasta, 'r').read()
     if muscle_bin is None:
-        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        muscle_bin = os.path.join(BINARY_DIR, 'muscle_{}'.format(platform.system().lower()))
+        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        muscle_bin = os.path.join(mod_dir, 'bin/muscle_{}'.format(platform.system().lower()))
     aln_format = ''
     if fmt == 'clustal':
         aln_format = ' -clwstrict'
@@ -224,6 +222,9 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
         muscle_cline += ' -diags'
     if all([gap_open is not None, gap_extend is not None]):
         muscle_cline += ' -gapopen {} -gapextend {}'.format(gap_open, gap_extend)
+    if debug:
+        print('muscle binary path:', muscle_bin)
+        print('muscle command:', muscle_cline)
     muscle = sp.Popen(str(muscle_cline),
                       stdin=sp.PIPE,
                       stdout=sp.PIPE,
@@ -231,9 +232,13 @@ def muscle(sequences=None, alignment_file=None, fasta=None,
                       universal_newlines=True,
                       shell=True)
     if sys.version_info[0] > 2:
-        alignment = muscle.communicate(input=fasta_string)[0]
+        alignment, stderr = muscle.communicate(input=fasta_string)
     else:
-        alignment = unicode(muscle.communicate(input=fasta_string)[0], 'utf-8')
+        alignment, stderr = muscle.communicate(input=fasta_string)
+        alignment = unicode(alignment, 'utf-8')
+        stderr = unicode(stderr, 'utf-8')
+    if debug:
+        print(stderr)
     aln = AlignIO.read(StringIO(alignment), fmt)
     if as_file:
         if not alignment_file:
@@ -337,7 +342,7 @@ def local_alignment(query, target=None, targets=None, match=3, mismatch=-2,
         raise RuntimeError(err)
     if target:
         targets = [target, ]
-    # to maintain backward compatibility with earlier AbTools API
+    # to maintain backward compatibility with earlier abutils API
     if gap_open_penalty is not None:
         gap_open = -1 * gap_open_penalty
     if gap_extend_penalty is not None:
@@ -1026,12 +1031,12 @@ def dot_alignment(sequences, seq_field=None, name_field=None, root=None, root_na
         sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
     elif type(root) == Sequence:
         if seq_field is not None:
-            if seq_field not in list(root.anotations.keys()):
+            if seq_field not in list(root.annotations.keys()):
                 print('\nERROR: {} is not present in the supplied root sequence.\n'.format(seq_field))
                 sys.exit(1)
             root.alignment_sequence = root[seq_field]
         if name_field is not None:
-            if name_field not in list(root.anotations.keys()):
+            if name_field not in list(root.annotations.keys()):
                 print('\nERROR: {} is not present in the supplied root sequence.\n'.format(name_field))
                 sys.exit(1)
             root.alignment_id = root[name_field]
