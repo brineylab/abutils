@@ -68,17 +68,18 @@ class Cluster():
     @lazy_property
     def consensus(self):
         return self._make_consensus()
-    
+
     def _make_consensus(self):
         if len(self.sequences) == 1:
             return self.sequences[0]
-        _aln = mafft(self.sequences, as_file=True)
-        aln = AlignIO.read(open(_aln, 'r'), 'fasta')
+        aln = mafft(self.sequences)
+        if aln is None:
+            print("ERROR: Failed to generate an alignmnet for a consensus sequence.")
+            return None
         summary_align = AlignInfo.SummaryInfo(aln)
         consensus = summary_align.gap_consensus(threshold=0.51, ambiguous='n')
         consensus_string = str(consensus).replace('-', '')
         consensus_seq = Sequence(consensus_string.upper())
-        os.unlink(_aln)
         return consensus_seq
 
 
