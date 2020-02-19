@@ -39,7 +39,7 @@ import subprocess as sp
 import sys
 
 import numpy as np
-import scipy as sp
+import scipy
 import pandas as pd
 
 from scipy.ndimage import gaussian_filter1d
@@ -748,7 +748,7 @@ class SpectralTree():
     
     @lazy_property
     def eigenvalues(self):
-        gl = sp.sparse.csgraph.laplacian(self.distances)
+        gl = scipy.sparse.csgraph.laplacian(self.distances)
         w, v = np.linalg.eig(gl)
         return [e for e in sorted(w, reverse=True) if e >= 1]
     
@@ -762,7 +762,7 @@ class SpectralTree():
 
     @lazy_property
     def kde(self):
-        return sp.stats.gaussian_kde(self.eigenvalues)
+        return scipy.stats.gaussian_kde(self.eigenvalues)
 
     
     def pdf(self, x):
