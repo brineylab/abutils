@@ -39,7 +39,7 @@ import subprocess as sp
 import sys
 
 import numpy as np
-import scipy as sp
+import scipy
 import pandas as pd
 
 from scipy.ndimage import gaussian_filter1d
@@ -519,8 +519,7 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     # if linked_alignment is not None:
     #     t = ete3.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
     #     ete3.faces.SequenceItem = MySequenceItem
-    else:
-        t = ete3.Tree(tree)
+    t = ete3.Tree(tree)
     if root_name is not None:
         t.set_outgroup(t&root_name)
     # style the nodes
@@ -748,7 +747,7 @@ class SpectralTree():
     
     @lazy_property
     def eigenvalues(self):
-        gl = sp.sparse.csgraph.laplacian(self.distances)
+        gl = scipy.sparse.csgraph.laplacian(self.distances)
         w, v = np.linalg.eig(gl)
         return [e for e in sorted(w, reverse=True) if e >= 1]
     
@@ -762,7 +761,7 @@ class SpectralTree():
 
     @lazy_property
     def kde(self):
-        return sp.stats.gaussian_kde(self.eigenvalues)
+        return scipy.stats.gaussian_kde(self.eigenvalues)
 
     
     def pdf(self, x):

@@ -1,5 +1,5 @@
 language: python
-# pick the appropriate requirements file for 2.7 or 3.x
+# versions and requirements files
 matrix:
   include:
     - python: "3.5"
@@ -8,7 +8,8 @@ matrix:
       env: REQUIREMENTS=requirements.txt
     - python: "3.7"
       env: REQUIREMENTS=requirements.txt
-      dist: xenial
+    - python: "3.8"
+      env: REQUIREMENTS=requirements.txt
 # install system dependencies
 before_install:
   - sudo apt-get update

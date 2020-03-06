@@ -35,8 +35,8 @@ import seaborn as sns
 __all__ = ['barplot', 'heatmap']
 
 
-def barplot(x, y, colors, fig_file=None, xlabel=None, ylabel=None, rotate_xtick_labels=False, grid=False, size=None, xfontsize=None):
-    sns.set_style('ticks')
+def barplot(x, y, colors, fig_file=None, xlabel=None, ylabel=None,
+            rotate_xtick_labels=False, grid=False, size=None, xfontsize=None):
     # set bar locations and width
     ind = np.arange(len(x))
     width = 0.75
