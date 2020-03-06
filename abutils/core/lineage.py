@@ -785,7 +785,7 @@ def fast_tree(alignment, tree, is_aa, show_output=False):
 
 
 def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_color=None, singleton_color='lightgrey', shuffle_colors=False, seed=1234,
-          text_kws={}, pie_kws={}, fontsize=28):
+          text_kws={}, pie_kws={}, fontsize=28, linewidth=2):
     lineages = sorted(lineages, key=lambda x: x.size(pairs_only), reverse=True)
     non_singletons = [l for l in lineages if l.size(pairs_only) > 1]
     singleton_count = sum([1 for l in lineages if l.size(pairs_only) == 1])
@@ -825,7 +825,7 @@ def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_c
     plt.setp(inside, width=width, edgecolor='white')
 
     for w in inside:
-        w.set_linewidth(2)
+        w.set_linewidth(linewidth)
 
     kwargs = dict(size=fontsize, color='k', va='center', fontweight='bold')
     for k, v in text_kws.items():
@@ -842,7 +842,7 @@ def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_c
 
 def _get_donut_colors(N):
     HSV_tuples = [(x * 1.0 / N, 0.8, 0.9) for x in range(N)]
-    RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)[::-1]
+    RGB_tuples = list(map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples))[::-1]
     return RGB_tuples
 
 
@@ -980,33 +980,33 @@ def group_lineages(pairs, just_pairs=False):
 #     '-': "#FFFFFF",
 # }
 
-# _aa_pixel_colors = {
-#     'A': "#C8C8C8",
-#     'R': "#145AFF",
-#     'N': "#00DCDC",
-#     'D': "#E60A0A",
-#     'C': "#E6E600",
-#     'Q': "#00DCDC",
-#     'E': "#E60A0A",
-#     'G': "#EBEBEB",
-#     'H': "#8282D2",
-#     'I': "#0F820F",
-#     'L': "#0F820F",
-#     'K': "#145AFF",
-#     'M': "#E6E600",
-#     'F': "#3232AA",
-#     'P': "#DC9682",
-#     'S': "#FA9600",
-#     'T': "#FA9600",
-#     'W': "#B45AB4",
-#     'Y': "#3232AA",
-#     'V': "#0F820F",
-#     'B': "#FF69B4",
-#     'Z': "#FF69B4",
-#     'X': "#BEA06E",
-#     '.': "#F2F2F2",
-#     '-': "#FFFFFF",
-# }
+_aa_pixel_colors = {
+    'A': "#C8C8C8",
+    'R': "#145AFF",
+    'N': "#00DCDC",
+    'D': "#E60A0A",
+    'C': "#E6E600",
+    'Q': "#00DCDC",
+    'E': "#E60A0A",
+    'G': "#EBEBEB",
+    'H': "#8282D2",
+    'I': "#0F820F",
+    'L': "#0F820F",
+    'K': "#145AFF",
+    'M': "#E6E600",
+    'F': "#3232AA",
+    'P': "#DC9682",
+    'S': "#FA9600",
+    'T': "#FA9600",
+    'W': "#B45AB4",
+    'Y': "#3232AA",
+    'V': "#0F820F",
+    'B': "#FF69B4",
+    'Z': "#FF69B4",
+    'X': "#BEA06E",
+    '.': "#F2F2F2",
+    '-': "#FFFFFF",
+}
 
 # _ntfgcolors = {
 #     'A': '#000000',
@@ -1032,13 +1032,13 @@ def group_lineages(pairs, just_pairs=False):
 #     ' ': "#FFFFFF"
 # }
 
-# _nt_pixel_colors = {
-#     'A': '#E12427',
-#     'C': '#3B7FB6',
-#     'G': '#63BE7A',
-#     'T': '#E1E383',
-#     # 'U': '#E1E383',
-#     '.': "#F2F2F2",
-#     '-': "#FFFFFF",
-#     # ' ': "#FFFFFF"
-# }
+_nt_pixel_colors = {
+    'A': '#E12427',
+    'C': '#3B7FB6',
+    'G': '#63BE7A',
+    'T': '#E1E383',
+    # 'U': '#E1E383',
+    '.': "#F2F2F2",
+    '-': "#FFFFFF",
+    # ' ': "#FFFFFF"
+}
