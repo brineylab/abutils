@@ -519,8 +519,7 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     # if linked_alignment is not None:
     #     t = ete3.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
     #     ete3.faces.SequenceItem = MySequenceItem
-    else:
-        t = ete3.Tree(tree)
+    t = ete3.Tree(tree)
     if root_name is not None:
         t.set_outgroup(t&root_name)
     # style the nodes
