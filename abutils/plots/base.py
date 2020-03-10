@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# filename: plots.py
+# filename: base.py
 
 
 #
@@ -66,7 +66,7 @@ def barplot(x, y, colors, fig_file=None, xlabel=None, ylabel=None,
     ax.tick_params(axis='x', which='both', top='off', length=3, pad=1.5)
     ax.tick_params(axis='y', which='both', right='off', length=3, pad=1.5)
     # make the plot
-    bar = ax.bar(ind, y, width, color=colors)
+    ax.bar(ind, y, width, color=colors)
     fig.tight_layout()
     if fig_file is not None:
         plt.savefig(fig_file)
