@@ -3,6 +3,7 @@ celery
 ete3
 matplotlib
 mock
+natsort
 numpy
 nwalign
 pandas
