@@ -23,7 +23,7 @@ The intended use of abutils is through the public API, enabling incorporation of
 
 
 ### testing  
-To run the test suite, clone or download the repository and run `pytest ./` from the top-level directory.  
+To run the test suite, clone or download the repository and run `pytest ./` from the top-level directory. The same tests are run after every commit using TravisCI.  
   
 
 ### requirements  

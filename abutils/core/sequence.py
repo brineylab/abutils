@@ -59,10 +59,10 @@ class Sequence(object):
 
         4) a Biopython ``SeqRecord`` object
 
-        5) an AbTools ``Sequence`` object
+        5) an abutils ``Sequence`` object
 
     If ``seq`` is provided as a string, the sequence ID can optionally be
-    provided via ``id``.  If ``seq`` is a string and ``id`` is not provided,
+    provided via the ``id`` keyword argument.  If ``seq`` is a string and ``id`` is not provided,
     a random sequence ID will be generated with ``uuid.uuid4()``.
 
     Quality scores can be supplied with ``qual`` or as part of a ``SeqRecord`` object.
@@ -70,7 +70,7 @@ class Sequence(object):
     via ``qual``, the ``qual`` scores will override the SeqRecord quality scores.
 
     If ``seq`` is a dictionary, typically the result of a MongoDB query, the dictionary
-    can be accessed directly from the ``Sequence`` instance. To retrive the value
+    can be accessed directly from the ``Sequence`` instance (via the ``annotations`` property). To retrive the value
     for ``'junc_aa'`` in the instantiating dictionary, you would simply::
 
         s = Sequence(dict)
