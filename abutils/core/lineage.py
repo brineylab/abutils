@@ -40,8 +40,6 @@ from matplotlib.colors import ListedColormap
 
 import ete3
 
-from abstar import run as run_abstar
-
 from .pair import Pair
 from .sequence import Sequence
 from ..utils.alignment import mafft, muscle
@@ -692,6 +690,7 @@ class Lineage(object):
 
 
     def _calculate_uca(self, paired_only=False):
+        from abstar import run as run_abstar
         if paired_only:
             heavies = self.just_pairs
             lights = self.just_pairs
@@ -732,6 +731,7 @@ class Lineage(object):
 
 
     def _rmp(self, sequences):
+        from abstar import run as run_abstar
         rmp = ''
         seqs = [(s['seq_id'], s['vdj_nt']) for s in sequences]
         aln = muscle(seqs)
