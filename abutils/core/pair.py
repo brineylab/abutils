@@ -26,11 +26,15 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import copy
+import csv
 import sys
 import traceback
 
 from Bio.Seq import Seq
-from Bio.Alphabet import generic_dna
+try:
+    from Bio.Alphabet import generic_dna
+except ImportError:
+    generic_dna = 'DNA'
 
 from .sequence import Sequence
 from ..utils import germlines
@@ -375,7 +379,7 @@ def get_pairs(db, collection, experiment=None, subject=None, group=None, name='s
 
 
 def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=False,
-                 h_selection_func=None, l_selection_func=None):
+                 h_selection_func=None, l_selection_func=None, tenx_annot_file=None):
     '''
     Assigns sequences to the appropriate mAb pair, based on the sequence name.
 
@@ -395,6 +399,21 @@ def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=
 
     Returns a list of Pair objects, one for each mAb pair.
     '''
+    # add UMIs to the sequence annotations if a 10xG annotations file is provided
+    if tenx_annot_file is not None:
+        annots = {}
+        with open(tenx_annot_file) as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                key = 'consensus_id' if 'consensus_id' in r else 'contig_id'
+                annots[r[key]] = r['umis']
+        for s in seqs:
+            s['umis'] = annots.get(s['seq_id'], 0)
+        if h_selection_func is None:
+            h_selection_func = umi_selector
+        if l_selection_func is None:
+            l_selection_func = umi_selector
+    # identify pairs
     pdict = {}
     for s in seqs:
         if delim is not None:
@@ -411,6 +430,11 @@ def assign_pairs(seqs, name='seq_id', delim=None, delim_occurance=1, pairs_only=
     if pairs_only:
         pairs = [p for p in pairs if p.is_pair]
     return pairs
+
+
+def umi_selector(seqs):
+    sorted_seqs = sorted(seqs, key=lambda x: x['umis'], reverse=True)
+    return sorted_seqs[0]
 
 
 def deduplicate(pairs, aa=False, ignore_primer_regions=False):

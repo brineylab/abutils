@@ -42,7 +42,7 @@ config = {
     'version': __version__,
     'install_requires': install_requires,
     'packages': ['abutils'],
-    'scripts': [],
+    'scripts': ['bin/batch_cellranger'],
     'name': 'abutils',
     'include_package_data': True,
     'classifiers': ['License :: OSI Approved :: MIT License',
