@@ -31,7 +31,10 @@ import sys
 import traceback
 
 from Bio.Seq import Seq
-from Bio.Alphabet import generic_dna
+try:
+    from Bio.Alphabet import generic_dna
+except Import Error:
+    generic_dna = 'DNA'
 
 from .sequence import Sequence
 from ..utils import germlines
