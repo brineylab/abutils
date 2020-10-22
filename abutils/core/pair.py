@@ -33,7 +33,7 @@ import traceback
 from Bio.Seq import Seq
 try:
     from Bio.Alphabet import generic_dna
-except Import Error:
+except ImportError:
     generic_dna = 'DNA'
 
 from .sequence import Sequence
