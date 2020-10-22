@@ -14,5 +14,5 @@ sample-sheet
 scikit-bio==0.5.5
 scikit-learn
 scipy
-seaborn==0.11
+seaborn>=0.11
 smart_open
