@@ -31,10 +31,6 @@ import sys
 import traceback
 
 from Bio.Seq import Seq
-try:
-    from Bio.Alphabet import generic_dna
-except ImportError:
-    generic_dna = 'DNA'
 
 from .sequence import Sequence
 from ..utils import germlines
@@ -303,7 +299,7 @@ class Pair(object):
         if len(seq['vdj_nt']) % 3 != 0:
             trunc = len(seq['vdj_nt']) % 3
             seq['vdj_nt'] = seq['vdj_nt'][:-trunc]
-        seq['vdj_aa'] = Seq(seq['vdj_nt'], generic_dna).translate()
+        seq['vdj_aa'] = Seq(seq['vdj_nt']).translate()
 
 
     def fasta(self, key='vdj_nt', append_chain=True):
