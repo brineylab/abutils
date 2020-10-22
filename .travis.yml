@@ -2,8 +2,6 @@ language: python
 # versions and requirements files
 matrix:
   include:
-    - python: "3.5"
-      env: REQUIREMENTS=requirements.txt
     - python: "3.6"
       env: REQUIREMENTS=requirements.txt
     - python: "3.7"
