@@ -29,7 +29,10 @@ else:
         reqs = parse_requirements(req_file, session=False)
     except TypeError:
         reqs = parse_requirements(req_file)
-    install_requires = [str(r.req) for r in reqs]
+    try:
+        install_requires = [str(r.req) for r in reqs]
+    except AttributeError:
+        install_requires = [str(r.requirement) for r in reqs]
 
 # read version
 exec(open('abutils/version.py').read())
@@ -46,7 +49,6 @@ config = {
     'name': 'abutils',
     'include_package_data': True,
     'classifiers': ['License :: OSI Approved :: MIT License',
-                    'Programming Language :: Python :: 3.5',
                     'Programming Language :: Python :: 3.6',
                     'Programming Language :: Python :: 3.7',
                     'Programming Language :: Python :: 3.8',
