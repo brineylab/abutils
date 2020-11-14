@@ -195,7 +195,7 @@ def feature_kde(data, x, y, hue=None, hue_order=None, colors=None, thresh=0.1,
             handles.append((f, e))
 #         handles = [Patch(fc=c, ec=c, alpha=kde_fill_alpha / 3, label=h) for c, h in zip(colors, hue_order)]
     else:
-        handles = [Line2D([0], [0], color=c, label=h) for c in colors]
+        handles = [Line2D([0], [0], color=c) for c in colors]
     if highlight_name is not None:
         legend_labels.append(highlight_name)
         handles.append(Line2D([0], [0], marker=highlight_marker, color='w',
@@ -277,7 +277,7 @@ def feature_scatter(data, x, y, hue=None, hue_order=None, colors=None, marker='o
                         alpha=alpha, linewidths=0, label=h)
     else:
         plt.scatter(data[x], data[y], c=[colors[0]], s=size, marker=marker,
-                        alpha=alpha, linewidths=0, label=h)
+                        alpha=alpha, linewidths=0)
 
     # highlighted points
     highlight = any([highlight_index is not None, all([highlight_x is not None, highlight_y is not None])])
@@ -322,7 +322,7 @@ def feature_scatter(data, x, y, hue=None, hue_order=None, colors=None, marker='o
 
 
 def cellhash_ridge(data, hashname, category, colors=None, alpha=1.0,
-                   category_order=None, rename=None, xmax=14,
+                   categories=None, hide_extra_categories=False, rename=None, xmax=14,
                    ylabel_fontsize=11, xlabel=None, xlabel_fontsize=12,
                    feature_label_xoffset=5, figfile=None):
     '''
@@ -339,18 +339,21 @@ def cellhash_ridge(data, hashname, category, colors=None, alpha=1.0,
     if rename is None:
         rename = {}
     else:
-        if not any([k in df.columns.values for k in rename.keys()]):
+        if not any([k in data.columns.values for k in rename.keys()]):
             rename = {v: k for k, v in rename.items()}
 
     # categories
     category_set = list(set(data[category]))
-    if category_order is None:
+    if categories is None:
         feature_cats = natsorted([c for c in category_set if rename.get(c, c) in data.columns.values])
         extra_cats = natsorted([c for c in category_set if rename.get(c, c) not in feature_cats])
         categories = feature_cats + extra_cats
     else:
-        feature_cats = category_order
-        extra_cats = []
+        feature_cats = categories
+        if hide_extra_categories:
+            extra_cats = []
+        else:
+            extra_cats = [c for c in category_set if rename.get(c, c) not in feature_cats]
         categories = feature_cats + extra_cats
 
     # colors

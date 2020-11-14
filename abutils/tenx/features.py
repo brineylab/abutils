@@ -38,9 +38,46 @@ from scipy.signal import argrelextrema
 from scipy.stats import scoreatpercentile
 
 
-def assign_cellhash_groups(df, hashnames=None, rename_dict=None, log_normalize=True,
+def assign_cellhash_groups(df, hashnames=None, rename=None, log_normalize=False,
                            threshold_minimum=4.0, threshold_maximum=10.0, kde_maximum=15.0, 
-                           assignments_only=False, return_intermediates=False, debug=False):
+                           assignments_only=False, update_also=None, debug=False):
+    '''
+    Assigns cells to hash groups based on cell hashing data.
+
+    Args:
+    -----
+
+        df (pd.DataFrame): Squareform input dataframe, containing cellhash UMI counts. Indexes
+            should be cells, columns should be cell hashes.
+        
+        hashnames (iterable): List of hashnames, which correspond to column names in ``df``. 
+            If not provided, all columns in ``df`` will be assumed to be  hashnames.
+        
+        rename (dict): Dictionary relating hasnhames (column names in ``df``) to the preferred
+            group name. For example, if the hashname ``'Cellhash1'`` corresponded to the sample 
+            ``'Sample1'``, an example ``rename_dict`` argument would be::
+
+                {'Cellhash1': 'Sample1'}
+
+        log_normalize (bool): If ``True``, data will be log2 normalized before hash grouping. Default
+            is ``True``.
+
+        threshold_minimum (float): Minimum acceptable kig2-normalized UMI threshold. Potential 
+            thresholds below this value will be ignored. Default is ``4.0``.
+
+        threshold_maximum (float): Maximum acceptable kig2-normalized UMI threshold. Potential 
+            thresholds above this value will be ignored. Default is ``10.0``.
+
+        kde_maximum (float): Upper limit of the KDE (in log2-normalized UMI counts). This should 
+            be below the maximum number of UMI counts, or else strange results may occur. Default 
+            is ``15.0``.
+
+        assignments_only (bool): If ``True``, return a pandas ``Series`` object containing only the 
+            group assignment. Suitable for appending to an existing dataframe.
+
+        debug (bool): produces plots and prints intermediate information for debugging. Default is 
+            ``False``.
+    '''
     hash_df = df.copy()
     # make sure the dataframe is counts + 1
     if 0 in hash_df.values:
@@ -49,8 +86,8 @@ def assign_cellhash_groups(df, hashnames=None, rename_dict=None, log_normalize=T
         hash_df = hash_df.applymap(np.log2)
     if hashnames is None:
         hashnames = hash_df.columns.values
-    if rename_dict is None:
-        rename_dict = {h: h for h in hashnames}
+    if rename is None:
+        rename = {c: c for c in hash_df.columns.values}
 
     thresholds = {}
     for hashname in hashnames:
@@ -72,7 +109,7 @@ def assign_cellhash_groups(df, hashnames=None, rename_dict=None, log_normalize=T
     for _, row in hash_df[hashnames].iterrows():
         a = [h for h in hashnames if row[h] >= thresholds[h]]
         if len(a) == 1:
-            assignment = rename_dict.get(a[0], 'not found')
+            assignment = rename.get(a[0], a[0])
         elif len(a) > 1:
             assignment = 'doublet'
         else:
@@ -82,11 +119,12 @@ def assign_cellhash_groups(df, hashnames=None, rename_dict=None, log_normalize=T
     
     if assignments_only:
         return hash_df['assignment']
+    elif update_also is not None:
+        update_also = update_also.copy()
+        update_also['assignment'] = hash_df['assignment']
+        return hash_df, update_also
     else:
-        if return_intermediates:
-            return hash_df
-        else:
-            return hash_df[list(hashnames) + ['assignment']]
+        return hash_df
 
 
 def classify_features(df, positive=None, negative=None,
@@ -158,7 +196,6 @@ def positive_feature_cutoff(vals, threshold_maximum=10.0, threshold_minimum=4.0,
             plt.vlines(cutoff, min(e), max(e),
                        colors='k', alpha=0.5, linestyles=':', linewidths=2)
             # text
-            text_ymin = min(e) + (0.025 * (max(e) - min(e)))
             text_xadj = 0.025 * (max(s) - min(s))
             cutoff_string = f'{cutoff_text}: {round(cutoff, 3)}' if show_cutoff_value else cutoff_text
             plt.text(cutoff - text_xadj, max(e), cutoff_string, ha='right', va='top', fontsize=14)
@@ -199,9 +236,10 @@ def negative_feature_cutoff(vals, threshold_maximum=10.0, threshold_minimum=4.0,
         _all_min = np.array([m for m in all_min if s[m] <= threshold_maximum and s[m] >= threshold_minimum])
         min_vals = zip(_all_min, e[_all_min])
         mi = sorted(min_vals, key=lambda x: x[1])[0][0]
-        adj = len(all_max) - len(all_min) - 1
-        ma = all_max[max([0, list(all_min).index(mi) - adj])]
-        cutoff = s[int((mi + ma) / 2)]
+        ma = [m for m in all_max if s[m] < s[mi]][-1]
+        # adj = len(all_max) - len(all_min) - 1
+        # ma = all_max[max([0, list(all_min).index(mi) - adj])]
+        cutoff = s[int((mi + ma) / denominator)]
     elif len(all_min) == 1:
         mi = all_min[0]
         ma = all_max[0]
