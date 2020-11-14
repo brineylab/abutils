@@ -25,6 +25,7 @@
 
 import sys
 
+import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -194,7 +195,7 @@ def feature_kde(data, x, y, hue=None, hue_order=None, colors=None, thresh=0.1,
             handles.append((f, e))
 #         handles = [Patch(fc=c, ec=c, alpha=kde_fill_alpha / 3, label=h) for c, h in zip(colors, hue_order)]
     else:
-        handles = [Line2D([0], [0], color=c, label=h) for c in colors]
+        handles = [Line2D([0], [0], color=c) for c in colors]
     if highlight_name is not None:
         legend_labels.append(highlight_name)
         handles.append(Line2D([0], [0], marker=highlight_marker, color='w',
@@ -276,7 +277,7 @@ def feature_scatter(data, x, y, hue=None, hue_order=None, colors=None, marker='o
                         alpha=alpha, linewidths=0, label=h)
     else:
         plt.scatter(data[x], data[y], c=[colors[0]], s=size, marker=marker,
-                        alpha=alpha, linewidths=0, label=h)
+                        alpha=alpha, linewidths=0)
 
     # highlighted points
     highlight = any([highlight_index is not None, all([highlight_x is not None, highlight_y is not None])])
@@ -318,4 +319,179 @@ def feature_scatter(data, x, y, hue=None, hue_order=None, colors=None, marker='o
         plt.savefig(figfile)
     else:
         plt.show()
+
+
+def cellhash_ridge(data, hashname, category, colors=None, alpha=1.0,
+                   categories=None, hide_extra_categories=False, rename=None, xmax=14,
+                   ylabel_fontsize=11, xlabel=None, xlabel_fontsize=12,
+                   feature_label_xoffset=5, figfile=None):
+    '''
+    Docstring for feature_ridge.
+    '''
+    
+    # input data
+    data = data.copy()
+    if category not in data.columns.values:
+        print('"{}" is not a column in the supplied dataframe'.format(category))
+        return
+    
+    # rename
+    if rename is None:
+        rename = {}
+    else:
+        if not any([k in data.columns.values for k in rename.keys()]):
+            rename = {v: k for k, v in rename.items()}
+
+    # categories
+    category_set = list(set(data[category]))
+    if categories is None:
+        feature_cats = natsorted([c for c in category_set if rename.get(c, c) in data.columns.values])
+        extra_cats = natsorted([c for c in category_set if rename.get(c, c) not in feature_cats])
+        categories = feature_cats + extra_cats
+    else:
+        feature_cats = categories
+        if hide_extra_categories:
+            extra_cats = []
+        else:
+            extra_cats = [c for c in category_set if rename.get(c, c) not in feature_cats]
+        categories = feature_cats + extra_cats
+
+    # colors
+    if colors is None:
+        n_colors = len(feature_cats)
+        colors = list(sns.color_palette(n_colors=n_colors))
+        n_greys = len(extra_cats)
+        greys = list(plt.get_cmap('Greys')(np.linspace(0, 1, n_greys + 2))[1:-1, :3])
+        cdict = {h: c for h, c in zip(categories, colors + greys)}
+    elif isinstance(colors, (list, tuple, np.ndarray, pd.core.series.Series)):
+        colors = list(colors)
+        if len(colors) < len(categories):
+            n_greys = len(categories) - len(colors)
+            greys = list(plt.get_cmap('Greys')(np.linspace(0, 1, n_greys + 2))[1:-1, :3])
+        cdict = {h: c for h, c in zip(categories, colors + greys)}
+    else:
+        cdict = colors
+        if len(cdict) < len(categories):
+            missing = [k for k in categories if k not in cdict]
+            n_greys = len(missing)
+            greys = list(plt.get_cmap('Greys')(np.linspace(0, 1, n_greys + 2))[1:-1, :3])
+            for m, g in zip(missing, greys):
+                cdict[m] = g
+    colors = [cdict[c] for c in categories]
+
+    # plot
+    g = sns.FacetGrid(data, row=category, hue=category,
+                      aspect=7.5, height=0.75, palette=colors,
+                      row_order=categories, hue_order=categories)
+    g.map(sns.kdeplot, hashname, clip_on=False, shade=True, alpha=alpha, lw=1.5)
+    g.map(sns.kdeplot, hashname, clip_on=False, color="w", lw=3)
+    g.map(plt.axhline, y=0, lw=2, clip_on=False)
+
+    def label(x, color, label):
+        ax = plt.gca()
+        ax.text(0, .2, label, fontweight="bold", color=color,
+                fontsize=ylabel_fontsize,
+                ha="left", va="center", transform=ax.transAxes)
+    g.map(label, hashname)
+
+    # set the subplots to overlap
+    g.fig.subplots_adjust(hspace=0.1)
+
+    # remove axes details that don't play well with overlap
+    g.set_titles("")
+    g.set(xticks=range(0, xmax + 1, 2))
+    g.set(yticks=[])
+    g.set(xlim=[-feature_label_xoffset, xmax + 0.25])
+    g.despine(bottom=True, left=True)
+    
+    # xlabel
+    if xlabel is not None:
+        g.set(xlabel=xlabel)
+    
+    xlabel_position = ((xmax / 2) + feature_label_xoffset) / (xmax + feature_label_xoffset)
+    for ax in g.axes.flat:
+        ax.set_xlabel(ax.get_xlabel(),
+                      x=xlabel_position,
+                      fontsize=xlabel_fontsize)
+        
+    for ax in g.axes.flat:
+        ax.set_xlabel(ax.get_xlabel(), fontsize=xlabel_fontsize)
+
+    if figfile is not None:
+        g.savefig(figfile)
+    else:
+        plt.show()
+
+
+def feature_ridge(data, features, colors=None, rename=None,
+                  xlabel='UMI count ($\mathregular{log_2}$)', 
+                  ylabel_fontsize=11, xlabel_fontsize=12,
+                  feature_label_xoffset=5, xmax=14, alpha=1.0,
+                  figfile=None):
+    '''
+    Docstring for feature_ridge.
+    '''
+    
+    # input data
+    data = data.copy()
+    features = [f for f in features if f in data.columns.values]
+    melted = data.melt(value_vars=features, var_name='feature')
+    
+    # rename
+    if rename is None:
+        rename = {}
+    else:
+        if not any([k in df.columns.values for k in rename.keys()]):
+            rename = {v: k for k, v in rename.items()}
+
+    # colors
+    if colors is None:
+        n_colors = len(features)
+        colors = list(sns.color_palette(n_colors=n_colors))
+        cdict = {h: c for h, c in zip(features, colors)}
+    elif isinstance(colors, (list, tuple, np.ndarray, pd.core.series.Series)):
+        cdict = {h: c for h, c in zip(features, colors)}
+    else:
+        cdict = colors
+    colors = [cdict[f] for f in features]
+
+    # plot
+    g = sns.FacetGrid(melted, row='feature', hue='feature',
+                      aspect=7.5, height=0.75, palette=colors,
+                      row_order=features, hue_order=features)
+    g.map(sns.kdeplot, 'value', clip_on=False, shade=True, alpha=alpha, lw=1.5)
+    g.map(sns.kdeplot, 'value', clip_on=False, color="w", lw=3)
+    g.map(plt.axhline, y=0, lw=2, clip_on=False)
+
+    def label(x, color, label):
+        ax = plt.gca()
+        ax.text(0, .2, label, fontweight="bold", color=color,
+                fontsize=ylabel_fontsize,
+                ha="left", va="center", transform=ax.transAxes)
+    g.map(label, 'feature')
+
+    # set the subplots to overlap
+    g.fig.subplots_adjust(hspace=0.1)
+
+    # remove axes details that don't play well with overlap
+    g.set_titles("")
+    g.set(xticks=range(0, xmax + 1, 2))
+    g.set(yticks=[])
+    g.set(xlim=[-feature_label_xoffset, xmax + 0.25])
+    g.despine(bottom=True, left=True)
+    
+    # xlabel
+    g.set(xlabel=xlabel)
+    xlabel_position = ((xmax / 2) + feature_label_xoffset) / (xmax + feature_label_xoffset)
+    for ax in g.axes.flat:
+        ax.set_xlabel(ax.get_xlabel(),
+                      x=xlabel_position,
+                      fontsize=xlabel_fontsize)
+
+    if figfile is not None:
+        g.savefig(figfile)
+    else:
+        plt.show()
+
+
 
