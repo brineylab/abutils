@@ -54,8 +54,8 @@ class Sequence(object):
 
         2) an iterable, formatted as ``[seq_id, sequence]``
 
-        3) a dict, containing at least the ID (default key = 'seq_id') and a
-           sequence (default key = 'vdj_nt'). Alternate ``id_key`` and ``seq_key``
+        3) a dict, containing at least the sequence ID and a
+           sequence. Alternate ``id_key`` and ``seq_key``
            can be provided at instantiation.
 
         4) a Biopython ``SeqRecord`` object
@@ -306,7 +306,7 @@ class Sequence(object):
             self.qual = qual
             self._input_sequence = self.sequence
         elif type(seq) == Sequence:
-            self.id = seq.id
+            self.id = id if id is not None else seq.id
             self.sequence = seq.sequence
             self.description = seq.description
             self.qual = seq.qual
@@ -323,7 +323,7 @@ class Sequence(object):
                     qual = seq.letter_annotations['phred_quality']
                 elif 'solexa_quality' in seq.letter_annotations:
                     qual = seq.letter_annotations['solexa_quality']
-            self.id = str(seq.id)
+            self.id = id if id is not None else str(seq.id)
             self.description = str(seq.description)
             self.sequence = str(seq.seq).upper()
             self.qual = qual
@@ -337,7 +337,7 @@ class Sequence(object):
                 seq_options = ['vdj_nt', 'sequence_nt', 'sequence']
                 if any([k in seq for k in seq_options]):
                     self.seq_key = [k for k in seq_options if k in seq][0]
-            self.id = seq.get(self.id_key, None)
+            self.id = id if id is not None else seq.get(self.id_key, None)
             self.sequence = seq.get(self.seq_key, None)
             self.qual = qual
             self._input_sequence = self.sequence
