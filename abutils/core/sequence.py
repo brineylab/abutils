@@ -26,6 +26,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import OrderedDict
+import csv
 import json
 import operator
 import sys
@@ -78,7 +79,11 @@ class Sequence(object):
 
     If ``seq`` is a dictionary, an optional ``id_key`` and ``seq_key`` can be provided,
     which tells the ``Sequence`` object which field to use to populate ``Sequence.id`` and
-    ``Sequence.sequence``. Defaults are ``id_key='seq_id'`` and ``seq_key='vdj_nt'``.
+    ``Sequence.sequence``. Defaults for both ``id_key`` and ``seq_key`` are ``None``, which 
+    results in abutils trying to determine the appropriate key. For ``id_key``, the following 
+    keys are tried: ``['seq_id', 'sequence_id']``. For ``seq_key``, the following keys are tried:
+    ``['vdj_nt', 'sequence_nt', 'sequence']``. If none of the attempts are successful, the 
+    ``Sequence.id`` or ``Sequence.sequence`` attributes will be ``None``.
 
     Alternately, the ``__getitem__()`` interface can be used to obtain a slice from the
     ``sequence`` attribute. An example of the distinction::
@@ -109,7 +114,7 @@ class Sequence(object):
         with identical sequences but without user-supplied IDs won't be equal,
         because their IDs will have been randomly generated.
     """
-    def __init__(self, seq, id=None, qual=None, id_key='seq_id', seq_key='vdj_nt'):
+    def __init__(self, seq, id=None, qual=None, id_key=None, seq_key=None):
         super(Sequence, self).__init__()
         self._input_sequence = None
         self._input_id = id
@@ -296,36 +301,21 @@ class Sequence(object):
         if type(seq) in STR_TYPES:
             if id is None:
                 id = uuid.uuid4()
-            if sys.version_info[0] == 2:
-                self.id = id.encode('ascii') if isinstance(id, unicode) else id
-                self.sequence = str(seq).encode('ascii').upper() if isinstance(str(seq), unicode) else str(seq).upper()
-                self.qual = qual.encode('ascii') if isinstance(qual, unicode) else qual
-            else:
-                self.sequence = str(seq).upper()
-                self.id = id
-                self.qual = qual
+            self.sequence = str(seq).upper()
+            self.id = id
+            self.qual = qual
             self._input_sequence = self.sequence
         elif type(seq) == Sequence:
-            if sys.version_info[0] == 2:
-                self.id = seq.id.encode('ascii') if isinstance(seq.id, unicode) else seq.id
-                self.sequence = seq.sequence.encode('ascii') if isinstance(seq.sequence, unicode) else seq.sequence
-                self.qual = seq.qual.encode('ascii') if isinstance(seq.qual, unicode) else seq.qual
-            else:
-                self.id = seq.id
-                self.sequence = seq.sequence
-                self.description = seq.description
-                self.qual = seq.qual
+            self.id = seq.id
+            self.sequence = seq.sequence
+            self.description = seq.description
+            self.qual = seq.qual
             self._input_sequence = self.sequence
             self._annotations = seq._annotations
         elif type(seq) in [list, tuple]:
-            if sys.version_info[0] == 2:
-                self.id = str(seq[0]).encode('ascii').upper() if isinstance(str(seq[0]), unicode) else str(seq[0])
-                self.sequence = str(seq[1]).encode('ascii').upper() if isinstance(str(seq[1]), unicode) else str(seq[1]).upper()
-                self.qual = self.qual.encode('ascii') if isinstance(qual, unicode) else qual
-            else:
-                self.id = str(seq[0])
-                self.sequence = str(seq[1]).upper()
-                self.qual = qual
+            self.id = str(seq[0])
+            self.sequence = str(seq[1]).upper()
+            self.qual = qual
             self._input_sequence = self.sequence
         elif type(seq) == SeqRecord:
             if qual is None:
@@ -333,31 +323,28 @@ class Sequence(object):
                     qual = seq.letter_annotations['phred_quality']
                 elif 'solexa_quality' in seq.letter_annotations:
                     qual = seq.letter_annotations['solexa_quality']
-            if sys.version_info[0] == 2:
-                self.id = str(seq.id).encode('ascii') if isinstance(str(seq.id), unicode) else str(seq.id)
-                self.description = str(seq.description).encode('ascii') if isinstance(str(seq.description), unicode) else str(seq.description)
-                self.sequence = str(seq.seq).encode('ascii').upper() if isinstance(str(seq.seq), unicode) else str(seq.seq).upper()
-                self.qual = qual.encode('ascii') if isinstance(qual, unicode) else qual
-            else:
-                self.id = str(seq.id)
-                self.description = str(seq.description)
-                self.sequence = str(seq.seq).upper()
-                self.qual = qual
+            self.id = str(seq.id)
+            self.description = str(seq.description)
+            self.sequence = str(seq.seq).upper()
+            self.qual = qual
             self._input_sequence = self.sequence
         elif type(seq) in [dict, OrderedDict]:
-            if sys.version_info[0] == 2:
-                self.id = seq[self.id_key].encode('ascii') if isinstance(seq[self.id_key], unicode) else seq[self.id_key]
-                self.sequence = seq[self.seq_key].encode('ascii').upper() if isinstance(seq[self.seq_key], unicode) else seq[self.seq_key].upper()
-                self.qual = qual if isinstance(qual, unicode) else qual
-            else:
-                self.id = seq[self.id_key]
-                self.sequence = seq[self.seq_key]
-                self.qual = qual
+            if self.id_key is None:
+                id_options = ['seq_id', 'sequence_id']
+                if any([k in seq for k in id_options]):
+                    self.id_key = [k for k in id_options if k in seq][0]
+            if self.seq_key is None:
+                seq_options = ['vdj_nt', 'sequence_nt', 'sequence']
+                if any([k in seq for k in seq_options]):
+                    self.seq_key = [k for k in seq_options if k in seq][0]
+            self.id = seq.get(self.id_key, None)
+            self.sequence = seq.get(self.seq_key, None)
+            self.qual = qual
             self._input_sequence = self.sequence
             self._annotations = seq
 
 
-def read_json(json_file, match=None):
+def read_json(json_file, match=None, id_key=None, seq_key=None):
     if match is None:
         match = {}
     sequences = []
@@ -368,9 +355,18 @@ def read_json(json_file, match=None):
             j = json.loads(line.strip())
             try:
                 if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):
-                    sequences.append(Sequence(j))
+                    sequences.append(Sequence(j, id_key=id_key, seq_key=seq_key))
             except KeyError:
                 continue
+    return sequences
+
+
+def read_csv(csv_file, delimiter=',', id_key=None, seq_key=None):
+    sequences = []
+    with open(csv_file, 'r') as f:
+        reader = csv.DictReader(f, delimiter=delimiter)
+        for row in reader:
+            sequences.append(Sequence(row, id_key=id_key, seq_key=seq_key))
     return sequences
 
 
