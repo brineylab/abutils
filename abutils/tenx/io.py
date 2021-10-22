@@ -90,14 +90,14 @@ def read_10x_mtx(mtx_file, gex_only=False, hash_regex='cell ?hash', ignore_hash_
     hashes = non_gex[:, [re.search(pattern, i) is not None for i in non_gex.var.gene_ids]]
     features = non_gex[:, [re.search(pattern, i) is None for i in non_gex.var.gene_ids]]
     # make hash DataFrame
-    hash_df = sc.get.obs_df(hashes, hashes.var_names)
+    hash_df = hashes.to_df()
     if ignore_zero_median_hashes:
         hash_df = hash_df[[h for h in hash_df.columns.values if hash_df[h].median() > 0]]
     if transform_hashes:
         hash_df += 1
         hash_df = hash_df.apply(np.log2)
     # make feature DataFrame
-    feature_df = sc.get.obs_df(features, features.var_names)
+    feature_df = features.to_df()
     if ignore_zero_median_features:
         feature_df = feature_df[[h for h in feature_df.columns.values if feature_df[h].median() > 0]]
     if transform_features:
