@@ -441,7 +441,7 @@ def feature_ridge(data, features, colors=None, rename=None,
     if rename is None:
         rename = {}
     else:
-        if not any([k in df.columns.values for k in rename.keys()]):
+        if not any([k in data.columns.values for k in rename.keys()]):
             rename = {v: k for k, v in rename.items()}
 
     # colors

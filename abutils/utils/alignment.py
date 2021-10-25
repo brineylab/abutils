@@ -26,7 +26,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from copy import copy, deepcopy
+import hashlib
 from io import StringIO
+import json
 import logging
 import os
 import platform
@@ -860,24 +862,46 @@ class NWAlignment(BaseAlignment):
 
     def _get_matrix_file(self, match=None, mismatch=None, matrix=None):
         matrix_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'matrices')
-        builtins = ['blosum62', 'match3mismatch2', 'match1mismatch0']
-        if matrix is not None:
-            matrix_name = matrix
-        else:
+        builtins = [os.path.basename(f) for f in list_files(matrix_dir)]
+        if matrix is None:
             matrix_name = 'match{}mismatch{}'.format(abs(match), abs(mismatch))
-        if matrix_name.lower() in builtins:
+            if matrix_name not in builtins:
+                self._build_matrix_from_params(match, mismatch, os.path.join(matrix_dir, matrix_name))
             return os.path.join(matrix_dir, matrix_name)
-        builtin_names = [os.path.basename(f) for f in list_files(matrix_dir)]
-        if self._matrix is not None:
+        elif isinstance(matrix, dict):
+            dhash = hashlib.md5()
+            encoded = json.dumps(matrix, sort_keys=True).encode()
+            dhash.update(encoded)
+            matrix_name = dhash.hexdigest()
+            if matrix_name not in builtins:
+                self._build_matrix_from_dict(matrix, os.path.join(matrix_dir, matrix_name))
+            return os.path.join(matrix_dir, matrix_name)
+        else:
             if self._matrix.lower() in builtin_names:
                 return os.path.join(matrix_dir, self._matrix.lower())
             else:
                 err = 'The supplied matrix name ({}) does not exist. '.format(matrix)
-                err += 'Built-in matrices are: {}'.format(', '.join(builtins))
+                err += 'Built-in matrices are: {}'.format('\n'.join(builtins))
                 raise RuntimeError(err)
-        else:
-            self._build_matrix_from_params(match, mismatch, os.path.join(matrix_dir, matrix_name))
-            return os.path.join(matrix_dir, matrix_name)
+
+
+        # if matrix is not None:
+        #     matrix_name = matrix
+        # else:
+        #     matrix_name = 'match{}mismatch{}'.format(abs(match), abs(mismatch))
+        # if matrix_name.lower() in builtins:
+        #     return os.path.join(matrix_dir, matrix_name)
+        # builtin_names = [os.path.basename(f) for f in list_files(matrix_dir)]
+        # if self._matrix is not None:
+        #     if self._matrix.lower() in builtin_names:
+        #         return os.path.join(matrix_dir, self._matrix.lower())
+        #     else:
+        #         err = 'The supplied matrix name ({}) does not exist. '.format(matrix)
+        #         err += 'Built-in matrices are: {}'.format(', '.join(builtins))
+        #         raise RuntimeError(err)
+        # else:
+        #     self._build_matrix_from_params(match, mismatch, os.path.join(matrix_dir, matrix_name))
+        #     return os.path.join(matrix_dir, matrix_name)
 
     def _align(self):
         matrix = self._get_matrix_file(match=self._match,
@@ -924,6 +948,22 @@ class NWAlignment(BaseAlignment):
                 resline.append(mstring if r1 == r2 else mmstring)
             matlist.append(' '.join(resline))
         open(matrix_file, 'w').write('\n'.join(matlist))
+        return matrix_file
+
+    @staticmethod
+    def _build_matrix_from_dict(matrix, matrix_file):
+        residues = sorted(matrix.keys())
+        header = '   ' + '  '.join(residues)
+        matlist = [header, ]
+        for r1 in residues:
+            resline = [r1, ]
+            for r2 in residues:
+                s = matrix[r1][r2]
+                score = ' {}'.format(s) if len(str(s)) == 1 else str(s)
+                resline.append(score)
+            matlist.append(' '.join(resline))
+        with open(matrix_file, 'w') as f:
+            f.write('\n'.join(matlist))
         return matrix_file
 
     @staticmethod

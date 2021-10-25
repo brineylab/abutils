@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-from .core.sequence import read_fasta, read_json, from_mongodb
+from .core.sequence import read_csv, read_fasta, read_json, from_mongodb
 
 from .utils.convert import abi_to_fasta
 from .utils.pipeline import list_files, make_dir

@@ -344,7 +344,8 @@ class Sequence(object):
             self._annotations = seq
 
 
-def read_json(json_file, match=None, id_key=None, seq_key=None):
+
+def read_json(json_file, match=None, id_key='seq_id', sequence_key='sequence'):
     if match is None:
         match = {}
     sequences = []
@@ -355,18 +356,17 @@ def read_json(json_file, match=None, id_key=None, seq_key=None):
             j = json.loads(line.strip())
             try:
                 if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):
-                    sequences.append(Sequence(j, id_key=id_key, seq_key=seq_key))
+                    sequences.append(Sequence(j, id_key=id_key, seq_key=sequence_key))
             except KeyError:
                 continue
     return sequences
 
 
-def read_csv(csv_file, delimiter=',', id_key=None, seq_key=None):
-    sequences = []
+
+def read_csv(csv_file, delimiter=',', id_key='sequence_id', sequence_key='sequence'):
     with open(csv_file, 'r') as f:
         reader = csv.DictReader(f, delimiter=delimiter)
-        for row in reader:
-            sequences.append(Sequence(row, id_key=id_key, seq_key=seq_key))
+        sequences = [Sequence(r, id_key=id_key, seq_key=sequence_key) for r in reader]
     return sequences
 
 

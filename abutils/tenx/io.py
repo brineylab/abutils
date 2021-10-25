@@ -36,6 +36,7 @@ def read_10x_mtx(mtx_file, gex_only=False, hash_regex='cell ?hash', ignore_hash_
     Reads a 10x Genomics matrix file and outputs gex, cell hash, and feature barcode data.
 
     Args:
+    -----
 
         mtx_file (str): path to the 10x Genomics matrix folder (as accepted by ``scanpy.read_10x_mtx()``)
 
@@ -63,8 +64,9 @@ def read_10x_mtx(mtx_file, gex_only=False, hash_regex='cell ?hash', ignore_hash_
         ignore_zero_median_features (bool): If ``True``, any features containing a meadian
             count of ``0`` will be ignored and not returned in the feature dataframe. Default
             is ``True``.
-
+    
     Returns:
+    --------
 
         gex (anndata.AnnData): An ``AnnData`` object containing gene expression data. If ``gex_only``
             is ``True``, only ``gex`` is returned.
@@ -90,14 +92,14 @@ def read_10x_mtx(mtx_file, gex_only=False, hash_regex='cell ?hash', ignore_hash_
     hashes = non_gex[:, [re.search(pattern, i) is not None for i in non_gex.var.gene_ids]]
     features = non_gex[:, [re.search(pattern, i) is None for i in non_gex.var.gene_ids]]
     # make hash DataFrame
-    hash_df = hashes.to_df()
+    hash_df = hashes.to_df()[hashes.var_names]
     if ignore_zero_median_hashes:
         hash_df = hash_df[[h for h in hash_df.columns.values if hash_df[h].median() > 0]]
     if transform_hashes:
         hash_df += 1
         hash_df = hash_df.apply(np.log2)
     # make feature DataFrame
-    feature_df = features.to_df()
+    feature_df = features.to_df()[features.var_names]
     if ignore_zero_median_features:
         feature_df = feature_df[[h for h in feature_df.columns.values if feature_df[h].median() > 0]]
     if transform_features:
