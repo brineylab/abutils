@@ -65,7 +65,8 @@ class Pair(object):
         self._experiment = None
         self._timepoint = None
         self._is_pair = None
-        self._vrc01_like = None
+        # self._vrc01_like = None
+        # self._loose_vrc01_like = None
         self._lineage = None
         self._select_heavy = h_selection_func
         self._select_light = l_selection_func
@@ -124,6 +125,15 @@ class Pair(object):
     def light(self, light):
         self._light = light
 
+    
+    @property
+    def heavies(self):
+        return self._heavies
+    
+    @property
+    def lights(self):
+        return self._lights
+
     @property
     def is_pair(self):
         if all([self.heavy is not None, self.light is not None]):
@@ -133,25 +143,74 @@ class Pair(object):
     @property
     def lineage(self):
         if self._lineage is None:
-            self._lineage = self.heavy['clonify']['id']
+            if 'clonify' in self.heavy:
+                self._lineage = self.heavy['clonify']['id']
         return self._lineage
 
-    @property
-    def vrc01_like(self):
-        if self._vrc01_like is None:
-            if any([self.heavy is None, self.light is None]):
-                self._vrc01_like = False
-            else:
-                self._vrc01_like = all([self.heavy['v_gene']['gene'] == 'IGHV1-2', self.light['cdr3_len'] == 5])
-        return self._vrc01_like
+    # @property
+    # def vrc01_like(self):
+    #     if self._vrc01_like is None:
+    #         if any([self.heavy is None, self.light is None]):
+    #             self._vrc01_like = False
+    #         else:
+    #             try:
+    #                 # abstar's JSON output format
+    #                 self._vrc01_like = all([self.heavy['v_gene']['gene'] == 'IGHV1-2', self.light['cdr3_len'] == 5])
+    #             except KeyError:
+    #                 try:
+    #                     # AIRR format
+    #                     self._vrc01_like = all([self.heavy['v_call'] == 'IGHV1-2', self.light['junction_aa_length'] == 7])
+    #                 except KeyError:
+    #                     # unknown format
+    #                     pass
+    #     return self._vrc01_like
+
+    # @property
+    # def loose_vrc01_like(self):
+    #     if self._loose_vrc01_like is None:
+    #         try:
+    #             # abstar's JSON output format
+    #             if any([l['cdr3_len'] == 5 for l in p._lights]) and any([h['v_gene']['gene'] == 'IGHV1-2' for h in p._heavies]):
+    #                 self._loose_vrc01_like = True
+    #             else:
+    #                 self._loose_vrc01_like = False
+    #         except KeyError:
+    #             try:
+    #                 # AIRR format
+    #                 if any([l['junction_aa_length'] == 7 for l in p._lights]) and any([h['v_call'] == 'IGHV1-2' for h in p._heavies]):
+    #                     self._loose_vrc01_like = True
+    #                 else:
+    #                     self._loose_vrc01_like = False
+    #             except:
+    #                 # unknown format
+    #                 pass
+    #     return self._loose_vrc01_like
 
     @property
     def name(self):
         if self._name is None:
             if self.heavy is not None:
-                self._name = self.heavy['seq_id']
+                try:
+                    # abstar's JSON format
+                    self._name = self.heavy['seq_id']
+                except KeyError:
+                    try:
+                        # AIRR format
+                        self._name = self.heavy['sequence_id']
+                    except KeyError:
+                        # unknown format
+                        pass
             elif self.light is not None:
-                self._name = self.light['seq_id']
+                try:
+                    # abstar's JSON format
+                    self._name = self.light['seq_id']
+                except KeyError:
+                    try:
+                        # AIRR format
+                        self._name = self.light['sequence_id']
+                    except KeyError:
+                        # unknown format
+                        pass
         return self._name
 
     @name.setter
@@ -227,82 +286,82 @@ class Pair(object):
         self._timepoint = timepoint
 
 
-    def refine(self, heavy=True, light=True, species='human'):
-        for seq in [s for s in [self.heavy, self.light] if s is not None]:
-            try:
-                self.remove_ambigs(seq)
-                self._refine_v(seq, species)
-                self._refine_j(seq, species)
-                self._retranslate(seq)
-            except:
-                print('REFINEMENT FAILED: {}, {} chain'.format(seq['seq_id'], seq['chain']))
-                print(traceback.format_exception_only(*sys.exc_info()[:2]))
+    # def refine(self, heavy=True, light=True, species='human'):
+    #     for seq in [s for s in [self.heavy, self.light] if s is not None]:
+    #         try:
+    #             self.remove_ambigs(seq)
+    #             self._refine_v(seq, species)
+    #             self._refine_j(seq, species)
+    #             self._retranslate(seq)
+    #         except:
+    #             print('REFINEMENT FAILED: {}, {} chain'.format(seq['seq_id'], seq['chain']))
+    #             print(traceback.format_exception_only(*sys.exc_info()[:2]))
 
 
-    @staticmethod
-    def remove_ambigs(seq):
-        # fix Ns in the nucleotide sequence
-        vdj = ''
-        for s, g in zip(seq['vdj_nt'], seq['vdj_germ_nt']):
-            if s.upper() == 'N':
-                vdj += g
-            else:
-                vdj += s
-        seq['vdj_nt'] = vdj
-        # fix Xs in the amino acid sequence
-        vdj = ''
-        for s, g in zip(seq['vdj_aa'], seq['vdj_germ_aa']):
-            if s.upper() == 'X':
-                vdj += g
-            else:
-                vdj += s
-        seq['vdj_aa'] = vdj
+    # @staticmethod
+    # def remove_ambigs(seq):
+    #     # fix Ns in the nucleotide sequence
+    #     vdj = ''
+    #     for s, g in zip(seq['vdj_nt'], seq['vdj_germ_nt']):
+    #         if s.upper() == 'N':
+    #             vdj += g
+    #         else:
+    #             vdj += s
+    #     seq['vdj_nt'] = vdj
+    #     # fix Xs in the amino acid sequence
+    #     vdj = ''
+    #     for s, g in zip(seq['vdj_aa'], seq['vdj_germ_aa']):
+    #         if s.upper() == 'X':
+    #             vdj += g
+    #         else:
+    #             vdj += s
+    #     seq['vdj_aa'] = vdj
 
-    @staticmethod
-    def _refine_v(seq, species):
-        '''
-        Completes the 5' end of a a truncated sequence with germline nucleotides.
-        Input is a MongoDB dict (seq) and the species.
-        '''
-        vgerm = germlines.get_germline(seq['v_gene']['full'], species)
-        aln = global_alignment(seq['vdj_nt'], vgerm)
-        prepend = ''
-        for s, g in zip(aln.aligned_query, aln.aligned_target):
-            if s != '-':
-                break
-            else:
-                prepend += g
-        seq['vdj_nt'] = prepend + seq['vdj_nt']
+    # @staticmethod
+    # def _refine_v(seq, species):
+    #     '''
+    #     Completes the 5' end of a a truncated sequence with germline nucleotides.
+    #     Input is a MongoDB dict (seq) and the species.
+    #     '''
+    #     vgerm = germlines.get_germline(seq['v_gene']['full'], species)
+    #     aln = global_alignment(seq['vdj_nt'], vgerm)
+    #     prepend = ''
+    #     for s, g in zip(aln.aligned_query, aln.aligned_target):
+    #         if s != '-':
+    #             break
+    #         else:
+    #             prepend += g
+    #     seq['vdj_nt'] = prepend + seq['vdj_nt']
 
-    @staticmethod
-    def _refine_j(seq, species):
-        '''
-        Completes the 3' end of a a truncated sequence with germline nucleotides.
-        Input is a MongoDB dict (seq) and the species.
-        '''
-        jgerm = germlines.get_germline(seq['j_gene']['full'], species)
-        aln = global_alignment(seq['vdj_nt'], jgerm)
-        append = ''
-        for s, g in zip(aln.aligned_query[::-1], aln.aligned_target[::-1]):
-            if s != '-':
-                break
-            else:
-                append += g
-        seq['vdj_nt'] = seq['vdj_nt'] + append[::-1]
+    # @staticmethod
+    # def _refine_j(seq, species):
+    #     '''
+    #     Completes the 3' end of a a truncated sequence with germline nucleotides.
+    #     Input is a MongoDB dict (seq) and the species.
+    #     '''
+    #     jgerm = germlines.get_germline(seq['j_gene']['full'], species)
+    #     aln = global_alignment(seq['vdj_nt'], jgerm)
+    #     append = ''
+    #     for s, g in zip(aln.aligned_query[::-1], aln.aligned_target[::-1]):
+    #         if s != '-':
+    #             break
+    #         else:
+    #             append += g
+    #     seq['vdj_nt'] = seq['vdj_nt'] + append[::-1]
 
-    @staticmethod
-    def _retranslate(seq):
-        '''
-        Retranslates a nucleotide sequence following refinement.
-        Input is a Pair sequence (basically a dict of MongoDB output).
-        '''
-        if len(seq['vdj_nt']) % 3 != 0:
-            trunc = len(seq['vdj_nt']) % 3
-            seq['vdj_nt'] = seq['vdj_nt'][:-trunc]
-        seq['vdj_aa'] = Seq(seq['vdj_nt']).translate()
+    # @staticmethod
+    # def _retranslate(seq):
+    #     '''
+    #     Retranslates a nucleotide sequence following refinement.
+    #     Input is a Pair sequence (basically a dict of MongoDB output).
+    #     '''
+    #     if len(seq['vdj_nt']) % 3 != 0:
+    #         trunc = len(seq['vdj_nt']) % 3
+    #         seq['vdj_nt'] = seq['vdj_nt'][:-trunc]
+    #     seq['vdj_aa'] = Seq(seq['vdj_nt']).translate()
 
 
-    def fasta(self, key='vdj_nt', append_chain=True):
+    def fasta(self, name_field='seq_id', sequence_field='vdj_nt', append_chain=True):
         '''
         Returns the sequence pair as a fasta string. If the Pair object contains
         both heavy and light chain sequences, both will be returned as a single string.
@@ -321,7 +380,7 @@ class Pair(object):
         for s, chain in [(self.heavy, 'heavy'), (self.light, 'light')]:
             if s is not None:
                 c = '_{}'.format(chain) if append_chain else ''
-                fastas.append('>{}{}\n{}'.format(s['seq_id'], c, s[key]))
+                fastas.append('>{}{}\n{}'.format(s[name_field], c, s[sequence_field]))
         return '\n'.join(fastas)
 
 
@@ -488,3 +547,60 @@ def refine(pairs, heavy=True, light=True, species='human'):
     for p in refined_pairs:
         p.refine(heavy, light, species)
     return refined_pairs
+
+
+
+
+def vrc01_like(pair, loose=False):
+    if loose:
+        return loose_vrc01_like(pair)
+    else:
+        return strict_vrc01_like(pair)
+
+
+def strict_vrc01_like(pair):
+    if any([pair.heavy is None, pair.light is None]):
+        vrc01_like = False
+    else:
+        try:
+            # abstar's JSON output format
+            vrc01_like = all([pair.heavy['v_gene']['gene'] == 'IGHV1-2', pair.light['cdr3_len'] == 5])
+        except KeyError:
+            try:
+                # AIRR format
+                vrc01_like = all([pair.heavy['v_call'] == 'IGHV1-2', pair.light['junction_aa_length'] == 7])
+            except KeyError:
+                # unknown format
+                vrc01_like = None
+    return vrc01_like
+
+
+def loose_vrc01_like(pair):
+    try:
+        # abstar's JSON output format
+        if any([l['cdr3_len'] == 5 for l in pair.lights]) and any([h['v_gene']['gene'] == 'IGHV1-2' for h in pair.heavies]):
+            loose_vrc01_like = True
+        else:
+            loose_vrc01_like = False
+    except KeyError:
+        try:
+            # AIRR format
+            if any([l['junction_aa_length'] == 7 for l in pair.lights]) and any([h['v_call'] == 'IGHV1-2' for h in pair.heavies]):
+                loose_vrc01_like = True
+            else:
+                loose_vrc01_like = False
+        except:
+            # unknown format
+            loose_vrc01_like = None
+    return loose_vrc01_like
+
+
+
+
+
+
+
+
+
+
+
