@@ -71,7 +71,7 @@ def nested_dict_lookup(d, key_list, missing=None):
     '''
     try:
         return reduce(operator.getitem, key_list, d)
-    except KeyError:
+    except (KeyError, TypeError):
         return missing
 
 
