@@ -345,9 +345,14 @@ class Sequence(object):
 
 
 
-def read_json(json_file, match=None, id_key='seq_id', sequence_key='sequence'):
+def read_json(json_file, match=None, fields=None, id_key='seq_id', sequence_key='sequence'):
     if match is None:
         match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
     sequences = []
     with open(json_file, 'r') as f:
         for line in f:
@@ -356,6 +361,9 @@ def read_json(json_file, match=None, id_key='seq_id', sequence_key='sequence'):
             j = json.loads(line.strip())
             try:
                 if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):
+                    if fields is not None:
+                        _fields = [f for f in fields if f in j]
+                        j = {f: j[f] for f in _fields}
                     sequences.append(Sequence(j, id_key=id_key, seq_key=sequence_key))
             except KeyError:
                 continue
@@ -363,10 +371,26 @@ def read_json(json_file, match=None, id_key='seq_id', sequence_key='sequence'):
 
 
 
-def read_csv(csv_file, delimiter=',', id_key='sequence_id', sequence_key='sequence'):
+def read_csv(csv_file, delimiter=',', match=None, fields=None, id_key='sequence_id', sequence_key='sequence'):
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
     with open(csv_file, 'r') as f:
         reader = csv.DictReader(f, delimiter=delimiter)
-        sequences = [Sequence(r, id_key=id_key, seq_key=sequence_key) for r in reader]
+        for r in reader:
+            try:
+                if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):
+                    if fields is not None:
+                        _fields = [f for f in fields if f in r]
+                        r = {f: r[f] for f in _fields}
+                    sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+            except KeyError:
+                continue
     return sequences
 
 

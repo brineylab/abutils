@@ -31,7 +31,7 @@ from .utils.pipeline import list_files, make_dir
 
 
 
-def read_sequences(file=None, format='tabular', sep='\t',
+def read_sequences(file=None, format='tabular', sep='\t', fields=None, match=None,
                    id_key='sequence_id', sequence_key='sequence',
                    db=None, collection=None, mongodb_kwargs=None):
     '''
@@ -68,11 +68,11 @@ def read_sequences(file=None, format='tabular', sep='\t',
     '''
     format = format.lower()
     if format == 'json':
-        return read_json(file, id_key=id_key, sequence_key=sequence_key)
+        return read_json(file, id_key=id_key, sequence_key=sequence_key, fields=fields, match=match)
     elif format == 'fasta':
         return read_fasta(file)
     elif format == 'tabular':
-        return read_csv(file, delimiter=sep, id_key=id_key, sequence_key=sequence_key)
+        return read_csv(file, delimiter=sep, id_key=id_key, sequence_key=sequence_key, fields=fields, match=match)
     elif format == 'mongodb':
         if any([db is None, collection is None]):
             error = f'ERROR: db and collection are required arguments if the data type is "mongodb".'
