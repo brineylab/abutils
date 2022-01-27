@@ -145,7 +145,7 @@ def cluster(sequences, threshold=0.975, temp_dir='/tmp', in_memory_db=True, debu
         f.write('\n'.join(fstring))
     
     # cluster
-    clu_dict = mmseqs_cluster(fasta_file, min_seq_id=threshold, temp_dir=temp_dir, debug=debug)
+    clu_dict = vsearch_cluster(fasta_file, min_seq_id=threshold, temp_dir=temp_dir, debug=debug)
     
     # parse clustering output
     clus = []
@@ -163,6 +163,58 @@ def cluster(sequences, threshold=0.975, temp_dir='/tmp', in_memory_db=True, debu
         shutil.rmtree(temp_dir)
     
     return clusters
+
+
+
+
+def vsearch_cluster(fasta_file, min_seq_id=0.975, temp_dir='/tmp', debug=False, strand='plus'):         # pipe strand = 'both' to parse un-oriented input
+    # preparing
+    fasta_file = os.path.abspath(fasta_file)
+    temp_dir = os.path.join(temp_dir, 'vsearch')
+    make_dir(temp_dir)
+    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    vsearch_bin = os.path.join(mod_dir, 'bin/vsearch_{}'.format(platform.system().lower()))
+
+    # do the clustering
+    clu_file = os.path.join(temp_dir, 'CLU')
+    clu_file2 = os.path.join(temp_dir, 'CLU2')
+    cluster_cmd = '{} --cluster_fast {} --clusterout_id --uc {} --id {} --iddef 0 --sizeout --strand {}'.format(vsearch_bin, fasta_file, clu_file, min_seq_id, strand)
+    p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if debug:
+        if sys.version_info[0] > 2:
+            stdout = stdout.decode('utf-8')
+            stderr = stderr.decode('utf-8')
+        print('STDOUT:', stdout)
+        print('')
+        print('STDERR:', stderr)
+
+    # generating clean output
+    clu_names = {}
+    clu_seqs = {}
+    with open(clu_file) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('S'):
+                c = line.split("\t")
+                c = c[-1]
+                s = c[-1]
+            if line.startswith('H'):
+                _cs = line.split("\t")
+                c = _cs[-1]
+                s = _cs[-2]
+            if c not in clu_names:
+                cname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+                clu_names[c] = cname
+            clu_name = clu_names[c]
+            if clu_name not in clu_seqs:
+                clu_seqs[clu_name] = {'centroid': c, 'seq_ids': []}
+            clu_seqs[clu_name]['seq_ids'].append(s)
+
+    # clean up
+    if not debug:
+        shutil.rmtree(temp_dir)
+    return clu_seqs
 
 
 
