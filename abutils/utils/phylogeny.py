@@ -26,6 +26,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import colorsys
+import re
 from collections import Counter
 from copy import copy, deepcopy
 import itertools
@@ -295,10 +296,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                 print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(name_field))
                 sys.exit(1)
             for s in sequences:
-                s.alignment_id = s[name_field]
+                s.alignment_id = re.sub('[;:]', '_', s[name_field])
         else:
             for s in sequences:
-                s.alignment_id = s.id
+                s.alignment_id = re.sub('[;:]', '_', s.id)
 
         # parse the root sequence
         if unrooted:
