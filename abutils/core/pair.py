@@ -60,12 +60,12 @@ class Pair(object):
         self._beta = None
         self._delta = None
         self._gamma = None
-        self._heavies = [s for s in seqs if s['chain'] == 'heavy']
-        self._lights = [s for s in seqs if s['chain'] in ['kappa', 'lambda']]
-        self._alphas = [s for s in seqs if s['chain'] == 'alpha']
-        self._betas = [s for s in seqs if s['chain'] == 'beta']
-        self._deltas = [s for s in seqs if s['chain'] == 'delta']
-        self._gammas = [s for s in seqs if s['chain'] == 'gamma']
+        self._heavies = None
+        self._lights = None
+        self._alphas = None
+        self._betas = None
+        self._deltas = None
+        self._gammas = None
         self._name = name
         self._fasta = None
         self._sample = None
@@ -86,7 +86,7 @@ class Pair(object):
 
     def __hash__(self):
         return hash((self.heavy, self.light))
-
+        
 
     @property
     def receptor(self):
@@ -171,26 +171,56 @@ class Pair(object):
     
     @property
     def heavies(self):
+        if self._heavies is None:
+            if all(['chain' in s.annotations for s in self._seqs]):
+                self._heavies = [s for s in self._seqs if s['chain'] == 'heavy']
+            elif all(['locus' in s.annotations for s in self._seqs]):
+                self._heavies = [s for s in self._seqs if s['locus'] == 'IGH']
         return self._heavies
     
     @property
     def lights(self):
+        if self._lights is None:
+            if all(['chain' in s.annotations for s in self._seqs]):
+                self._lights = [s for s in self._seqs if s['chain'] in ['kappa', 'lambda']]
+            elif all(['locus' in s.annotations for s in self._seqs]):
+                self._lights = [s for s in self._seqs if s['locus'] in ['IGK', 'IGL']]
         return self._lights
     
     @property
     def alphas(self):
+        if self._alphas is None:
+            if all(['chain' in s.annotations for s in self._seqs]):
+                self._alphas = [s for s in self._seqs if s['chain'] == 'alpha']
+            elif all(['locus' in s.annotations for s in self._seqs]):
+                self._alphas = [s for s in self._seqs if s['locus'] == 'TRA']
         return self._alphas
 
     @property
     def betas(self):
+        if self._betas is None:
+            if all(['chain' in s.annotations for s in self._seqs]):
+                self._betas = [s for s in self._seqs if s['chain'] == 'beta']
+            elif all(['locus' in s.annotations for s in self._seqs]):
+                self._betas = [s for s in self._seqs if s['locus'] == 'TRB']
         return self._betas
 
     @property
     def deltas(self):
+        if self._deltas is None:
+            if all(['chain' in s.annotations for s in self._seqs]):
+                self._deltas = [s for s in self._seqs if s['chain'] == 'delta']
+            elif all(['locus' in s.annotations for s in self._seqs]):
+                self._deltas = [s for s in self._seqs if s['locus'] == 'TRD']
         return self._deltas
 
     @property
     def gammas(self):
+        if self._gammas is None:
+            if all(['chain' in s.annotations for s in self._seqs]):
+                self._gammas = [s for s in self._seqs if s['chain'] == 'gamma']
+            elif all(['locus' in s.annotations for s in self._seqs]):
+                self._gammas = [s for s in self._seqs if s['locus'] == 'TRG']
         return self._gammas
 
     @property
