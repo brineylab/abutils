@@ -107,7 +107,7 @@ class Pair(object):
     @property
     def heavy(self):
         if self._heavy is None:
-            self._heavy = self._select_chain(self._heavies)
+            self._heavy = self._select_chain(self.heavies)
         return self._heavy
 
     @heavy.setter
@@ -117,7 +117,7 @@ class Pair(object):
     @property
     def light(self):
         if self._light is None:
-            self._light = self._select_chain(self._lights)
+            self._light = self._select_chain(self.lights)
         return self._light
 
     @light.setter
@@ -128,7 +128,7 @@ class Pair(object):
     @property
     def alpha(self):
         if self._alpha is None:
-            self._alpha = self._select_chain(self._alphas)
+            self._alpha = self._select_chain(self.alphas)
         return self._alpha
 
     @alpha.setter
@@ -139,7 +139,7 @@ class Pair(object):
     @property
     def beta(self):
         if self._beta is None:
-            self._beta = self._select_chain(self._betas)
+            self._beta = self._select_chain(self.betas)
         return self._beta
 
     @beta.setter
@@ -150,7 +150,7 @@ class Pair(object):
     @property
     def delta(self):
         if self._delta is None:
-            self._delta = self._select_chain(self._deltas)
+            self._delta = self._select_chain(self.deltas)
         return self._delta
 
     @delta.setter
@@ -161,7 +161,7 @@ class Pair(object):
     @property
     def gamma(self):
         if self._gamma is None:
-            self._gamma = self._select_chain(self._gammas)
+            self._gamma = self._select_chain(self.gammas)
         return self._gamma
 
     @gamma.setter
