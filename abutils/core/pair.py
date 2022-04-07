@@ -60,12 +60,12 @@ class Pair(object):
         self._beta = None
         self._delta = None
         self._gamma = None
-        self._heavies = [s for s in seqs if s['chain'] == 'heavy']
-        self._lights = [s for s in seqs if s['chain'] in ['kappa', 'lambda']]
-        self._alphas = [s for s in seqs if s['chain'] == 'alpha']
-        self._betas = [s for s in seqs if s['chain'] == 'beta']
-        self._deltas = [s for s in seqs if s['chain'] == 'delta']
-        self._gammas = [s for s in seqs if s['chain'] == 'gamma']
+        self._heavies = None
+        self._lights = None
+        self._alphas = None
+        self._betas = None
+        self._deltas = None
+        self._gammas = None
         self._name = name
         self._fasta = None
         self._sample = None
@@ -86,7 +86,7 @@ class Pair(object):
 
     def __hash__(self):
         return hash((self.heavy, self.light))
-
+        
 
     @property
     def receptor(self):
@@ -107,7 +107,7 @@ class Pair(object):
     @property
     def heavy(self):
         if self._heavy is None:
-            self._heavy = self._chain_selector(self._heavies)
+            self._heavy = self._select_chain(self.heavies)
         return self._heavy
 
     @heavy.setter
@@ -117,7 +117,7 @@ class Pair(object):
     @property
     def light(self):
         if self._light is None:
-            self._light = self._chain_selector(self._lights)
+            self._light = self._select_chain(self.lights)
         return self._light
 
     @light.setter
@@ -128,7 +128,7 @@ class Pair(object):
     @property
     def alpha(self):
         if self._alpha is None:
-            self._alpha = self._chain_selector(self._alphas)
+            self._alpha = self._select_chain(self.alphas)
         return self._alpha
 
     @alpha.setter
@@ -139,7 +139,7 @@ class Pair(object):
     @property
     def beta(self):
         if self._beta is None:
-            self._beta = self._chain_selector(self._betas)
+            self._beta = self._select_chain(self.betas)
         return self._beta
 
     @beta.setter
@@ -150,7 +150,7 @@ class Pair(object):
     @property
     def delta(self):
         if self._delta is None:
-            self._delta = self._chain_selector(self._deltas)
+            self._delta = self._select_chain(self.deltas)
         return self._delta
 
     @delta.setter
@@ -161,7 +161,7 @@ class Pair(object):
     @property
     def gamma(self):
         if self._gamma is None:
-            self._gamma = self._chain_selector(self._gammas)
+            self._gamma = self._select_chain(self.gammas)
         return self._gamma
 
     @gamma.setter
@@ -171,26 +171,56 @@ class Pair(object):
     
     @property
     def heavies(self):
+        if self._heavies is None:
+            if all([s['chain'] is not None for s in self._seqs]):
+                self._heavies = [s for s in self._seqs if s['chain'] == 'heavy']
+            elif all([s['locus'] is not None for s in self._seqs]):
+                self._heavies = [s for s in self._seqs if s['locus'] == 'IGH']
         return self._heavies
     
     @property
     def lights(self):
+        if self._lights is None:
+            if all([s['chain'] is not None for s in self._seqs]):
+                self._lights = [s for s in self._seqs if s['chain'] in ['kappa', 'lambda']]
+            elif all([s['locus'] is not None for s in self._seqs]):
+                self._lights = [s for s in self._seqs if s['locus'] in ['IGK', 'IGL']]
         return self._lights
     
     @property
     def alphas(self):
+        if self._alphas is None:
+            if all([s['chain'] is not None for s in self._seqs]):
+                self._alphas = [s for s in self._seqs if s['chain'] == 'alpha']
+            elif all([s['locus'] is not None for s in self._seqs]):
+                self._alphas = [s for s in self._seqs if s['locus'] == 'TRA']
         return self._alphas
 
     @property
     def betas(self):
+        if self._betas is None:
+            if all([s['chain'] is not None for s in self._seqs]):
+                self._betas = [s for s in self._seqs if s['chain'] == 'beta']
+            elif all([s['locus'] is not None for s in self._seqs]):
+                self._betas = [s for s in self._seqs if s['locus'] == 'TRB']
         return self._betas
 
     @property
     def deltas(self):
+        if self._deltas is None:
+            if all([s['chain'] is not None for s in self._seqs]):
+                self._deltas = [s for s in self._seqs if s['chain'] == 'delta']
+            elif all([s['locus'] is not None for s in self._seqs]):
+                self._deltas = [s for s in self._seqs if s['locus'] == 'TRD']
         return self._deltas
 
     @property
     def gammas(self):
+        if self._gammas is None:
+            if all([s['chain'] is not None for s in self._seqs]):
+                self._gammas = [s for s in self._seqs if s['chain'] == 'gamma']
+            elif all([s['locus'] is not None for s in self._seqs]):
+                self._gammas = [s for s in self._seqs if s['locus'] == 'TRG']
         return self._gammas
 
     @property
