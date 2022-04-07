@@ -2,12 +2,11 @@ language: python
 # versions and requirements files
 python:
   - "3.6"
-  - "3.7"
+  # - "3.7"
   - "3.8"
   - "3.9"
 
 dist:
-  - xenial
   - bionic
   - focal
 
