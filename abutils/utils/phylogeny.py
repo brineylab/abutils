@@ -82,7 +82,7 @@ def fasttree(alignment, tree_file, is_aa=False, quiet=True):
         ft_cmd = 'fasttree {} > {}'.format(alignment, tree_file)
     else:
         ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree_file)
-    ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
+    ft = sp.Popen(str(ft_cmd), stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
     stdout, stderr = ft.communicate()
     if not quiet:
         print(ft_cmd)
@@ -174,7 +174,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
         # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50, 
         compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1,
-        delete_nodes=None, quiet=True):
+        delete_nodes=None, circular=False, quiet=True):
     '''
     Generates a lineage phylogeny figure.
 
@@ -262,6 +262,8 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
         figname_suffix: by default, figures will be named <lineage_id>.pdf. If suffix='_suffix' and
             the lineage ID is 'ABC123', the figure file will be named 'ABC123_suffix.pdf'.
+
+        circular (bool): set this argument to True to switch to a circular representation of the tree.
     '''
 
     if project_dir is None:
@@ -507,7 +509,9 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       scale_factor=scale_factor,
                       linewidth=linewidth,
                       ladderize=ladderize,
-                      delete_nodes=delete_nodes, quiet=quiet)
+                      delete_nodes=delete_nodes,
+                      circular=circular,
+                      quiet=quiet)
     except:
         do_print = False if quiet else True
         if do_print:
@@ -518,7 +522,7 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None, fontsize=12,
                       show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False,
                       label_colors=None, tree_orientation=0, min_order_fraction=0.1, show_root_name=False,
-                      chain=None,
+                      circular=False, chain=None,
                       # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
                       compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True,
                       delete_nodes=None, quiet=True):
@@ -537,8 +541,8 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
             print("Tree build-up ok. Setting up figure parameters ...")
     except:
         print("Something went wrong with ete3 ...")
-    # if root_name is not None:
-    #     t.set_outgroup(t&root_name)
+    if root_name is not None:
+        t.set_outgroup(t&root_name)
     # style the nodes
     for node in t.traverse():
         if node.name in delete_nodes:
@@ -583,6 +587,10 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     #     ts.layout_fn = _phyloalignment_layout_function
     ts.orientation = tree_orientation
     ts.show_leaf_name = False
+    if circular:
+        ts.mode = "c"
+        ts.arc_start = 0  # 0 degrees = 3 o'clock
+        ts.arc_span = 360
     if scale is not None:
         ts.scale = int(scale)
     if branch_vert_margin is not None:
