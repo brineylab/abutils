@@ -35,6 +35,7 @@ import uuid
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+from ..utils.codons import codon_lookup
 from ..utils.utilities import nested_dict_lookup
 
 if sys.version_info[0] > 2:
@@ -183,6 +184,15 @@ class Sequence(object):
             return all([self.sequence == other.sequence, self.id == other.id])
         return False
 
+    
+    @classmethod
+    def from_json(cls, data):
+        if isinstance(data, str):
+            data = json.loads(data)
+        s = cls(None)
+        s.__dict__ = data
+        return s
+
 
     @property
     def fasta(self):
@@ -238,6 +248,10 @@ class Sequence(object):
     @strand.setter
     def strand(self, strand):
         self._strand = strand
+
+
+    def translate(self, sequence_key=None, frame=1):
+        return translate(self, sequence_key, frame)
 
 
     def as_fasta(self, name_field=None, seq_field=None):
@@ -342,6 +356,28 @@ class Sequence(object):
             self.qual = qual
             self._input_sequence = self.sequence
             self._annotations = seq
+
+
+
+def translate(sequence, sequence_key=None, frame=1):
+    if sequence_key is not None:
+        seq = Sequence(nested_dict_lookup(sequence.annotations, sequence_key.split('.')))
+    else:
+        seq = Sequence(sequence)
+    if seq is None:
+        return None
+    start = (frame % 3) - 1
+    end = len(seq) - (len(seq[start:]) % 3)
+    seq = seq[start:end]
+    translated = ''
+    for i in range(0, len(seq), 3):
+        codon = seq[i:i+3]
+        if all([c == '-' for c in codon]):
+            aa = '-'
+        else:
+            aa = codon_lookup.get(codon, 'X')
+        translated += aa
+    return translated
 
 
 
