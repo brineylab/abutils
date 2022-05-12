@@ -91,6 +91,21 @@ def fasttree(alignment, tree_file, is_aa=False, quiet=True):
     return tree_file
 
 
+def iqtree(alignment, quiet=True):
+    if quiet:
+        iqt_cmd = 'iqtree -s {} -m MFP -bb 1000 -nt AUTO -redo -asr -quiet'.format(alignment)
+    else:
+        iqt_cmd = 'iqtree -s {} -m MFP -bb 1000 -nt AUTO -redo -asr'.format(alignment)
+    iqt = sp.Popen(str(iqt_cmd), stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
+    stdout, stderr = iqt.communicate()
+    if not quiet:
+        print(iqt_cmd)
+        print(stdout)
+        print(stderr)
+    tree_file = os.path.splitext(alignment)[0] + '.treefile'
+    return tree_file
+
+
 def lsd(tree, output_file=None, dates_file=None, outgroup_file=None,
         with_constraints=True, with_weights=True, reestimate_root_position=None, quiet=True):
     lsd_cmd = 'lsd -i {}'.format(os.path.abspath(tree))
@@ -167,14 +182,14 @@ def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
 
 
 def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
-        seq_field=None, name_field=None, aa=False, species='human', unrooted=False, ladderize=True,
-        root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
-        order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
-        scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
-        mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
-        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50, 
-        compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1,
-        delete_nodes=None, circular=False, quiet=True):
+              seq_field=None, name_field=None, aa=False, species='human', unrooted=False, ladderize=True,
+              root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
+              order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
+              scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
+              mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
+              # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
+              compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1,
+              delete_nodes=None, circular=False, quiet=True, tree_engine='fasttree'):
     '''
     Generates a lineage phylogeny figure.
 
@@ -264,6 +279,8 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             the lineage ID is 'ABC123', the figure file will be named 'ABC123_suffix.pdf'.
 
         circular (bool): set this argument to True to switch to a circular representation of the tree.
+
+        tree_engine: allow changing from FastTree (default) to iqTree (to perform ancestor sequence reconstruction)
     '''
 
     if project_dir is None:
@@ -473,8 +490,11 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
     # make treefile (if necessary)
     if tree_file is None:
-        tree_file = os.path.abspath(os.path.join(project_dir, '{}.nw'.format(name)))
-        fasttree(aln_file, tree_file, is_aa=aa, quiet=quiet)
+        if tree_engine == 'fasttree':
+            tree_file = os.path.abspath(os.path.join(project_dir, '{}.nw'.format(name)))
+            fasttree(aln_file, tree_file, is_aa=aa, quiet=quiet)
+        if tree_engine == 'iqtree':
+            iqtree(aln_file, quiet=quiet)
 
     # make phylogeny
     do_print = False if quiet else True
