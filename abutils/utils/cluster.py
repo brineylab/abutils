@@ -223,74 +223,74 @@ def vsearch_clusterfast(fasta_file, threshold=0.975, temp_dir='/tmp',
 
 
 
-# def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir='/tmp', debug=False):
-#     # preflight
-#     fasta_file = os.path.abspath(fasta_file)
-#     temp_dir = os.path.join(temp_dir, 'mmseqs')
-#     make_dir(temp_dir)
-#     mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#     mmseqs_bin = os.path.join(mod_dir, 'bin/mmseqs_{}'.format(platform.system().lower()))
+def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir='/tmp', debug=False):
+    # preflight
+    fasta_file = os.path.abspath(fasta_file)
+    temp_dir = os.path.join(temp_dir, 'mmseqs')
+    make_dir(temp_dir)
+    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    mmseqs_bin = os.path.join(mod_dir, 'bin/mmseqs_{}'.format(platform.system().lower()))
 
-#     # create the sequence DB
-#     db_file = os.path.join(temp_dir, 'DB')
-#     db_cmd = '{} createdb {} {}'.format(mmseqs_bin, fasta_file, db_file)
-#     p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-#     stdout, stderr = p.communicate()
-#     if debug:
-#         if sys.version_info[0] > 2:
-#             stdout = stdout.decode('utf-8')
-#             stderr = stderr.decode('utf-8')
-#         print('STDOUT:', stdout)
-#         print('')
-#         print('STDERR:', stderr)
+    # create the sequence DB
+    db_file = os.path.join(temp_dir, 'DB')
+    db_cmd = '{} createdb {} {}'.format(mmseqs_bin, fasta_file, db_file)
+    p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if debug:
+        if sys.version_info[0] > 2:
+            stdout = stdout.decode('utf-8')
+            stderr = stderr.decode('utf-8')
+        print('STDOUT:', stdout)
+        print('')
+        print('STDERR:', stderr)
 
-#     # do the clustering
-#     clu_file = os.path.join(temp_dir, 'CLU')
-#     cluster_cmd = '{} cluster {} {} {} --min-seq-id {}'.format(mmseqs_bin, db_file, clu_file, temp_dir, min_seq_id)
-#     p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-#     stdout, stderr = p.communicate()
-#     if debug:
-#         if sys.version_info[0] > 2:
-#             stdout = stdout.decode('utf-8')
-#             stderr = stderr.decode('utf-8')
-#         print('STDOUT:', stdout)
-#         print('')
-#         print('STDERR:', stderr)
+    # do the clustering
+    clu_file = os.path.join(temp_dir, 'CLU')
+    cluster_cmd = '{} cluster {} {} {} --min-seq-id {}'.format(mmseqs_bin, db_file, clu_file, temp_dir, min_seq_id)
+    p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if debug:
+        if sys.version_info[0] > 2:
+            stdout = stdout.decode('utf-8')
+            stderr = stderr.decode('utf-8')
+        print('STDOUT:', stdout)
+        print('')
+        print('STDERR:', stderr)
 
-#     # generate TSV-formatted output
-#     tsv_file = os.path.join(temp_dir, 'CLU.tsv')
-#     tsv_cmd = '{0} createtsv {1} {1} {2} {3}'.format(mmseqs_bin, db_file, clu_file, tsv_file)
-#     p = sp.Popen(tsv_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-#     stdout, stderr = p.communicate()
-#     if debug:
-#         if sys.version_info[0] > 2:
-#             stdout = stdout.decode('utf-8')
-#             stderr = stderr.decode('utf-8')
-#         print('STDOUT:', stdout)
-#         print('')
-#         print('STDERR:', stderr)
+    # generate TSV-formatted output
+    tsv_file = os.path.join(temp_dir, 'CLU.tsv')
+    tsv_cmd = '{0} createtsv {1} {1} {2} {3}'.format(mmseqs_bin, db_file, clu_file, tsv_file)
+    p = sp.Popen(tsv_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if debug:
+        if sys.version_info[0] > 2:
+            stdout = stdout.decode('utf-8')
+            stderr = stderr.decode('utf-8')
+        print('STDOUT:', stdout)
+        print('')
+        print('STDERR:', stderr)
 
-#     # parse TSV output
-#     clu_names = {}
-#     clu_seqs = {}
-#     with open(tsv_file) as f:
-#         for line in f:
-#             line = line.strip()
-#             if line.startswith('#'):
-#                 continue
-#             c, s = line.split()
-#             if c not in clu_names:
-#                 cname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
-#                 clu_names[c] = cname
-#             clu_name = clu_names[c]
-#             if clu_name not in clu_seqs:
-#                 clu_seqs[clu_name] = {'centroid': c, 'seq_ids': []}
-#             clu_seqs[clu_name]['seq_ids'].append(s)
+    # parse TSV output
+    clu_names = {}
+    clu_seqs = {}
+    with open(tsv_file) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('#'):
+                continue
+            c, s = line.split()
+            if c not in clu_names:
+                cname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+                clu_names[c] = cname
+            clu_name = clu_names[c]
+            if clu_name not in clu_seqs:
+                clu_seqs[clu_name] = {'centroid': c, 'seq_ids': []}
+            clu_seqs[clu_name]['seq_ids'].append(s)
 
-#     # clean up
-#     if not debug:
-#         shutil.rmtree(temp_dir)
-#     return clu_seqs
+    # clean up
+    if not debug:
+        shutil.rmtree(temp_dir)
+    return clu_seqs
 
 
 
