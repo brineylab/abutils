@@ -35,6 +35,7 @@ from Bio.Seq import Seq
 from .sequence import Sequence
 from ..utils import germlines
 from ..utils.alignment import global_alignment
+from ..utils.utilities import nested_dict_lookup
 
 
 if sys.version_info[0] > 2:
@@ -91,12 +92,20 @@ class Pair(object):
     @property
     def receptor(self):
         if self._receptor is None:
-            if all([s['chain'] in ['heavy', 'kappa', 'lambda'] for s in self._seqs]):
-                self._receptor = 'bcr'
-            elif all([s['chain'] in ['alpha', 'beta', 'delta', 'gamma'] for s in self._seqs]):
-                self._receptor = 'tcr'
-            else:
-                self._receptor = 'unknown'
+            if all([s['chain'] is not None for s in self._seqs]):
+                if all([s['chain'] in ['heavy', 'kappa', 'lambda'] for s in self._seqs]):
+                    self._receptor = 'bcr'
+                elif all([s['chain'] in ['alpha', 'beta', 'delta', 'gamma'] for s in self._seqs]):
+                    self._receptor = 'tcr'
+                else:
+                    self._receptor = 'unknown'
+            elif all([s['locus'] is not None for s in self._seqs]):
+                if all([s['locus'].lower() in ['igh', 'igk', 'igl'] for s in self._seqs]):
+                    self._receptor = 'bcr'
+                elif all([s['locus'].lower() in ['tra', 'trb', 'trd', 'trg'] for s in self._seqs]):
+                    self._receptor = 'tcr'
+                else:
+                    self._receptor = 'unknown'
         return self._receptor
 
     @receptor.setter
@@ -310,73 +319,73 @@ class Pair(object):
     def name(self, name):
         self._name = name
 
-    @property
-    def sample(self):
-        if self._sample is None:
-            slist = []
-            if self.experiment is not None:
-                slist.append(str(self.experiment))
-            if self.group is not None:
-                slist.append(str(self.group))
-            if self.subject is not None:
-                slist.append(str(self.subject))
-            if self.timepoint is not None:
-                slist.append(str(self.timepoint))
-            if slist:
-                self._sample = '|'.join(slist)
-        return self._sample
+    # @property
+    # def sample(self):
+    #     if self._sample is None:
+    #         slist = []
+    #         if self.experiment is not None:
+    #             slist.append(str(self.experiment))
+    #         if self.group is not None:
+    #             slist.append(str(self.group))
+    #         if self.subject is not None:
+    #             slist.append(str(self.subject))
+    #         if self.timepoint is not None:
+    #             slist.append(str(self.timepoint))
+    #         if slist:
+    #             self._sample = '|'.join(slist)
+    #     return self._sample
 
-    @property
-    def subject(self):
-        if self._subject is None:
-            if self.heavy is not None and 'subject' in self.heavy.keys():
-                self._subject = self.heavy['subject']
-            elif self.light is not None and 'subject' in self.light.keys():
-                self._subject = self.light['subject']
-        return self._subject
+    # @property
+    # def subject(self):
+    #     if self._subject is None:
+    #         if self.heavy is not None and 'subject' in self.heavy.keys():
+    #             self._subject = self.heavy['subject']
+    #         elif self.light is not None and 'subject' in self.light.keys():
+    #             self._subject = self.light['subject']
+    #     return self._subject
 
-    @subject.setter
-    def subject(self, subject):
-        self._subject = subject
+    # @subject.setter
+    # def subject(self, subject):
+    #     self._subject = subject
 
-    @property
-    def group(self):
-        if self._group is None:
-            if self.heavy is not None and 'group' in self.heavy.keys():
-                self._group = self.heavy['group']
-            elif self.light is not None and 'group' in self.light.keys():
-                self._group = self.light['group']
-        return self._group
+    # @property
+    # def group(self):
+    #     if self._group is None:
+    #         if self.heavy is not None and 'group' in self.heavy.keys():
+    #             self._group = self.heavy['group']
+    #         elif self.light is not None and 'group' in self.light.keys():
+    #             self._group = self.light['group']
+    #     return self._group
 
-    @group.setter
-    def group(self, group):
-        self._group = group
+    # @group.setter
+    # def group(self, group):
+    #     self._group = group
 
-    @property
-    def experiment(self):
-        if self._experiment is None:
-            if self.heavy is not None and 'experiment' in self.heavy.keys():
-                self._experiment = self.heavy['experiment']
-            elif self.light is not None and 'experiment' in self.light.keys():
-                self._experiment = self.light['experiment']
-        return self._experiment
+    # @property
+    # def experiment(self):
+    #     if self._experiment is None:
+    #         if self.heavy is not None and 'experiment' in self.heavy.keys():
+    #             self._experiment = self.heavy['experiment']
+    #         elif self.light is not None and 'experiment' in self.light.keys():
+    #             self._experiment = self.light['experiment']
+    #     return self._experiment
 
-    @experiment.setter
-    def experiment(self, experiment):
-        self._experiment = experiment
+    # @experiment.setter
+    # def experiment(self, experiment):
+    #     self._experiment = experiment
 
-    @property
-    def timepoint(self):
-        if self._timepoint is None:
-            if self.heavy is not None and 'timepoint' in self.heavy.keys():
-                self._timepoint = self.heavy['timepoint']
-            elif self.light is not None and 'timepoint' in self.light.keys():
-                self._timepoint = self.light['timepoint']
-        return self._timepoint
+    # @property
+    # def timepoint(self):
+    #     if self._timepoint is None:
+    #         if self.heavy is not None and 'timepoint' in self.heavy.keys():
+    #             self._timepoint = self.heavy['timepoint']
+    #         elif self.light is not None and 'timepoint' in self.light.keys():
+    #             self._timepoint = self.light['timepoint']
+    #     return self._timepoint
 
-    @timepoint.setter
-    def timepoint(self, timepoint):
-        self._timepoint = timepoint
+    # @timepoint.setter
+    # def timepoint(self, timepoint):
+    #     self._timepoint = timepoint
 
 
     # def refine(self, heavy=True, light=True, species='human'):
@@ -475,6 +484,60 @@ class Pair(object):
                 c = '_{}'.format(chain) if append_chain else ''
                 fastas.append('>{}{}\n{}'.format(s[name_field], c, s[sequence_field]))
         return '\n'.join(fastas)
+
+
+    def summarize(self, annotation_format='airr'):
+        try:
+            if annotation_format == 'airr':
+                v_key = 'v_gene'
+                d_key = 'd_gene'
+                j_key = 'j_gene'
+                junc_key = 'junction_aa'
+                vident_key = 'v_identity'
+                isotype_key = 'isotype'
+            elif annotation_format == 'json':
+                v_key = 'v_gene.gene'
+                d_key = 'd_gene.gene'
+                j_key = 'j_gene.gene'
+                junc_key = 'junc_aa'
+                vident_key = 'nt_identity.v'
+                isotype_key = 'isotype'
+            vline = ''
+            dline = ''
+            jline = ''
+            juncline = ''
+            identline = ''
+            isotypeline = ''
+            if self.heavy is not None:
+                vline += nested_dict_lookup(self.heavy, v_key.split('.'))
+                dline += nested_dict_lookup(self.heavy, d_key.split('.'))
+                jline += nested_dict_lookup(self.heavy, j_key.split('.'))
+                juncline += nested_dict_lookup(self.heavy, junc_key.split('.'))
+                identline += nested_dict_lookup(self.heavy, vident_key.split('.'))
+                isotypeline += nested_dict_lookup(self.heavy, isotype_key.split('.'))
+            pad = max([len(l) for l in [vline, dline, jline, juncline, identline, isotypeline]]) + 4
+            vline += ' ' * (pad - len(vline))
+            dline += ' ' * (pad - len(dline))
+            jline += ' ' * (pad - len(jline))
+            juncline += ' ' * (pad - len(juncline))
+            identline += ' ' * (pad - len(identline))
+            isotypeline += ' ' * (pad - len(isotypeline))
+            if self.light is not None:
+                vline += nested_dict_lookup(self.light, v_key.split('.'))
+                jline += nested_dict_lookup(self.light, j_key.split('.'))
+                juncline += nested_dict_lookup(self.light, junc_key.split('.'))
+                identline += nested_dict_lookup(self.light, vident_key.split('.'))
+            
+            header_len = max([len(l) for l in [vline, dline, jline, juncline, identline, isotypeline]])
+            header_spaces = int((header_len - len(self.name)) / 2)
+            print(f"{' ' * header_spaces}{self.name}")
+            print('-' * header_len)
+            for l in [vline, dline, jline, juncline, identline, isotypeline]:
+                print(l)
+            print('')
+        except:
+            return
+        
 
 
     def _chain_selector(self, seqs):
