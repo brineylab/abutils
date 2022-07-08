@@ -35,6 +35,8 @@ import uuid
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+import pandas as pd
+
 from ..utils.codons import codon_lookup
 from ..utils.utilities import nested_dict_lookup
 
@@ -416,17 +418,16 @@ def read_csv(csv_file, delimiter=',', match=None, fields=None, id_key='sequence_
         if sequence_key not in fields:
             fields.append(sequence_key)
     sequences = []
-    with open(csv_file, 'r') as f:
-        reader = csv.DictReader(f, delimiter=delimiter)
-        for r in reader:
-            try:
-                if all([nested_dict_lookup(j, k.split('.')) == v for k, v in match.items()]):
-                    if fields is not None:
-                        _fields = [f for f in fields if f in r]
-                        r = {f: r[f] for f in _fields}
-                    sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
-            except KeyError:
-                continue
+    df = pd.read_csv(csv_file, delimiter=delimiter)
+    for _, r in df.iterrows():
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
     return sequences
 
 
