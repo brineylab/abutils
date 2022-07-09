@@ -26,6 +26,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import colorsys
+import re
 from collections import Counter
 from copy import copy, deepcopy
 import itertools
@@ -81,12 +82,27 @@ def fasttree(alignment, tree_file, is_aa=False, quiet=True):
         ft_cmd = 'fasttree {} > {}'.format(alignment, tree_file)
     else:
         ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree_file)
-    ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    ft = sp.Popen(str(ft_cmd), stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
     stdout, stderr = ft.communicate()
     if not quiet:
         print(ft_cmd)
         print(stdout)
         print(stderr)
+    return tree_file
+
+
+def iqtree(alignment, quiet=True):
+    if quiet:
+        iqt_cmd = 'iqtree -s {} -m MFP -bb 1000 -nt AUTO -redo -asr -quiet'.format(alignment)
+    else:
+        iqt_cmd = 'iqtree -s {} -m MFP -bb 1000 -nt AUTO -redo -asr'.format(alignment)
+    iqt = sp.Popen(str(iqt_cmd), stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
+    stdout, stderr = iqt.communicate()
+    if not quiet:
+        print(iqt_cmd)
+        print(stdout)
+        print(stderr)
+    tree_file = os.path.splitext(alignment)[0] + '.treefile'
     return tree_file
 
 
@@ -166,14 +182,14 @@ def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
 
 
 def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
-        seq_field=None, name_field=None, aa=False, species='human', unrooted=False, ladderize=True,
-        root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
-        order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
-        scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
-        mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
-        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50, 
-        compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1.0,
-        delete_nodes=None, quiet=True):
+              seq_field=None, name_field=None, aa=False, species='human', unrooted=False, ladderize=True,
+              root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
+              order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
+              scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
+              mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
+              # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
+              compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1,
+              delete_nodes=None, circular=False, quiet=True, tree_engine='fasttree'):
     '''
     Generates a lineage phylogeny figure.
 
@@ -261,6 +277,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
         figname_suffix: by default, figures will be named <lineage_id>.pdf. If suffix='_suffix' and
             the lineage ID is 'ABC123', the figure file will be named 'ABC123_suffix.pdf'.
+
+        circular (bool): set this argument to True to switch to a circular representation of the tree.
+
+        tree_engine: allow changing from FastTree (default) to iqTree (to perform ancestor sequence reconstruction)
     '''
 
     if project_dir is None:
@@ -295,10 +315,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                 print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(name_field))
                 sys.exit(1)
             for s in sequences:
-                s.alignment_id = s[name_field]
+                s.alignment_id = re.sub('[;:]', '|', s[name_field])
         else:
             for s in sequences:
-                s.alignment_id = s.id
+                s.alignment_id = re.sub('[;:]', '|', s.id)
 
         # parse the root sequence
         if unrooted:
@@ -470,14 +490,21 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
     # make treefile (if necessary)
     if tree_file is None:
-        tree_file = os.path.abspath(os.path.join(project_dir, '{}.nw'.format(name)))
-        fasttree(aln_file, tree_file, is_aa=aa, quiet=quiet)
+        if tree_engine == 'fasttree':
+            tree_file = os.path.abspath(os.path.join(project_dir, '{}.nw'.format(name)))
+            fasttree(aln_file, tree_file, is_aa=aa, quiet=quiet)
+        if tree_engine == 'iqtree':
+            iqtree(aln_file, quiet=quiet)
 
     # make phylogeny
+    do_print = False if quiet else True
+    if do_print:
+        print("Making figure ...")
     prefix = '' if figname_prefix is None else figname_prefix
     suffix = '' if figname_suffix is None else figname_suffix
     fig_file = os.path.join(project_dir, '{}{}{}.pdf'.format(prefix, name, suffix))
-    _make_tree_figure(tree_file,
+    try:
+        _make_tree_figure(tree_file,
                       fig_file,
                       color_dict,
                       order_dict,
@@ -502,14 +529,23 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                       scale_factor=scale_factor,
                       linewidth=linewidth,
                       ladderize=ladderize,
-                      delete_nodes=delete_nodes)
+                      delete_nodes=delete_nodes,
+                      circular=circular,
+                      quiet=quiet)
+    except:
+        do_print = False if quiet else True
+        if do_print:
+            print("Something went wrong ...")
+        pass
 
 
-def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None,
-        fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
-        tree_orientation=0, min_order_fraction=0.1, show_root_name=False, chain=None,
-        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
-        compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True, delete_nodes=None):
+def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None, fontsize=12,
+                      show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False,
+                      label_colors=None, tree_orientation=0, min_order_fraction=0.1, show_root_name=False,
+                      circular=False, chain=None,
+                      # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
+                      compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True,
+                      delete_nodes=None, quiet=True):
     if delete_nodes is None:
         delete_nodes = []
     elif type(delete_nodes) in STR_TYPES:
@@ -519,7 +555,12 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     # if linked_alignment is not None:
     #     t = ete3.PhyloTree(tree, alignment=linked_alignment, alg_format='fasta')
     #     ete3.faces.SequenceItem = MySequenceItem
-    t = ete3.Tree(tree)
+    try:
+        t = ete3.Tree(tree)
+        if not quiet:
+            print("Tree build-up ok. Setting up figure parameters ...")
+    except:
+        print("Something went wrong with ete3 ...")
     if root_name is not None:
         t.set_outgroup(t&root_name)
     # style the nodes
@@ -554,6 +595,8 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         if show_names is True:
             tf = _build_node_text_face(node, color_node_labels, color, label_colors, fontsize, rename_function)
             node.add_face(tf, column=0)
+        elif show_names is False:
+            pass
         elif node.name in show_names:
             tf = _build_node_text_face(node, color_node_labels, color, label_colors, fontsize, rename_function)
             node.add_face(tf, column=0)
@@ -564,6 +607,10 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     #     ts.layout_fn = _phyloalignment_layout_function
     ts.orientation = tree_orientation
     ts.show_leaf_name = False
+    if circular:
+        ts.mode = "c"
+        ts.arc_start = 0  # 0 degrees = 3 o'clock
+        ts.arc_span = 360
     if scale is not None:
         ts.scale = int(scale)
     if branch_vert_margin is not None:
@@ -572,6 +619,7 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     if ladderize:
         t.ladderize()
     t.render(fig, tree_style=ts)
+    print("Successful!")
 
 
 def _build_node_text_face(node, color_node_labels, color, label_colors, fontsize, rename_function):
