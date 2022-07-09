@@ -420,6 +420,7 @@ def read_csv(csv_file, delimiter=',', match=None, fields=None, id_key='sequence_
     sequences = []
     df = pd.read_csv(csv_file, delimiter=delimiter)
     for _, r in df.iterrows():
+        r = r.to_dict()
         try:
             if all([r[k] == v for k, v in match.items()]):
                 if fields is not None:
