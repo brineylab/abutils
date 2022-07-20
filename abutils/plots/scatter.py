@@ -67,14 +67,20 @@ def scatter(
     hide_legend=False,
     xlabel=None,
     ylabel=None,
+    title=None,
+    title_fontsize=20,
+    title_fontweight='normal',
+    title_loc='center',
+    title_pad=None,
+    show_title=False,
     xlabel_fontsize=16,
     ylabel_fontsize=16,
     xtick_labelsize=14,
     ytick_labelsize=14,
     xtick_labelrotation=0,
     ytick_labelrotation=0,
-    cbar_width=35,
-    cbar_height=5,
+    cbar_width=0.35,
+    cbar_height=0.05,
     cbar_loc="lower right",
     cbar_orientation="horizontal",
     cbar_bbox_to_anchor=None,
@@ -83,6 +89,7 @@ def scatter(
     cbar_title_fontsize=12,
     hide_cbar=False,
     equal_axes=True,
+    ax=None,
     show=False,
     figsize=None,
     figfile=None,):
@@ -247,6 +254,9 @@ def scatter(
     equal_axes : bool, default=True
         If ```True```, the the limits of the x- and y-axis will be equal.
 
+    ax : mpl.axes.Axes, default=None
+        Pre-existing axes for the plot. If not provided, a new axes will be created.
+
     show :bool, default=False  
         If ``True``, plot is shown and the plot ``Axes`` object is not returned. Default
         is ``False``, which does not call ``pyplot.show()`` and returns the ``Axes`` object.
@@ -337,13 +347,14 @@ def scatter(
     plot_kwargs = default_plot_kwargs
     
     
-   # scatterplot
-    plt.figure(figsize=figsize)
-    ax = plt.gca()
+    # scatterplot
+    if ax is None:
+        plt.figure(figsize=figsize)
+        ax = plt.gca()
     if hue_order:
         for h in hue_order[::-1]:
             d = df[df[hue] == h]
-            plt.scatter(
+            ax.scatter(
                 d[x],
                 d[y],
                 c=d["color"],
@@ -354,7 +365,7 @@ def scatter(
                 **plot_kwargs,
             )
     else:
-        plt.scatter(
+        ax.scatter(
             df[x],
             df[y],
             c=df["color"],
@@ -399,32 +410,44 @@ def scatter(
     
     # colorbar
     elif not hide_cbar:
-        if cbar_bbox_to_anchor is None:
-            cbar_bbox_to_anchor = (0.01, 0.01, 0.925, 0.925)
-        cbax = inset_axes(
-            ax,
-            width=f"{cbar_width}%",
-            height=f"{cbar_height}%",
-            loc=cbar_loc,
-            bbox_to_anchor=cbar_bbox_to_anchor,
-            bbox_transform=ax.transAxes,
+        if cbar_orientation == 'horizontal':
+            width = max([cbar_width, cbar_height])
+            height = min([cbar_width, cbar_height])
+        else:
+            width = min([cbar_width, cbar_height])
+            height = max([cbar_width, cbar_height])
+        cbar_bounds = get_inset_axes_bounds(
+            cbar_loc,
+            cbar_bbox_to_anchor,
+            width,
+            height
         )
-        fig = plt.gcf()
+        cbax = ax.inset_axes(cbar_bounds)
+
         norm = mpl.colors.Normalize(vmin=min_hue, vmax=max_hue)
-        ticks = [round(t, 2) for t in np.linspace(min_hue, max_hue, num=4)]
-        fig.colorbar(
+        # ticks = [t for t in np.linspace(min_hue, max_hue, num=4)]
+        
+        cbar = plt.colorbar(
             mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
             cax=cbax,
             orientation=cbar_orientation,
-            ticks=ticks,
         )
         if cbar_orientation == "horizontal":
             ticks_position = "bottom" if cbar_flip_ticks else "top"
             cbax.xaxis.set_ticks_position(ticks_position)
+            cbax.xaxis.set_label_position(ticks_position)
+            cbar.ax.set_xlabel(
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+            )
         else:
             ticks_position = "left" if cbar_flip_ticks else "right"
             cbax.yaxis.set_ticks_position(ticks_position)
-        cbax.set_title(cbar_title, fontsize=cbar_title_fontsize, fontweight="medium")
+            cbax.yaxis.set_label_position(ticks_position)
+            cbar.ax.set_ylabel(
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+            )
 
     # style the plot
     ax.set_xlabel(xlabel if xlabel is not None else x, fontsize=xlabel_fontsize)
@@ -445,6 +468,15 @@ def scatter(
         axlim = [min([xlim[0], ylim[0]]), max([xlim[1], ylim[1]])]
         ax.set_xlim(axlim)
         ax.set_ylim(axlim)
+        
+    if show_title and title is not None:
+        ax.set_title(
+            title,
+            loc=title_loc,
+            pad=title_pad,
+            fontsize=title_fontsize,
+            fontweight=title_fontweight,
+        )
 
     # save, show or return the ax
     if figfile is not None:
@@ -454,3 +486,36 @@ def scatter(
         plt.show()
     else:
         return ax
+
+
+
+
+def get_inset_axes_bounds(loc, bbox_to_anchor, width, height):
+    if bbox_to_anchor is None:
+        loc_dict = {
+            'upper left': [0, 1-height],
+            'upper center': [0.5-width/2, 1-height],
+            'upper right': [1-width, 1-height],
+            'center left': [0, 0.5-height/2],
+            'center': [0.5-width/2, 0.5-height/2],
+            'center right': [1-width, 0.5-height/2],
+            'lower left': [0, 0],
+            'lower center': [0.5-width/2, 0],
+            'lower right': [1-width, 0]
+        }
+        x0, y0 = loc_dict.get(loc, [0, 0])
+    else:
+        x, y = bbox_to_anchor[:2]
+        loc_dict = {
+            'upper left': [x, y-height],
+            'upper center': [x-width/2, y-height],
+            'upper right': [x-width, y-height],
+            'center left': [x, y-height/2],
+            'center': [x-width/2, y-height/2],
+            'center right': [x-width, y-height/2],
+            'lower left': [x, y],
+            'lower center': [x-width/2, y],
+            'lower right': [x-width, y]
+        }
+        x0, y0 = loc_dict.get(loc, [0, 0])
+    return [x0, y0, width, height]
