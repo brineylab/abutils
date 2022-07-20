@@ -128,7 +128,7 @@ def bar(
         Alternate color for the bar plot. Used to color categories not provided in `palette` 
         or to color categories not present in `highlight`.  
 
-    orientation : str
+    orientation : str, optional
         Orientation of the plot. Options are ``'vertical'`` or ``'horizontal'``. Default is 
         ``'vertical'``.
         
@@ -341,7 +341,13 @@ def bar(
 
     # legend
     if len(hue_batches) > 1 and not hide_legend:
-        ax.legend(**legend_kwargs)
+        if orientation == 'horizontal':
+            leg_kwargs = {'loc': 'center left', 
+                          'bbox_to_anchor': [1.01, 0.5]}
+            leg_kwargs.update(legend_kwargs)
+        else:
+            leg_kwargs = legend_kwargs
+        ax.legend(**leg_kwargs)
     if hide_legend or palette is None:
         ax.get_legend().remove()
 
