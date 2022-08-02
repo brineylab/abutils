@@ -310,8 +310,6 @@ def scatter(
                 cmap = sns.color_palette("flare", as_cmap=True)
             else:
                 cmap = plt.get_cmap(cmap)
-            max_hue = df[hue].max()
-            min_hue = df[hue].min()
             df["color"] = [cmap((h - min_hue) / (max_hue - min_hue)) for h in df[hue]]
         else:
             if hue_order is None:
@@ -424,6 +422,8 @@ def scatter(
         )
         cbax = ax.inset_axes(cbar_bounds)
 
+        max_hue = np.ceil(df[hue].max())
+        min_hue = max(0, df[hue].min())
         norm = mpl.colors.Normalize(vmin=min_hue, vmax=max_hue)
         # ticks = [t for t in np.linspace(min_hue, max_hue, num=4)]
         
