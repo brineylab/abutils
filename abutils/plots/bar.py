@@ -249,6 +249,7 @@ def bar(
                     y_dict[_x] += float(_y)
                 else:
                     y_dict[_x] = float(_y)
+            batch_data.append(y_dict)
         else:
             y_dict = Counter(batch[x])
             batch_data.append(y_dict)
