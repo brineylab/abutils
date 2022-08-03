@@ -310,6 +310,8 @@ def scatter(
                 cmap = sns.color_palette("flare", as_cmap=True)
             else:
                 cmap = plt.get_cmap(cmap)
+            min_hue = max(0, df[hue].min())
+            max_hue = np.ceil(df[hue].max())
             df["color"] = [cmap((h - min_hue) / (max_hue - min_hue)) for h in df[hue]]
         else:
             if hue_order is None:
