@@ -32,19 +32,21 @@ import time
 from . import progbar
 
 
-def monitor_mp_jobs(results, start_time=None, completion_string='\n'):
+def monitor_mp_jobs(results, start_time=None, completion_string='\n', print_progress=True):
     finished = 0
     jobs = len(results)
     while finished < jobs:
         time.sleep(1)
         ready = [ar for ar in results if ar.ready()]
         finished = len(ready)
-        progbar.progress_bar(finished, jobs, start_time=start_time)
-    progbar.progress_bar(finished, jobs, start_time=start_time,
-                         complete=True, completion_string=completion_string)
+        if print_progress:
+            progbar.progress_bar(finished, jobs, start_time=start_time)
+    if print_progress:
+        progbar.progress_bar(finished, jobs, start_time=start_time,
+                             complete=True, completion_string=completion_string)
 
 
-def monitor_celery_jobs(results, start_time=None, completion_string='\n'):
+def monitor_celery_jobs(results, start_time=None, completion_string='\n', print_progress=True):
     finished = 0
     jobs = len(results)
     while finished < jobs:
@@ -52,9 +54,11 @@ def monitor_celery_jobs(results, start_time=None, completion_string='\n'):
         succeeded = [ar for ar in results if ar.successful()]
         failed = [ar for ar in results if ar.failed()]
         finished = len(succeeded) + len(failed)
-        progbar.progress_bar(finished, jobs, start_time=start_time)
-    progbar.progress_bar(finished, jobs, start_time=start_time,
-                         complete=True, completion_string=completion_string)
+        if print_progress:
+            progbar.progress_bar(finished, jobs, start_time=start_time)
+    if print_progress:
+        progbar.progress_bar(finished, jobs, start_time=start_time,
+                             complete=True, completion_string=completion_string)
 
 
 @contextmanager
