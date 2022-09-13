@@ -289,7 +289,7 @@ def bar(
                 else:
                     _colors.append(alt_color)
             else:
-                _colors.append(palette.get(_hue, palette.get(_x, alt_color)))
+                _colors.append(palette.get(_hue, palette.get(_x, color)))
         colors.append(_colors)
             
     # plot kwargs
