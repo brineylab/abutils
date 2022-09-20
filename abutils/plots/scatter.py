@@ -40,14 +40,13 @@ from natsort import natsorted
 from abutils.utils.color import get_cmap
 
 
-
 def scatter(
     x=None,
-    y=None, 
-    hue=None, 
+    y=None,
+    hue=None,
     marker="o",
     data=None,
-    hue_order=None, 
+    hue_order=None,
     force_categorical_hue=False,
     palette=None,
     color=None,
@@ -61,7 +60,7 @@ def scatter(
     highlight_size=90,
     highlight_color="k",
     highlight_name=None,
-    highlight_alpha=0.9,  
+    highlight_alpha=0.9,
     plot_kwargs=None,
     legend_kwargs=None,
     hide_legend=False,
@@ -69,8 +68,8 @@ def scatter(
     ylabel=None,
     title=None,
     title_fontsize=20,
-    title_fontweight='normal',
-    title_loc='center',
+    title_fontweight="normal",
+    title_loc="center",
     title_pad=None,
     show_title=False,
     xlabel_fontsize=16,
@@ -92,8 +91,9 @@ def scatter(
     ax=None,
     show=False,
     figsize=None,
-    figfile=None,):
-    '''
+    figfile=None,
+):
+    """
     Produces a scatter plot.
 
     Parameters
@@ -281,25 +281,25 @@ def scatter(
     .. _any valid inset_axes() location: 
         https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.axes_grid1.inset_locator.inset_axes.html
         
-    '''
+    """
     # process input data
     if data is None:
         _data = {}
-        _data['x'] = x
-        x = 'x'
-        _data['y'] = y
-        y = 'y'
+        _data["x"] = x
+        x = "x"
+        _data["y"] = y
+        y = "y"
         if hue is not None:
-            _data['hue'] = hue
-            hue = 'hue'
+            _data["hue"] = hue
+            hue = "hue"
         df = pd.DataFrame(_data)
     else:
         df = data.copy()
-    
+
     # figure size
     if figsize is None:
         figsize = [6, 6]
-        
+
     # hue and color
     continuous_hue = False
     if hue is not None:
@@ -317,7 +317,7 @@ def scatter(
             if hue_order is None:
                 hue_order = natsorted(list(set(df[hue])))
             if palette is not None:
-                missing_color = color if color is not None else 'lightgrey'
+                missing_color = color if color is not None else "lightgrey"
                 hue_dict = {h: palette.get(h, missing_color) for h in hue_order}
             else:
                 n_colors = max(1, len(hue_order))
@@ -335,18 +335,16 @@ def scatter(
             df["color"] = [color] * df.shape[0]
         else:
             df["color"] = [sns.color_palette()[0]] * df.shape[0]
-            
+
     # markers
     # TODO
-    
-            
+
     # plot kwargs
-    default_plot_kwargs = {'linewidths': 0}
+    default_plot_kwargs = {"linewidths": 0}
     if plot_kwargs is not None:
         default_plot_kwargs.update(plot_kwargs)
     plot_kwargs = default_plot_kwargs
-    
-    
+
     # scatterplot
     if ax is None:
         plt.figure(figsize=figsize)
@@ -398,7 +396,7 @@ def scatter(
             marker=highlight_marker,
             label=highlight_name,
         )
-    
+
     # legend
     if not continuous_hue:
         if hue is not None and not hide_legend:
@@ -407,20 +405,17 @@ def scatter(
                 default_legend_kwargs.update(legend_kwargs)
             legend_kwargs = default_legend_kwargs
             ax.legend(**legend_kwargs)
-    
+
     # colorbar
     elif not hide_cbar:
-        if cbar_orientation == 'horizontal':
+        if cbar_orientation == "horizontal":
             width = max([cbar_width, cbar_height])
             height = min([cbar_width, cbar_height])
         else:
             width = min([cbar_width, cbar_height])
             height = max([cbar_width, cbar_height])
         cbar_bounds = get_inset_axes_bounds(
-            cbar_loc,
-            cbar_bbox_to_anchor,
-            width,
-            height
+            cbar_loc, cbar_bbox_to_anchor, width, height
         )
         cbax = ax.inset_axes(cbar_bounds)
 
@@ -428,7 +423,7 @@ def scatter(
         min_hue = max(0, df[hue].min())
         norm = mpl.colors.Normalize(vmin=min_hue, vmax=max_hue)
         # ticks = [t for t in np.linspace(min_hue, max_hue, num=4)]
-        
+
         cbar = plt.colorbar(
             mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
             cax=cbax,
@@ -439,16 +434,14 @@ def scatter(
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(ticks_position)
             cbar.ax.set_xlabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
+                cbar_title, fontsize=cbar_title_fontsize,
             )
         else:
             ticks_position = "left" if cbar_flip_ticks else "right"
             cbax.yaxis.set_ticks_position(ticks_position)
             cbax.yaxis.set_label_position(ticks_position)
             cbar.ax.set_ylabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
+                cbar_title, fontsize=cbar_title_fontsize,
             )
 
     # style the plot
@@ -457,7 +450,9 @@ def scatter(
     ax.tick_params(
         axis="x", labelsize=xtick_labelsize, labelrotation=xtick_labelrotation
     )
-    ax.tick_params(axis="y", labelsize=ytick_labelsize, labelrotation=ytick_labelrotation)
+    ax.tick_params(
+        axis="y", labelsize=ytick_labelsize, labelrotation=ytick_labelrotation
+    )
 
     for spine in ["right", "top"]:
         ax.spines[spine].set_visible(False)
@@ -470,7 +465,7 @@ def scatter(
         axlim = [min([xlim[0], ylim[0]]), max([xlim[1], ylim[1]])]
         ax.set_xlim(axlim)
         ax.set_ylim(axlim)
-        
+
     if show_title and title is not None:
         ax.set_title(
             title,
@@ -490,34 +485,32 @@ def scatter(
         return ax
 
 
-
-
 def get_inset_axes_bounds(loc, bbox_to_anchor, width, height):
     if bbox_to_anchor is None:
         loc_dict = {
-            'upper left': [0, 1-height],
-            'upper center': [0.5-width/2, 1-height],
-            'upper right': [1-width, 1-height],
-            'center left': [0, 0.5-height/2],
-            'center': [0.5-width/2, 0.5-height/2],
-            'center right': [1-width, 0.5-height/2],
-            'lower left': [0, 0],
-            'lower center': [0.5-width/2, 0],
-            'lower right': [1-width, 0]
+            "upper left": [0, 1 - height],
+            "upper center": [0.5 - width / 2, 1 - height],
+            "upper right": [1 - width, 1 - height],
+            "center left": [0, 0.5 - height / 2],
+            "center": [0.5 - width / 2, 0.5 - height / 2],
+            "center right": [1 - width, 0.5 - height / 2],
+            "lower left": [0, 0],
+            "lower center": [0.5 - width / 2, 0],
+            "lower right": [1 - width, 0],
         }
         x0, y0 = loc_dict.get(loc, [0, 0])
     else:
         x, y = bbox_to_anchor[:2]
         loc_dict = {
-            'upper left': [x, y-height],
-            'upper center': [x-width/2, y-height],
-            'upper right': [x-width, y-height],
-            'center left': [x, y-height/2],
-            'center': [x-width/2, y-height/2],
-            'center right': [x-width, y-height/2],
-            'lower left': [x, y],
-            'lower center': [x-width/2, y],
-            'lower right': [x-width, y]
+            "upper left": [x, y - height],
+            "upper center": [x - width / 2, y - height],
+            "upper right": [x - width, y - height],
+            "center left": [x, y - height / 2],
+            "center": [x - width / 2, y - height / 2],
+            "center right": [x - width, y - height / 2],
+            "lower left": [x, y],
+            "lower center": [x - width / 2, y],
+            "lower right": [x - width, y],
         }
         x0, y0 = loc_dict.get(loc, [0, 0])
     return [x0, y0, width, height]

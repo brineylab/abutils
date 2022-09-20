@@ -27,7 +27,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 
 def lazy_property(func):
-    '''
+    """
     Wraps a property to provide lazy evaluation. Eliminates boilerplate.
     Also provides for setting and deleting the property.
 
@@ -85,8 +85,8 @@ def lazy_property(func):
             del c.lazy_property
             new_prop = c.lazy_property
             new_prop == prop  # FALSE
-    '''
-    attr_name = '_lazy_' + func.__name__
+    """
+    attr_name = "_lazy_" + func.__name__
 
     @property
     def _lazy_property(self):
@@ -107,13 +107,15 @@ def lazy_property(func):
 
 
 def coroutine(func):
-    '''
+    """
     Initializes a coroutine -- essentially it just takes a
     generator function and calls generator.next() to get
     things going.
-    '''
+    """
+
     def start(*args, **kwargs):
         cr = func(*args, **kwargs)
         cr.next()
         return cr
+
     return start

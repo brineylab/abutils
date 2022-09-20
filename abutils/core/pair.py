@@ -39,19 +39,22 @@ from ..utils.utilities import nested_dict_lookup
 
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [str, ]
+    STR_TYPES = [
+        str,
+    ]
 else:
     STR_TYPES = [str, unicode]
 
 
 class Pair(object):
-    '''
+    """
     Holds a pair of sequences, corresponding to HC and LC of a single mAb.
 
     Input is a list of dicts, with each dict containing sequence information from a single
     chain, formatted as would be returned from a query on a MongoDB database containing
     AbStar output.
-    '''
+    """
+
     def __init__(self, seqs, name=None, chain_selection_func=None):
         self._seqs = seqs
         self._receptor = None
@@ -76,8 +79,11 @@ class Pair(object):
         self._timepoint = None
         self._is_pair = None
         self._lineage = None
-        self._select_chain = chain_selection_func if chain_selection_func is not None else self._chain_selector
-
+        self._select_chain = (
+            chain_selection_func
+            if chain_selection_func is not None
+            else self._chain_selector
+        )
 
     def __eq__(self, other):
         return (self.heavy, self.light) == (other.heavy, other.light)
@@ -87,31 +93,43 @@ class Pair(object):
 
     def __hash__(self):
         return hash((self.heavy, self.light))
-        
 
     @property
     def receptor(self):
         if self._receptor is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                if all([s['chain'] in ['heavy', 'kappa', 'lambda'] for s in self._seqs]):
-                    self._receptor = 'bcr'
-                elif all([s['chain'] in ['alpha', 'beta', 'delta', 'gamma'] for s in self._seqs]):
-                    self._receptor = 'tcr'
+            if all([s["chain"] is not None for s in self._seqs]):
+                if all(
+                    [s["chain"] in ["heavy", "kappa", "lambda"] for s in self._seqs]
+                ):
+                    self._receptor = "bcr"
+                elif all(
+                    [
+                        s["chain"] in ["alpha", "beta", "delta", "gamma"]
+                        for s in self._seqs
+                    ]
+                ):
+                    self._receptor = "tcr"
                 else:
-                    self._receptor = 'unknown'
-            elif all([s['locus'] is not None for s in self._seqs]):
-                if all([s['locus'].lower() in ['igh', 'igk', 'igl'] for s in self._seqs]):
-                    self._receptor = 'bcr'
-                elif all([s['locus'].lower() in ['tra', 'trb', 'trd', 'trg'] for s in self._seqs]):
-                    self._receptor = 'tcr'
+                    self._receptor = "unknown"
+            elif all([s["locus"] is not None for s in self._seqs]):
+                if all(
+                    [s["locus"].lower() in ["igh", "igk", "igl"] for s in self._seqs]
+                ):
+                    self._receptor = "bcr"
+                elif all(
+                    [
+                        s["locus"].lower() in ["tra", "trb", "trd", "trg"]
+                        for s in self._seqs
+                    ]
+                ):
+                    self._receptor = "tcr"
                 else:
-                    self._receptor = 'unknown'
+                    self._receptor = "unknown"
         return self._receptor
 
     @receptor.setter
     def receptor(self, receptor):
         self._receptor = receptor
-
 
     @property
     def heavy(self):
@@ -133,7 +151,6 @@ class Pair(object):
     def light(self, light):
         self._light = light
 
-
     @property
     def alpha(self):
         if self._alpha is None:
@@ -144,7 +161,6 @@ class Pair(object):
     def alpha(self, alpha):
         self._alpha = alpha
 
-    
     @property
     def beta(self):
         if self._beta is None:
@@ -155,7 +171,6 @@ class Pair(object):
     def beta(self, beta):
         self._beta = beta
 
-    
     @property
     def delta(self):
         if self._delta is None:
@@ -165,7 +180,6 @@ class Pair(object):
     @delta.setter
     def delta(self, delta):
         self._delta = delta
-
 
     @property
     def gamma(self):
@@ -177,59 +191,60 @@ class Pair(object):
     def gamma(self, gamma):
         self._gamma = gamma
 
-    
     @property
     def heavies(self):
         if self._heavies is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                self._heavies = [s for s in self._seqs if s['chain'] == 'heavy']
-            elif all([s['locus'] is not None for s in self._seqs]):
-                self._heavies = [s for s in self._seqs if s['locus'] == 'IGH']
+            if all([s["chain"] is not None for s in self._seqs]):
+                self._heavies = [s for s in self._seqs if s["chain"] == "heavy"]
+            elif all([s["locus"] is not None for s in self._seqs]):
+                self._heavies = [s for s in self._seqs if s["locus"] == "IGH"]
         return self._heavies
-    
+
     @property
     def lights(self):
         if self._lights is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                self._lights = [s for s in self._seqs if s['chain'] in ['kappa', 'lambda']]
-            elif all([s['locus'] is not None for s in self._seqs]):
-                self._lights = [s for s in self._seqs if s['locus'] in ['IGK', 'IGL']]
+            if all([s["chain"] is not None for s in self._seqs]):
+                self._lights = [
+                    s for s in self._seqs if s["chain"] in ["kappa", "lambda"]
+                ]
+            elif all([s["locus"] is not None for s in self._seqs]):
+                self._lights = [s for s in self._seqs if s["locus"] in ["IGK", "IGL"]]
         return self._lights
-    
+
     @property
     def alphas(self):
         if self._alphas is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                self._alphas = [s for s in self._seqs if s['chain'] == 'alpha']
-            elif all([s['locus'] is not None for s in self._seqs]):
-                self._alphas = [s for s in self._seqs if s['locus'] == 'TRA']
+            if all([s["chain"] is not None for s in self._seqs]):
+                self._alphas = [s for s in self._seqs if s["chain"] == "alpha"]
+            elif all([s["locus"] is not None for s in self._seqs]):
+                self._alphas = [s for s in self._seqs if s["locus"] == "TRA"]
         return self._alphas
 
     @property
     def betas(self):
         if self._betas is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                self._betas = [s for s in self._seqs if s['chain'] == 'beta']
-            elif all([s['locus'] is not None for s in self._seqs]):
-                self._betas = [s for s in self._seqs if s['locus'] == 'TRB']
+            if all([s["chain"] is not None for s in self._seqs]):
+                self._betas = [s for s in self._seqs if s["chain"] == "beta"]
+            elif all([s["locus"] is not None for s in self._seqs]):
+                self._betas = [s for s in self._seqs if s["locus"] == "TRB"]
         return self._betas
 
     @property
     def deltas(self):
         if self._deltas is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                self._deltas = [s for s in self._seqs if s['chain'] == 'delta']
-            elif all([s['locus'] is not None for s in self._seqs]):
-                self._deltas = [s for s in self._seqs if s['locus'] == 'TRD']
+            if all([s["chain"] is not None for s in self._seqs]):
+                self._deltas = [s for s in self._seqs if s["chain"] == "delta"]
+            elif all([s["locus"] is not None for s in self._seqs]):
+                self._deltas = [s for s in self._seqs if s["locus"] == "TRD"]
         return self._deltas
 
     @property
     def gammas(self):
         if self._gammas is None:
-            if all([s['chain'] is not None for s in self._seqs]):
-                self._gammas = [s for s in self._seqs if s['chain'] == 'gamma']
-            elif all([s['locus'] is not None for s in self._seqs]):
-                self._gammas = [s for s in self._seqs if s['locus'] == 'TRG']
+            if all([s["chain"] is not None for s in self._seqs]):
+                self._gammas = [s for s in self._seqs if s["chain"] == "gamma"]
+            elif all([s["locus"] is not None for s in self._seqs]):
+                self._gammas = [s for s in self._seqs if s["locus"] == "TRG"]
         return self._gammas
 
     @property
@@ -245,8 +260,8 @@ class Pair(object):
     @property
     def lineage(self):
         if self._lineage is None:
-            if 'clonify' in self.heavy:
-                self._lineage = self.heavy['clonify']['id']
+            if "clonify" in self.heavy:
+                self._lineage = self.heavy["clonify"]["id"]
         return self._lineage
 
     # @property
@@ -294,22 +309,22 @@ class Pair(object):
             if self.heavy is not None:
                 try:
                     # abstar's JSON format
-                    self._name = self.heavy['seq_id']
+                    self._name = self.heavy["seq_id"]
                 except KeyError:
                     try:
                         # AIRR format
-                        self._name = self.heavy['sequence_id']
+                        self._name = self.heavy["sequence_id"]
                     except KeyError:
                         # unknown format
                         pass
             elif self.light is not None:
                 try:
                     # abstar's JSON format
-                    self._name = self.light['seq_id']
+                    self._name = self.light["seq_id"]
                 except KeyError:
                     try:
                         # AIRR format
-                        self._name = self.light['sequence_id']
+                        self._name = self.light["sequence_id"]
                     except KeyError:
                         # unknown format
                         pass
@@ -387,7 +402,6 @@ class Pair(object):
     # def timepoint(self, timepoint):
     #     self._timepoint = timepoint
 
-
     # def refine(self, heavy=True, light=True, species='human'):
     #     for seq in [s for s in [self.heavy, self.light] if s is not None]:
     #         try:
@@ -398,7 +412,6 @@ class Pair(object):
     #         except:
     #             print('REFINEMENT FAILED: {}, {} chain'.format(seq['seq_id'], seq['chain']))
     #             print(traceback.format_exception_only(*sys.exc_info()[:2]))
-
 
     # @staticmethod
     # def remove_ambigs(seq):
@@ -462,9 +475,10 @@ class Pair(object):
     #         seq['vdj_nt'] = seq['vdj_nt'][:-trunc]
     #     seq['vdj_aa'] = Seq(seq['vdj_nt']).translate()
 
-
-    def fasta(self, name_field='sequence_id', sequence_field='sequence', append_chain=True):
-        '''
+    def fasta(
+        self, name_field="sequence_id", sequence_field="sequence", append_chain=True
+    ):
+        """
         Returns the sequence pair as a fasta string. If the Pair object contains
         both heavy and light chain sequences, both will be returned as a single string.
 
@@ -477,87 +491,102 @@ class Pair(object):
 
         To just use the pair name (which will result in duplicate sequence names for Pair objects
         with both heavy and light chains), set <append_chain> to False.
-        '''
+        """
         fastas = []
-        for s, chain in [(self.heavy, 'heavy'), (self.light, 'light')]:
+        for s, chain in [(self.heavy, "heavy"), (self.light, "light")]:
             if s is not None:
-                c = '_{}'.format(chain) if append_chain else ''
-                fastas.append('>{}{}\n{}'.format(s[name_field], c, s[sequence_field]))
-        return '\n'.join(fastas)
+                c = "_{}".format(chain) if append_chain else ""
+                fastas.append(">{}{}\n{}".format(s[name_field], c, s[sequence_field]))
+        return "\n".join(fastas)
 
-
-    def summarize(self, annotation_format='airr'):
+    def summarize(self, annotation_format="airr"):
         try:
-            if annotation_format == 'airr':
-                v_key = 'v_gene'
-                d_key = 'd_gene'
-                j_key = 'j_gene'
-                junc_key = 'junction_aa'
-                vident_key = 'v_identity'
-                isotype_key = 'isotype'
-            elif annotation_format == 'json':
-                v_key = 'v_gene.gene'
-                d_key = 'd_gene.gene'
-                j_key = 'j_gene.gene'
-                junc_key = 'junc_aa'
-                vident_key = 'nt_identity.v'
-                isotype_key = 'isotype'
-            vline = ''
-            dline = ''
-            jline = ''
-            juncline = ''
-            identline = ''
-            isotypeline = ''
+            if annotation_format == "airr":
+                v_key = "v_gene"
+                d_key = "d_gene"
+                j_key = "j_gene"
+                junc_key = "junction_aa"
+                vident_key = "v_identity"
+                isotype_key = "isotype"
+            elif annotation_format == "json":
+                v_key = "v_gene.gene"
+                d_key = "d_gene.gene"
+                j_key = "j_gene.gene"
+                junc_key = "junc_aa"
+                vident_key = "nt_identity.v"
+                isotype_key = "isotype"
+            vline = ""
+            dline = ""
+            jline = ""
+            juncline = ""
+            identline = ""
+            isotypeline = ""
             if self.heavy is not None:
-                vline += nested_dict_lookup(self.heavy, v_key.split('.'))
-                dline += nested_dict_lookup(self.heavy, d_key.split('.'))
-                jline += nested_dict_lookup(self.heavy, j_key.split('.'))
-                juncline += nested_dict_lookup(self.heavy, junc_key.split('.'))
-                identline += nested_dict_lookup(self.heavy, vident_key.split('.'))
-                isotypeline += nested_dict_lookup(self.heavy, isotype_key.split('.'))
-            pad = max([len(l) for l in [vline, dline, jline, juncline, identline, isotypeline]]) + 4
-            vline += ' ' * (pad - len(vline))
-            dline += ' ' * (pad - len(dline))
-            jline += ' ' * (pad - len(jline))
-            juncline += ' ' * (pad - len(juncline))
-            identline += ' ' * (pad - len(identline))
-            isotypeline += ' ' * (pad - len(isotypeline))
+                vline += nested_dict_lookup(self.heavy, v_key.split("."))
+                dline += nested_dict_lookup(self.heavy, d_key.split("."))
+                jline += nested_dict_lookup(self.heavy, j_key.split("."))
+                juncline += nested_dict_lookup(self.heavy, junc_key.split("."))
+                identline += nested_dict_lookup(self.heavy, vident_key.split("."))
+                isotypeline += nested_dict_lookup(self.heavy, isotype_key.split("."))
+            pad = (
+                max(
+                    [
+                        len(l)
+                        for l in [vline, dline, jline, juncline, identline, isotypeline]
+                    ]
+                )
+                + 4
+            )
+            vline += " " * (pad - len(vline))
+            dline += " " * (pad - len(dline))
+            jline += " " * (pad - len(jline))
+            juncline += " " * (pad - len(juncline))
+            identline += " " * (pad - len(identline))
+            isotypeline += " " * (pad - len(isotypeline))
             if self.light is not None:
-                vline += nested_dict_lookup(self.light, v_key.split('.'))
-                jline += nested_dict_lookup(self.light, j_key.split('.'))
-                juncline += nested_dict_lookup(self.light, junc_key.split('.'))
-                identline += nested_dict_lookup(self.light, vident_key.split('.'))
-            
-            header_len = max([len(l) for l in [vline, dline, jline, juncline, identline, isotypeline]])
+                vline += nested_dict_lookup(self.light, v_key.split("."))
+                jline += nested_dict_lookup(self.light, j_key.split("."))
+                juncline += nested_dict_lookup(self.light, junc_key.split("."))
+                identline += nested_dict_lookup(self.light, vident_key.split("."))
+
+            header_len = max(
+                [
+                    len(l)
+                    for l in [vline, dline, jline, juncline, identline, isotypeline]
+                ]
+            )
             header_spaces = int((header_len - len(self.name)) / 2)
             print(f"{' ' * header_spaces}{self.name}")
-            print('-' * header_len)
+            print("-" * header_len)
             for l in [vline, dline, jline, juncline, identline, isotypeline]:
                 print(l)
-            print('')
+            print("")
         except:
             return
-        
-
 
     def _chain_selector(self, seqs):
         if len(seqs) == 0:
             return None
-        if all(['umis' in s for s in seqs]):
-            sorted_seqs = sorted(seqs, key=lambda x: x['umis'], reverse=True)
+        if all(["umis" in s for s in seqs]):
+            sorted_seqs = sorted(seqs, key=lambda x: x["umis"], reverse=True)
             return sorted_seqs[0]
         else:
             return seqs[0]
 
 
-
-
-
-
-
-def get_pairs(db, collection, experiment=None, subject=None, group=None, name='seq_id',
-    delim=None, delim_occurance=1, pairs_only=False, chain_selection_func=None):
-    '''
+def get_pairs(
+    db,
+    collection,
+    experiment=None,
+    subject=None,
+    group=None,
+    name="seq_id",
+    delim=None,
+    delim_occurance=1,
+    pairs_only=False,
+    chain_selection_func=None,
+):
+    """
     Gets sequences and assigns them to the appropriate mAb pair, based on the sequence name.
 
     Inputs:
@@ -581,32 +610,44 @@ def get_pairs(db, collection, experiment=None, subject=None, group=None, name='s
         will be returned. Default is False.
 
     Returns a list of Pair objects, one for each mAb pair.
-    '''
+    """
     match = {}
     if subject is not None:
         if type(subject) in (list, tuple):
-            match['subject'] = {'$in': subject}
+            match["subject"] = {"$in": subject}
         elif type(subject) in STR_TYPES:
-            match['subject'] = subject
+            match["subject"] = subject
     if group is not None:
         if type(group) in (list, tuple):
-            match['group'] = {'$in': group}
+            match["group"] = {"$in": group}
         elif type(group) in STR_TYPES:
-            match['group'] = group
+            match["group"] = group
     if experiment is not None:
         if type(experiment) in (list, tuple):
-            match['experiment'] = {'$in': experiment}
+            match["experiment"] = {"$in": experiment}
         elif type(experiment) in STR_TYPES:
-            match['experiment'] = experiment
+            match["experiment"] = experiment
     seqs = list(db[collection].find(match))
-    return assign_pairs(seqs, name=name, delim=delim,
-        delim_occurance=delim_occurance, pairs_only=pairs_only,
-        chain_selection_func=chain_selection_func)
+    return assign_pairs(
+        seqs,
+        name=name,
+        delim=delim,
+        delim_occurance=delim_occurance,
+        pairs_only=pairs_only,
+        chain_selection_func=chain_selection_func,
+    )
 
 
-def assign_pairs(seqs, id_key='sequence_id', delim=None, delim_occurance=1, pairs_only=False,
-                 chain_selection_func=None, tenx_annot_file=None):
-    '''
+def assign_pairs(
+    seqs,
+    id_key="sequence_id",
+    delim=None,
+    delim_occurance=1,
+    pairs_only=False,
+    chain_selection_func=None,
+    tenx_annot_file=None,
+):
+    """
     Assigns sequences to the appropriate mAb pair, based on the sequence name.
 
     Inputs:
@@ -624,7 +665,7 @@ def assign_pairs(seqs, id_key='sequence_id', delim=None, delim_occurance=1, pair
         will be returned. Default is False.
 
     Returns a list of Pair objects, one for each mAb pair.
-    '''
+    """
     # add UMIs to the sequence annotations if a 10xG annotations file is provided
     if tenx_annot_file is not None:
         annots = {}
@@ -632,12 +673,12 @@ def assign_pairs(seqs, id_key='sequence_id', delim=None, delim_occurance=1, pair
         with open(tenx_annot_file) as f:
             reader = csv.DictReader(f)
             for r in reader:
-                key = 'consensus_id' if 'consensus_id' in r else 'contig_id'
-                umis[r[key]] = r['umis']
+                key = "consensus_id" if "consensus_id" in r else "contig_id"
+                umis[r[key]] = r["umis"]
                 annots[r[key]] = r
         for s in seqs:
-            s['umis'] = umis.get(s[id_key], 0)
-            s['tenx_annots'] = annots.get(s[id_key], {})
+            s["umis"] = umis.get(s[id_key], 0)
+            s["tenx_annots"] = annots.get(s[id_key], {})
 
     # identify pairs
     pdict = {}
@@ -647,12 +688,15 @@ def assign_pairs(seqs, id_key='sequence_id', delim=None, delim_occurance=1, pair
         else:
             pname = s[id_key]
         if pname not in pdict:
-            pdict[pname] = [s, ]
+            pdict[pname] = [
+                s,
+            ]
         else:
             pdict[pname].append(s)
-    pairs = [Pair(p,
-                  name=n,
-                  chain_selection_func=chain_selection_func) for n, p in pdict.items()]
+    pairs = [
+        Pair(p, name=n, chain_selection_func=chain_selection_func)
+        for n, p in pdict.items()
+    ]
     if pairs_only:
         pairs = [p for p in pairs if p.is_pair]
     return pairs
@@ -715,8 +759,6 @@ def assign_pairs(seqs, id_key='sequence_id', delim=None, delim_occurance=1, pair
 #     return refined_pairs
 
 
-
-
 def vrc01_like(pair, loose=False):
     if loose:
         return loose_vrc01_like(pair)
@@ -730,11 +772,18 @@ def strict_vrc01_like(pair):
     else:
         try:
             # abstar's JSON output format
-            vrc01_like = all([pair.heavy['v_gene']['gene'] == 'IGHV1-2', pair.light['cdr3_len'] == 5])
+            vrc01_like = all(
+                [pair.heavy["v_gene"]["gene"] == "IGHV1-2", pair.light["cdr3_len"] == 5]
+            )
         except KeyError:
             try:
                 # AIRR format
-                vrc01_like = all([pair.heavy['v_call'] == 'IGHV1-2', pair.light['junction_aa_length'] == 7])
+                vrc01_like = all(
+                    [
+                        pair.heavy["v_call"] == "IGHV1-2",
+                        pair.light["junction_aa_length"] == 7,
+                    ]
+                )
             except KeyError:
                 # unknown format
                 vrc01_like = None
@@ -744,14 +793,18 @@ def strict_vrc01_like(pair):
 def loose_vrc01_like(pair):
     try:
         # abstar's JSON output format
-        if any([l['cdr3_len'] == 5 for l in pair.lights]) and any([h['v_gene']['gene'] == 'IGHV1-2' for h in pair.heavies]):
+        if any([l["cdr3_len"] == 5 for l in pair.lights]) and any(
+            [h["v_gene"]["gene"] == "IGHV1-2" for h in pair.heavies]
+        ):
             loose_vrc01_like = True
         else:
             loose_vrc01_like = False
     except KeyError:
         try:
             # AIRR format
-            if any([l['junction_aa_length'] == 7 for l in pair.lights]) and any([h['v_call'] == 'IGHV1-2' for h in pair.heavies]):
+            if any([l["junction_aa_length"] == 7 for l in pair.lights]) and any(
+                [h["v_call"] == "IGHV1-2" for h in pair.heavies]
+            ):
                 loose_vrc01_like = True
             else:
                 loose_vrc01_like = False
@@ -759,14 +812,4 @@ def loose_vrc01_like(pair):
             # unknown format
             loose_vrc01_like = None
     return loose_vrc01_like
-
-
-
-
-
-
-
-
-
-
 

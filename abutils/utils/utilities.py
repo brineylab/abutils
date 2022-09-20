@@ -30,21 +30,21 @@ import operator
 import sys
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [str, ]
+    STR_TYPES = [
+        str,
+    ]
     from functools import reduce
 else:
     STR_TYPES = [str, unicode]
 
 
-
-
-#================================
+# ================================
 #       USEFUL SNIPPITS
-#================================
+# ================================
 
 
 def nested_dict_lookup(d, key_list, missing=None):
-    '''
+    """
     Retrieves a nested value from a dictionary given a list of keys::
 
         mydict = {'key1a': {'key1b': 'val1b}, 'key2a': {'key2b': {'key2c': 'val2c}}}
@@ -68,7 +68,7 @@ def nested_dict_lookup(d, key_list, missing=None):
 
         Value from the nested dictionary. If one or more of the nested keys is not present
         in the nested dictionary, `None` will be returned.
-    '''
+    """
     try:
         return reduce(operator.getitem, key_list, d)
     except (KeyError, TypeError):

@@ -34,9 +34,17 @@ if sys.version_info[0] > 2:
     raw_input = input
 
 
-def compress_and_upload(data, compressed_file, s3_path, multipart_chunk_size_mb=500,
-    method='gz', delete=False, access_key=None, secret_key=None):
-    '''
+def compress_and_upload(
+    data,
+    compressed_file,
+    s3_path,
+    multipart_chunk_size_mb=500,
+    method="gz",
+    delete=False,
+    access_key=None,
+    secret_key=None,
+):
+    """
     Compresses data and uploads to S3.
 
     S3 upload uses ``s3cmd``, so you must either:
@@ -83,18 +91,23 @@ def compress_and_upload(data, compressed_file, s3_path, multipart_chunk_size_mb=
         access_key (str): AWS access key.
 
         secret_key (str): AWS secret key.
-    '''
-    logger = log.get_logger('s3')
+    """
+    logger = log.get_logger("s3")
     if all([access_key, secret_key]):
         configure(access_key=access_key, secret_key=secret_key, logger=logger)
     compress(data, compressed_file, fmt=method, logger=logger)
-    put(compressed_file, s3_path, multipart_chunk_size_mb=multipart_chunk_size_mb, logger=logger)
+    put(
+        compressed_file,
+        s3_path,
+        multipart_chunk_size_mb=multipart_chunk_size_mb,
+        logger=logger,
+    )
     if delete:
         os.unlink(compressed_file)
 
 
 def put(f, s3_path, multipart_chunk_size_mb=500, logger=None):
-    '''
+    """
     Uploads a single file to S3, using s3cmd.
 
     Args:
@@ -107,37 +120,33 @@ def put(f, s3_path, multipart_chunk_size_mb=500, logger=None):
                 put(f='/path/to/myfile.tar.gz', s3_path='s3://my_bucket/path/to/')
 
             will result in an uploaded S3 path of ``s3://my_bucket/path/to/myfile.tar.gz``
-    '''
+    """
     if not logger:
-        logger = log.get_logger('s3')
+        logger = log.get_logger("s3")
     fname = os.path.basename(f)
     target = os.path.join(s3_path, fname)
-    s3cmd_cline = 's3cmd put {} {} --multipart-chunk-size-mb {}'.format(f,
-                                                                        target,
-                                                                        multipart_chunk_size_mb)
+    s3cmd_cline = "s3cmd put {} {} --multipart-chunk-size-mb {}".format(
+        f, target, multipart_chunk_size_mb
+    )
     print_put_info(fname, target, logger)
-    s3cmd = sp.Popen(s3cmd_cline,
-                     stdout=sp.PIPE,
-                     stderr=sp.PIPE,
-                     shell=True)
+    s3cmd = sp.Popen(s3cmd_cline, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = s3cmd.communicate()
 
 
 def print_put_info(fname, target, logger):
-    logger.info('')
-    logger.info('')
-    logger.info('')
-    logger.info('-' * 25)
-    logger.info('UPLOADING TO S3')
-    logger.info('-' * 25)
-    logger.info('')
-    logger.info('File: {}'.format(fname))
-    logger.info('Target S3 location: {}'.format(target))
+    logger.info("")
+    logger.info("")
+    logger.info("")
+    logger.info("-" * 25)
+    logger.info("UPLOADING TO S3")
+    logger.info("-" * 25)
+    logger.info("")
+    logger.info("File: {}".format(fname))
+    logger.info("Target S3 location: {}".format(target))
 
 
-
-def compress(d, output, fmt='gz', logger=None):
-    '''
+def compress(d, output, fmt="gz", logger=None):
+    """
     Creates a compressed/uncompressed tar file.
 
     Args:
@@ -154,20 +163,26 @@ def compress(d, output, fmt='gz', logger=None):
 
         fmt: Compression method. Options are ``'gz'`` (gzip),
             ``'bz2'`` (bzip2) and ``'none'`` (uncompressed). Default is ``'gz'``.
-    '''
+    """
     if not logger:
-        logger = log.get_logger('s3')
+        logger = log.get_logger("s3")
     if type(d) not in [list, tuple]:
-        d = [d, ]
+        d = [
+            d,
+        ]
     d = [os.path.expanduser(_d) for _d in d]
     print_compress_info(d, output, compress, logger)
-    if fmt.lower() == 'none':
-        fmt = ''
-    elif fmt.lower() not in ['gz', 'bz2']:
-        logger.info('Compression option ("{}") is invalid.\nFalling back to uncompressed.'.format(fmt))
-        fmt = ''
+    if fmt.lower() == "none":
+        fmt = ""
+    elif fmt.lower() not in ["gz", "bz2"]:
+        logger.info(
+            'Compression option ("{}") is invalid.\nFalling back to uncompressed.'.format(
+                fmt
+            )
+        )
+        fmt = ""
     output = os.path.expanduser(output)
-    tar = tarfile.open(output, 'w:{}'.format(fmt))
+    tar = tarfile.open(output, "w:{}".format(fmt))
     for obj in d:
         tar.add(obj)
     tar.close()
@@ -176,30 +191,30 @@ def compress(d, output, fmt='gz', logger=None):
 
 def print_compress_info(d, output, compress, logger):
     if not logger:
-        logger = log.get_logger('s3')
+        logger = log.get_logger("s3")
     dirs = [obj for obj in d if os.path.isdir(obj)]
     files = [obj for obj in d if os.path.isfile(obj)]
-    logger.info('')
-    logger.info('')
-    logger.info('')
-    logger.info('-' * 25)
-    logger.info('COMPRESSING DATA')
-    logger.info('-' * 25)
-    logger.info('')
-    logger.info('Ouptut file: {}'.format(output))
-    logger.info('Compression: {}'.format(compress.lower()))
+    logger.info("")
+    logger.info("")
+    logger.info("")
+    logger.info("-" * 25)
+    logger.info("COMPRESSING DATA")
+    logger.info("-" * 25)
+    logger.info("")
+    logger.info("Ouptut file: {}".format(output))
+    logger.info("Compression: {}".format(compress.lower()))
     if dirs:
-        d = 'directories' if len(dirs) > 1 else 'directory'
-        logger.info('Found {} {} to compress: {}'.format(len(dirs), d,
-                                                         ', '.join(dirs)))
+        d = "directories" if len(dirs) > 1 else "directory"
+        logger.info("Found {} {} to compress: {}".format(len(dirs), d, ", ".join(dirs)))
     if files:
-        f = 'files' if len(files) > 1 else 'file'
-        logger.info('Found {} {} to compress: {}'.format(len(files), f,
-                                                         ', '.join(files)))
+        f = "files" if len(files) > 1 else "file"
+        logger.info(
+            "Found {} {} to compress: {}".format(len(files), f, ", ".join(files))
+        )
 
 
 def configure(access_key=None, secret_key=None, logger=None):
-    '''
+    """
     Configures s3cmd prior to first use.
 
     If no arguments are provided, you will be prompted to enter
@@ -210,29 +225,29 @@ def configure(access_key=None, secret_key=None, logger=None):
         access_key (str): AWS access key
 
         secret_key (str): AWS secret key
-    '''
+    """
     if not logger:
-        logger = log.get_logger('s3')
+        logger = log.get_logger("s3")
     if not all([access_key, secret_key]):
-        logger.info('')
-        access_key = input('AWS Access Key: ')
-        secret_key = input('AWS Secret Key: ')
+        logger.info("")
+        access_key = input("AWS Access Key: ")
+        secret_key = input("AWS Secret Key: ")
     _write_config(access_key, secret_key)
-    logger.info('')
-    logger.info('Completed writing S3 config file.')
-    logger.info('')
+    logger.info("")
+    logger.info("Completed writing S3 config file.")
+    logger.info("")
 
 
 def _write_config(access_key, secret_key):
-    cfg_string = '[default]\n'
-    cfg_string += 'access_key = {}\n'.format(access_key)
-    cfg_string += 'secret_key = {}\n'.format(secret_key)
+    cfg_string = "[default]\n"
+    cfg_string += "access_key = {}\n".format(access_key)
+    cfg_string += "secret_key = {}\n".format(secret_key)
     cfg_string += CONFIG_DEFAULTS
-    cfg_file = os.path.expanduser('~/.s3cfg')
-    open(cfg_file, 'w').write(cfg_string)
+    cfg_file = os.path.expanduser("~/.s3cfg")
+    open(cfg_file, "w").write(cfg_string)
 
 
-CONFIG_DEFAULTS = '''
+CONFIG_DEFAULTS = """
 access_token =
 add_encoding_exts =
 add_headers =
@@ -292,4 +307,5 @@ verbosity = WARNING
 website_endpoint = http://%(bucket)s.s3-website-% (location)s.amazonaws.com/
 website_error =
 website_index = index.html
-'''
+"""
+

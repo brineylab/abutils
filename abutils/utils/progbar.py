@@ -29,9 +29,16 @@ import sys
 from datetime import datetime
 
 
-def progress_bar(finished, total, start_time=None, extra_info=None,
-                 autocomplete=True, complete=False, completion_string='\n'):
-    '''
+def progress_bar(
+    finished,
+    total,
+    start_time=None,
+    extra_info=None,
+    autocomplete=True,
+    complete=False,
+    completion_string="\n",
+):
+    """
     Prints an ASCII progress bar.
 
     Each call to ``progress_bar`` will update the progress bar. An example
@@ -68,21 +75,23 @@ def progress_bar(finished, total, start_time=None, extra_info=None,
         completion_string (str): Will be appended to the progbar string if
             `complete` is `True`. Default is `'\n'`.
 
-    '''
-    pct = int(100. * finished / total)
+    """
+    pct = int(100.0 * finished / total)
     ticks = int(pct / 2)
     spaces = int(50 - ticks)
     if start_time is not None:
         elapsed = (datetime.now() - start_time).seconds
         minutes = int(elapsed / 60)
         seconds = int(elapsed % 60)
-        minute_str = '0' * (2 - len(str(minutes))) + str(minutes)
-        second_str = '0' * (2 - len(str(seconds))) + str(seconds)
-        prog_bar = '\r({}/{}) |{}{}|  {}%  ({}:{})  '.format(finished, total,
-            '|' * ticks, ' ' * spaces, pct, minute_str, second_str)
+        minute_str = "0" * (2 - len(str(minutes))) + str(minutes)
+        second_str = "0" * (2 - len(str(seconds))) + str(seconds)
+        prog_bar = "\r({}/{}) |{}{}|  {}%  ({}:{})  ".format(
+            finished, total, "|" * ticks, " " * spaces, pct, minute_str, second_str
+        )
     else:
-        prog_bar = '\r({}/{}) |{}{}|  {}%  '.format(finished, total,
-            '|' * ticks, ' ' * spaces, pct)
+        prog_bar = "\r({}/{}) |{}{}|  {}%  ".format(
+            finished, total, "|" * ticks, " " * spaces, pct
+        )
     if extra_info is not None:
         prog_bar += str(extra_info)
     if autocomplete and finished == total:

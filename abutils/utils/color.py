@@ -38,11 +38,11 @@ if sys.version_info[0] > 2:
     basestring = str
 
 
-cmaps = {'heatmap': sns.diverging_palette(240, 10, as_cmap=True)}
+cmaps = {"heatmap": sns.diverging_palette(240, 10, as_cmap=True)}
 
 
 def cmap_from_color(color, dark=False):
-    '''
+    """
     Generates a matplotlib colormap from a single color.
 
     Colormap will be built, by default, from white to ``color``.
@@ -63,7 +63,7 @@ def cmap_from_color(color, dark=False):
 
         colormap: A matplotlib colormap
 
-    '''
+    """
     if dark:
         return sns.dark_palette(color, as_cmap=True)
     else:
@@ -114,7 +114,8 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=256):
     cmap = get_cmap(cmap)
     name = "%s-trunc-%.2g-%.2g" % (cmap.name, minval, maxval)
     return colors.LinearSegmentedColormap.from_list(
-        name, cmap(np.linspace(minval, maxval, n)))
+        name, cmap(np.linspace(minval, maxval, n))
+    )
 
 
 def stack_colormap(lower, upper, n=256):
@@ -161,7 +162,7 @@ def get_cmap(cmap=None, name=None, from_color=None, dark=False, n=256):
     if from_color is not None:
         return cmap_from_color(from_color, dark)
     elif cmap is None:
-        err = 'You must provide either cmap or from_color'
+        err = "You must provide either cmap or from_color"
         raise RuntimeError(err)
     if isinstance(cmap, colors.Colormap):
         return cmap
