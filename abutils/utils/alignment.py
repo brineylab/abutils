@@ -36,6 +36,7 @@ import subprocess as sp
 import sys
 import tempfile
 import traceback
+from typing import Union, Iterable, Optional
 
 from skbio.alignment import StripedSmithWaterman
 
@@ -76,72 +77,89 @@ __all__ = [
 
 
 def mafft(
-    sequences=None,
-    alignment_file=None,
-    fasta=None,
-    fmt="fasta",
-    threads=-1,
-    as_file=False,
-    reorder=True,
-    print_stdout=False,
-    print_stderr=False,
-    mafft_bin=None,
+    sequences: Union[str, Iterable],
+    alignment_file: Optional[str] = None,
+    fmt: str = "fasta",
+    threads: int = -1,
+    as_file: bool = False,
+    reorder: bool = True,
+    mafft_bin: Optional[str] = None,
+    debug: bool = False,
+    fasta: Optional[str] = None,
 ):
     """
-    Performs multiple sequence alignment with MAFFT.
+    Performs multiple sequence alignment with `MAFFT`_.
 
-    Args:
+    Parameters
+    ----------
+    sequences : (str, iterable)
+        Can be one of several things:
+            1. path to a FASTA-formatted file
+            2. a FASTA-formatted string
+            3. a list of BioPython ``SeqRecord`` objects
+            4. a list of abutils ``Sequence`` objects
+            5. a list of lists/tuples, of the format ``[sequence_id, sequence]``
 
-        sequences (list): Sequences to be aligned. ``sequences`` can be one of four things:
+    alignment_file : str, optional
+        Path for the output alignment file. Required if ``as_file`` is ``True``.
 
-            1. a FASTA-formatted string
+    fmt : str, default='fasta'
+        Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'. 
+        Default is 'fasta'.
 
-            2. a list of BioPython ``SeqRecord`` objects
+    threads : int, default=-1
+        Number of threads for MAFFT to use. Default is ``-1``, which uses all
+        available CPUs.
 
-            3. a list of abutils ``Sequence`` objects
+    as_file: bool, default=False
+        If ``True``, returns a path to the alignment file. If ``False``,
+        returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
+        ``Bio.AlignIO.read()`` on the alignment file).
 
-            4. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+    mafft_bin : str, optional
+        Path to a MAFFT executable. Default is ``None``, which results in 
+        using the default system MAFFT binary (just calling ``'mafft'``).
 
-        alignment_file (str): Path for the output alignment file. If not supplied,
-            a name will be generated using ``tempfile.NamedTemporaryFile()``.
+    debug : bool, default=False
+        If ``True``, prints MAFFT's standard output and standard error. 
+        Default is ``False``.
 
-        fasta (str): Path to a FASTA-formatted file of sequences. Used as an
-            alternative to ``sequences`` when suppling a FASTA file.
+    fasta : str, optional 
+        Path to a FASTA-formatted input file. Depricated (use `sequences` 
+        for all types if input), but retained for backwards compatibility.
 
-        fmt (str): Format of the alignment. Options are 'fasta', 'phylip', and 'clustal'. Default
-            is 'fasta'.
 
-        threads (int): Number of threads for MAFFT to use. Default is ``-1``, which
-            results in MAFFT using ``multiprocessing.cpu_count()`` threads.
+    Returns
+    -------
+    alignment : str or ``MultipleSeqAlignment``
+        If ``as_file`` is ``True``, returns a path to the output alignment file,
+        Otherwise, returns a BioPython ``MultipleSeqAlignment`` object.
 
-        as_file (bool): If ``True``, returns a path to the alignment file. If ``False``,
-            returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
-            ``Bio.AlignIO.read()`` on the alignment file).
-        
-        print_stdout (bool): If ``True``, prints MAFFT's standard output. Default is ``False``.
 
-        print_stderr (bool): If ``True``, prints MAFFT's standard error. Default is ``False``.
-
-        mafft_bin (str): Path to MAFFT executable. Default is ``None``, which results in 
-            using the default system MAFFT binary.
-
-    Returns:
-
-        Returns a BioPython ``MultipleSeqAlignment`` object, unless ``as_file`` is ``True``,
-            in which case the path to the alignment file is returned.
-
+    .. _MAFFT:
+        https://mafft.cbrc.jp/alignment/software/
     """
-    if sequences:
+    # process input
+    if fasta is not None:
+        sequences = fasta
+    if os.path.is_file(sequences):
+        ffile = sequences
+    else:
         fasta_string = _get_fasta_string(sequences)
         fasta_file = tempfile.NamedTemporaryFile(delete=False)
         fasta_file.close()
         ffile = fasta_file.name
         with open(ffile, "w") as f:
             f.write(fasta_string)
-    elif fasta:
-        ffile = fasta
+    # configure output path
     if alignment_file is None:
-        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+        if as_file:
+            err = "ERROR: path to an output alignment file is required."
+            print("\n" + err + "\n")
+            sys.exit()
+        else:
+            alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    # do the alignment
     aln_format = ""
     if fmt.lower() == "clustal":
         aln_format = "--clustalout "
@@ -162,13 +180,16 @@ def mafft(
         shell=True,
     )
     stdout, stderr = mafft.communicate()
-    if print_stdout:
+    # return output
+    if debug:
         print(mafft_cline)
         print(stdout)
-    if print_stderr:
         print(stderr)
     os.unlink(ffile)
     if os.stat(alignment_file).st_size == 0:
+        err = "WARNING: output alignment file is empty. "
+        err += "Verify that MAFFT is installed and the input data is valid,"
+        print(err)
         return None
     if as_file:
         return alignment_file
