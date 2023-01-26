@@ -32,11 +32,13 @@ import itertools
 import math
 import multiprocessing as mp
 import os
+import platform
 import random
 import shutil
 import string
 import subprocess as sp
 import sys
+from typing import Optional
 
 import numpy as np
 import scipy
@@ -62,6 +64,7 @@ from .alignment import mafft, muscle
 from .cluster import cluster
 from .color import hex_to_rgb, get_cmap
 from .decorators import lazy_property
+from .pipeline import make_dir
 
 if sys.version_info[0] > 2:
     STR_TYPES = [
@@ -76,11 +79,63 @@ else:
 # --------------------------------
 
 
-def fasttree(alignment, tree_file, is_aa=False, quiet=True):
+def fasttree(
+    alignment_file: str,
+    tree_file: str,
+    is_aa: bool = False,
+    fasttree_bin: Optional[str] = None,
+    quiet: bool = True,
+) -> str:
+    """
+    Computes a tree file from a multiple seqeunce alignment using `FastTree`_.
+
+    Parameters
+    ----------
+    alignment_file : str
+        Path to a multiple sequence alignment file, in FASTA format. Required.
+
+    tree_file : str
+        Path to the tree file which will be output by FastTree. If the parent 
+        directory does not exist, it will be created. Required.
+
+    is_aa : bool, default=False
+        Must be set to ``True`` if the input multiple sequence alignment contains
+        amino acid sequences. Default is ``False``, meaning FastTree will expect
+        nucleotide sequences.
+
+    fasttree_bin : str, optional
+        Path to the desired FastTree binary. Default is to use the version of 
+        FastTree that is bundled with ``abutils``.
+
+    quiet : bool, default=False
+        If ``True``, verbose output is printed. Default is False.
+
+    
+    Returns
+    -------
+    tree_file: str
+        Path to the tree file produced by FastTree.
+
+
+    .. _FastTree:
+        http://www.microbesonline.org/fasttree/
+    """
+    # set the FastTree binary
+    if fasttree_bin is None:
+        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        fasttree_bin = os.path.join(
+            mod_dir, f"bin/fasttree_{platform.system().lower()}"
+        )
+    # make output directory if necessary
+    alignment_file = os.path.abspath(alignment_file)
+    tree_file = os.path.abspath(tree_file)
+    if not os.path.isdir(os.path.dirname(tree_file)):
+        make_dir(os.path.dirname(tree_file))
+    # run FastTree
     if is_aa:
-        ft_cmd = "fasttree {} > {}".format(alignment, tree_file)
+        ft_cmd = "fasttree {} > {}".format(alignment_file, tree_file)
     else:
-        ft_cmd = "fasttree -nt {} > {}".format(alignment, tree_file)
+        ft_cmd = "fasttree -nt {} > {}".format(alignment_file, tree_file)
     ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = ft.communicate()
     if not quiet:
