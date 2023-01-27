@@ -142,7 +142,7 @@ def mafft(
     # process input
     if fasta is not None:
         sequences = fasta
-    if os.path.is_file(sequences):
+    if os.path.isfile(sequences):
         ffile = sequences
     else:
         fasta_string = _get_fasta_string(sequences)
