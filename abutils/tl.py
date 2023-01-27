@@ -22,12 +22,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-
 from .core.lineage import group_lineages
 from .core.pair import assign_pairs
 
-from .utils.alignment import global_alignment, local_alignment, dot_alignment, muscle, mafft
+from .utils.alignment import (
+    global_alignment,
+    local_alignment,
+    dot_alignment,
+    muscle,
+    mafft,
+)
 from .utils.cluster import cluster
 from .utils.progbar import progress_bar
-
+from .utils.phylogeny import fasttree, lsd, igphyml
 
