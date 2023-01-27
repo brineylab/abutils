@@ -85,6 +85,7 @@ def fasttree(
     tree_file: Optional[str] = None,
     is_aa: bool = False,
     fasttree_bin: Optional[str] = None,
+    debug: bool = False,
     quiet: bool = True,
 ) -> str:
     """
@@ -109,8 +110,11 @@ def fasttree(
         Path to the desired FastTree binary. Default is to use the version of 
         FastTree that is bundled with ``abutils``.
 
-    quiet : bool, default=False
+    debug : bool, default=False
         If ``True``, verbose output is printed. Default is False.
+
+    quiet : bool, default=True
+        Depricated, but retained for backwards compatibility. Use `debug` instead.
 
     
     Returns
@@ -123,6 +127,8 @@ def fasttree(
         http://www.microbesonline.org/fasttree/
     """
     alignment_file = os.path.abspath(alignment_file)
+    if not quiet:
+        debug = True
     # set the FastTree binary
     if fasttree_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -145,7 +151,7 @@ def fasttree(
         ft_cmd = "fasttree -nt {} > {}".format(alignment_file, tree_file)
     ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = ft.communicate()
-    if not quiet:
+    if debug:
         print(ft_cmd)
         print(stdout)
         print(stderr)
