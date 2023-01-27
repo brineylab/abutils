@@ -81,7 +81,7 @@ else:
 
 
 def fasttree(
-    alignment_file: str,
+    aln: str,
     tree_file: Optional[str] = None,
     is_aa: bool = False,
     fasttree_bin: Optional[str] = None,
@@ -93,8 +93,9 @@ def fasttree(
 
     Parameters
     ----------
-    alignment_file : str
-        Path to a multiple sequence alignment file, in FASTA format. Required.
+    aln : str
+        Path to a multiple sequence alignment file, in FASTA format, or a 
+        FASTA-formatted multiple sequence alignment string. Required.
 
     tree_file : str
         Path to the tree file which will be output by FastTree. If the parent 
@@ -126,7 +127,15 @@ def fasttree(
     .. _FastTree:
         http://www.microbesonline.org/fasttree/
     """
-    alignment_file = os.path.abspath(alignment_file)
+    # process input
+    if os.path.isfile(aln):
+        alignment_file = os.path.abspath(aln)
+    else:
+        ff = tempfile.NamedTemporaryFile(delete=False)
+        ff.close()
+        alignment_file = ff.name
+        with open(alignment_file, "w") as f:
+            f.write(aln)
     if not quiet:
         debug = True
     # set the FastTree binary
