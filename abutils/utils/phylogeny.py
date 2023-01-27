@@ -97,7 +97,8 @@ def fasttree(
 
     tree_file : str
         Path to the tree file which will be output by FastTree. If the parent 
-        directory does not exist, it will be created. Required.
+        directory does not exist, it will be created. If not provided, the output 
+        (a Newick-formatted tree file) will be returned as a ``str``.
 
     is_aa : bool, default=False
         Must be set to ``True`` if the input multiple sequence alignment contains
@@ -121,6 +122,7 @@ def fasttree(
     .. _FastTree:
         http://www.microbesonline.org/fasttree/
     """
+    alignment_file = os.path.abspath(alignment_file)
     # set the FastTree binary
     if fasttree_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -128,11 +130,12 @@ def fasttree(
             mod_dir, f"bin/fasttree_{platform.system().lower()}"
         )
     # make output directory if necessary
-    if alignment_file is None:
-        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    if tree_file is None:
+        as_file = False
+        tree_file = tempfile.NamedTemporaryFile(delete=False).name
     else:
-        alignment_file = os.path.abspath(alignment_file)
-    tree_file = os.path.abspath(tree_file)
+        as_file = True
+        tree_file = os.path.abspath(tree_file)
     if not os.path.isdir(os.path.dirname(tree_file)):
         make_dir(os.path.dirname(tree_file))
     # run FastTree
@@ -146,7 +149,13 @@ def fasttree(
         print(ft_cmd)
         print(stdout)
         print(stderr)
-    return tree_file
+    # output
+    if as_file:
+        return tree_file
+    else:
+        with open(tree_file, "r") as f:
+            tree_string = f.read()
+        return tree_string
 
 
 def lsd(
