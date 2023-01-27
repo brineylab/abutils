@@ -37,30 +37,24 @@ import sys
 import tempfile
 import traceback
 from typing import Union, Iterable, Optional
+import uuid
 
 from skbio.alignment import StripedSmithWaterman
 
+import nwalign3 as nw
+
 from Bio import AlignIO, pairwise2
+from Bio.Align import MultipleSeqAlignment, AlignInfo
 from Bio.SeqRecord import SeqRecord
 
 from .pipeline import list_files
 from ..core.sequence import Sequence
 
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-    import nwalign3 as nw
-else:
-    STR_TYPES = [str, unicode]
-    import nwalign as nw
-
-# from .. import BINARY_DIR
-
 
 __all__ = [
     "mafft",
     "muscle",
+    "muscle_v3",
     "local_alignment",
     "global_alignment",
     "dot_alignment",
@@ -82,11 +76,14 @@ def mafft(
     fmt: str = "fasta",
     threads: int = -1,
     as_file: bool = False,
+    as_string: bool = False,
     reorder: bool = True,
     mafft_bin: Optional[str] = None,
+    seq_key: Optional[str] = None,
+    id_key: Optional[str] = None,
     debug: bool = False,
     fasta: Optional[str] = None,
-):
+) -> Union[MultipleSeqAlignment, str]:
     """
     Performs multiple sequence alignment with `MAFFT`_.
 
@@ -112,9 +109,15 @@ def mafft(
         available CPUs.
 
     as_file: bool, default=False
-        If ``True``, returns a path to the alignment file. If ``False``,
+        If ``True``, returns the path to the alignment file. If ``False``,
+        returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
+        output as a ``str``, depending on `as_string`. Requires that 
+        `alignment_file` is also provided.
+
+    as_string: bool, default=False
+        If ``True``, returns a the alignment output as a string. If ``False``,
         returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
-        ``Bio.AlignIO.read()`` on the alignment file).
+        ``Bio.AlignIO.read()`` on the alignment file). 
 
     mafft_bin : str, optional
         Path to a MAFFT executable. Default is ``None``, which results in 
@@ -145,20 +148,18 @@ def mafft(
     if os.path.isfile(sequences):
         ffile = sequences
     else:
-        fasta_string = _get_fasta_string(sequences)
-        fasta_file = tempfile.NamedTemporaryFile(delete=False)
-        fasta_file.close()
-        ffile = fasta_file.name
+        fasta_string = _get_fasta_string(sequences, id_key=id_key, seq_key=seq_key)
+        ff = tempfile.NamedTemporaryFile(delete=False)
+        ff.close()
+        ffile = ff.name
         with open(ffile, "w") as f:
             f.write(fasta_string)
     # configure output path
     if alignment_file is None:
-        if as_file:
-            err = "ERROR: path to an output alignment file is required."
-            print("\n" + err + "\n")
-            sys.exit()
-        else:
-            alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+        as_file = False
+        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    else:
+        alignment_file = os.path.abspath(alignment_file)
     # do the alignment
     aln_format = ""
     if fmt.lower() == "clustal":
@@ -185,7 +186,6 @@ def mafft(
         print(mafft_cline)
         print(stdout)
         print(stderr)
-    os.unlink(ffile)
     if os.stat(alignment_file).st_size == 0:
         err = "WARNING: output alignment file is empty. "
         err += "Verify that MAFFT is installed and the input data is valid,"
@@ -193,83 +193,239 @@ def mafft(
         return None
     if as_file:
         return alignment_file
-    aln = AlignIO.read(open(alignment_file), fmt)
+    with open(alignment_file, "r") as f:
+        if as_string:
+            aln = f.read()
+        else:
+            aln = AlignIO.read(f, fmt)
     os.unlink(alignment_file)
     return aln
 
 
 def muscle(
-    sequences=None,
-    alignment_file=None,
-    fasta=None,
-    fmt="fasta",
-    as_file=False,
-    maxiters=None,
-    diags=False,
-    gap_open=None,
-    gap_extend=None,
-    muscle_bin=None,
-    debug=False,
-):
+    sequences: Union[str, Iterable],
+    alignment_file: Optional[str] = None,
+    as_file: bool = False,
+    as_string: bool = False,
+    muscle_bin: Optional[str] = None,
+    threads: Optional[int] = None,
+    seq_key: Optional[str] = None,
+    id_key: Optional[str] = None,
+    debug: bool = False,
+    fasta: Optional[str] = None,
+) -> Union[MultipleSeqAlignment, str]:
     """
-    Performs multiple sequence alignment with MUSCLE.
+    Performs multiple sequence alignment with `MUSCLE`_ (version 5).
 
-    Args:
+    Parameters
+    ----------
+    sequences : (str, iterable)
+        Can be one of several things:
+            1. path to a FASTA-formatted file
+            2. a FASTA-formatted string
+            3. a list of BioPython ``SeqRecord`` objects
+            4. a list of abutils ``Sequence`` objects
+            5. a list of lists/tuples, of the format ``[sequence_id, sequence]``
 
-        sequences (list): Sequences to be aligned. ``sequences`` can be one of four things:
+    alignment_file : str, optional
+        Path for the output alignment file. Required if ``as_file`` is ``True``.
 
-            1. a FASTA-formatted string
+    threads : int, default=None
+        Number of threads for MUSCLE to use. If not provided, MUSCLE uses all
+        available CPUs.
 
-            2. a list of BioPython ``SeqRecord`` objects
+    as_file: bool, default=False
+        If ``True``, returns the path to the alignment file. If ``False``,
+        returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
+        output as a ``str``, depending on `as_string`. Requires that 
+        `alignment_file` is also provided.
 
-            3. a list of AbTools ``Sequence`` objects
+    as_string: bool, default=False
+        If ``True``, returns a the alignment output as a string. If ``False``,
+        returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
+        ``Bio.AlignIO.read()`` on the alignment file). 
 
-            4. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+    muscle_bin : str, optional
+        Path to a MUSCLE executable. If not provided, the MUSCLE binary bundled 
+        with ``abutils`` will be used.
 
-        alignment_file (str): Path for the output alignment file. If not supplied,
-            a name will be generated using ``tempfile.NamedTemporaryFile()``.
+    debug : bool, default=False
+        If ``True``, prints MAFFT's standard output and standard error. 
+        Default is ``False``.
 
-        fasta (str): Path to a FASTA-formatted file of sequences. Used as an
-            alternative to ``sequences`` when suppling a FASTA file.
+    fasta : str, optional 
+        Path to a FASTA-formatted input file. Depricated (use `sequences` 
+        for all types if input), but retained for backwards compatibility.
 
-        fmt (str): Format of the alignment. Options are 'fasta' and 'clustal'. Default
-            is 'fasta'.
 
-        threads (int): Number of threads (CPU cores) for MUSCLE to use. Default is ``-1``, which
-            results in MUSCLE using all available cores.
+    Returns
+    -------
+    alignment : str or ``MultipleSeqAlignment``
+        If ``as_file`` is ``True``, returns a path to the output alignment file,
+        Otherwise, returns a BioPython ``MultipleSeqAlignment`` object.
 
-        as_file (bool): If ``True``, returns a path to the alignment file. If ``False``,
-            returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
-            ``Bio.AlignIO.read()`` on the alignment file).
 
-        maxiters (int): Passed directly to MUSCLE using the ``-maxiters`` flag.
-
-        diags (int): Passed directly to MUSCLE using the ``-diags`` flag.
-
-        gap_open (float): Passed directly to MUSCLE using the ``-gapopen`` flag. Ignored
-            if ``gap_extend`` is not also provided.
-
-        gap_extend (float): Passed directly to MUSCLE using the ``-gapextend`` flag. Ignored
-            if ``gap_open`` is not also provided.
-
-        muscle_bin (str): Path to MUSCLE executable. ``abutils`` includes built-in MUSCLE binaries
-            for MacOS and Linux, however, a different MUSCLE binary can be provided. Default is
-            ``None``, which results in using the appropriate built-in MUSCLE binary.
-
-    Returns:
-
-        Returns a BioPython ``MultipleSeqAlignment`` object, unless ``as_file`` is ``True``,
-            in which case the path to the alignment file is returned.
+    .. _MUSCLE:
+        https://www.drive5.com/muscle/
     """
-    if sequences:
-        fasta_string = _get_fasta_string(sequences)
-    elif fasta:
-        fasta_string = open(fasta, "r").read()
+    # process input
+    if fasta is not None:
+        sequences = fasta
+    if os.path.isfile(sequences):
+        ffile = sequences
+    else:
+        fasta_string = _get_fasta_string(sequences, id_key=id_key, seq_key=seq_key)
+        ff = tempfile.NamedTemporaryFile(delete=False)
+        ff.close()
+        ffile = ff.name
+        with open(ffile, "w") as f:
+            f.write(fasta_string)
+    # configure output path
+    if alignment_file is None:
+        as_file = False
+        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    else:
+        alignment_file = os.path.abspath(alignment_file)
+    # muscle binary
     if muscle_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         muscle_bin = os.path.join(
             mod_dir, "bin/muscle_{}".format(platform.system().lower())
         )
+    # do the alignment
+    muscle_cline = f"{muscle_bin} -align {ffile} -output {alignment_file}"
+    if threads is not None:
+        muscle_cline += f" -threads {threads}"
+    muscle = sp.Popen(str(muscle_cline), stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = muscle.communicate()
+    if debug:
+        print("muscle binary path:", muscle_bin)
+        print("muscle command:", muscle_cline)
+        print(stdout)
+        print(stderr)
+    # output
+    if os.stat(alignment_file).st_size == 0:
+        err = "WARNING: output alignment file is empty. "
+        err += "Please verify that the input data is valid"
+        print(err)
+        return None
+    if as_file:
+        return alignment_file
+    with open(alignment_file, "r") as f:
+        if as_string:
+            aln = f.read()
+        else:
+            aln = AlignIO.read(f, "fasta")
+    os.unlink(alignment_file)
+    return aln
+
+
+def muscle_v3(
+    sequences=None,
+    alignment_file=None,
+    fasta=None,
+    fmt="fasta",
+    as_file=False,
+    as_string=False,
+    maxiters=None,
+    diags=False,
+    gap_open=None,
+    gap_extend=None,
+    muscle_bin=None,
+    seq_key=None,
+    id_key=None,
+    debug=False,
+):
+    """
+    Performs multiple sequence alignment with `MUSCLE`_ (version 3).
+
+    Parameters
+    ----------
+    sequences : (str, iterable)
+        Can be one of several things:
+            1. path to a FASTA-formatted file
+            2. a FASTA-formatted string
+            3. a list of BioPython ``SeqRecord`` objects
+            4. a list of abutils ``Sequence`` objects
+            5. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+
+    alignment_file : str, optional
+        Path for the output alignment file. Required if ``as_file`` is ``True``.
+
+    fmt : str, default='fasta'
+        Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'. 
+        Default is 'fasta'.
+
+    threads : int, default=-1
+        Number of threads for MUSCLE to use. Default is ``-1``, which uses all
+        available CPUs.
+
+    as_file: bool, default=False
+        If ``True``, returns the path to the alignment file. If ``False``,
+        returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
+        output as a ``str``, depending on `as_string`. Requires that 
+        `alignment_file` is also provided.
+
+    as_string: bool, default=False
+        If ``True``, returns a the alignment output as a string. If ``False``,
+        returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
+        ``Bio.AlignIO.read()`` on the alignment file). 
+
+    maxiters : int, default=-1 
+        Passed directly to MUSCLE using the ``-maxiters`` flag.
+
+    diags : int, default=None
+        Passed directly to MUSCLE using the ``-diags`` flag.
+
+    gap_open : float, default=None 
+        Passed directly to MUSCLE using the ``-gapopen`` flag. Ignored
+        if ``gap_extend`` is not also provided.
+
+    gap_extend : float, default=None 
+        Passed directly to MUSCLE using the ``-gapextend`` flag. Ignored
+        if ``gap_open`` is not also provided.
+
+    muscle_bin : str, optional
+        Path to a MUSCLE executable. If not provided, the MUSCLE binary bundled 
+        with ``abutils`` will be used.
+
+    debug : bool, default=False
+        If ``True``, prints MAFFT's standard output and standard error. 
+        Default is ``False``.
+
+    fasta : str, optional 
+        Path to a FASTA-formatted input file. Depricated (use `sequences` 
+        for all types if input), but retained for backwards compatibility.
+
+
+    Returns
+    -------
+    alignment : str or ``MultipleSeqAlignment``
+        If ``as_file`` is ``True``, returns a path to the output alignment file,
+        Otherwise, returns a BioPython ``MultipleSeqAlignment`` object.
+
+
+    .. _MUSCLE:
+        https://drive5.com/muscle/downloads_v3.htm
+
+    """
+    # process input
+    if fasta is not None:
+        sequences = fasta
+    fasta_string = _get_fasta_string(sequences, id_key=id_key, seq_key=seq_key)
+    # configure output path
+    if alignment_file is None:
+        as_file = False
+        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    else:
+        alignment_file = os.path.abspath(alignment_file)
+    # muscle binary
+    if muscle_bin is None:
+        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        muscle_bin = os.path.join(
+            mod_dir, "bin/muscle3_{}".format(platform.system().lower())
+        )
+    # do the alignment
     aln_format = ""
     if fmt == "clustal":
         aln_format = " -clwstrict"
@@ -291,21 +447,63 @@ def muscle(
         universal_newlines=True,
         shell=True,
     )
-    if sys.version_info[0] > 2:
-        alignment, stderr = muscle.communicate(input=fasta_string)
-    else:
-        alignment, stderr = muscle.communicate(input=fasta_string)
-        alignment = unicode(alignment, "utf-8")
-        stderr = unicode(stderr, "utf-8")
+    alignment, stderr = muscle.communicate(input=fasta_string)
     if debug:
         print(stderr)
-    aln = AlignIO.read(StringIO(alignment), fmt)
-    if as_file:
-        if not alignment_file:
-            alignment_file = tempfile.NamedTemporaryFile().name
-        AlignIO.write(aln, alignment_file, fmt)
-        return alignment_file
-    return aln
+    # output
+    if as_string:
+        return alignment
+    elif as_file:
+        with open(alignment_file, "w") as f:
+            f.write(alignment)
+    else:
+        return AlignIO.read(StringIO(alignment), fmt)
+
+    # if sequences:
+    #     fasta_string = _get_fasta_string(sequences)
+    # elif fasta:
+    #     fasta_string = open(fasta, "r").read()
+    # if muscle_bin is None:
+    #     mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    #     muscle_bin = os.path.join(
+    #         mod_dir, "bin/muscle_{}".format(platform.system().lower())
+    #     )
+    # aln_format = ""
+    # if fmt == "clustal":
+    #     aln_format = " -clwstrict"
+    # muscle_cline = "{}{} ".format(muscle_bin, aln_format)
+    # if maxiters is not None:
+    #     muscle_cline += " -maxiters {}".format(maxiters)
+    # if diags:
+    #     muscle_cline += " -diags"
+    # if all([gap_open is not None, gap_extend is not None]):
+    #     muscle_cline += " -gapopen {} -gapextend {}".format(gap_open, gap_extend)
+    # if debug:
+    #     print("muscle binary path:", muscle_bin)
+    #     print("muscle command:", muscle_cline)
+    # muscle = sp.Popen(
+    #     str(muscle_cline),
+    #     stdin=sp.PIPE,
+    #     stdout=sp.PIPE,
+    #     stderr=sp.PIPE,
+    #     universal_newlines=True,
+    #     shell=True,
+    # )
+    # if sys.version_info[0] > 2:
+    #     alignment, stderr = muscle.communicate(input=fasta_string)
+    # else:
+    #     alignment, stderr = muscle.communicate(input=fasta_string)
+    #     alignment = unicode(alignment, "utf-8")
+    #     stderr = unicode(stderr, "utf-8")
+    # if debug:
+    #     print(stderr)
+    # aln = AlignIO.read(StringIO(alignment), fmt)
+    # if as_file:
+    #     if not alignment_file:
+    #         alignment_file = tempfile.NamedTemporaryFile().name
+    #     AlignIO.write(aln, alignment_file, fmt)
+    #     return alignment_file
+    # return aln
 
 
 def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
@@ -317,11 +515,16 @@ def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
     return (name, consensus_string.upper())
 
 
-def _get_fasta_string(sequences):
+def _get_fasta_string(sequences, id_key=None, seq_key=None):
     if type(sequences) == str:
         return sequences
     elif all([type(s) == Sequence for s in sequences]):
-        return "\n".join([s.fasta for s in sequences])
+        ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
+        seqs = [
+            s.get(seq_key, s.sequence) if seq_key is not None else s.sequence
+            for s in sequences
+        ]
+        return "\n".join(f"{i}\n{s}" for i, s in zip(ids, seqs))
     else:
         return "\n".join([Sequence(s).fasta for s in sequences])
     # elif type(sequences[0]) == SeqRecord:
