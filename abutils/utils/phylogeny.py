@@ -38,6 +38,7 @@ import shutil
 import string
 import subprocess as sp
 import sys
+import tempfile
 from typing import Optional
 
 import numpy as np
@@ -81,7 +82,7 @@ else:
 
 def fasttree(
     alignment_file: str,
-    tree_file: str,
+    tree_file: Optional[str] = None,
     is_aa: bool = False,
     fasttree_bin: Optional[str] = None,
     quiet: bool = True,
@@ -127,7 +128,10 @@ def fasttree(
             mod_dir, f"bin/fasttree_{platform.system().lower()}"
         )
     # make output directory if necessary
-    alignment_file = os.path.abspath(alignment_file)
+    if alignment_file is None:
+        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    else:
+        alignment_file = os.path.abspath(alignment_file)
     tree_file = os.path.abspath(tree_file)
     if not os.path.isdir(os.path.dirname(tree_file)):
         make_dir(os.path.dirname(tree_file))
