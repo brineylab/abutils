@@ -48,7 +48,9 @@ from Bio.Align import MultipleSeqAlignment, AlignInfo
 from Bio.SeqRecord import SeqRecord
 
 from .pipeline import list_files
+
 from ..core.sequence import Sequence
+from ..io import to_fasta
 
 
 __all__ = [
@@ -79,8 +81,8 @@ def mafft(
     as_string: bool = False,
     reorder: bool = True,
     mafft_bin: Optional[str] = None,
-    seq_key: Optional[str] = None,
     id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
     debug: bool = False,
     fasta: Optional[str] = None,
 ) -> Union[MultipleSeqAlignment, str]:
@@ -123,6 +125,12 @@ def mafft(
         Path to a MAFFT executable. Default is ``None``, which results in 
         using the default system MAFFT binary (just calling ``'mafft'``).
 
+    id_key : str, default=None
+        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
+        
+    sequence_key : str, default=None
+        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
+
     debug : bool, default=False
         If ``True``, prints MAFFT's standard output and standard error. 
         Default is ``False``.
@@ -145,15 +153,7 @@ def mafft(
     # process input
     if fasta is not None:
         sequences = fasta
-    if os.path.isfile(sequences):
-        ffile = sequences
-    else:
-        fasta_string = _get_fasta_string(sequences, id_key=id_key, seq_key=seq_key)
-        ff = tempfile.NamedTemporaryFile(delete=False)
-        ff.close()
-        ffile = ff.name
-        with open(ffile, "w") as f:
-            f.write(fasta_string)
+    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
     # configure output path
     if alignment_file is None:
         as_file = False
@@ -209,8 +209,8 @@ def muscle(
     as_string: bool = False,
     muscle_bin: Optional[str] = None,
     threads: Optional[int] = None,
-    seq_key: Optional[str] = None,
     id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
     debug: bool = False,
     fasta: Optional[str] = None,
 ) -> Union[MultipleSeqAlignment, str]:
@@ -230,10 +230,6 @@ def muscle(
     alignment_file : str, optional
         Path for the output alignment file. Required if ``as_file`` is ``True``.
 
-    threads : int, default=None
-        Number of threads for MUSCLE to use. If not provided, MUSCLE uses all
-        available CPUs.
-
     as_file: bool, default=False
         If ``True``, returns the path to the alignment file. If ``False``,
         returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
@@ -248,6 +244,16 @@ def muscle(
     muscle_bin : str, optional
         Path to a MUSCLE executable. If not provided, the MUSCLE binary bundled 
         with ``abutils`` will be used.
+
+    threads : int, default=None
+        Number of threads for MUSCLE to use. If not provided, MUSCLE uses all
+        available CPUs.
+
+    id_key : str, default=None
+        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
+        
+    sequence_key : str, default=None
+        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
 
     debug : bool, default=False
         If ``True``, prints MAFFT's standard output and standard error. 
@@ -271,15 +277,7 @@ def muscle(
     # process input
     if fasta is not None:
         sequences = fasta
-    if os.path.isfile(sequences):
-        ffile = sequences
-    else:
-        fasta_string = _get_fasta_string(sequences, id_key=id_key, seq_key=seq_key)
-        ff = tempfile.NamedTemporaryFile(delete=False)
-        ff.close()
-        ffile = ff.name
-        with open(ffile, "w") as f:
-            f.write(fasta_string)
+    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
     # configure output path
     if alignment_file is None:
         as_file = False
@@ -412,7 +410,9 @@ def muscle_v3(
     # process input
     if fasta is not None:
         sequences = fasta
-    fasta_string = _get_fasta_string(sequences, id_key=id_key, seq_key=seq_key)
+    fasta_string = to_fasta(
+        sequences, as_string=True, id_key=id_key, sequence_key=seq_key,
+    )
     # configure output path
     if alignment_file is None:
         as_file = False
@@ -515,24 +515,24 @@ def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
     return (name, consensus_string.upper())
 
 
-def _get_fasta_string(sequences, id_key=None, seq_key=None):
-    if type(sequences) == str:
-        return sequences
-    elif all([type(s) == Sequence for s in sequences]):
-        ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
-        seqs = [
-            s.get(seq_key, s.sequence) if seq_key is not None else s.sequence
-            for s in sequences
-        ]
-        return "\n".join(f"{i}\n{s}" for i, s in zip(ids, seqs))
-    else:
-        return "\n".join([Sequence(s).fasta for s in sequences])
-    # elif type(sequences[0]) == SeqRecord:
-    #     return '\n'.join(['>{}\n{}'.format(seq.id, str(seq.seq).upper()) for seq in sequences])
-    # # elif type(sequences[0]) == Sequence:
-    # #     return '\n'.join(['>{}\n{}'.format(seq.id, seq.seq) for seq in sequences])
-    # elif type(sequences[0]) in [list, tuple]:
-    #     return '\n'.join(['>{}\n{}'.format(seq[0], seq[1]) for seq in sequences])
+# def _get_fasta_string(sequences, id_key=None, seq_key=None):
+#     if type(sequences) == str:
+#         return sequences
+#     elif all([type(s) == Sequence for s in sequences]):
+#         ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
+#         seqs = [
+#             s.get(seq_key, s.sequence) if seq_key is not None else s.sequence
+#             for s in sequences
+#         ]
+#         return "\n".join(f"{i}\n{s}" for i, s in zip(ids, seqs))
+#     else:
+#         return "\n".join([Sequence(s).fasta for s in sequences])
+# elif type(sequences[0]) == SeqRecord:
+#     return '\n'.join(['>{}\n{}'.format(seq.id, str(seq.seq).upper()) for seq in sequences])
+# # elif type(sequences[0]) == Sequence:
+# #     return '\n'.join(['>{}\n{}'.format(seq.id, seq.seq) for seq in sequences])
+# elif type(sequences[0]) in [list, tuple]:
+#     return '\n'.join(['>{}\n{}'.format(seq[0], seq[1]) for seq in sequences])
 
 
 # ----------------------------

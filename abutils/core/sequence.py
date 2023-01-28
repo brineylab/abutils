@@ -29,6 +29,7 @@ from collections import OrderedDict
 import csv
 import json
 import operator
+import os
 import sys
 import tempfile
 from typing import Iterable, Optional
@@ -39,6 +40,7 @@ from Bio.SeqRecord import SeqRecord
 
 import pandas as pd
 
+from ..io import make_dir
 from ..utils.codons import codon_lookup
 from ..utils.utilities import nested_dict_lookup
 
@@ -612,6 +614,7 @@ def to_fasta(
     as_string: bool = False,
     id_key: Optional[str] = None,
     sequence_key: Optional[str] = None,
+    tempfile_dir: str = "/tmp",
 ) -> str:
     """
     Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
@@ -620,9 +623,11 @@ def to_fasta(
     ----------
     sequences : Iterable[Sequence]
         An iterable of any of the following:
-            1. a list of abutils ``Sequence`` objects
-            2. a list of BioPython ``SeqRecord`` objects
-            3. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+            1. list of abutils ``Sequence`` objects
+            2. FASTA-formatted string
+            3. path to a FASTA-formatted file
+            4. list of BioPython ``SeqRecord`` objects
+            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
         Required.
 
     fasta_file : str, default=None
@@ -640,6 +645,11 @@ def to_fasta(
         Name of the annotation field containg the sequence. If not provided,
         ``sequence.sequence`` is used.
 
+    tempfile_dir : str, default="/tmp"
+        If `fasta_file` is not provided, directory into which the tempfile 
+        should be created. If the directory does not exist, it will be 
+        created. Default is "/tmp".
+
     
     Returns
     --------
@@ -647,7 +657,18 @@ def to_fasta(
         Path to a FASTA file or a FASTA-formatted string
 
     """
-    if all([type(s) == Sequence for s in sequences]):
+    # if sequences is already a FASTA-formatted file
+    if os.path.isfile(sequences):
+        if as_string:
+            with open(sequences, "r") as f:
+                fasta_string = f.read()
+            return fasta_string
+        return sequences
+    # if sequences is a FASTA-formatted string
+    if isinstance(sequences, str):
+        fasta_string = sequences
+    # anything else..
+    elif all([type(s) == Sequence for s in sequences]):
         ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
         seqs = [
             s.get(sequence_key, s.sequence) if sequence_key is not None else s.sequence
@@ -656,12 +677,16 @@ def to_fasta(
         fasta_string = "\n".join(f">{i}\n{s}" for i, s in zip(ids, seqs))
     else:
         fasta_string = "\n".join([Sequence(s).fasta for s in sequences])
+    # output
     if as_string:
         return fasta_string
     if fasta_file is None:
-        ff = tempfile.NamedTemporaryFile(delete=False)
+        make_dir(tempfile_dir)
+        ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
         ff.close()
         fasta_file = ff.name
+    else:
+        make_dir(os.path.dirname(fasta_file))
     with open(fasta_file, "w") as f:
         f.write(fasta_string)
     return fasta_file

@@ -37,6 +37,7 @@ import subprocess as sp
 import sys
 import tempfile
 import time
+from typing import Iterable, Optional, Union
 
 from Bio import SeqIO, AlignIO
 from Bio.Align import AlignInfo
@@ -45,7 +46,8 @@ from .alignment import mafft
 from .database import KeyValueStore
 from .decorators import lazy_property
 from .pipeline import make_dir
-from ..core.sequence import Sequence, read_fasta
+
+from ..core.sequence import Sequence, read_fasta, to_fasta
 
 
 class Cluster:
@@ -57,6 +59,10 @@ class Cluster:
         self.name = name
         self.sequences = sequences
         self.centroid = centroid
+
+    def __iter__():
+        for s in self.sequences:
+            yield s
 
     @property
     def size(self):
@@ -90,7 +96,7 @@ class Clusters:
     """
 
     def __init__(self, clusters=None):
-        self._clusters = clusters if clusters is not None else []
+        self._clusters = self._parse_clusters(clusters)
 
     def __iter__(self):
         for cluster in self.clusters:
@@ -113,6 +119,19 @@ class Clusters:
     @property
     def count(self):
         return len(self.clusters)
+
+    def _parse_clusters(self, clusts):
+        if isinstance(clusts, dict):
+            clusters = []
+            for name, cdata in clusts.items():
+                seqs = cdata["seqs"]
+                centroid = cdata["centroid"]
+                clusters.append(Cluster(name, seqs, centroid=centroid))
+            return clusters
+        elif clusts is None:
+            return []
+        else:
+            return clusts
 
     def add(self, cluster):
         self._clusters.append(cluster)
@@ -177,6 +196,102 @@ def cluster(sequences, threshold=0.975, temp_dir="/tmp", debug=False):
     if not debug:
         shutil.rmtree(temp_dir)
     return clusters
+
+
+def cluster_vsearch(
+    sequences: Union[Iterable, str],
+    threshold: float = 0.975,
+    temp_dir: str = "/tmp",
+    iddef: int = 0,
+    vsearch_bin: str = None,
+    id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
+    strand: str = "plus",
+    as_dict: bool = False,
+    debug: bool = False,
+) -> Union[dict, Clusters]:
+    """
+    Clusters sequences using `VSEARCH`_.
+
+
+    vsearch_bin : str, optional
+        Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled 
+        with ``abutils`` will be used.
+
+    id_key : str, default=None
+        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
+        
+    sequence_key : str, default=None
+        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
+
+
+    
+
+    debug : bool, default=False
+        If ``True``, prints MAFFT's standard output and standard error. 
+        Default is ``False``.
+
+
+
+    .. _VSEARCH
+        https://github.com/torognes/vsearch
+
+    """
+    # input processing
+    fasta_file = to_fasta(
+        sequences, tempfile_dir=temp_dir, id_key=id_key, sequence_key=seq_key
+    )
+    seqs = read_fasta(fasta_file)
+    seq_dict = {s.id: s for s in seqs}
+    # output files
+    centroid_file = tempfile.NamedTemporaryFile(
+        dir=temp_dir, delete=False, prefix="centroids_"
+    ).name
+    uc_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="uc_").name
+    # get the vsearch binary
+    if vsearch_bin is None:
+        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        vsearch_bin = os.path.join(
+            mod_dir, "bin/vsearch_{}".format(platform.system().lower())
+        )
+    # do clustering
+    vsearch_cmd = f"{vsearch_bin} --cluster_fast {fasta_file}"
+    vsearch_cmd += f" --centroids {centroid_file}"
+    vsearch_cmd += f" --clusterout_id"
+    vsearch_cmd += f" --uc {uc_file}"
+    vsearch_cmd += f" --id {threshold}"
+    vsearch_cmd += f" --iddef {iddef}"
+    vsearch_cmd += f" --sizeout"
+    vsearch_cmd += f" --strand {strand}"
+    p = sp.Popen(vsearch_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if debug:
+        print("STDOUT:", stdout.decode("utf-8"))
+        print("")
+        print("STDERR:", stderr.decode("utf-8"))
+    # process output
+    if os.stat(uc_file).st_size == 0:
+        err = f"WARNING: the VSEARCH output file ({uc_file}) is empty. "
+        err += "Please verify that the input data is valid."
+        print(err)
+        return None
+    cluster_info = {}
+    with open(uc_file, "r") as f:
+        for line in f:
+            if not (ldata := line.strip().split()):
+                continue
+            cluster_num = ldata[1]
+            if cluster_num not in cluster_info:
+                cluster_info[cluster_num] = {"seqs": []}
+            if ldata[0] == "S":
+                centroid = ldata[-2]
+                cluster_info[cluster_num]["centroid"] = seq_dict[centroid]
+                cluster_info[cluster_num]["seqs"].append(seq_dict[centroid])
+            elif ldata[0] == "H":
+                hit = ldata[-2]
+                cluster_info[cluster_num]["seqs"].append(seq_dict[hit])
+    if as_dict:
+        return cluster_info
 
 
 def vsearch_clusterfast(
