@@ -587,7 +587,7 @@ def read_fasta(fasta_file: str) -> Iterable[Sequence]:
     Returns
     -------
     sequences : list of ``Sequences``
-    
+
     """
     with open(fasta_file) as f:
         sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
@@ -653,7 +653,7 @@ def to_fasta(
             s.get(sequence_key, s.sequence) if sequence_key is not None else s.sequence
             for s in sequences
         ]
-        fasta_string = "\n".join(f"{i}\n{s}" for i, s in zip(ids, seqs))
+        fasta_string = "\n".join(f">{i}\n{s}" for i, s in zip(ids, seqs))
     else:
         fasta_string = "\n".join([Sequence(s).fasta for s in sequences])
     if as_string:
