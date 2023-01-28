@@ -30,6 +30,8 @@ import csv
 import json
 import operator
 import sys
+import tempfile
+from typing import Iterable, Optional
 import uuid
 
 from Bio import SeqIO
@@ -365,7 +367,29 @@ class Sequence(object):
             self._annotations = seq
 
 
-def translate(sequence, sequence_key=None, frame=1):
+def translate(
+    sequence: Sequence, sequence_key: Optional[str] = None, frame: int = 1
+) -> str:
+    """
+    Translates a nucleotide sequence.
+
+    Parameters
+    ----------
+    sequence : Sequence
+        ``Sequence`` object to be translated. Required.
+
+    sequence_key : str, default=None
+        Name of the annotation field containg the sequence to be translated. 
+        If not provided, ``sequence.sequence`` is used.
+
+    frame : int, default=1
+        Reading frame to translate. Default is ``1``.
+
+    
+    Returns
+    -------
+    translated : str
+    """
     if sequence_key is not None:
         seq = Sequence(
             nested_dict_lookup(sequence.annotations, sequence_key.split("."))
@@ -389,8 +413,45 @@ def translate(sequence, sequence_key=None, frame=1):
 
 
 def read_json(
-    json_file, match=None, fields=None, id_key="seq_id", sequence_key="sequence"
+    json_file: str,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "seq_id",
+    sequence_key: str = "vdj_nt",
 ):
+    """
+    Reads a JSON-formatted annotation file and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    json_file : str
+        Path to the input JSON file. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file. 
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which 
+        the ``'locus'`` field is no ``'IGH'``:
+            ``{'locus': 'IGH'}
+    
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence`` 
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="seq_id"
+        Name of the annotation field containing the sequence ID. Used to 
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="vdj_nt"
+        Name of the annotation field containg the sequence. Used to 
+        populate the ``Sequence.sequence`` property.
+
+    
+    Returns
+    -------
+    sequences : list of ``Sequences``
+    
+    """
     if match is None:
         match = {}
     if fields is not None:
@@ -418,13 +479,49 @@ def read_json(
 
 
 def read_csv(
-    csv_file,
-    delimiter=",",
-    match=None,
-    fields=None,
-    id_key="sequence_id",
-    sequence_key="sequence",
-):
+    csv_file: str,
+    delimiter: str = ",",
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
+    """
+    Reads a tabular annotation file and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the input CSV file. Required.
+
+    delimiter : str, default=","
+        Column delimiter. Default is ``","``.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file. 
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which 
+        the ``'locus'`` field is no ``'IGH'``:
+            ``{'locus': 'IGH'}
+    
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence`` 
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to 
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to 
+        populate the ``Sequence.sequence`` property.
+
+    
+    Returns
+    -------
+    sequences : list of ``Sequences``
+    
+    """
     if match is None:
         match = {}
     if fields is not None:
@@ -447,7 +544,51 @@ def read_csv(
     return sequences
 
 
-def read_fasta(fasta_file):
+def read_airr(
+    tsv_file: str, match: Optional[dict] = None, fields: Optional[Iterable] = None
+) -> Iterable[Sequence]:
+    """
+    Reads an AIRR-formatted annotation file and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    tsv_file : str
+        Path to the input TSV file. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file. 
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which 
+        the ``'locus'`` field is no ``'IGH'``:
+            ``{'locus': 'IGH'}
+    
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence`` 
+        objects. Fields must be column names in the input file.
+
+    
+    Returns
+    -------
+    sequences : list of ``Sequences``
+    """
+    return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
+
+
+def read_fasta(fasta_file: str) -> Iterable[Sequence]:
+    """
+    Reads a FASTA-formatted  file and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    fasta_file : str
+        Path to the input FASTA file. Required.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+    
+    """
     with open(fasta_file) as f:
         sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
     return sequences
@@ -464,3 +605,63 @@ def from_mongodb(db, collection, match=None, project=None, limit=None):
         results = db[collection].find(match, project)
     return [Sequence(r) for r in results]
 
+
+def to_fasta(
+    sequences: Iterable[Sequence],
+    fasta_file: Optional[str] = None,
+    as_string: bool = False,
+    id_key: Optional[str] = None,
+    sequence_key: Optional[str] = None,
+) -> str:
+    """
+    Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        An iterable of any of the following:
+            1. a list of abutils ``Sequence`` objects
+            2. a list of BioPython ``SeqRecord`` objects
+            3. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+        Required.
+
+    fasta_file : str, default=None
+        Path to the output FASTA file. If not provided and `as_string` is ``False``,
+        a file will be created using ``tempfile.NamedTemporaryFile()``.
+
+    as_string : bool, default=False
+        Return a FASTA-formatted string rather than writing to file.
+
+    id_key : str, default=None
+        Name of the annotation field containing the sequence ID. If not provided, 
+        ``sequence.id`` is used.
+
+    sequence_key : str, default=None
+        Name of the annotation field containg the sequence. If not provided,
+        ``sequence.sequence`` is used.
+
+    
+    Returns
+    --------
+    fasta : str
+        Path to a FASTA file or a FASTA-formatted string
+
+    """
+    if all([type(s) == Sequence for s in sequences]):
+        ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
+        seqs = [
+            s.get(sequence_key, s.sequence) if sequence_key is not None else s.sequence
+            for s in sequences
+        ]
+        fasta_string = "\n".join(f"{i}\n{s}" for i, s in zip(ids, seqs))
+    else:
+        fasta_string = "\n".join([Sequence(s).fasta for s in sequences])
+    if as_string:
+        return fasta_string
+    if fasta_file is None:
+        ff = tempfile.NamedTemporaryFile(delete=False)
+        ff.close()
+        fasta_file = ff.name
+    with open(fasta_file, "w") as f:
+        f.write(fasta_string)
+    return fasta_file
