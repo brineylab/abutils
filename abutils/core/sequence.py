@@ -657,17 +657,18 @@ def to_fasta(
         Path to a FASTA file or a FASTA-formatted string
 
     """
-    # if sequences is already a FASTA-formatted file
-    if os.path.isfile(sequences):
-        if as_string:
-            with open(sequences, "r") as f:
-                fasta_string = f.read()
-            return fasta_string
-        return sequences
-    # if sequences is a FASTA-formatted string
     if isinstance(sequences, str):
-        fasta_string = sequences
-    # anything else..
+        # if sequences is already a FASTA-formatted file
+        if os.path.isfile(sequences):
+            if as_string:
+                with open(sequences, "r") as f:
+                    fasta_string = f.read()
+                return fasta_string
+            return sequences
+        # if sequences is a FASTA-formatted string
+        else:
+            fasta_string = sequences
+    # if sequences is a list of Sequences
     elif all([type(s) == Sequence for s in sequences]):
         ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
         seqs = [
@@ -675,6 +676,7 @@ def to_fasta(
             for s in sequences
         ]
         fasta_string = "\n".join(f">{i}\n{s}" for i, s in zip(ids, seqs))
+    # anything else..
     else:
         fasta_string = "\n".join([Sequence(s).fasta for s in sequences])
     # output
