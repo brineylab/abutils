@@ -40,8 +40,8 @@ from Bio.SeqRecord import SeqRecord
 
 import pandas as pd
 
-from ..io import make_dir
 from ..utils.codons import codon_lookup
+from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
 
 if sys.version_info[0] > 2:
