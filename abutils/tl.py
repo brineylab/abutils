@@ -24,6 +24,7 @@
 
 from .core.lineage import group_lineages
 from .core.pair import assign_pairs
+from .core.sequence import translate
 
 from .utils.alignment import (
     global_alignment,
