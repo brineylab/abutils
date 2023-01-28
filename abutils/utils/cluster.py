@@ -292,6 +292,7 @@ def cluster_vsearch(
                 cluster_info[cluster_num]["seqs"].append(seq_dict[hit])
     if as_dict:
         return cluster_info
+    return Clusters(cluster_info)
 
 
 def vsearch_clusterfast(
