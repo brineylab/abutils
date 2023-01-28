@@ -24,7 +24,14 @@
 
 import sys
 
-from .core.sequence import read_csv, read_fasta, read_json, from_mongodb
+from .core.sequence import (
+    read_csv,
+    read_airr,
+    read_fasta,
+    read_json,
+    from_mongodb,
+    to_fasta,
+)
 
 from .utils.convert import abi_to_fasta
 from .utils.pipeline import list_files, make_dir
