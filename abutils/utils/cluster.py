@@ -138,9 +138,11 @@ class Clusters:
 def cluster(
     sequences: Union[Iterable, str],
     threshold: float = 0.975,
+    algo: str = "auto",
     temp_dir: str = "/tmp",
     iddef: int = 0,
     vsearch_bin: str = None,
+    mmseqs_bin: str = None,
     id_key: Optional[str] = None,
     seq_key: Optional[str] = None,
     strand: str = "plus",
@@ -148,7 +150,10 @@ def cluster(
     debug: bool = False,
 ) -> Union[dict, Clusters]:
     """
-    Clusters sequences using `VSEARCH`_.
+    Clusters sequences using `VSEARCH`_ or `MMseqs2`_. By default, sequences will 
+    be clustered with VSEARCH if there are fewer than 10,000 sequences and 
+    with MMseqs2 if there are more than 10,000 sequences. These defaults can be 
+    overridden with `algo`.
 
     Parameters
     ----------
@@ -163,6 +168,13 @@ def cluster(
 
     threshold : float, default=0.975
         Identity threshold for clustering. Must be between 0 and 1.
+
+    algo : float, default="auto"
+        Algorithm to be used for clustering. Options are ``"vsearch"``, ``"mmseqs"``, 
+        or ``"auto"``. By default (``"auto"``), VSEARCH will be used if there are fewer than 10,000 
+        sequences and MMseqs2 will be used for 10,000 sequences or more. Providing ``"vsearch"`` 
+        or ``"mmseqs"`` will force the use of the desired clustering algorithm regardless of the 
+        number or sequences to be clustered.
 
     temp_dir : str, default="/tmp"
         Path to a directory for temporary storage of clustering files.
@@ -180,6 +192,10 @@ def cluster(
 
     vsearch_bin : str, optional
         Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled 
+        with ``abutils`` will be used.
+
+    mmseqs_bin : str, optional
+        Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled 
         with ``abutils`` will be used.
 
     id_key : str, default=None
@@ -212,20 +228,50 @@ def cluster(
 
     .. _VSEARCH
         https://github.com/torognes/vsearch
+        x
+    .. _MMseqs2
+        https://github.com/soedinglab/MMseqs2
 
     """
-    return cluster_vsearch(
-        sequences=sequences,
-        threshold=threshold,
-        temp_dir=temp_dir,
-        iddef=iddef,
-        vsearch_bin=vsearch_bin,
-        id_key=id_key,
-        seq_key=seq_key,
-        strand=strand,
-        as_dict=as_dict,
-        debug=debug,
+    # check input data to get the number of sequences
+    fasta_file = to_fasta(
+        sequences, tempfile_dir=temp_dir, id_key=id_key, sequence_key=seq_key
     )
+    seqs = read_fasta(fasta_file)
+    # select the clustering algo
+    if algo.lower() == "auto" and len(seqs) < 10000:
+        algo = "vsearch"
+    elif algo.lower() == "auto" and len(seqs) >= 10000:
+        algo = "mmseqs"
+    if algo.lower() in ["mmseqs", "mmseqs2"]:
+        return cluster_mmseqs(
+            sequences=sequences,
+            threshold=threshold,
+            temp_dir=temp_dir,
+            mmseqs_bin=mmseqs_bin,
+            id_key=id_key,
+            seq_key=seq_key,
+            as_dict=as_dict,
+            debug=debug,
+        )
+    elif algo.lower() == "vsearch":
+        return cluster_vsearch(
+            sequences=sequences,
+            threshold=threshold,
+            temp_dir=temp_dir,
+            iddef=iddef,
+            vsearch_bin=vsearch_bin,
+            id_key=id_key,
+            seq_key=seq_key,
+            strand=strand,
+            as_dict=as_dict,
+            debug=debug,
+        )
+    else:
+        err = f"\nERROR: Invalid algo option: {algo}."
+        err += " Valid choices are: 'vsearch', 'mmseqs', or 'auto'.\n"
+        print(err)
+        sys.exit()
 
 
 def cluster_vsearch(
