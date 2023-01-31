@@ -31,9 +31,10 @@ from .utils.alignment import (
     local_alignment,
     dot_alignment,
     muscle,
+    muscle_v3,
     mafft,
 )
-from .utils.cluster import cluster
+from .utils.cluster import cluster, cluster_vsearch, cluster_mmseqs
 from .utils.progbar import progress_bar
 from .utils.phylogeny import fasttree, lsd, igphyml
 
