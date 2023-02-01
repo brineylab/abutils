@@ -111,6 +111,10 @@ class Clusters:
         return sorted(self._clusters, key=lambda x: x.size, reverse=True)
 
     @property
+    def centroids(self):
+        return [c.centroid for c in self.clusters]
+
+    @property
     def largest_cluster(self):
         return self.clusters[0]
 
