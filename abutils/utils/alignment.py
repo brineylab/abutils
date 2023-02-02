@@ -872,10 +872,10 @@ class BaseAlignment(object):
         self, query, target, matrix, match, mismatch, gap_open, gap_extend, aa
     ):
         super(BaseAlignment, self).__init__()
-        self.query = self._process_sequence(query, aa=aa)
-        self.target = self._process_sequence(target, aa=aa)
         self.raw_query = query
         self.raw_target = target
+        self.query = self._process_sequence(query, aa=aa)
+        self.target = self._process_sequence(target, aa=aa)
         self._matrix = matrix
         self._match = int(match)
         self._mismatch = int(mismatch)
@@ -963,13 +963,19 @@ class BaseAlignment(object):
     def target_id(self, target_id):
         self._target_id = target_id
 
+    @property
+    def alignment_midline(self):
+        if self._alignment_midline is None:
+            self._alignment_midline = self._get_alignment_midline()
+        return self._alignment_midline
+
     @staticmethod
     def _process_sequence(sequence, aa):
         if type(sequence) == Sequence:
             return sequence
         return Sequence(sequence)
 
-    def _alignment_midline(self):
+    def _get_alignment_midline(self):
         midline = ""
         for q, t in zip(self.aligned_query, self.aligned_target):
             if q == t:
@@ -1045,9 +1051,9 @@ class SSWAlignment(BaseAlignment):
 
         self.alignment_type = "local"
         self._alignment = self._align()
-        self.aligned_query = self._alignment.aligned_query_sequence
-        self.aligned_target = self._alignment.aligned_target_sequence
-        self.alignment_midline = self._alignment_midline()
+        self._aligned_query = self._alignment.aligned_query_sequence
+        self._aligned_target = self._alignment.aligned_target_sequence
+        self._alignment_midline = None
         self.score = self._alignment.optimal_alignment_score
         self.cigar = self._alignment.cigar
         self.query_begin = self._alignment.query_begin
@@ -1056,23 +1062,31 @@ class SSWAlignment(BaseAlignment):
         self.target_end = self._alignment.target_end_optimal
         self._alignment = None
 
+    @property
+    def alignment(self):
+        return self._alignment
+
+    @property
+    def aligned_query(self):
+        return self._aligned_query
+
+    @aligned_query.setter
+    def aligned_query(self, aligned_query):
+        self._aligned_query = aligned_query
+        self._alignment_midline = None
+
+    @property
+    def aligned_target(self):
+        return self._aligned_target
+
+    @aligned_target.setter
+    def aligned_target(self, aligned_target):
+        self._aligned_target = aligned_target
+        self._alignment_midline = None
+
     def _align(self):
-        if sys.version_info[0] == 2:
-            query = (
-                self.query.sequence.encode("ascii")
-                if isinstance(self.query.sequence, unicode)
-                else self.query.sequence
-            )
-            target = (
-                self.target.sequence.encode("ascii")
-                if isinstance(self.target.sequence, unicode)
-                else self.target.sequence
-            )
-        else:
-            query = self.query.sequence
-            target = self.target.sequence
         aligner = StripedSmithWaterman(
-            query,
+            self.query.sequence,
             match_score=self._match,
             mismatch_score=self._mismatch,
             gap_open_penalty=self._gap_open,
@@ -1080,7 +1094,7 @@ class SSWAlignment(BaseAlignment):
             substitution_matrix=self._matrix,
             protein=self._aa,
         )
-        return aligner(target)
+        return aligner(self.target.sequence)
 
 
 class BiopythonAlignment(BaseAlignment):
@@ -1102,14 +1116,36 @@ class BiopythonAlignment(BaseAlignment):
         self.alignment_type = "local"
         self._aln = self._align()
         aln_query, aln_target, score, begin, end = self._aln
-        self.aligned_query = aln_query[begin:end]
-        self.aligned_target = aln_target[begin:end]
-        self.alignment_midline = self._alignment_midline()
+        self._aligned_query = aln_query[begin:end]
+        self._aligned_target = aln_target[begin:end]
+        self._alignment_midline = None
         self.score = score
         self.query_begin = self._get_begin_pos(aln_query, begin)
         self.query_end = self._get_end_pos(aln_query, end)
         self.target_begin = self._get_begin_pos(aln_target, begin)
         self.target_end = self._get_end_pos(aln_target, end)
+
+    @property
+    def alignment(self):
+        return self._aln
+
+    @property
+    def aligned_query(self):
+        return self._aligned_query
+
+    @aligned_query.setter
+    def aligned_query(self, aligned_query):
+        self._aligned_query = aligned_query
+        self._alignment_midline = None
+
+    @property
+    def aligned_target(self):
+        return self._aligned_target
+
+    @aligned_target.setter
+    def aligned_target(self, aligned_target):
+        self._aligned_target = aligned_target
+        self._alignment_midline = None
 
     def _align(self):
         aln = pairwise2.align.localms(
@@ -1210,10 +1246,32 @@ class NWAlignment(BaseAlignment):
         )
         self._matrix = matrix
         self._alignment = self._align()
-        self.aligned_query = self._alignment[0]
-        self.aligned_target = self._alignment[1]
-        self.alignment_midline = self._alignment_midline()
+        self._aligned_query = self._alignment[0]
+        self._aligned_target = self._alignment[1]
+        self._alignment_midline = None
         self.score = self._score_alignment()
+
+    @property
+    def alignment(self):
+        return self._aln
+
+    @property
+    def aligned_query(self):
+        return self._aligned_query
+
+    @aligned_query.setter
+    def aligned_query(self, aligned_query):
+        self._aligned_query = aligned_query
+        self._alignment_midline = None
+
+    @property
+    def aligned_target(self):
+        return self._aligned_target
+
+    @aligned_target.setter
+    def aligned_target(self, aligned_target):
+        self._aligned_target = aligned_target
+        self._alignment_midline = None
 
     def _get_matrix_file(self, match=None, mismatch=None, matrix=None):
         matrix_dir = os.path.join(
