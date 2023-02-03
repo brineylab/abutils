@@ -113,8 +113,10 @@ def mafft(
     as_file: bool, default=False
         If ``True``, returns the path to the alignment file. If ``False``,
         returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
-        output as a ``str``, depending on `as_string`. Requires that 
-        `alignment_file` is also provided.
+        output as a ``str``, depending on `as_string`. If `alignment_file` is not 
+        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``. 
+        Note that this temporary file is created in ``"/tmp"`` and may be removed 
+        by the operating system without notice.
 
     as_string: bool, default=False
         If ``True``, returns a the alignment output as a string. If ``False``,
@@ -156,7 +158,7 @@ def mafft(
     ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
     # configure output path
     if alignment_file is None:
-        as_file = False
+        # as_file = False
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     else:
         alignment_file = os.path.abspath(alignment_file)
@@ -233,8 +235,10 @@ def muscle(
     as_file: bool, default=False
         If ``True``, returns the path to the alignment file. If ``False``,
         returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
-        output as a ``str``, depending on `as_string`. Requires that 
-        `alignment_file` is also provided.
+        output as a ``str``, depending on `as_string`. If `alignment_file` is not 
+        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``. 
+        Note that this temporary file is created in ``"/tmp"`` and may be removed 
+        by the operating system without notice.
 
     as_string: bool, default=False
         If ``True``, returns a the alignment output as a string. If ``False``,
@@ -280,7 +284,7 @@ def muscle(
     ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
     # configure output path
     if alignment_file is None:
-        as_file = False
+        # as_file = False
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     else:
         alignment_file = os.path.abspath(alignment_file)
