@@ -113,8 +113,10 @@ def mafft(
     as_file: bool, default=False
         If ``True``, returns the path to the alignment file. If ``False``,
         returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
-        output as a ``str``, depending on `as_string`. Requires that 
-        `alignment_file` is also provided.
+        output as a ``str``, depending on `as_string`. If `alignment_file` is not 
+        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``. 
+        Note that this temporary file is created in ``"/tmp"`` and may be removed 
+        by the operating system without notice.
 
     as_string: bool, default=False
         If ``True``, returns a the alignment output as a string. If ``False``,
@@ -156,7 +158,7 @@ def mafft(
     ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
     # configure output path
     if alignment_file is None:
-        as_file = False
+        # as_file = False
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     else:
         alignment_file = os.path.abspath(alignment_file)
@@ -233,8 +235,10 @@ def muscle(
     as_file: bool, default=False
         If ``True``, returns the path to the alignment file. If ``False``,
         returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
-        output as a ``str``, depending on `as_string`. Requires that 
-        `alignment_file` is also provided.
+        output as a ``str``, depending on `as_string`. If `alignment_file` is not 
+        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``. 
+        Note that this temporary file is created in ``"/tmp"`` and may be removed 
+        by the operating system without notice.
 
     as_string: bool, default=False
         If ``True``, returns a the alignment output as a string. If ``False``,
@@ -280,7 +284,7 @@ def muscle(
     ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
     # configure output path
     if alignment_file is None:
-        as_file = False
+        # as_file = False
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     else:
         alignment_file = os.path.abspath(alignment_file)
@@ -459,52 +463,6 @@ def muscle_v3(
     else:
         return AlignIO.read(StringIO(alignment), fmt)
 
-    # if sequences:
-    #     fasta_string = _get_fasta_string(sequences)
-    # elif fasta:
-    #     fasta_string = open(fasta, "r").read()
-    # if muscle_bin is None:
-    #     mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    #     muscle_bin = os.path.join(
-    #         mod_dir, "bin/muscle_{}".format(platform.system().lower())
-    #     )
-    # aln_format = ""
-    # if fmt == "clustal":
-    #     aln_format = " -clwstrict"
-    # muscle_cline = "{}{} ".format(muscle_bin, aln_format)
-    # if maxiters is not None:
-    #     muscle_cline += " -maxiters {}".format(maxiters)
-    # if diags:
-    #     muscle_cline += " -diags"
-    # if all([gap_open is not None, gap_extend is not None]):
-    #     muscle_cline += " -gapopen {} -gapextend {}".format(gap_open, gap_extend)
-    # if debug:
-    #     print("muscle binary path:", muscle_bin)
-    #     print("muscle command:", muscle_cline)
-    # muscle = sp.Popen(
-    #     str(muscle_cline),
-    #     stdin=sp.PIPE,
-    #     stdout=sp.PIPE,
-    #     stderr=sp.PIPE,
-    #     universal_newlines=True,
-    #     shell=True,
-    # )
-    # if sys.version_info[0] > 2:
-    #     alignment, stderr = muscle.communicate(input=fasta_string)
-    # else:
-    #     alignment, stderr = muscle.communicate(input=fasta_string)
-    #     alignment = unicode(alignment, "utf-8")
-    #     stderr = unicode(stderr, "utf-8")
-    # if debug:
-    #     print(stderr)
-    # aln = AlignIO.read(StringIO(alignment), fmt)
-    # if as_file:
-    #     if not alignment_file:
-    #         alignment_file = tempfile.NamedTemporaryFile().name
-    #     AlignIO.write(aln, alignment_file, fmt)
-    #     return alignment_file
-    # return aln
-
 
 def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
     summary_align = AlignInfo.SummaryInfo(aln)
@@ -515,26 +473,6 @@ def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
     return (name, consensus_string.upper())
 
 
-# def _get_fasta_string(sequences, id_key=None, seq_key=None):
-#     if type(sequences) == str:
-#         return sequences
-#     elif all([type(s) == Sequence for s in sequences]):
-#         ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
-#         seqs = [
-#             s.get(seq_key, s.sequence) if seq_key is not None else s.sequence
-#             for s in sequences
-#         ]
-#         return "\n".join(f"{i}\n{s}" for i, s in zip(ids, seqs))
-#     else:
-#         return "\n".join([Sequence(s).fasta for s in sequences])
-# elif type(sequences[0]) == SeqRecord:
-#     return '\n'.join(['>{}\n{}'.format(seq.id, str(seq.seq).upper()) for seq in sequences])
-# # elif type(sequences[0]) == Sequence:
-# #     return '\n'.join(['>{}\n{}'.format(seq.id, seq.seq) for seq in sequences])
-# elif type(sequences[0]) in [list, tuple]:
-#     return '\n'.join(['>{}\n{}'.format(seq[0], seq[1]) for seq in sequences])
-
-
 # ----------------------------
 #
 #     PAIRWISE ALIGNMENT
@@ -543,74 +481,83 @@ def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
 
 
 def local_alignment(
-    query,
-    target=None,
-    targets=None,
-    match=3,
-    mismatch=-2,
-    gap_open=-5,
-    gap_extend=-2,
-    matrix=None,
-    aa=False,
-    gap_open_penalty=None,
-    gap_extend_penalty=None,
-):
+    query: Union[str, SeqRecord, Sequence, Iterable],
+    target: Union[str, SeqRecord, Sequence, Iterable, None] = None,
+    targets: Optional[Iterable] = None,
+    match: int = 3,
+    mismatch: int = -2,
+    gap_open: int = -5,
+    gap_extend: int = -2,
+    matrix: Union[str, dict, None] = None,
+    aa: bool = False,
+    gap_open_penalty: Optional[int] = None,
+    gap_extend_penalty: Optional[int] = None,
+) -> Union[SSWAlignment, Iterable[SSWAlignment]]:
     """
     Striped Smith-Waterman local pairwise alignment.
 
-    Args:
-
-        query: Query sequence. ``query`` can be one of four things:
-
+    Parameters
+    ----------
+    query : str, SeqRecord, Sequence, or list
+        Query sequence. Can be any of the following:
             1. a nucleotide or amino acid sequence, as a string
-
             2. a Biopython ``SeqRecord`` object
+            3. an abutils ``Sequence`` object
+            4. a ``list`` or ``tuple`` of the format ``[seq_id, sequence]``
 
-            3. an AbTools ``Sequence`` object
+    target : str, SeqRecord, Sequence, or list, default=None
+        Target sequence. Can be anything accepted by `query`. One of 
+        `target` or `targets` must be provided.
 
-            4. a list/tuple of the format ``[seq_id, sequence]``
+    target : str, SeqRecord, Sequence, or list, default=None
+        Iterable of multiple target sequences. A ``list`` or ``tuple`` of 
+        anything accepted by `query`. One of `target` or `targets` must be provided.
 
-        target: A single target sequence. ``target`` can be anything that
-            ``query`` accepts.
+    match : int, default=3
+        Match score. Should be a positive integer.
 
-        targets (list): A list of target sequences, to be proccssed iteratively.
-            Each element in the ``targets`` list can be anything accepted by
-            ``query``.
+    mismatch : int, default=-2
+        Mismatch score. Typically should be less than or equal to ``0``.
 
-        match (int): Match score. Should be a positive integer. Default is 3.
+    gap_open : int, default=-5
+        Gap open score. Typically should be less than or equal to ``0``.
 
-        mismatch (int): Mismatch score. Should be a negative integer. Default is -2.
+    gap_extend : int, default=-2
+        Gap extension score. Typically should be less than or equal to ``0``.
 
-        gap_open (int): Penalty for opening gaps. Should be a negative integer.
-            Default is -5.
-
-        gap_extend (int): Penalty for extending gaps. Should be a negative
-            integer. Default is -2.
-
-        matrix (str, dict): Alignment scoring matrix. Two options for passing the
-            alignment matrix:
-
-            - The name of a built-in matrix. Current options are ``blosum62`` and ``pam250``.
-
-            - A nested dictionary, giving an alignment score for each residue pair. Should be formatted
-              such that retrieving the alignment score for A and G is accomplished by::
-
+    matrix : str, dict, default=None
+        Scoring matrix for amino acid alignments. Can be either:
+            - The name of a built-in matrix. Current options are 
+            ``"blosum62"`` and ``"pam250"``.
+            - A nested dictionary, giving an alignment score for each residue 
+            pair. Should be formatted such that retrieving the alignment score 
+            for ``"A"`` and ``"G"`` is accomplished by::
                 matrix['A']['G']
+        If not provided, ``"blosum62"`` is used.
 
-        aa (bool): Must be set to ``True`` if aligning amino acid sequences. Default
-            is ``False``.
+    aa : bool, default=False
+        Must be set to ``True`` if sequences are amino acids.
 
-    Returns:
+    gap_open_penalty : int, default=None
+        Depricated, but retained for backwards compatibility. Use `gap_open` 
+        insteaed. Should be a positive integer.
 
+    gap_extend_penalty : int, default=None
+        Depricated, but retained for backwards compatibility. Use `gap_exted` 
+        insteaed. Should be a positive integer.
+
+
+    Returns
+    -------
+    alignment : SSWAlignment or iterable
         If a single target sequence is provided (via ``target``), a single ``SSWAlignment``
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``SSWAlignment`` objects will be returned.
     """
-    if aa and not matrix:
-        err = "ERROR: You must supply a scoring matrix for amino acid alignments"
-        raise RuntimeError(err)
-    if not target and not targets:
-        err = "ERROR: You must supply a target sequence (or sequences)."
+    if aa and matrix is None:
+        matrix = "blosum62"
+    if not any([target, targets]):
+        err = "\nERROR: You must supply either ``target`` or ``targets``.\n"
         raise RuntimeError(err)
     if target:
         targets = [
@@ -618,9 +565,10 @@ def local_alignment(
         ]
     # to maintain backward compatibility with earlier abutils API
     if gap_open_penalty is not None:
-        gap_open = -1 * gap_open_penalty
+        gap_open = -gap_open_penalty
     if gap_extend_penalty is not None:
-        gap_extend = -1 * gap_extend_penalty
+        gap_extend = -gap_extend_penalty
+    # do the alignment
     alignments = []
     for t in targets:
         try:
@@ -630,8 +578,8 @@ def local_alignment(
                 match=match,
                 mismatch=mismatch,
                 matrix=matrix,
-                gap_open=-1 * gap_open,
-                gap_extend=-1 * gap_extend,
+                gap_open=-gap_open,
+                gap_extend=-gap_extend,
                 aa=aa,
             )
             alignments.append(alignment)
