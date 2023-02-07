@@ -24,60 +24,50 @@
 
 
 from collections import Counter
-import itertools
-import os
-import re
-import sys
+from typing import Union, Iterable, Optional
 
 import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-import scanpy as sc
 
 import seaborn as sns
 
-from anndata import AnnData
-
 from natsort import natsorted
 
-from abutils.utils.color import get_cmap
-from abutils.utils.utilities import nested_dict_lookup
+from ..utils.color import get_cmap
 
 
 def bar(
-    x=None,
-    y=None,
-    hue=None,
-    data=None,
-    order=None,
-    hue_order=None,
-    palette=None,
-    color=None,
-    alt_color="#D3D3D3",
-    normalize=False,
-    highlight=None,
-    highlight_color=None,
-    orientation="vertical",
-    plot_kwargs=None,
-    legend_kwargs=None,
-    hide_legend=False,
-    xlabel=None,
-    ylabel=None,
-    xlabel_fontsize=16,
-    ylabel_fontsize=16,
-    xtick_labelsize=14,
-    ytick_labelsize=14,
-    xtick_labelrotation=0,
-    ytick_labelrotation=0,
-    show=False,
-    figsize=None,
-    figfile=None,
+    x: Union[str, Iterable, None] = None,
+    y: Union[str, Iterable, None] = None,
+    hue: Union[str, Iterable, None] = None,
+    data: Optional[pd.DataFrame] = None,
+    order: Optional[Iterable] = None,
+    hue_order: Optional[Iterable] = None,
+    palette: Union[dict, Iterable, None] = None,
+    color: Union[str, Iterable, None] = None,
+    alt_color: Union[str, Iterable] = "#D3D3D3",
+    normalize: bool = False,
+    highlight: Union[str, Iterable, None] = None,
+    highlight_color: Union[str, Iterable, None] = None,
+    orientation: str = "vertical",
+    plot_kwargs: Optional[dict] = None,
+    legend_kwargs: Optional[dict] = None,
+    hide_legend: bool = False,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    xlabel_fontsize: Union[int, float] = 16,
+    ylabel_fontsize: Union[int, float] = 16,
+    xtick_labelsize: Union[int, float] = 14,
+    ytick_labelsize: Union[int, float] = 14,
+    xtick_labelrotation: Union[int, float] = 0,
+    ytick_labelrotation: Union[int, float] = 0,
+    ax: Optional[mpl.axes.Axes] = None,
+    show: bool = False,
+    figsize: Optional[Iterable] = None,
+    figfile: Optional[str] = None,
 ):
     """
     Produces a bar plot of categorical data. For data with distinct batches, a stacked 
@@ -85,7 +75,6 @@ def bar(
 
     Parameters
     ----------
-
     x : str or list, optional  
         Name of a column in `data` or an iterable of values to be plotted on the 
         x-axis. Required if `orientation` is ``'horizontal'``.
@@ -305,18 +294,19 @@ def bar(
     legend_kwargs = default_legend_kwargs
 
     # make the plot
-    plt.figure(figsize=figsize)
+    if ax is None:
+        plt.figure(figsize=figsize)
+        ax = plt.gca()
     bottom = np.zeros(len(x_vals))
     for h, d, c in zip(hue_order, batch_data, colors):
         y_vals = np.asarray([d.get(_x, 0) for _x in x_vals])
         if orientation == "horizontal":
-            plt.barh(x_vals, y_vals, left=bottom, color=c, label=h, **plot_kwargs)
+            ax.barh(x_vals, y_vals, left=bottom, color=c, label=h, **plot_kwargs)
         else:
-            plt.bar(x_vals, y_vals, bottom=bottom, color=c, label=h, **plot_kwargs)
+            ax.bar(x_vals, y_vals, bottom=bottom, color=c, label=h, **plot_kwargs)
         bottom += y_vals
 
     # style the plot
-    ax = plt.gca()
     if orientation == "horizontal":
         if xlabel is None:
             xlabel = "Frequency (%)" if normalize else "Count"
