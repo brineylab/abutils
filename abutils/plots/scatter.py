@@ -23,8 +23,8 @@
 #
 
 
-from collections import Counter
 import itertools
+from typing import Iterable, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -41,75 +41,85 @@ from abutils.utils.color import get_cmap
 
 
 def scatter(
-    x=None,
-    y=None,
-    hue=None,
-    marker="o",
-    data=None,
-    hue_order=None,
-    force_categorical_hue=False,
-    palette=None,
-    color=None,
-    cmap=None,
-    size=20,
-    alpha=0.6,
-    highlight_index=None,
-    highlight_x=None,
-    highlight_y=None,
-    highlight_marker="x",
-    highlight_size=90,
-    highlight_color="k",
-    highlight_name=None,
-    highlight_alpha=0.9,
-    plot_kwargs=None,
-    legend_kwargs=None,
-    hide_legend=False,
-    xlabel=None,
-    ylabel=None,
-    title=None,
-    title_fontsize=20,
-    title_fontweight="normal",
-    title_loc="center",
-    title_pad=None,
-    show_title=False,
-    xlabel_fontsize=16,
-    ylabel_fontsize=16,
-    xtick_labelsize=14,
-    ytick_labelsize=14,
-    xtick_labelrotation=0,
-    ytick_labelrotation=0,
-    cbar_width=0.35,
-    cbar_height=0.05,
-    cbar_loc="lower right",
-    cbar_orientation="horizontal",
-    cbar_bbox_to_anchor=None,
-    cbar_flip_ticks=False,
-    cbar_title=None,
-    cbar_title_fontsize=12,
-    hide_cbar=False,
-    equal_axes=True,
-    ax=None,
-    show=False,
-    figsize=None,
-    figfile=None,
-):
+    x: Union[str, Iterable, None] = None,
+    y: Union[str, Iterable, None] = None,
+    hue: Union[str, Iterable, None] = None,
+    marker: str = "o",
+    data: Optional[pd.DataFrame] = None,
+    hue_order: Optional[Iterable] = None,
+    force_categorical_hue: bool = False,
+    force_continuous_hue: bool = False,
+    palette: Union[dict, Iterable, None] = None,
+    color: Union[str, Iterable, None] = None,
+    cmap: Union[str, mpl.colors.Colormap, None] = None,
+    zero_color: Union[str, Iterable, None] = None,
+    size: Union[int, float] = 20,
+    alpha: float = 1.0,
+    highlight_index: Optional[Iterable] = None,
+    highlight_x: Optional[Iterable] = None,
+    highlight_y: Optional[Iterable] = None,
+    highlight_marker: str = "x",
+    highlight_size: Union[int, float] = 90,
+    highlight_color: Union[str, Iterable] = "k",
+    highlight_name: Optional[str] = None,
+    highlight_alpha: float = 0.9,
+    plot_kwargs: Optional[dict] = None,
+    legend_marker_alpha: Optional[float] = None,
+    legend_on_data: bool = False,
+    legend_fontsize: Union[int, float] = 12,
+    legend_fontweight: str = "bold",
+    legend_fontoutline: Union[int, float] = 3,
+    legend_label_position_offsets: Optional[dict] = None,
+    legend_kwargs: Optional[dict] = None,
+    hide_legend: bool = False,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    title: Optional[str] = None,
+    title_fontsize: Union[int, float] = 20,
+    title_fontweight: str = "normal",
+    title_loc: str = "center",
+    title_pad: Union[int, float, None] = None,
+    show_title: bool = False,
+    xlabel_fontsize: Union[int, float] = 16,
+    ylabel_fontsize: Union[int, float] = 16,
+    xtick_labelsize: Union[int, float] = 14,
+    ytick_labelsize: Union[int, float] = 14,
+    xtick_labelrotation: Union[int, float] = 0,
+    ytick_labelrotation: Union[int, float] = 0,
+    hide_ticks: bool = False,
+    tiny_axis: bool = False,
+    tiny_axis_xoffset: Union[int, float, None] = None,
+    tiny_axis_yoffset: Union[int, float, None] = None,
+    cbar_width: float = 0.35,
+    cbar_height: float = 0.05,
+    cbar_loc: str = "lower right",
+    cbar_orientation: str = "horizontal",
+    cbar_bbox_to_anchor: Optional[Iterable] = None,
+    cbar_flip_ticks: bool = False,
+    cbar_title: Optional[str] = None,
+    cbar_title_fontsize: Union[int, float] = 12,
+    hide_cbar: bool = False,
+    equal_axes: bool = True,
+    ax: Optional[mpl.axes.Axes] = None,
+    show: bool = False,
+    figsize: Optional[Iterable] = None,
+    figfile: Optional[str] = None,
+) -> Optional[mpl.axes.Axes]:
     """
     Produces a scatter plot.
 
     Parameters
     ----------
-
     x : str or iterable object  
         Name of a column in `data` or an iterable of values to be plotted on the 
         x-axis. Required.
 
     y : str or iterable object  
         Name of a column in `data` or an iterable of values to be plotted on the 
-        y-axis..
+        y-axis. Required.
 
     hue : str or iterable object, optional  
-        Name of a column in `data` or an iterable of hue categories to be used to 
-        group data into stacked bars. If not provided, an un-stacked bar plot is created.  
+        Name of a column in `data` or an iterable of hue categories.  
         
     marker : str, dict or iterable object, optional  
         Marker style for the scatter plot. Accepts any of the following:
@@ -130,6 +140,11 @@ def scatter(
     force_categorical_hue : bool, default=False  
         If ``True``, `hue` data will be treated as categorical, even if the data appear to 
         be continuous. This results in `color` being used to color the points rather than `cmap`.   
+
+    force_continuous_hue : bool, default=False  
+        If ``True``, `hue` data will be treated as continuous, even if the data appear to 
+        be categorical. This results in `cmap` being used to color the points rather than `color`.  
+        This may produce unexpected results and/or errors if used on non-numerical data.
         
     palette : dict, optional  
         Dictionary mapping `hue`, `x` or `y` names to colors. If if keys in `palette` match 
@@ -148,13 +163,19 @@ def scatter(
         .. tip::
             If a single RGB or RGBA ``list`` or ``tuple`` is provided and `hue` is also supplied, 
             there may be unexpected results as ``scatter()`` will attempt to map each of the 
-            individual RGB(A) values to a hue category.   
+            individual RGB(A) values to a hue category. Wrapping the RGB(A) iterable in a list 
+            will ensure that the color is interpreted correctly.   
         
         Only used if `hue` contains categorical data (`cmap` is used for continuous data). If not 
         provided, the `default Seaborn color palette`_ will be used. 
         
     cmap : str or matplotlib.color.Colormap, default='flare'   
         Colormap to be used for continuous `hue` data.  
+
+    zero_color : str or list of RGB(A) values
+        Separate color for ``0`` values when `hue` is continuous. By default, `cmap` is 
+        used for all values. An example use would be GEx plots for which visualization is
+        improved if ``0`` values are more obviously distinguished from low count values.
         
     size : str or float or iterable object, default=20  
         Size of the scatter points. Either a   
@@ -191,12 +212,36 @@ def scatter(
     plot_kwargs : dict, optional  
         Dictionary containing keyword arguments that will be passed to ``pyplot.scatter()``.
 
+    legend_on_data : bool, default=False
+        Plot legend labels on the data rather than in a separate legend. The X/Y midpoint 
+        for each legend category is used as the label location.
+
+    legend_fontsize : int or float, default=12
+        Fontsize for legend labels.
+
+    legend_fontweight : str, default="normal"
+        Fontweight for legend labels. Options are any accepted `Matplotlib text weight`_.
+
+    legend_fontoutline : int or float, default=None
+        Width of the outline of legend labels. Only used when `legend_on_data` is ``True``. 
+        Default is ``None``, which results in no outline.
+
+    legend_marker_alpha : float, default=None
+        Opacity for legend markers (or legend labels if `legend_on_data` is ``True``). 
+        By default, legend markers will use `alpha` and legend labels will be completely 
+        opaque, equivalent to `legend_marker_alpha` of ``1.0``.
+
+    legend_label_position_offsets : dict, default=None
+        A ``dict`` mapping legend labels to ``(x,y)`` coordinates used to offset legend labels. 
+        Only used when `legend_on_data` is ``True``. Offsets are in relative plot units: ``(0.1, 0.1)`` 
+        would move the label up and to the right by 10% of the overall plot area. 
+
     legend_kwargs : dict, optional  
         Dictionary containing keyword arguments that will be passed to ``ax.legend()``.
 
     hide_legend : bool, default=False  
-        By default, a plot legend will be shown if multiple batches are plotted. If ``True``, 
-        the legend will not be shown.  
+        By default, a plot legend will be shown if multiple hues are plotted. If ``True``, 
+        the legend will not be shown. 
         
     xlabel : str, optional  
         Text for the X-axis label. 
@@ -221,6 +266,16 @@ def scatter(
     
     ytick_labelrotation : int or float, default=0  
         Rotation of the Y-axis tick labels. 
+
+    tiny_axis : bool, default=False
+        Plots tiny axis lines in the lower left corner of the plot. Typcally used in 
+        UMAP plots. If ``True``, ticks and tick labels will be hidden.
+
+    tiny_axis_xoffset : float, default=None
+        X-axis offset for the tiny axis.
+
+    tiny_axis_yoffset : float, default=None
+        Y-axis offset for the tiny axis.
 
     cbar_width : int, default=35  
         Width of the colorbar. Only used for continuous `hue` types.  
@@ -278,6 +333,9 @@ def scatter(
     .. _default Seaborn color palette: 
         https://seaborn.pydata.org/generated/seaborn.color_palette.html  
 
+    .. _Matplotlib text weight
+        https://matplotlib.org/stable/tutorials/text/text_props.html
+
     .. _any valid inset_axes() location: 
         https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.axes_grid1.inset_locator.inset_axes.html
         
@@ -295,6 +353,15 @@ def scatter(
         df = pd.DataFrame(_data)
     else:
         df = data.copy()
+        if not isinstance(x, str) and len(x) == df.shape[0]:
+            df["x"] = x
+            x = "x"
+        if not isinstance(y, str) and len(y) == df.shape[0]:
+            df["y"] = y
+            y = "y"
+        if not isinstance(hue, str) and len(hue) == df.shape[0]:
+            df["hue"] = hue
+            hue = "hue"
 
     # figure size
     if figsize is None:
@@ -303,14 +370,19 @@ def scatter(
     # hue and color
     continuous_hue = False
     if hue is not None:
-        if all([isinstance(h, float) for h in df[hue]]) and not force_categorical_hue:
+        if force_continuous_hue:
+            continuous_hue = True
+        elif all([isinstance(h, float) for h in df[hue]]) and not force_categorical_hue:
+            continuous_hue = True
+        if continuous_hue:
             continuous_hue = True
             hue_order = []
             if cmap is None:
-                cmap = sns.color_palette("flare", as_cmap=True)
+                cmap = get_cmap("flare", zero_color=zero_color)
             else:
-                cmap = plt.get_cmap(cmap)
-            min_hue = max(0, df[hue].min())
+                cmap = get_cmap(cmap, zero_color=zero_color)
+            # min_hue = max(0, df[hue].min())
+            min_hue = np.floor(df[hue].min())
             max_hue = np.ceil(df[hue].max())
             df["color"] = [cmap((h - min_hue) / (max_hue - min_hue)) for h in df[hue]]
         else:
@@ -337,7 +409,11 @@ def scatter(
             df["color"] = [sns.color_palette()[0]] * df.shape[0]
 
     # markers
-    # TODO
+    # TODO: allow different markers that correspond to marker "categories"
+    # much like we can do with hues
+    # this might be a bit complex, because pyplot does not currently
+    # support marker style assignment by list, so we'd need to make
+    # a separate plt.scatter() call for each marker style
 
     # plot kwargs
     default_plot_kwargs = {"linewidths": 0}
@@ -405,9 +481,13 @@ def scatter(
                 default_legend_kwargs.update(legend_kwargs)
             legend_kwargs = default_legend_kwargs
             ax.legend(**legend_kwargs)
+            if legend_marker_alpha is not None:
+                leg = ax.get_legend()
+                for lh in leg.legendHandles:
+                    lh.set_alpha(legend_marker_alpha)
 
     # colorbar
-    elif not hide_cbar:
+    if continuous_hue and not hide_cbar:
         if cbar_orientation == "horizontal":
             width = max([cbar_width, cbar_height])
             height = min([cbar_width, cbar_height])
@@ -454,10 +534,103 @@ def scatter(
         axis="y", labelsize=ytick_labelsize, labelrotation=ytick_labelrotation
     )
 
-    for spine in ["right", "top"]:
-        ax.spines[spine].set_visible(False)
-    for spine in ["left", "bottom"]:
-        ax.spines[spine].set_position(("outward", 10))
+    if tiny_axis:
+        # get coords for the UMAP-specific axes
+        if tiny_axis_xoffset is None:
+            tiny_axis_xoffset = 0
+        if tiny_axis_yoffset is None:
+            tiny_axis_yoffset = 0
+        xmin = df[x].min()
+        xmax = df[x].max()
+        ymin = df[y].min()
+        ymax = df[y].max()
+        x_range = abs(xmax - xmin)
+        y_range = abs(ymax - ymin)
+        x_offset = x_range * tiny_axis_xoffset
+        y_offset = y_range * tiny_axis_yoffset
+        x_start = xmin + x_offset
+        y_start = ymin + y_offset
+        x_end = xmin + (x_range / 5) + x_offset
+        x_center = x_start + ((x_end - x_start) / 2)
+        y_end = ymin + (y_range / 5) + y_offset
+        y_center = y_start + ((y_end - y_start) / 2)
+        # draw the new "mini" axis lines
+        ax.hlines(y_start, x_start, x_end, "k", lw=2)
+        ax.vlines(x_start, y_start, y_end, "k", lw=2)
+        ax.annotate(
+            xlabel,
+            xy=(x_center, ymin),
+            xytext=(0, -5),
+            textcoords="offset points",
+            fontsize=xlabel_fontsize,
+            ha="center",
+            va="top",
+        )
+        ax.annotate(
+            ylabel,
+            xy=(xmin, y_center),
+            xytext=(-5, 0),
+            textcoords="offset points",
+            fontsize=ylabel_fontsize,
+            rotation="vertical",
+            ha="right",
+            va="center",
+        )
+        # remove the normal axis lines
+        ax.set_xlabel("", fontsize=0)
+        ax.set_ylabel("", fontsize=0)
+        for s in ["left", "right", "top", "bottom"]:
+            ax.spines[s].set_visible(False)
+    else:
+        for spine in ["right", "top"]:
+            ax.spines[spine].set_visible(False)
+        for spine in ["left", "bottom"]:
+            ax.spines[spine].set_position(("outward", 10))
+
+    if all([hue is not None, legend_on_data, not continuous_hue]):
+        # set up label offsets
+        if legend_label_position_offsets is None:
+            legend_label_position_offsets = {}
+        _xlim = ax.get_xlim()
+        _ylim = ax.get_ylim()
+        _xrange = _xlim[1] - _xlim[0]
+        _yrange = _ylim[1] - _ylim[0]
+        # configure the legend font outline
+        if legend_fontoutline is not None:
+            path_effect = [
+                mpl.patheffects.withStroke(linewidth=legend_fontoutline, foreground="w")
+            ]
+        else:
+            path_effect = None
+        # add the on-data legend
+        for h in df[hue].unique():
+            _df = df[df[hue] == h]
+            xoffset, yoffset = legend_label_position_offsets.get(h, (0, 0))
+            hue_x = _df[x].median() + (xoffset * _xrange)
+            hue_y = _df[y].median() + (yoffset * _yrange)
+            ax.text(
+                hue_x,
+                hue_y,
+                h,
+                c="k",
+                alpha=legend_marker_alpha,
+                weight=legend_fontweight,
+                verticalalignment="center",
+                horizontalalignment="center",
+                fontsize=legend_fontsize,
+                path_effects=path_effect,
+            )
+        # hide the "real" legend
+        hide_legend = True
+
+    if hide_legend:
+        l = ax.get_legend()
+        if l is not None:
+            l.remove()
+
+    if hide_ticks or tiny_axis:
+        ax.set_xticks([])
+        ax.set_yticks([])
 
     if equal_axes:
         xlim = ax.get_xlim()
