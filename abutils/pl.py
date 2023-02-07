@@ -25,5 +25,3 @@
 from .plots.bar import bar
 from .plots.scatter import scatter
 
-
-
