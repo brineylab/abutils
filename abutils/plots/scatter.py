@@ -31,7 +31,6 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 import seaborn as sns
 
@@ -321,7 +320,14 @@ def scatter(
 
     figfile : str, optional  
         Path at which to save the figure file. If not provided, the figure is not saved
-        and is either shown (if `show` is ``True``) or the ``Axes`` object is returned.  
+        and is either shown (if `show` is ``True``) or the ``Axes`` object is returned. 
+
+
+    Returns
+    -------
+    ax : mpl.axes.Axes
+        If `figfile` is ``None`` and `show` is ``False``, the ``ax`` is returned. 
+        Otherwise, the return value is ``None``. 
         
         
     .. _matplotlib marker: 
