@@ -23,7 +23,7 @@
 #
 
 
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, Iterable
 
 import seaborn as sns
 
@@ -38,9 +38,9 @@ cmaps = {"heatmap": sns.diverging_palette(240, 10, as_cmap=True)}
 
 
 def get_cmap(
-    c: Union[Colormap, str, Tuple],
+    c: Union[Colormap, str, Iterable],
     dark: bool = False,
-    zero_color: Union[str, Tuple, None] = None,
+    zero_color: Union[str, Iterable, None] = None,
     n: int = 256,
     minval: float = 0.0,
     maxval: float = 1.0,
@@ -55,7 +55,7 @@ def get_cmap(
         Can be one of several things:
             * matplotlib ``Colormap``
             * hex code
-            * matplotlib `color`_
+            * `Matplotlib color`_
             * RGB tuple
         If a single color is provided, a ``Colormap`` will be built from 
         white to the provided color (or from the color to black if `dark` 
@@ -93,7 +93,7 @@ def get_cmap(
     cmap : ``Colormap``
 
 
-    .. _color
+    .. _Matplotlib color
         https://matplotlib.org/stable/tutorials/colors/colors.html
     """
     if isinstance(c, Colormap):
@@ -114,6 +114,47 @@ def get_cmap(
     return cmap
 
 
+def monochrome_palette(
+    color: Union[str, Iterable], n_colors: int = 10, include_white: bool = False
+) -> list:
+    """
+    Returns a monochromatic palette of colors, from `color` to white.
+    
+    Parameters
+    ----------
+    color : str or Iterable
+        Color from which the monochromatic palette will be created. 
+        Can be one of several things:
+            * hex code
+            * `Matplotlib color`_
+            * RGB tuple 
+
+    n_colors : int, default=10
+        Number of colors in the palette.
+
+    include_white : bool, default=False
+        Whether or not to include white in the palette. White is not 
+        included by default, meaning all colors in the palette will be 
+        a shade of `color`.
+
+
+    Returns
+    -------
+    palette : list
+        A ``list`` of RGBA ``tuple``s
+
+
+    .. _Matplotlib color
+        https://matplotlib.org/stable/tutorials/colors/colors.html
+    """
+    cmap = get_cmap(color)
+    if include_white:
+        colors = [cmap(i) for i in np.linspace(1, 0, n_colors)]
+    else:
+        colors = [cmap(i) for i in np.linspace(1, 0, n_colors + 1)][:-1]
+    return colors
+
+
 def cmap_from_color(color: Union[str, Tuple], dark: bool = False) -> Colormap:
     """
     Generates a matplotlib colormap from a single color. Colormap will be built, 
@@ -132,10 +173,9 @@ def cmap_from_color(color: Union[str, Tuple], dark: bool = False) -> Colormap:
         black. Default is ``False``, which builds a colormap from
         white to ``color``.
 
-    Returns:
-
-        colormap : ``matplotlib.colors.Colormap``
-
+    Returns
+    -------
+        colormap : ``Colormap``
     """
     if dark:
         return sns.dark_palette(color, as_cmap=True)
