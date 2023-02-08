@@ -311,7 +311,7 @@ def scatter(
     ax : mpl.axes.Axes, default=None
         Pre-existing axes for the plot. If not provided, a new axes will be created.
 
-    show :bool, default=False  
+    show : bool, default=False  
         If ``True``, plot is shown and the plot ``Axes`` object is not returned. Default
         is ``False``, which does not call ``pyplot.show()`` and returns the ``Axes`` object.
 
