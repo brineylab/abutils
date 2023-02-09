@@ -338,7 +338,9 @@ def bar(
             leg_kwargs = legend_kwargs
         ax.legend(**leg_kwargs)
     if hide_legend or palette is None:
-        ax.get_legend().remove()
+        l = ax.get_legend()
+        if l is not None:
+            l.remove()
 
     # save, show or return the ax
     if figfile is not None:
