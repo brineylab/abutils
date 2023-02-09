@@ -492,7 +492,7 @@ def local_alignment(
     aa: bool = False,
     gap_open_penalty: Optional[int] = None,
     gap_extend_penalty: Optional[int] = None,
-) -> Union[SSWAlignment, Iterable[SSWAlignment]]:
+):
     """
     Striped Smith-Waterman local pairwise alignment.
 
