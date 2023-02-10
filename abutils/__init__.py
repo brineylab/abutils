@@ -27,7 +27,7 @@ from .utils import (
 )
 from .utils import alignment as aln
 from .utils import pipeline as path
-from utils.alignment import SSWAlignment, NWAlignment
+from .utils.alignment import SSWAlignment, NWAlignment
 
 from .version import __version__
 
