@@ -636,7 +636,7 @@ class PairwiseAlignment(ABC):
 
     @lazy_property
     def alignment_midline(self):
-        return self.traceback.comp
+        return self.traceback.comp.replace(".", " ")
 
     @lazy_property
     def query_begin(self):
