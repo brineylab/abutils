@@ -23,25 +23,19 @@
 #
 
 
-from datetime import datetime
-import multiprocessing as mp
 import os
 import platform
 import random
 import shutil
-import sqlite3
 import string
 import subprocess as sp
 import sys
 import tempfile
-import time
 from typing import Iterable, Optional, Union
 
-from Bio import SeqIO, AlignIO
 from Bio.Align import AlignInfo
 
 from .alignment import mafft
-from .database import KeyValueStore
 from .decorators import lazy_property
 from .pipeline import make_dir
 
@@ -58,7 +52,7 @@ class Cluster:
         self.sequences = sequences
         self.centroid = centroid
 
-    def __iter__():
+    def __iter__(self):
         for s in self.sequences:
             yield s
 
@@ -154,9 +148,9 @@ def cluster(
     debug: bool = False,
 ) -> Union[dict, Clusters]:
     """
-    Clusters sequences using `VSEARCH`_ or `MMseqs2`_. By default, sequences will 
-    be clustered with VSEARCH if there are fewer than 10,000 sequences and 
-    with MMseqs2 if there are more than 10,000 sequences. These defaults can be 
+    Clusters sequences using `VSEARCH`_ or `MMseqs2`_. By default, sequences will
+    be clustered with VSEARCH if there are fewer than 10,000 sequences and
+    with MMseqs2 if there are more than 10,000 sequences. These defaults can be
     overridden with `algo`.
 
     Parameters
@@ -174,10 +168,10 @@ def cluster(
         Identity threshold for clustering. Must be between 0 and 1.
 
     algo : float, default="auto"
-        Algorithm to be used for clustering. Options are ``"vsearch"``, ``"mmseqs"``, 
-        or ``"auto"``. By default (``"auto"``), VSEARCH will be used if there are fewer than 10,000 
-        sequences and MMseqs2 will be used for 10,000 sequences or more. Providing ``"vsearch"`` 
-        or ``"mmseqs"`` will force the use of the desired clustering algorithm regardless of the 
+        Algorithm to be used for clustering. Options are ``"vsearch"``, ``"mmseqs"``,
+        or ``"auto"``. By default (``"auto"``), VSEARCH will be used if there are fewer than 10,000
+        sequences and MMseqs2 will be used for 10,000 sequences or more. Providing ``"vsearch"``
+        or ``"mmseqs"`` will force the use of the desired clustering algorithm regardless of the
         number or sequences to be clustered.
 
     temp_dir : str, default="/tmp"
@@ -195,22 +189,22 @@ def cluster(
                alignment.
 
     vsearch_bin : str, optional
-        Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled 
+        Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled
         with ``abutils`` will be used.
 
     mmseqs_bin : str, optional
-        Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled 
+        Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled
         with ``abutils`` will be used.
 
     id_key : str, default=None
         Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-        
+
     sequence_key : str, default=None
         Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
 
     strand : str, default="plus"
         Strand of the sequences to align. Options are ``"plus"`` and ``"both"``.
-    
+
     as_dict : bool, default=False
         If ``True``, return clustering results as a ``dict`` rather than a ``Clusters``
         object. the ``dict`` is of the format:
@@ -221,7 +215,7 @@ def cluster(
             }
 
     debug : bool, default=False
-        If ``True``, prints MAFFT's standard output and standard error. 
+        If ``True``, prints MAFFT's standard output and standard error.
         Default is ``False``.
 
 
@@ -243,11 +237,12 @@ def cluster(
     )
     seqs = read_fasta(fasta_file)
     # select the clustering algo
-    if algo.lower() == "auto" and len(seqs) < 10000:
+    algo = algo.lower()
+    if algo == "auto" and len(seqs) < 10000:
         algo = "vsearch"
-    elif algo.lower() == "auto" and len(seqs) >= 10000:
+    elif algo == "auto" and len(seqs) >= 10000:
         algo = "mmseqs"
-    if algo.lower() in ["mmseqs", "mmseqs2"]:
+    if algo in ["mmseqs", "mmseqs2"]:
         return cluster_mmseqs(
             sequences=sequences,
             threshold=threshold,
@@ -258,7 +253,7 @@ def cluster(
             as_dict=as_dict,
             debug=debug,
         )
-    elif algo.lower() == "vsearch":
+    elif algo == "vsearch":
         return cluster_vsearch(
             sequences=sequences,
             threshold=threshold,
@@ -322,18 +317,18 @@ def cluster_vsearch(
                alignment.
 
     vsearch_bin : str, optional
-        Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled 
+        Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled
         with ``abutils`` will be used.
 
     id_key : str, default=None
         Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-        
+
     sequence_key : str, default=None
         Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
 
     strand : str, default="plus"
         Strand of the sequences to align. Options are ``"plus"`` and ``"both"``.
-    
+
     as_dict : bool, default=False
         If ``True``, return clustering results as a ``dict`` rather than a ``Clusters``
         object. the ``dict`` is of the format:
@@ -344,7 +339,7 @@ def cluster_vsearch(
             }
 
     debug : bool, default=False
-        If ``True``, prints MAFFT's standard output and standard error. 
+        If ``True``, prints MAFFT's standard output and standard error.
         Default is ``False``.
 
 
@@ -446,15 +441,15 @@ def cluster_mmseqs(
         Path to a directory for temporary storage of clustering files.
 
     mmseqs_bin : str, optional
-        Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled 
+        Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled
         with ``abutils`` will be used.
 
     id_key : str, default=None
         Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-        
+
     sequence_key : str, default=None
         Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
-    
+
     as_dict : bool, default=False
         If ``True``, return clustering results as a ``dict`` rather than a ``Clusters``
         object. the ``dict`` is of the format:
@@ -465,7 +460,7 @@ def cluster_mmseqs(
             }
 
     debug : bool, default=False
-        If ``True``, prints MAFFT's standard output and standard error. 
+        If ``True``, prints MAFFT's standard output and standard error.
         Default is ``False``.
 
 
