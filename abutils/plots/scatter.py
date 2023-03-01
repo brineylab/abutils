@@ -99,6 +99,7 @@ def scatter(
     cbar_flip_ticks: bool = False,
     cbar_title: Optional[str] = None,
     cbar_title_fontsize: Union[int, float] = 12,
+    cbar_title_loc: Optional[str] = None,
     hide_cbar: bool = False,
     equal_axes: bool = True,
     ax: Optional[mpl.axes.Axes] = None,
@@ -520,17 +521,21 @@ def scatter(
             orientation=cbar_orientation,
         )
         if cbar_orientation == "horizontal":
+            if cbar_title_loc is None:
+                cbar_title_loc = "top"
             ticks_position = "bottom" if cbar_flip_ticks else "top"
             cbax.xaxis.set_ticks_position(ticks_position)
-            cbax.xaxis.set_label_position(ticks_position)
-            cbar.ax.set_xlabel(
+            cbax.xaxis.set_label_position(cbar_title_loc)
+            cbar.ax.set_title(
                 cbar_title,
                 fontsize=cbar_title_fontsize,
             )
         else:
+            if cbar_title_loc is None:
+                cbar_title_loc = "right"
             ticks_position = "left" if cbar_flip_ticks else "right"
             cbax.yaxis.set_ticks_position(ticks_position)
-            cbax.yaxis.set_label_position(ticks_position)
+            cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
                 cbar_title,
                 fontsize=cbar_title_fontsize,
