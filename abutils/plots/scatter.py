@@ -545,9 +545,9 @@ def scatter(
     if tiny_axis:
         # get coords for the UMAP-specific axes
         if tiny_axis_xoffset is None:
-            tiny_axis_xoffset = 0.05
+            tiny_axis_xoffset = -0.05
         if tiny_axis_yoffset is None:
-            tiny_axis_yoffset = 0.05
+            tiny_axis_yoffset = -0.05
         xmin = df[x].min()
         xmax = df[x].max()
         ymin = df[y].min()
