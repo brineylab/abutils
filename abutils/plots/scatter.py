@@ -378,17 +378,17 @@ def scatter(
     # hue and color
     continuous_hue = False
     if hue is not None:
-        # set hue min and max values
-        if hue_min is None:
-            hue_min = np.floor(df[hue].min())
-        if hue_max is None:
-            hue_max = np.ceil(df[hue].max())
         if force_continuous_hue:
             continuous_hue = True
         elif all([isinstance(h, float) for h in df[hue]]) and not force_categorical_hue:
             continuous_hue = True
         if continuous_hue:
             continuous_hue = True
+            # set hue min and max values
+            if hue_min is None:
+                hue_min = np.floor(df[hue].min())
+            if hue_max is None:
+                hue_max = np.ceil(df[hue].max())
             hue_order = []
             cmap = get_cmap("flare" if cmap is None else cmap)
             normhue = lambda h: (h - hue_min) / (hue_max - hue_min)
