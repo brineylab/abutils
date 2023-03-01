@@ -51,7 +51,9 @@ def scatter(
     palette: Union[dict, Iterable, None] = None,
     color: Union[str, Iterable, None] = None,
     cmap: Union[str, mpl.colors.Colormap, None] = None,
-    zero_color: Union[str, Iterable, None] = None,
+    hue_min: Optional[float] = None,
+    hue_max: Optional[float] = None,
+    under_color: Union[str, Iterable, None] = "whitesmoke",
     size: Union[int, float] = 20,
     alpha: float = 1.0,
     highlight_index: Optional[Iterable] = None,
@@ -376,6 +378,11 @@ def scatter(
     # hue and color
     continuous_hue = False
     if hue is not None:
+        # set hue min and max values
+        if hue_min is None:
+            hue_min = np.floor(df[hue].min())
+        if hue_max is None:
+            hue_max = np.ceil(df[hue].max())
         if force_continuous_hue:
             continuous_hue = True
         elif all([isinstance(h, float) for h in df[hue]]) and not force_categorical_hue:
@@ -383,14 +390,11 @@ def scatter(
         if continuous_hue:
             continuous_hue = True
             hue_order = []
-            if cmap is None:
-                cmap = get_cmap("flare", zero_color=zero_color)
-            else:
-                cmap = get_cmap(cmap, zero_color=zero_color)
-            # min_hue = max(0, df[hue].min())
-            min_hue = np.floor(df[hue].min())
-            max_hue = np.ceil(df[hue].max())
-            df["color"] = [cmap((h - min_hue) / (max_hue - min_hue)) for h in df[hue]]
+            cmap = get_cmap("flare" if cmap is None else cmap)
+            normhue = lambda h: (h - hue_min) / (hue_max - hue_min)
+            df["color"] = [
+                cmap(normhue(h)) if h >= hue_min else under_color for h in df[hue]
+            ]
         else:
             if hue_order is None:
                 hue_order = natsorted(list(set(df[hue])))
@@ -505,9 +509,9 @@ def scatter(
         )
         cbax = ax.inset_axes(cbar_bounds)
 
-        max_hue = np.ceil(df[hue].max())
-        min_hue = max(0, df[hue].min())
-        norm = mpl.colors.Normalize(vmin=min_hue, vmax=max_hue)
+        # max_hue = np.ceil(df[hue].max())
+        # min_hue = max(0, df[hue].min())
+        norm = mpl.colors.Normalize(vmin=hue_min, vmax=hue_max)
         # ticks = [t for t in np.linspace(min_hue, max_hue, num=4)]
 
         cbar = plt.colorbar(
