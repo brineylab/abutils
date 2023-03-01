@@ -15,6 +15,7 @@ from .core.lineage import Lineage
 from .utils import (
     alignment,
     cluster,
+    color,
     decorators,
     jobs,
     log,
@@ -27,7 +28,9 @@ from .utils import (
 )
 from .utils import alignment as aln
 from .utils import pipeline as path
-from .utils.alignment import SSWAlignment, NWAlignment
+
+# from .utils.alignment import SSWAlignment, NWAlignment
+from .utils.alignment import LocalAlignment, GlobalAlignment, SemiGlobalAlignment
 
 from .version import __version__
 

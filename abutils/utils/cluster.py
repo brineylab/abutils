@@ -244,16 +244,6 @@ def cluster(
     elif algo == "auto" and len(seqs) >= 10000:
         algo = "mmseqs"
     if algo in ["mmseqs", "mmseqs2"]:
-        # return cluster_mmseqs(
-        #     sequences=sequences,
-        #     threshold=threshold,
-        #     temp_dir=temp_dir,
-        #     mmseqs_bin=mmseqs_bin,
-        #     id_key=id_key,
-        #     seq_key=seq_key,
-        #     as_dict=as_dict,
-        #     debug=debug,
-        # )
         cluster_dict = cluster_mmseqs(
             fasta_file=fasta_file,
             threshold=threshold,
@@ -263,18 +253,6 @@ def cluster(
             debug=debug,
         )
     elif algo == "vsearch":
-        # return cluster_vsearch(
-        #     sequences=sequences,
-        #     threshold=threshold,
-        #     temp_dir=temp_dir,
-        #     iddef=iddef,
-        #     vsearch_bin=vsearch_bin,
-        #     id_key=id_key,
-        #     seq_key=seq_key,
-        #     strand=strand,
-        #     as_dict=as_dict,
-        #     debug=debug,
-        # )
         cluster_dict = cluster_vsearch(
             fasta_file=fasta_file,
             threshold=threshold,
@@ -550,402 +528,132 @@ def cluster_mmseqs(
         return tsv_file
 
 
-# def cluster_vsearch(
-#     sequences: Union[Iterable, str],
-#     threshold: float = 0.975,
-#     temp_dir: str = "/tmp",
-#     iddef: int = 0,
-#     vsearch_bin: str = None,
-#     id_key: Optional[str] = None,
-#     seq_key: Optional[str] = None,
-#     strand: str = "plus",
-#     as_dict: bool = False,
-#     debug: bool = False,
-# ) -> Union[dict, Clusters]:
-#     """
-#     Clusters sequences using `VSEARCH`_.
-
-#     Parameters
-#     ----------
-#     sequences : iterable or string
-#         Input sequences in any of the following formats:
-#             1. list of abutils ``Sequence`` objects
-#             2. FASTA-formatted string
-#             3. path to a FASTA-formatted file
-#             4. list of BioPython ``SeqRecord`` objects
-#             5. list of lists/tuples, of the format ``[sequence_id, sequence]``
-#         Required.
-
-#     threshold : float, default=0.975
-#         Identity threshold for clustering. Must be between 0 and 1.
-
-#     temp_dir : str, default="/tmp"
-#         Path to a directory for temporary storage of clustering files.
-
-#     iddef : int, default=1
-#         Identity definition, as implemented by VSEARCH. Options are:
-#             0. CD-HIT definition: (matching columns) / (shortest sequence length).
-#             1. edit distance: (matching columns) / (alignment length).
-#             2. edit distance excluding terminal gaps (same as --id).
-#             3. Marine Biological Lab definition counting each gap opening (internal or
-#                terminal) as a single mismatch, whether or not the gap was extended: 1.0
-#                - [(mismatches + gap openings)/(longest sequence length)]
-#             4. BLAST definition, equivalent to --iddef 1 in a context of global pairwise
-#                alignment.
-
-#     vsearch_bin : str, optional
-#         Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled
-#         with ``abutils`` will be used.
-
-#     id_key : str, default=None
-#         Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-
-#     sequence_key : str, default=None
-#         Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
-
-#     strand : str, default="plus"
-#         Strand of the sequences to align. Options are ``"plus"`` and ``"both"``.
-
-#     as_dict : bool, default=False
-#         If ``True``, return clustering results as a ``dict`` rather than a ``Clusters``
-#         object. the ``dict`` is of the format:
-#             {"cluster1_name": {"centroid": cluster1_centroid,
-#                                "seqs": [seq1, seq2, seq3, ...]},
-#              "cluster2_name": {"centroid": cluster2_centroid,
-#                                "seqs": [seq4, seq5, seq6, ...]},
-#             }
-
-#     debug : bool, default=False
-#         If ``True``, prints MAFFT's standard output and standard error.
-#         Default is ``False``.
-
-
-#     Returns
-#     -------
-#     clusters : ``Clusters`` or ``dict``
-
-
-#     .. _VSEARCH
-#         https://github.com/torognes/vsearch
-
-#     """
-#     # input processing
-#     fasta_file = to_fasta(
-#         sequences, tempfile_dir=temp_dir, id_key=id_key, sequence_key=seq_key
+# def vsearch_clusterfast(
+#     fasta_file, threshold=0.975, temp_dir="/tmp", debug=False, strand="plus"
+# ):
+#     # preflight
+#     fasta_file = os.path.abspath(fasta_file)
+#     temp_dir = os.path.join(os.path.abspath(temp_dir), "vsearch")
+#     make_dir(temp_dir)
+#     mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#     vsearch_bin = os.path.join(
+#         mod_dir, "bin/vsearch_{}".format(platform.system().lower())
 #     )
-#     seqs = read_fasta(fasta_file)
-#     seq_dict = {s.id: s for s in seqs}
-#     # output files
-#     centroid_file = tempfile.NamedTemporaryFile(
-#         dir=temp_dir, delete=False, prefix="centroids_"
-#     ).name
-#     uc_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="uc_").name
-#     # get the vsearch binary
-#     if vsearch_bin is None:
-#         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#         vsearch_bin = os.path.join(
-#             mod_dir, "bin/vsearch_{}".format(platform.system().lower())
-#         )
-#     # do clustering
-#     vsearch_cmd = f"{vsearch_bin} --cluster_fast {fasta_file}"
-#     vsearch_cmd += f" --centroids {centroid_file}"
-#     vsearch_cmd += f" --clusterout_id"
-#     vsearch_cmd += f" --uc {uc_file}"
-#     vsearch_cmd += f" --id {threshold}"
-#     vsearch_cmd += f" --iddef {iddef}"
-#     vsearch_cmd += f" --sizeout"
-#     vsearch_cmd += f" --strand {strand}"
-#     p = sp.Popen(vsearch_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+
+#     # do the clustering
+#     centroid_file = os.path.join(temp_dir, "centroids")
+#     uc_file = os.path.join(temp_dir, "uc")
+#     cluster_cmd = (
+#         f"{vsearch_bin} --cluster_fast {fasta_file} --centroids {centroid_file}"
+#     )
+#     cluster_cmd += f" --clusterout_id --uc {uc_file} --id {threshold}"
+#     cluster_cmd += f" --iddef 0 --sizeout --strand {strand}"
+#     p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
 #     stdout, stderr = p.communicate()
 #     if debug:
 #         print("STDOUT:", stdout.decode("utf-8"))
 #         print("")
 #         print("STDERR:", stderr.decode("utf-8"))
-#     # process output
-#     if os.stat(uc_file).st_size == 0:
-#         err = f"WARNING: the VSEARCH output file ({uc_file}) is empty. "
-#         err += "Please verify that the input data is valid."
-#         print(err)
-#         return None
+
+#     # parse vsearch output
 #     cluster_info = {}
-#     with open(uc_file, "r") as f:
+#     with open(uc_file) as f:
 #         for line in f:
-#             if not (ldata := line.strip().split()):
-#                 continue
+#             ldata = line.strip().split()
 #             cluster_num = ldata[1]
 #             if cluster_num not in cluster_info:
-#                 cluster_info[cluster_num] = {"seqs": []}
+#                 cluster_info[cluster_num] = {"seq_ids": []}
 #             if ldata[0] == "S":
 #                 centroid = ldata[-2]
-#                 cluster_info[cluster_num]["centroid"] = seq_dict[centroid]
-#                 cluster_info[cluster_num]["seqs"].append(seq_dict[centroid])
+#                 cluster_info[cluster_num]["centroid"] = centroid
+#                 cluster_info[cluster_num]["seq_ids"].append(centroid)
 #             elif ldata[0] == "H":
 #                 hit = ldata[-2]
-#                 cluster_info[cluster_num]["seqs"].append(seq_dict[hit])
-#     if as_dict:
-#         return cluster_info
-#     return Clusters(cluster_info)
+#                 cluster_info[cluster_num]["seq_ids"].append(hit)
+
+#     # clean up
+#     if not debug:
+#         shutil.rmtree(temp_dir)
+#     return cluster_info
 
 
-# def cluster_mmseqs(
-#     sequences: Union[Iterable, str],
-#     threshold: float = 0.975,
-#     temp_dir: str = "/tmp",
-#     mmseqs_bin: str = None,
-#     id_key: Optional[str] = None,
-#     seq_key: Optional[str] = None,
-#     as_dict: bool = False,
-#     debug: bool = False,
-# ):
-#     """
-#     Clusters sequences using `MMseqs2`_.
-
-#     Parameters
-#     ----------
-#     sequences : iterable or string
-#         Input sequences in any of the following formats:
-#             1. list of abutils ``Sequence`` objects
-#             2. FASTA-formatted string
-#             3. path to a FASTA-formatted file
-#             4. list of BioPython ``SeqRecord`` objects
-#             5. list of lists/tuples, of the format ``[sequence_id, sequence]``
-#         Required.
-
-#     threshold : float, default=0.975
-#         Identity threshold for clustering. Must be between 0 and 1.
-
-#     temp_dir : str, default="/tmp"
-#         Path to a directory for temporary storage of clustering files.
-
-#     mmseqs_bin : str, optional
-#         Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled
-#         with ``abutils`` will be used.
-
-#     id_key : str, default=None
-#         Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-
-#     sequence_key : str, default=None
-#         Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
-
-#     as_dict : bool, default=False
-#         If ``True``, return clustering results as a ``dict`` rather than a ``Clusters``
-#         object. the ``dict`` is of the format:
-#             {"cluster1_name": {"centroid": cluster1_centroid,
-#                                "seqs": [seq1, seq2, seq3, ...]},
-#              "cluster2_name": {"centroid": cluster2_centroid,
-#                                "seqs": [seq4, seq5, seq6, ...]},
-#             }
-
-#     debug : bool, default=False
-#         If ``True``, prints MAFFT's standard output and standard error.
-#         Default is ``False``.
-
-
-#     Returns
-#     -------
-#     clusters : ``Clusters`` or ``dict``
-
-
-#     .. _MMseqs2
-#         https://github.com/soedinglab/MMseqs2
-
-#     """
-#     # input processing
-#     fasta_file = to_fasta(
-#         sequences, tempfile_dir=temp_dir, id_key=id_key, sequence_key=seq_key
+# def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir="/tmp", debug=False):
+#     # preflight
+#     fasta_file = os.path.abspath(fasta_file)
+#     temp_dir = os.path.join(temp_dir, "mmseqs")
+#     make_dir(temp_dir)
+#     mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#     mmseqs_bin = os.path.join(
+#         mod_dir, "bin/mmseqs_{}".format(platform.system().lower())
 #     )
-#     seqs = read_fasta(fasta_file)
-#     seq_dict = {s.id: s for s in seqs}
-#     # output files
-#     db_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="DB_").name
-#     clu_file = tempfile.NamedTemporaryFile(
-#         dir=temp_dir, delete=False, prefix="CLU_"
-#     ).name
-#     tsv_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="TSV_")
-#     # get the mmseqs binary
-#     if mmseqs_bin is None:
-#         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#         mmseqs_bin = os.path.join(
-#             mod_dir, "bin/mmseqs_{}".format(platform.system().lower())
-#         )
-#     # build the mmseqs DB
-#     db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_file}"
+
+#     # create the sequence DB
+#     db_file = os.path.join(temp_dir, "DB")
+#     db_cmd = "{} createdb {} {}".format(mmseqs_bin, fasta_file, db_file)
 #     p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
 #     stdout, stderr = p.communicate()
 #     if debug:
+#         if sys.version_info[0] > 2:
+#             stdout = stdout.decode("utf-8")
+#             stderr = stderr.decode("utf-8")
 #         print("STDOUT:", stdout)
 #         print("")
 #         print("STDERR:", stderr)
+
 #     # do the clustering
-#     cluster_cmd = f"{mmseqs_bin} cluster"
-#     cluster_cmd += f" {db_file} {clu_file} {temp_dir}"
-#     cluster_cmd += f" --min-seq-id {threshold}"
+#     clu_file = os.path.join(temp_dir, "CLU")
+#     cluster_cmd = "{} cluster {} {} {} --min-seq-id {}".format(
+#         mmseqs_bin, db_file, clu_file, temp_dir, min_seq_id
+#     )
 #     p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
 #     stdout, stderr = p.communicate()
 #     if debug:
+#         if sys.version_info[0] > 2:
+#             stdout = stdout.decode("utf-8")
+#             stderr = stderr.decode("utf-8")
 #         print("STDOUT:", stdout)
 #         print("")
 #         print("STDERR:", stderr)
+
 #     # generate TSV-formatted output
-#     tsv_cmd = f"{mmseqs_bin} createtsv"
-#     tsv_cmd += f" {db_file} {db_file} {clu_file} {tsv_file}"
+#     tsv_file = os.path.join(temp_dir, "CLU.tsv")
+#     tsv_cmd = "{0} createtsv {1} {1} {2} {3}".format(
+#         mmseqs_bin, db_file, clu_file, tsv_file
+#     )
 #     p = sp.Popen(tsv_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
 #     stdout, stderr = p.communicate()
 #     if debug:
+#         if sys.version_info[0] > 2:
+#             stdout = stdout.decode("utf-8")
+#             stderr = stderr.decode("utf-8")
 #         print("STDOUT:", stdout)
 #         print("")
 #         print("STDERR:", stderr)
+
 #     # parse TSV output
-#     cluster_info = {}
-#     name_dict = {}
+#     clu_names = {}
+#     clu_seqs = {}
 #     with open(tsv_file) as f:
 #         for line in f:
 #             line = line.strip()
 #             if line.startswith("#"):
 #                 continue
 #             c, s = line.split()
-#             if c not in name_dict:
-#                 name = "".join(
+#             if c not in clu_names:
+#                 cname = "".join(
 #                     random.choice(string.ascii_uppercase + string.digits)
 #                     for _ in range(8)
 #                 )
-#                 name_dict[c] = name
-#             name = name_dict[c]
-#             if name not in cluster_info:
-#                 centroid = seq_dict[c]
-#                 cluster_info[name] = {"centroid": centroid, "seqs": []}
-#             cluster_info[name]["seqs"].append(seq_dict[s])
-#     if as_dict:
-#         return cluster_info
-#     return Clusters(cluster_info)
+#                 clu_names[c] = cname
+#             clu_name = clu_names[c]
+#             if clu_name not in clu_seqs:
+#                 clu_seqs[clu_name] = {"centroid": c, "seq_ids": []}
+#             clu_seqs[clu_name]["seq_ids"].append(s)
 
-
-def vsearch_clusterfast(
-    fasta_file, threshold=0.975, temp_dir="/tmp", debug=False, strand="plus"
-):
-    # preflight
-    fasta_file = os.path.abspath(fasta_file)
-    temp_dir = os.path.join(os.path.abspath(temp_dir), "vsearch")
-    make_dir(temp_dir)
-    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    vsearch_bin = os.path.join(
-        mod_dir, "bin/vsearch_{}".format(platform.system().lower())
-    )
-
-    # do the clustering
-    centroid_file = os.path.join(temp_dir, "centroids")
-    uc_file = os.path.join(temp_dir, "uc")
-    cluster_cmd = (
-        f"{vsearch_bin} --cluster_fast {fasta_file} --centroids {centroid_file}"
-    )
-    cluster_cmd += f" --clusterout_id --uc {uc_file} --id {threshold}"
-    cluster_cmd += f" --iddef 0 --sizeout --strand {strand}"
-    p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = p.communicate()
-    if debug:
-        print("STDOUT:", stdout.decode("utf-8"))
-        print("")
-        print("STDERR:", stderr.decode("utf-8"))
-
-    # parse vsearch output
-    cluster_info = {}
-    with open(uc_file) as f:
-        for line in f:
-            ldata = line.strip().split()
-            cluster_num = ldata[1]
-            if cluster_num not in cluster_info:
-                cluster_info[cluster_num] = {"seq_ids": []}
-            if ldata[0] == "S":
-                centroid = ldata[-2]
-                cluster_info[cluster_num]["centroid"] = centroid
-                cluster_info[cluster_num]["seq_ids"].append(centroid)
-            elif ldata[0] == "H":
-                hit = ldata[-2]
-                cluster_info[cluster_num]["seq_ids"].append(hit)
-
-    # clean up
-    if not debug:
-        shutil.rmtree(temp_dir)
-    return cluster_info
-
-
-def mmseqs_cluster(fasta_file, min_seq_id=0.975, temp_dir="/tmp", debug=False):
-    # preflight
-    fasta_file = os.path.abspath(fasta_file)
-    temp_dir = os.path.join(temp_dir, "mmseqs")
-    make_dir(temp_dir)
-    mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    mmseqs_bin = os.path.join(
-        mod_dir, "bin/mmseqs_{}".format(platform.system().lower())
-    )
-
-    # create the sequence DB
-    db_file = os.path.join(temp_dir, "DB")
-    db_cmd = "{} createdb {} {}".format(mmseqs_bin, fasta_file, db_file)
-    p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = p.communicate()
-    if debug:
-        if sys.version_info[0] > 2:
-            stdout = stdout.decode("utf-8")
-            stderr = stderr.decode("utf-8")
-        print("STDOUT:", stdout)
-        print("")
-        print("STDERR:", stderr)
-
-    # do the clustering
-    clu_file = os.path.join(temp_dir, "CLU")
-    cluster_cmd = "{} cluster {} {} {} --min-seq-id {}".format(
-        mmseqs_bin, db_file, clu_file, temp_dir, min_seq_id
-    )
-    p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = p.communicate()
-    if debug:
-        if sys.version_info[0] > 2:
-            stdout = stdout.decode("utf-8")
-            stderr = stderr.decode("utf-8")
-        print("STDOUT:", stdout)
-        print("")
-        print("STDERR:", stderr)
-
-    # generate TSV-formatted output
-    tsv_file = os.path.join(temp_dir, "CLU.tsv")
-    tsv_cmd = "{0} createtsv {1} {1} {2} {3}".format(
-        mmseqs_bin, db_file, clu_file, tsv_file
-    )
-    p = sp.Popen(tsv_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = p.communicate()
-    if debug:
-        if sys.version_info[0] > 2:
-            stdout = stdout.decode("utf-8")
-            stderr = stderr.decode("utf-8")
-        print("STDOUT:", stdout)
-        print("")
-        print("STDERR:", stderr)
-
-    # parse TSV output
-    clu_names = {}
-    clu_seqs = {}
-    with open(tsv_file) as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("#"):
-                continue
-            c, s = line.split()
-            if c not in clu_names:
-                cname = "".join(
-                    random.choice(string.ascii_uppercase + string.digits)
-                    for _ in range(8)
-                )
-                clu_names[c] = cname
-            clu_name = clu_names[c]
-            if clu_name not in clu_seqs:
-                clu_seqs[clu_name] = {"centroid": c, "seq_ids": []}
-            clu_seqs[clu_name]["seq_ids"].append(s)
-
-    # clean up
-    if not debug:
-        shutil.rmtree(temp_dir)
-    return clu_seqs
+#     # clean up
+#     if not debug:
+#         shutil.rmtree(temp_dir)
+#     return clu_seqs
 
 
 # __all__ = ['CDHITResult', 'Cluster', 'cluster', 'cdhit', 'parse_clusters']
