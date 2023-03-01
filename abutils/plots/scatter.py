@@ -100,6 +100,7 @@ def scatter(
     cbar_title: Optional[str] = None,
     cbar_title_fontsize: Union[int, float] = 12,
     cbar_title_loc: Optional[str] = None,
+    cbar_title_labelpad: float = 8.0,
     hide_cbar: bool = False,
     equal_axes: bool = True,
     ax: Optional[mpl.axes.Axes] = None,
@@ -526,9 +527,10 @@ def scatter(
             ticks_position = "bottom" if cbar_flip_ticks else "top"
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(cbar_title_loc)
-            cbar.ax.set_title(
+            cbar.ax.set_xlabel(
                 cbar_title,
                 fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
         else:
             if cbar_title_loc is None:
@@ -539,6 +541,7 @@ def scatter(
             cbar.ax.set_ylabel(
                 cbar_title,
                 fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
 
     # style the plot
