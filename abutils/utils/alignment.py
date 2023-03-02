@@ -532,6 +532,10 @@ class PairwiseAlignment(ABC):
         self._traceback = None
         self._cigar = None
 
+        # for backwards compatibility:
+        self.raw_query = query
+        self.raw_target = target
+
     def __repr__(self):
         if len(self.aligned_query) > 20:
             qstring = "{}...{}".format(
