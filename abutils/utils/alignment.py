@@ -860,7 +860,7 @@ class CIGAR:
     def cigar_list(self):
         if self._cigar_list is None:
             cigar_list = []
-            cig_iter = groupby(aln.cigar, lambda c: c.isdigit())
+            cig_iter = groupby(self.cigar_string, lambda c: c.isdigit())
             for _, n in cig_iter:
                 ce = CIGARElement(
                     length=int("".join(n)), element="".join(next(cig_iter)[1])
