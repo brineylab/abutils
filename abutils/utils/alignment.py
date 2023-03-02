@@ -25,6 +25,7 @@
 from abc import ABC, abstractmethod
 from copy import copy, deepcopy
 from io import StringIO
+from itertools import groupby
 import os
 import platform
 import subprocess as sp
@@ -623,7 +624,8 @@ class PairwiseAlignment(ABC):
 
     @property
     def cigar(self):
-        return self.alignment.cigar.decode.decode("utf-8")
+        cigar_string = self.alignment.cigar.decode.decode("utf-8")
+        return CIGAR(cigar_string=cigar_string)
 
     @property
     def traceback(self):
@@ -647,7 +649,11 @@ class PairwiseAlignment(ABC):
 
     @lazy_property
     def query_begin(self):
-        return self.alignment.cigar.beg_query
+        # return self.alignment.cigar.beg_query
+        query_begin = self.alignment.cigar.beg_query
+        if self.cigar[0].element == "I":
+            query_begin += self.cigar[0].length
+        return query_begin
 
     @lazy_property
     def query_end(self):
@@ -655,7 +661,11 @@ class PairwiseAlignment(ABC):
 
     @lazy_property
     def target_begin(self):
-        return self.alignment.cigar.beg_ref
+        # return self.alignment.cigar.beg_ref
+        target_begin = self.alignment.cigar.beg_ref
+        if self.cigar[0].element == "D":
+            target_begin += self.cigar[0].length
+        return target_begin
 
     @lazy_property
     def target_end(self):
@@ -818,6 +828,52 @@ class SemiGlobalAlignment(PairwiseAlignment):
         )
         self.alignment_function = alignment_function
         self.alignment_type = "semi-global"
+
+
+class CIGAR:
+    """
+    Parsable representation of a CIGAR string.
+    """
+
+    def __init__(self, cigar_string):
+        self.cigar_string = cigar_string
+        self._cigar_list = None
+
+    def __str__(self):
+        return self.cigar_string
+
+    def __repr__(self):
+        print(self.cigar_string)
+        return ""
+
+    def __len__(self):
+        return sum([c.length for c in self.cigar_list])
+
+    def __getitem__(self, slice):
+        return self.cigar_list[slice]
+
+    def __iter__(self):
+        for c in self.cigar_list:
+            yield c
+
+    @property
+    def cigar_list(self):
+        if self._cigar_list is None:
+            cigar_list = []
+            cig_iter = groupby(aln.cigar, lambda c: c.isdigit())
+            for _, n in cig_iter:
+                ce = CIGARElement(
+                    length=int("".join(n)), element="".join(next(cig_iter)[1])
+                )
+                cigar_list.append(ce)
+            self._cigar_list = cigar_list
+        return self._cigar_list
+
+
+class CIGARElement:
+    def __init__(self, length, element):
+        self.length: int = int(length)
+        self.element: str = element
 
 
 def process_targets(target, targets):
