@@ -571,7 +571,10 @@ class PairwiseAlignment(ABC):
         return "\n".join(lines)
 
     def __len__(self):
-        return len(self.aligned_query)
+        try:
+            return len(self.aligned_query)
+        except AttributeError:
+            return 0
 
     def __eq__(self, other):
         if not hasattr(other, "score"):
@@ -864,7 +867,7 @@ def local_alignment(
         Mismatch score. Typically should be less than or equal to ``0``.
 
     gap_open : int, default=-5
-        Gap open score. Must be  less than or equal to ``0``.
+        Gap open score. Must be less than or equal to ``0``.
 
     gap_extend : int, default=-2
         Gap extension score. Must be less than or equal to ``0``.
