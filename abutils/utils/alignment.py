@@ -832,7 +832,18 @@ class SemiGlobalAlignment(PairwiseAlignment):
 
 class CIGAR:
     """
-    Parsable representation of a CIGAR string.
+    Parsable representation of a CIGAR string. The CIGAR parsing code was taken
+    almost vertabim from the `Cigar`_ package. Init argument is a CIGAR string.
+    Iterating over a ``CIGAR`` object yields ``CIGARElement``s. The length of
+    a ``CIGAR`` object is the length of the alignment encoded by the CIGAR string,
+    not the length of the CIGAR string itself::
+
+        cig = CIGAR("99=2X99=")
+        len(cig) # --> 200
+        len(cig.cigar_string) # --> 8
+
+    .. _Cigar
+        https://github.com/brentp/cigar
     """
 
     def __init__(self, cigar_string):
@@ -871,6 +882,10 @@ class CIGAR:
 
 
 class CIGARElement:
+    """
+    Representation of a single CIGAR element.
+    """
+
     def __init__(self, length, element):
         self.length: int = int(length)
         self.element: str = element
