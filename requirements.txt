@@ -5,15 +5,16 @@ ete3
 matplotlib
 natsort
 numpy
-nwalign3
+# nwalign3
 pandas
 paramiko
+parasail
 pymongo
 pytest
 python-circos
 pyyaml
 sample-sheet
-scikit-bio == 0.5.6
+# scikit-bio==0.5.6
 scikit-learn
 scipy
 seaborn >= 0.11

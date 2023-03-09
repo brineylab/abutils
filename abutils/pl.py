@@ -23,5 +23,5 @@
 
 
 from .plots.bar import bar
+from .plots.donut import donut
 from .plots.scatter import scatter
-

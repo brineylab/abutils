@@ -51,7 +51,9 @@ def scatter(
     palette: Union[dict, Iterable, None] = None,
     color: Union[str, Iterable, None] = None,
     cmap: Union[str, mpl.colors.Colormap, None] = None,
-    zero_color: Union[str, Iterable, None] = None,
+    hue_min: Optional[float] = None,
+    hue_max: Optional[float] = None,
+    under_color: Union[str, Iterable, None] = "whitesmoke",
     size: Union[int, float] = 20,
     alpha: float = 1.0,
     highlight_index: Optional[Iterable] = None,
@@ -97,6 +99,8 @@ def scatter(
     cbar_flip_ticks: bool = False,
     cbar_title: Optional[str] = None,
     cbar_title_fontsize: Union[int, float] = 12,
+    cbar_title_loc: Optional[str] = None,
+    cbar_title_labelpad: float = 8.0,
     hide_cbar: bool = False,
     equal_axes: bool = True,
     ax: Optional[mpl.axes.Axes] = None,
@@ -109,110 +113,110 @@ def scatter(
 
     Parameters
     ----------
-    x : str or iterable object  
-        Name of a column in `data` or an iterable of values to be plotted on the 
+    x : str or iterable object
+        Name of a column in `data` or an iterable of values to be plotted on the
         x-axis. Required.
 
-    y : str or iterable object  
-        Name of a column in `data` or an iterable of values to be plotted on the 
+    y : str or iterable object
+        Name of a column in `data` or an iterable of values to be plotted on the
         y-axis. Required.
 
-    hue : str or iterable object, optional  
-        Name of a column in `data` or an iterable of hue categories.  
-        
-    marker : str, dict or iterable object, optional  
+    hue : str or iterable object, optional
+        Name of a column in `data` or an iterable of hue categories.
+
+    marker : str, dict or iterable object, optional
         Marker style for the scatter plot. Accepts any of the following:
           * a `matplotlib marker`_ string
           * a ``dict`` mapping `hue` categories to a `matplotlib marker`_ string
-          * a ``list`` of `matplotlib marker`_ strings, which should be the same 
+          * a ``list`` of `matplotlib marker`_ strings, which should be the same
               length as `x` and `y`.
 
-    data : pandas.DataFrame, optional  
-        A ``DataFrame`` object containing the input data. If provided, `x` and/or `y` should 
-        be column names in `data`.   
-        
-    hue_order : iterable object, optional  
-        List of `hue` categories in the order they should be plotted. If `hue_order` contains a 
-        subset of all categories found in `hue`, only the supplied categories will be plotted.  
-        If not provided, `hue` categories will be plotted in ``natsort.natsorted()`` order.  
-        
-    force_categorical_hue : bool, default=False  
-        If ``True``, `hue` data will be treated as categorical, even if the data appear to 
-        be continuous. This results in `color` being used to color the points rather than `cmap`.   
+    data : pandas.DataFrame, optional
+        A ``DataFrame`` object containing the input data. If provided, `x` and/or `y` should
+        be column names in `data`.
 
-    force_continuous_hue : bool, default=False  
-        If ``True``, `hue` data will be treated as continuous, even if the data appear to 
-        be categorical. This results in `cmap` being used to color the points rather than `color`.  
+    hue_order : iterable object, optional
+        List of `hue` categories in the order they should be plotted. If `hue_order` contains a
+        subset of all categories found in `hue`, only the supplied categories will be plotted.
+        If not provided, `hue` categories will be plotted in ``natsort.natsorted()`` order.
+
+    force_categorical_hue : bool, default=False
+        If ``True``, `hue` data will be treated as categorical, even if the data appear to
+        be continuous. This results in `color` being used to color the points rather than `cmap`.
+
+    force_continuous_hue : bool, default=False
+        If ``True``, `hue` data will be treated as continuous, even if the data appear to
+        be categorical. This results in `cmap` being used to color the points rather than `color`.
         This may produce unexpected results and/or errors if used on non-numerical data.
-        
-    palette : dict, optional  
-        Dictionary mapping `hue`, `x` or `y` names to colors. If if keys in `palette` match 
-        more than one category, `hue` categories take priority. If `palette` is not provided, 
-        bars are colored using `color` (if `hue` is ``None``) or a palette is generated 
-        automatically using ``sns.hls_palette()``.  
 
-    color : str or iterable object, optional. 
+    palette : dict, optional
+        Dictionary mapping `hue`, `x` or `y` names to colors. If if keys in `palette` match
+        more than one category, `hue` categories take priority. If `palette` is not provided,
+        bars are colored using `color` (if `hue` is ``None``) or a palette is generated
+        automatically using ``sns.hls_palette()``.
+
+    color : str or iterable object, optional.
         Color for the plot markers. Can be any of the following:
           * a ``list`` or ``tuple`` containing RGB or RGBA values
           * a color string, either from `Matplotlib's set of named colors`_ or a hex color value
           * the name of a column in `data` that contains color values
-          * a ``list`` of colors (either as strings or RGB tuples) to be used for `hue` categories. 
-            If `colors` is shorter than the list of hue categories, colors will be reused.  
-        
+          * a ``list`` of colors (either as strings or RGB tuples) to be used for `hue` categories.
+            If `colors` is shorter than the list of hue categories, colors will be reused.
+
         .. tip::
-            If a single RGB or RGBA ``list`` or ``tuple`` is provided and `hue` is also supplied, 
-            there may be unexpected results as ``scatter()`` will attempt to map each of the 
-            individual RGB(A) values to a hue category. Wrapping the RGB(A) iterable in a list 
-            will ensure that the color is interpreted correctly.   
-        
-        Only used if `hue` contains categorical data (`cmap` is used for continuous data). If not 
-        provided, the `default Seaborn color palette`_ will be used. 
-        
-    cmap : str or matplotlib.color.Colormap, default='flare'   
-        Colormap to be used for continuous `hue` data.  
+            If a single RGB or RGBA ``list`` or ``tuple`` is provided and `hue` is also supplied,
+            there may be unexpected results as ``scatter()`` will attempt to map each of the
+            individual RGB(A) values to a hue category. Wrapping the RGB(A) iterable in a list
+            will ensure that the color is interpreted correctly.
+
+        Only used if `hue` contains categorical data (`cmap` is used for continuous data). If not
+        provided, the `default Seaborn color palette`_ will be used.
+
+    cmap : str or matplotlib.color.Colormap, default='flare'
+        Colormap to be used for continuous `hue` data.
 
     zero_color : str or list of RGB(A) values
-        Separate color for ``0`` values when `hue` is continuous. By default, `cmap` is 
+        Separate color for ``0`` values when `hue` is continuous. By default, `cmap` is
         used for all values. An example use would be GEx plots for which visualization is
         improved if ``0`` values are more obviously distinguished from low count values.
-        
-    size : str or float or iterable object, default=20  
-        Size of the scatter points. Either a   
 
-    alpha : float, default=0.6  
-        Alpha of the scatter points.  
-        
-    highlight_index : iterable object, optional  
-        An iterable of index names (present in `data.index`) of points to be highlighted on 
+    size : str or float or iterable object, default=20
+        Size of the scatter points. Either a
+
+    alpha : float, default=0.6
+        Alpha of the scatter points.
+
+    highlight_index : iterable object, optional
+        An iterable of index names (present in `data.index`) of points to be highlighted on
         the plot. If provided, `highlight_x` and `highlight_y` are ignored.
 
-    highlight_x : iterable object, optional  
+    highlight_x : iterable object, optional
         An iterable of x-values for highlighted points. Also requires `highlight_y`.
-        
-    highlight_y : iterable object, optional  
-        An iterable of y-values for highlighted points. Also requires `highlight_x`.
-        
-    highlight_marker : str, default='x'  
-        Marker style to be used for highlight points. Accepts any `matplotlib marker`_. 
 
-    highlight_size : int, default=90  
+    highlight_y : iterable object, optional
+        An iterable of y-values for highlighted points. Also requires `highlight_x`.
+
+    highlight_marker : str, default='x'
+        Marker style to be used for highlight points. Accepts any `matplotlib marker`_.
+
+    highlight_size : int, default=90
         Size of the highlight marker.
 
     highlight_color : string or list of color values, default='k'
         Color of the highlight points.
 
-    highlight_name : str, optional  
+    highlight_name : str, optional
         Name of the highlights, to be used in the plot legend. If not supplied,
         highlight points will not be included in the legend.
-        
-    highlight_alpha : float, default=0.9  
-        Alpha of the highlight points. 
 
-    plot_kwargs : dict, optional  
+    highlight_alpha : float, default=0.9
+        Alpha of the highlight points.
+
+    plot_kwargs : dict, optional
         Dictionary containing keyword arguments that will be passed to ``pyplot.scatter()``.
 
     legend_on_data : bool, default=False
-        Plot legend labels on the data rather than in a separate legend. The X/Y midpoint 
+        Plot legend labels on the data rather than in a separate legend. The X/Y midpoint
         for each legend category is used as the label location.
 
     legend_fontsize : int or float, default=12
@@ -222,52 +226,52 @@ def scatter(
         Fontweight for legend labels. Options are any accepted `Matplotlib text weight`_.
 
     legend_fontoutline : int or float, default=None
-        Width of the outline of legend labels. Only used when `legend_on_data` is ``True``. 
+        Width of the outline of legend labels. Only used when `legend_on_data` is ``True``.
         Default is ``None``, which results in no outline.
 
     legend_marker_alpha : float, default=None
-        Opacity for legend markers (or legend labels if `legend_on_data` is ``True``). 
-        By default, legend markers will use `alpha` and legend labels will be completely 
+        Opacity for legend markers (or legend labels if `legend_on_data` is ``True``).
+        By default, legend markers will use `alpha` and legend labels will be completely
         opaque, equivalent to `legend_marker_alpha` of ``1.0``.
 
     legend_label_position_offsets : dict, default=None
-        A ``dict`` mapping legend labels to ``(x,y)`` coordinates used to offset legend labels. 
-        Only used when `legend_on_data` is ``True``. Offsets are in relative plot units: ``(0.1, 0.1)`` 
-        would move the label up and to the right by 10% of the overall plot area. 
+        A ``dict`` mapping legend labels to ``(x,y)`` coordinates used to offset legend labels.
+        Only used when `legend_on_data` is ``True``. Offsets are in relative plot units: ``(0.1, 0.1)``
+        would move the label up and to the right by 10% of the overall plot area.
 
-    legend_kwargs : dict, optional  
+    legend_kwargs : dict, optional
         Dictionary containing keyword arguments that will be passed to ``ax.legend()``.
 
-    hide_legend : bool, default=False  
-        By default, a plot legend will be shown if multiple hues are plotted. If ``True``, 
-        the legend will not be shown. 
-        
-    xlabel : str, optional  
-        Text for the X-axis label. 
+    hide_legend : bool, default=False
+        By default, a plot legend will be shown if multiple hues are plotted. If ``True``,
+        the legend will not be shown.
 
-    ylabel : str, optional  
-        Text for the Y-axis label.  
-        
-    xlabel_fontsize : int or float, default=16  
+    xlabel : str, optional
+        Text for the X-axis label.
+
+    ylabel : str, optional
+        Text for the Y-axis label.
+
+    xlabel_fontsize : int or float, default=16
         Fontsize for the X-axis label text.
 
-    ylabel_fontsize : int or float, default=16  
+    ylabel_fontsize : int or float, default=16
         Fontsize for the Y-axis label text.
 
-    xtick_labelsize : int or float, default=14  
-        Fontsize for the X-axis tick labels.  
+    xtick_labelsize : int or float, default=14
+        Fontsize for the X-axis tick labels.
 
-    ytick_labelsize : int or float, default=14  
-        Fontsize for the Y-axis tick labels.  
+    ytick_labelsize : int or float, default=14
+        Fontsize for the Y-axis tick labels.
 
-    xtick_labelrotation : int or float, default=0  
-        Rotation of the X-axis tick labels.  
-    
-    ytick_labelrotation : int or float, default=0  
-        Rotation of the Y-axis tick labels. 
+    xtick_labelrotation : int or float, default=0
+        Rotation of the X-axis tick labels.
+
+    ytick_labelrotation : int or float, default=0
+        Rotation of the Y-axis tick labels.
 
     tiny_axis : bool, default=False
-        Plots tiny axis lines in the lower left corner of the plot. Typcally used in 
+        Plots tiny axis lines in the lower left corner of the plot. Typcally used in
         UMAP plots. If ``True``, ticks and tick labels will be hidden.
 
     tiny_axis_xoffset : float, default=None
@@ -276,75 +280,75 @@ def scatter(
     tiny_axis_yoffset : float, default=None
         Y-axis offset for the tiny axis.
 
-    cbar_width : int, default=35  
-        Width of the colorbar. Only used for continuous `hue` types.  
+    cbar_width : int, default=35
+        Width of the colorbar. Only used for continuous `hue` types.
 
-    cbar_height : int, default=5  
-        Height of the colorbar. Only used for continuous `hue` types.  
+    cbar_height : int, default=5
+        Height of the colorbar. Only used for continuous `hue` types.
 
-    cbar_loc : str or iterable object, default='lower right'  
+    cbar_loc : str or iterable object, default='lower right'
         Location of the colorbar. Accepts `any valid inset_axes() location`_.
 
-    cbar_orientation : str, default='horizontal'  
+    cbar_orientation : str, default='horizontal'
         Orientation of the colorbar. Options are ``'horizontal'`` and ``'vertical'``.
 
     cbar_bbox_to_anchor : list or tuple, optional
-        bbox_to_anchor for the colorbar. Used in combination with `cbar_loc` to provide 
+        bbox_to_anchor for the colorbar. Used in combination with `cbar_loc` to provide
         fine-grained positioning of the colorbar.
 
-    cbar_flip_ticks : bool, default=False  
-        Flips the position of colorbar ticks. Ticks default to the bottom if `cbar_orientation` 
-        is  ``'horizontal'`` and the left if  `cbar_orientation` is ``'vertical'``.  
+    cbar_flip_ticks : bool, default=False
+        Flips the position of colorbar ticks. Ticks default to the bottom if `cbar_orientation`
+        is  ``'horizontal'`` and the left if  `cbar_orientation` is ``'vertical'``.
 
-    cbar_title : str, optional  
-        Colorbar title. If not provided, `hue` is used.  
+    cbar_title : str, optional
+        Colorbar title. If not provided, `hue` is used.
 
-    cbar_title_fontsize : int or float, default=12  
-        Fontsize for the colorbar title.  
-        
-    hide_cbar : bool, default=False. 
-        If ``True``, the color bar will be hidden on plots with continuous `hue` values.  
-        
+    cbar_title_fontsize : int or float, default=12
+        Fontsize for the colorbar title.
+
+    hide_cbar : bool, default=False.
+        If ``True``, the color bar will be hidden on plots with continuous `hue` values.
+
     equal_axes : bool, default=True
         If ```True```, the the limits of the x- and y-axis will be equal.
 
     ax : mpl.axes.Axes, default=None
         Pre-existing axes for the plot. If not provided, a new axes will be created.
 
-    show : bool, default=False  
+    show : bool, default=False
         If ``True``, plot is shown and the plot ``Axes`` object is not returned. Default
         is ``False``, which does not call ``pyplot.show()`` and returns the ``Axes`` object.
 
-    figsize : iterable object, default=[6, 4]  
-        List containing the figure size (as ``[x-dimension, y-dimension]``) in inches. 
+    figsize : iterable object, default=[6, 4]
+        List containing the figure size (as ``[x-dimension, y-dimension]``) in inches.
 
-    figfile : str, optional  
+    figfile : str, optional
         Path at which to save the figure file. If not provided, the figure is not saved
-        and is either shown (if `show` is ``True``) or the ``Axes`` object is returned. 
+        and is either shown (if `show` is ``True``) or the ``Axes`` object is returned.
 
 
     Returns
     -------
     ax : mpl.axes.Axes
-        If `figfile` is ``None`` and `show` is ``False``, the ``ax`` is returned. 
-        Otherwise, the return value is ``None``. 
-        
-        
-    .. _matplotlib marker: 
-        https://matplotlib.org/stable/api/markers_api.html  
+        If `figfile` is ``None`` and `show` is ``False``, the ``ax`` is returned.
+        Otherwise, the return value is ``None``.
+
+
+    .. _matplotlib marker:
+        https://matplotlib.org/stable/api/markers_api.html
 
     .. _Matplotlib's set of named colors:
         https://matplotlib.org/stable/gallery/color/named_colors.html
-        
-    .. _default Seaborn color palette: 
-        https://seaborn.pydata.org/generated/seaborn.color_palette.html  
+
+    .. _default Seaborn color palette:
+        https://seaborn.pydata.org/generated/seaborn.color_palette.html
 
     .. _Matplotlib text weight
         https://matplotlib.org/stable/tutorials/text/text_props.html
 
-    .. _any valid inset_axes() location: 
+    .. _any valid inset_axes() location:
         https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.axes_grid1.inset_locator.inset_axes.html
-        
+
     """
     # process input data
     if data is None:
@@ -382,15 +386,17 @@ def scatter(
             continuous_hue = True
         if continuous_hue:
             continuous_hue = True
+            # set hue min and max values
+            if hue_min is None:
+                hue_min = np.floor(df[hue].min())
+            if hue_max is None:
+                hue_max = np.ceil(df[hue].max())
             hue_order = []
-            if cmap is None:
-                cmap = get_cmap("flare", zero_color=zero_color)
-            else:
-                cmap = get_cmap(cmap, zero_color=zero_color)
-            # min_hue = max(0, df[hue].min())
-            min_hue = np.floor(df[hue].min())
-            max_hue = np.ceil(df[hue].max())
-            df["color"] = [cmap((h - min_hue) / (max_hue - min_hue)) for h in df[hue]]
+            cmap = get_cmap("flare" if cmap is None else cmap)
+            normhue = lambda h: (h - hue_min) / (hue_max - hue_min)
+            df["color"] = [
+                cmap(normhue(h)) if h >= hue_min else under_color for h in df[hue]
+            ]
         else:
             if hue_order is None:
                 hue_order = natsorted(list(set(df[hue])))
@@ -505,9 +511,9 @@ def scatter(
         )
         cbax = ax.inset_axes(cbar_bounds)
 
-        max_hue = np.ceil(df[hue].max())
-        min_hue = max(0, df[hue].min())
-        norm = mpl.colors.Normalize(vmin=min_hue, vmax=max_hue)
+        # max_hue = np.ceil(df[hue].max())
+        # min_hue = max(0, df[hue].min())
+        norm = mpl.colors.Normalize(vmin=hue_min, vmax=hue_max)
         # ticks = [t for t in np.linspace(min_hue, max_hue, num=4)]
 
         cbar = plt.colorbar(
@@ -516,18 +522,26 @@ def scatter(
             orientation=cbar_orientation,
         )
         if cbar_orientation == "horizontal":
+            if cbar_title_loc is None:
+                cbar_title_loc = "top"
             ticks_position = "bottom" if cbar_flip_ticks else "top"
             cbax.xaxis.set_ticks_position(ticks_position)
-            cbax.xaxis.set_label_position(ticks_position)
+            cbax.xaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_xlabel(
-                cbar_title, fontsize=cbar_title_fontsize,
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
         else:
+            if cbar_title_loc is None:
+                cbar_title_loc = "right"
             ticks_position = "left" if cbar_flip_ticks else "right"
             cbax.yaxis.set_ticks_position(ticks_position)
-            cbax.yaxis.set_label_position(ticks_position)
+            cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
-                cbar_title, fontsize=cbar_title_fontsize,
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
 
     # style the plot
@@ -543,9 +557,9 @@ def scatter(
     if tiny_axis:
         # get coords for the UMAP-specific axes
         if tiny_axis_xoffset is None:
-            tiny_axis_xoffset = 0
+            tiny_axis_xoffset = -0.05
         if tiny_axis_yoffset is None:
-            tiny_axis_yoffset = 0
+            tiny_axis_yoffset = -0.05
         xmin = df[x].min()
         xmax = df[x].max()
         ymin = df[y].min()
@@ -565,7 +579,7 @@ def scatter(
         ax.vlines(x_start, y_start, y_end, "k", lw=2)
         ax.annotate(
             xlabel,
-            xy=(x_center, ymin),
+            xy=(x_center, y_start),
             xytext=(0, -5),
             textcoords="offset points",
             fontsize=xlabel_fontsize,
@@ -574,7 +588,7 @@ def scatter(
         )
         ax.annotate(
             ylabel,
-            xy=(xmin, y_center),
+            xy=(x_start, y_center),
             xytext=(-5, 0),
             textcoords="offset points",
             fontsize=ylabel_fontsize,

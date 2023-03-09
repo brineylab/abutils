@@ -31,10 +31,82 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 from matplotlib import cm, colors
-from matplotlib.colors import Colormap, LinearSegmentedColormap, to_rgba_array
+from matplotlib.colors import (
+    Colormap,
+    ListedColormap,
+    LinearSegmentedColormap,
+    to_rgba_array,
+)
 
 
-cmaps = {"heatmap": sns.diverging_palette(240, 10, as_cmap=True)}
+# -----------------
+#    PALETTES
+# -----------------
+
+palettes = {
+    "muted neon rainbow": [
+        "#ef476f",
+        "#ffd166",
+        "#06d6a0",
+        "#118ab2",
+        "#6c6678",
+        "#073b4c",
+    ],
+    "neon pastel": ["#9b5de5", "#f15bb5", "#fee440", "#00bbf9", "#00f5d4"],
+    "muted sunset": ["#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51"],
+    "vibrant rainbow": ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93"],
+    "bright pastel": ["#826aed", "#c879ff", "#ffb7ff", "#3bf4fb", "#caff8a"],
+    "fresh rainbow": ["#1be7ff", "#6eeb83", "#e4ff1a", "#ffb800", "#ff5714"],
+    "cool rainbow": [
+        "#065275",
+        "#029099",
+        "#7ccba1",
+        "#fdde9c",
+        "#f0746e",
+        "#dc3978",
+        "#7c1e6f",
+    ],
+    "bright primary": ["#246eb9", "#4cb944", "#c73e1d", "#ffbe0b", "#401f3e"],
+}
+
+
+def show_palettes() -> None:
+    """
+    inspired by https://matplotlib.org/stable/tutorials/colors/colormaps.html
+    """
+    gradient = np.linspace(0, 1, 256)
+    gradient = np.vstack((gradient, gradient))
+
+    nrows = len(palettes)
+    figh = 1 + (nrows + (nrows - 1) * 0.1) * 0.75
+    fig, axs = plt.subplots(
+        nrows=nrows + 1,
+        figsize=(6.4, figh),
+    )
+    fig.subplots_adjust(
+        top=1 - 0.35 / figh, bottom=0.15 / figh, left=0.2, right=0.99, hspace=0.6
+    )
+    for ax, name in zip(axs, palettes):
+        cmap = ListedColormap(palettes[name])
+        ax.imshow(
+            gradient,
+            aspect="auto",
+            cmap=cmap,
+        )
+        ax.text(
+            -0.02,
+            0.5,
+            name,
+            va="center",
+            ha="right",
+            fontsize=10,
+            transform=ax.transAxes,
+        )
+
+    for ax in axs:
+        ax.set_axis_off()
+
+    plt.show()
 
 
 def get_cmap(
@@ -57,19 +129,19 @@ def get_cmap(
             * hex code
             * `Matplotlib color`_
             * RGB tuple
-        If a single color is provided, a ``Colormap`` will be built from 
-        white to the provided color (or from the color to black if `dark` 
-        is ``True``). 
-    
+        If a single color is provided, a ``Colormap`` will be built from
+        white to the provided color (or from the color to black if `dark`
+        is ``True``).
+
     dark : bool, default=False
-        If ``True``, build a ``Colormap`` from the provided color from the color 
+        If ``True``, build a ``Colormap`` from the provided color from the color
         to black. By default, the ``Colormap`` will be built from the provided
         color to white.
 
     zero_color : any Matplotlib color, default=None
         Alternate color for the zero value of the ``Colormap``. Produces results
-        similar to the default colormap in 10x Genomics' Loupe browser, in which 
-        the zero count value for GEX plots is light grey and less easily confused with 
+        similar to the default colormap in 10x Genomics' Loupe browser, in which
+        the zero count value for GEX plots is light grey and less easily confused with
         near-zero counts.
 
     minval : float, default=0.0
@@ -77,8 +149,8 @@ def get_cmap(
         which represents the fraction of the ``Colormap`` at which to truncate.
 
     maxval : float, default=1.0
-        Truncate the upper bound of the ``Colormap``. Must be a ``float`` greater than 
-        zero and less than or equal to 1.0, which represents the fraction of the 
+        Truncate the upper bound of the ``Colormap``. Must be a ``float`` greater than
+        zero and less than or equal to 1.0, which represents the fraction of the
         ``Colormap`` to truncate.
 
     n : int, default=256
@@ -87,7 +159,7 @@ def get_cmap(
     name : str, default=None
         Name of the ``Colormap``.
 
-    
+
     Returns
     -------
     cmap : ``Colormap``
@@ -119,22 +191,22 @@ def monochrome_palette(
 ) -> list:
     """
     Returns a monochromatic palette of colors, from `color` to white.
-    
+
     Parameters
     ----------
     color : str or Iterable
-        Color from which the monochromatic palette will be created. 
+        Color from which the monochromatic palette will be created.
         Can be one of several things:
             * hex code
             * `Matplotlib color`_
-            * RGB tuple 
+            * RGB tuple
 
     n_colors : int, default=10
         Number of colors in the palette.
 
     include_white : bool, default=False
-        Whether or not to include white in the palette. White is not 
-        included by default, meaning all colors in the palette will be 
+        Whether or not to include white in the palette. White is not
+        included by default, meaning all colors in the palette will be
         a shade of `color`.
 
 
@@ -157,30 +229,39 @@ def monochrome_palette(
 
 def cmap_from_color(color: Union[str, Tuple], dark: bool = False) -> Colormap:
     """
-    Generates a matplotlib colormap from a single color. Colormap will be built, 
+    Generates a matplotlib colormap from a single color. Colormap will be built,
     by default, from white to ``color``.
 
     Parameters
     ----------
-    color : str or tuple
+    color : str or Iterable
+        Color from which the monochromatic palette will be created.
         Can be one of several things:
-            1. Hex code
-            2. HTML color name
-            3. RGB tuple
+            * hex code
+            * `Matplotlib color`_
+            * RGB tuple
 
     dark : bool, default=False
         If ``True``, colormap will be built from ``color`` to
         black. Default is ``False``, which builds a colormap from
         white to ``color``.
 
+
     Returns
     -------
         colormap : ``Colormap``
+
+
+    .. _Matplotlib color
+        https://matplotlib.org/stable/tutorials/colors/colors.html
     """
-    if dark:
-        return sns.dark_palette(color, as_cmap=True)
-    else:
-        return sns.light_palette(color, as_cmap=True)
+    return get_cmap(color, dark=dark)
+
+
+cmaps = {
+    "heatmap": sns.diverging_palette(240, 10, as_cmap=True),
+    "loupe": get_cmap("YlOrBr", zero_color=[0.9, 0.9, 0.9, 1.0], minval=0.1),
+}
 
 
 def hex_to_rgb(hex_string):
@@ -212,17 +293,17 @@ def truncate_colormap(
 
     Args:
 
-    	cmap : colormap): Colormap to be truncated.
+        cmap : colormap): Colormap to be truncated.
 
-    	minval (float): Lower bound. Should be a float betwee 0 and 1.
+        minval (float): Lower bound. Should be a float betwee 0 and 1.
 
-    	maxval (float): Upper bound. Should be a float between 0 and 1
+        maxval (float): Upper bound. Should be a float between 0 and 1
 
-    	n (int): Number of colormap steps. Default is ``256``.
+        n (int): Number of colormap steps. Default is ``256``.
 
     Returns:
 
-    	colormap: A matplotlib colormap
+        colormap: A matplotlib colormap
 
     http://stackoverflow.com/questions/18926031/how-to-extract-a-subset-of-a-colormap-as-a-new-colormap-in-matplotlib
     """
@@ -313,4 +394,3 @@ def truncate_colormap(
 #             Amax,
 #         )
 #     return colors.LinearSegmentedColormap.from_list(name or "noname", A, N=n)
-
