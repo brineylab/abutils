@@ -205,7 +205,7 @@ def lsd(
     return output_file
 
 
-def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
+def igphyml(input_file: str = None, tree_file: str = None, root: str = None, verbose: bool = False) -> str:
     """
     Computes a phylogenetic tree using IgPhyML.
 

@@ -128,15 +128,17 @@ def list_files(d, extension=None):
 
 
 def print_splash():
-    splash = """     _    _     _   _ _   _ _       ____  _            _ _            
+    splash = """
+     _    _     _   _ _   _ _       ____  _            _ _            
     / \  | |__ | | | | |_(_) |___  |  _ \(_)_ __   ___| (_)_ __   ___ 
    / _ \ | '_ \| | | | __| | / __| | |_) | | '_ \ / _ \ | | '_ \ / _ \\
   / ___ \| |_) | |_| | |_| | \__ \ |  __/| | |_) |  __/ | | | | |  __/
  /_/   \_\_.__/ \___/ \__|_|_|___/ |_|   |_| .__/ \___|_|_|_| |_|\___|
-                                           |_|                        """
+                                           |_|                        
+    """
     print("")
     print(splash)
     print(
-        "(c) 2017 Bryan Briney\nDistributed under the MIT License (http://opensource.org/licenses/MIT)"
+        "(c) 2023 Bryan Briney\nDistributed under the MIT License (http://opensource.org/licenses/MIT)"
     )
-    print("\n")
+    print("")
