@@ -92,7 +92,10 @@ class Pair(object):
         return not self == other
 
     def __hash__(self):
-        return hash((self.name, self.heavy.sequence, self.light.sequence))
+        name = self.name
+        heavy = self.heavy.sequence if self.heavy is not None else None
+        light = self.light.sequence if self.light is not None else None
+        return hash((name, heavy, light))
 
     @property
     def receptor(self):
