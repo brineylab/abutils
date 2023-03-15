@@ -36,13 +36,15 @@ from pymongo import MongoClient
 from . import log
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [str, ]
+    STR_TYPES = [
+        str,
+    ]
 else:
     STR_TYPES = [str, unicode]
 
 
-def get_connection(ip='localhost', port=27017, user=None, password=None):
-    '''
+def get_connection(ip="localhost", port=27017, user=None, password=None):
+    """
     Returns a pymongo ``MongoClient`` object.
 
     .. note:
@@ -63,21 +65,22 @@ def get_connection(ip='localhost', port=27017, user=None, password=None):
         password (str): Password, if authentication is enabled on the MongoDB database.
             Default is ``None``, which results in requesting the connection
             without authentication.
-    '''
-    if platform.system().lower() == 'darwin':
+    """
+    if platform.system().lower() == "darwin":
         connect = False
     else:
         connect = True
     if user and password:
         import urllib
+
         pwd = urllib.quote_plus(password)
-        uri = 'mongodb://{}:{}@{}:{}'.format(user, pwd, ip, port)
+        uri = "mongodb://{}:{}@{}:{}".format(user, pwd, ip, port)
         return MongoClient(uri, connect=connect)
     return MongoClient(ip, port, connect=connect)
 
 
-def list_dbs(ip='localhost', port=27017, user=None, connect=True, hint=None):
-    '''
+def list_dbs(ip="localhost", port=27017, user=None, connect=True, hint=None):
+    """
     Returns a list of Databases.
 
     .. note:
@@ -103,40 +106,41 @@ def list_dbs(ip='localhost', port=27017, user=None, connect=True, hint=None):
             
         hint (str): substring found in database name, if used only list of 
             databases that contain the substring will returned
-    '''
-    
-    #Darwin says "you shall not connect!"
-    if platform.system().lower() == 'darwin':
+    """
+
+    # Darwin says "you shall not connect!"
+    if platform.system().lower() == "darwin":
         connect = False
     else:
         connect = True
-    
+
     # check for user and pass, if so: make uri, import urllib, return dbs
     if user and password:
         import urllib
+
         pwd = urllib.quote_plus(password)
-        uri = 'mongodb://{}:{}@{}:{}'.format(user, pwd, ip, port)
-        #check to see if hint was passed in and return list of dbs with hint
+        uri = "mongodb://{}:{}@{}:{}".format(user, pwd, ip, port)
+        # check to see if hint was passed in and return list of dbs with hint
         if hint and type(hint) == str:
             ls = MongoClient(uri, connect=connect).list_database_names()
             return [d for d in ls if hint.upper() in d.upper()]
-        #otherwise return a list of all dbs
+        # otherwise return a list of all dbs
         else:
             return MongoClient(uri, connect=connect).list_database_names()
-        
-    #otherwise no user or pass required    
+
+    # otherwise no user or pass required
     else:
-        #check to see if hint was passed in and return list of dbs with hint
+        # check to see if hint was passed in and return list of dbs with hint
         if hint and type(hint) == str:
             ls = MongoClient(ip, port, connect=connect).list_database_names()
             return [d for d in ls if hint.upper() in d.upper()]
-        #otherwise return a list of all dbs
+        # otherwise return a list of all dbs
         else:
             return MongoClient(ip, port, connect=connect).list_database_names()
 
 
-def get_db(db, ip='localhost', port=27017, user=None, password=None):
-    '''
+def get_db(db, ip="localhost", port=27017, user=None, password=None):
+    """
     Returns a pymongo ``Database`` object.
 
     .. note:
@@ -159,15 +163,16 @@ def get_db(db, ip='localhost', port=27017, user=None, password=None):
         password (str): Password, if authentication is enabled on the MongoDB database.
             Default is ``None``, which results in requesting the connection
             without authentication.
-    '''
-    if platform.system().lower() == 'darwin':
+    """
+    if platform.system().lower() == "darwin":
         connect = False
     else:
         connect = True
     if user and password:
         import urllib
+
         pwd = urllib.quote_plus(password)
-        uri = 'mongodb://{}:{}@{}:{}'.format(user, pwd, ip, port)
+        uri = "mongodb://{}:{}@{}:{}".format(user, pwd, ip, port)
         conn = MongoClient(uri, connect=connect)
     else:
         conn = MongoClient(ip, port, connect=connect)
@@ -175,7 +180,7 @@ def get_db(db, ip='localhost', port=27017, user=None, password=None):
 
 
 def get_collections(db, collection=None, prefix=None, suffix=None):
-    '''
+    """
     Returns a sorted list of collection names found in ``db``.
 
     Arguments:
@@ -199,9 +204,11 @@ def get_collections(db, collection=None, prefix=None, suffix=None):
     Returns:
 
         list: A sorted list of collection names.
-    '''
+    """
     if collection is not None:
-        return [collection, ]
+        return [
+            collection,
+        ]
     collections = db.collection_names(include_system_collections=False)
     if prefix is not None:
         collections = [c for c in collections if c.startswith(prefix)]
@@ -211,7 +218,7 @@ def get_collections(db, collection=None, prefix=None, suffix=None):
 
 
 def rename_collection(db, collection, new_name):
-    '''
+    """
     Renames a MongoDB collection.
 
     Arguments:
@@ -228,10 +235,10 @@ def rename_collection(db, collection, new_name):
                 returns the new collection name. If the function
                 returns an empty string, the collection will not be
                 renamed.
-    '''
-    if hasattr(new_name, '__call__'):
+    """
+    if hasattr(new_name, "__call__"):
         _new = new_name(collection)
-        if _new == '':
+        if _new == "":
             return
     else:
         _new = new_name
@@ -240,7 +247,7 @@ def rename_collection(db, collection, new_name):
 
 
 def update(field, value, db, collection, match=None):
-    '''
+    """
     Updates MongoDB documents.
 
     Sets ``field`` equal to ``value`` for all documents that
@@ -259,18 +266,18 @@ def update(field, value, db, collection, match=None):
         match (dict): A dictionary containing the match criteria, for example::
 
             {'seq_id': {'$in': ['a', 'b', 'c']}, 'cdr3_len': {'$gte': 18}}
-    '''
+    """
     c = db[collection]
     match = match if match is not None else {}
     # check MongoDB version to use appropriate update command
-    if db.client.server_info()['version'].startswith('2'):
-        c.update(match, {'$set': {field: value}}, multi=True)
+    if db.client.server_info()["version"].startswith("2"):
+        c.update(match, {"$set": {field: value}}, multi=True)
     else:
-        c.update_many(match, {'$set': {field: value}})
+        c.update_many(match, {"$set": {field: value}})
 
 
 def unset(db, collection, field, match=None):
-    '''
+    """
     Removes ``field`` from all records in ``collection`` that meet
     ``match`` criteria.
 
@@ -285,22 +292,31 @@ def unset(db, collection, field, match=None):
         match (dict): A dictionary containing the match criteria, for example::
 
             {'seq_id': {'$in': ['a', 'b', 'c']}, 'cdr3_len': {'$gte': 18}}
-    '''
+    """
     c = db[collection]
     match = match if match is not None else {}
     # check MongoDB version to use appropriate update command
-    if db.client.server_info()['version'].startswith('2'):
-        c.update(match, {'$unset': {field: ''}}, multi=True)
+    if db.client.server_info()["version"].startswith("2"):
+        c.update(match, {"$unset": {field: ""}}, multi=True)
     else:
-        c.update_many(match, {'$unset': {field: ''}})
+        c.update_many(match, {"$unset": {field: ""}})
 
 
-def mongoimport(json, database,
-                ip='localhost', port=27017,
-                user=None, password=None,
-                delim='_', delim1=None, delim2=None,
-                delim_occurance=1, delim1_occurance=1, delim2_occurance=1):
-    '''
+def mongoimport(
+    json,
+    database,
+    ip="localhost",
+    port=27017,
+    user=None,
+    password=None,
+    delim="_",
+    delim1=None,
+    delim2=None,
+    delim_occurance=1,
+    delim1_occurance=1,
+    delim2_occurance=1,
+):
+    """
     Performs mongoimport on one or more json files.
 
     Args:
@@ -341,38 +357,52 @@ def mongoimport(json, database,
 
         delim2_occurance (int): Occurance of ``delim2`` at which to split filename.
             Default is ``1``
-    '''
-    logger = log.get_logger('mongodb')
+    """
+    logger = log.get_logger("mongodb")
     _print_mongoimport_info(logger)
     if type(json) in (list, tuple):
         pass
     elif os.path.isdir(json):
         from abtools.utils.pipeline import list_files
+
         json = list_files(json)
     else:
-        json = [json, ]
-    jsons = sorted([os.path.expanduser(j) for j in json if j.endswith('.json')])
-    collections = _get_import_collections(jsons, delim, delim_occurance,
-                                          delim1, delim1_occurance,
-                                          delim2, delim2_occurance)
-    logger.info('Found {} files to import'.format(len(jsons)))
-    logger.info('')
+        json = [
+            json,
+        ]
+    jsons = sorted([os.path.expanduser(j) for j in json if j.endswith(".json")])
+    collections = _get_import_collections(
+        jsons,
+        delim,
+        delim_occurance,
+        delim1,
+        delim1_occurance,
+        delim2,
+        delim2_occurance,
+    )
+    logger.info("Found {} files to import".format(len(jsons)))
+    logger.info("")
     for i, (json_file, collection) in enumerate(zip(jsons, collections)):
-        logger.info('[ {} ] {} --> {}'.format(i + 1, os.path.basename(json_file), collection))
+        logger.info(
+            "[ {} ] {} --> {}".format(i + 1, os.path.basename(json_file), collection)
+        )
         # logger.info("Performing mongoimport on {}.".format(os.path.basename(json_file)))
         # logger.info("Importing the file into collection {}.".format(collection))
         if all([user, password]):
-            host = '--host {} --port {} -username {} -password {}'.format(ip, port, user, password)
+            host = "--host {} --port {} -username {} -password {}".format(
+                ip, port, user, password
+            )
         else:
-            host = '--host {} --port {}'.format(ip, port)
+            host = "--host {} --port {}".format(ip, port)
         mongo_cmd = "mongoimport {} --db {} --collection {} --file {}".format(
-            host, database, collection, json_file)
+            host, database, collection, json_file
+        )
         mongo = sp.Popen(mongo_cmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
         stdout, stderr = mongo.communicate()
 
 
 def index(db, collection, fields, directions=None, desc=False, background=False):
-    '''
+    """
     Builds a simple (single field) or complex (multiple fields) index
     on a single collection in a MongoDB database.
 
@@ -400,10 +430,13 @@ def index(db, collection, fields, directions=None, desc=False, background=False)
         background (bool): If ``True``, the indexing operation will be processed
             in the background. When performing background indexes, the MongoDB
             database will not be locked.
-    '''
+    """
     import pymongo
+
     if type(fields) in STR_TYPES:
-        fields = [fields, ]
+        fields = [
+            fields,
+        ]
     if directions is None:
         _dir = pymongo.DESCENDING if desc else pymongo.ASCENDING
         directions = [_dir] * len(fields)
@@ -412,8 +445,8 @@ def index(db, collection, fields, directions=None, desc=False, background=False)
     coll.create_index(field_tuples, background=background)
 
 
-def remove_padding(db, collection, field='padding'):
-    '''
+def remove_padding(db, collection, field="padding"):
+    """
     Removes a padding field.
 
     Args:
@@ -423,34 +456,37 @@ def remove_padding(db, collection, field='padding'):
         collection (str): Collection name
 
         field (str): Name of the padding field. Default is ``padding``
-    '''
+    """
     unset(db, collection, field=field)
     # c = db[collection]
     # c.update({}, {'$unset': {field: ''}}, multi=True)
 
 
-def _get_import_collections(jsons, delim, delim_occurance,
-                            delim1, delim1_occurance,
-                            delim2, delim2_occurance):
+def _get_import_collections(
+    jsons, delim, delim_occurance, delim1, delim1_occurance, delim2, delim2_occurance
+):
     jnames = [os.path.basename(j) for j in jsons]
     if not all([delim1, delim2]):
         collections = [delim.join(j.split(delim)[:delim_occurance]) for j in jnames]
     else:
         pre_colls = [delim1.join(j.split(delim1)[delim1_occurance:]) for j in jnames]
-        collections = [delim2.join(j.split(delim2)[:delim2_occurance]) for j in pre_colls]
+        collections = [
+            delim2.join(j.split(delim2)[:delim2_occurance]) for j in pre_colls
+        ]
     return collections
 
 
 def _print_mongoimport_info(logger):
-    logger.info('')
-    logger.info('')
-    logger.info('')
-    logger.info('-' * 25)
-    logger.info('MONGOIMPORT')
-    logger.info('-' * 25)
-    logger.info('')
+    logger.info("")
+    logger.info("")
+    logger.info("")
+    logger.info("-" * 25)
+    logger.info("MONGOIMPORT")
+    logger.info("-" * 25)
+    logger.info("")
 
 
 def _print_remove_padding():
-    logger = log.get_logger('mongodb')
-    logger.info('Removing MongoDB padding...')
+    logger = log.get_logger("mongodb")
+    logger.info("Removing MongoDB padding...")
+

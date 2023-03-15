@@ -32,11 +32,14 @@ import itertools
 import math
 import multiprocessing as mp
 import os
+import platform
 import random
 import shutil
 import string
 import subprocess as sp
 import sys
+import tempfile
+from typing import Optional
 
 import numpy as np
 import scipy
@@ -62,49 +65,137 @@ from .alignment import mafft, muscle
 from .cluster import cluster
 from .color import hex_to_rgb, get_cmap
 from .decorators import lazy_property
+from .pipeline import make_dir
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [str, ]
+    STR_TYPES = [
+        str,
+    ]
 else:
     STR_TYPES = [str, unicode]
 
 
-
-
-#--------------------------------
+# --------------------------------
 #  PHYLOGENETIC RECONSTRUCTION
-#--------------------------------
+# --------------------------------
 
 
-def fasttree(alignment, tree_file, is_aa=False, quiet=True):
-    if is_aa:
-        ft_cmd = 'fasttree {} > {}'.format(alignment, tree_file)
+def fasttree(
+    aln: str,
+    tree_file: Optional[str] = None,
+    is_aa: bool = False,
+    fasttree_bin: Optional[str] = None,
+    debug: bool = False,
+    quiet: bool = True,
+) -> str:
+    """
+    Computes a tree file from a multiple seqeunce alignment using `FastTree`_.
+
+    Parameters
+    ----------
+    aln : str
+        Path to a multiple sequence alignment file, in FASTA format, or a 
+        FASTA-formatted multiple sequence alignment string. Required.
+
+    tree_file : str
+        Path to the tree file which will be output by FastTree. If the parent 
+        directory does not exist, it will be created. If not provided, the output 
+        (a Newick-formatted tree file) will be returned as a ``str``.
+
+    is_aa : bool, default=False
+        Must be set to ``True`` if the input multiple sequence alignment contains
+        amino acid sequences. Default is ``False``, meaning FastTree will expect
+        nucleotide sequences.
+
+    fasttree_bin : str, optional
+        Path to the desired FastTree binary. Default is to use the version of 
+        FastTree that is bundled with ``abutils``.
+
+    debug : bool, default=False
+        If ``True``, verbose output is printed. Default is False.
+
+    quiet : bool, default=True
+        Depricated, but retained for backwards compatibility. Use `debug` instead.
+
+    
+    Returns
+    -------
+    tree_file: str
+        Path to the tree file produced by FastTree.
+
+
+    .. _FastTree:
+        http://www.microbesonline.org/fasttree/
+    """
+    # process input
+    if os.path.isfile(aln):
+        alignment_file = os.path.abspath(aln)
     else:
-        ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree_file)
+        ff = tempfile.NamedTemporaryFile(delete=False)
+        ff.close()
+        alignment_file = ff.name
+        with open(alignment_file, "w") as f:
+            f.write(aln)
+    if not quiet:
+        debug = True
+    # set the FastTree binary
+    if fasttree_bin is None:
+        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        fasttree_bin = os.path.join(
+            mod_dir, f"bin/fasttree_{platform.system().lower()}"
+        )
+    # make output directory if necessary
+    if tree_file is None:
+        as_file = False
+        tree_file = tempfile.NamedTemporaryFile(delete=False).name
+    else:
+        as_file = True
+        tree_file = os.path.abspath(tree_file)
+    if not os.path.isdir(os.path.dirname(tree_file)):
+        make_dir(os.path.dirname(tree_file))
+    # run FastTree
+    if is_aa:
+        ft_cmd = "fasttree {} > {}".format(alignment_file, tree_file)
+    else:
+        ft_cmd = "fasttree -nt {} > {}".format(alignment_file, tree_file)
     ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = ft.communicate()
-    if not quiet:
+    if debug:
         print(ft_cmd)
         print(stdout)
         print(stderr)
-    return tree_file
+    # output
+    if as_file:
+        return tree_file
+    else:
+        with open(tree_file, "r") as f:
+            tree_string = f.read()
+        return tree_string
 
 
-def lsd(tree, output_file=None, dates_file=None, outgroup_file=None,
-        with_constraints=True, with_weights=True, reestimate_root_position=None, quiet=True):
-    lsd_cmd = 'lsd -i {}'.format(os.path.abspath(tree))
+def lsd(
+    tree,
+    output_file=None,
+    dates_file=None,
+    outgroup_file=None,
+    with_constraints=True,
+    with_weights=True,
+    reestimate_root_position=None,
+    quiet=True,
+):
+    lsd_cmd = "lsd -i {}".format(os.path.abspath(tree))
     if output_file is not None:
-        lsd_cmd += ' -o {}'.format(os.path.abspath(output_file))
+        lsd_cmd += " -o {}".format(os.path.abspath(output_file))
     if dates_file is not None:
-        lsd_cmd += ' -d {}'.format(os.path.abspath(dates_file))
+        lsd_cmd += " -d {}".format(os.path.abspath(dates_file))
     if outgroup_file is not None:
-        lsd_cmd += ' -g {}'.format(os.path.abspath(outgroup_file))
+        lsd_cmd += " -g {}".format(os.path.abspath(outgroup_file))
     if with_constraints:
-        lsd_cmd += ' -c'
+        lsd_cmd += " -c"
     if with_weights:
-        lsd_cmd += ' -v'
+        lsd_cmd += " -v"
     if reestimate_root_position is not None:
-        lsd_cmd += ' -r {}'.format(reestimate_root_position)
+        lsd_cmd += " -r {}".format(reestimate_root_position)
     p = sp.Popen(lsd_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = p.communicate()
     if not quiet:
@@ -114,8 +205,8 @@ def lsd(tree, output_file=None, dates_file=None, outgroup_file=None,
     return output_file
 
 
-def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
-    '''
+def igphyml(input_file: str = None, tree_file: str = None, root: str = None, verbose: bool = False) -> str:
+    """
     Computes a phylogenetic tree using IgPhyML.
 
     .. note::
@@ -132,49 +223,78 @@ def igphyml(input_file=None, tree_file=None, root=None, verbose=False):
 
         verbose (bool): If `True`, prints the standard output and standard error for each IgPhyML run. 
             Default is `False`.
-    '''
+    """
 
-    if shutil.which('igphyml') is None:
-        raise RuntimeError('It appears that IgPhyML is not installed.\nPlease install and try again.')
-    
+    if shutil.which("igphyml") is None:
+        raise RuntimeError(
+            "It appears that IgPhyML is not installed.\nPlease install and try again."
+        )
+
     # first, tree topology is estimated with the M0/GY94 model
-    igphyml_cmd1 = 'igphyml -i {} -m GY -w M0 -t e --run_id gy94'.format(aln_file)
+    igphyml_cmd1 = "igphyml -i {} -m GY -w M0 -t e --run_id gy94".format(aln_file)
     p1 = sp.Popen(igphyml_cmd1, stdout=sp.PIPE, stderr=sp.PIPE)
     stdout1, stderr1 = p1.communicate()
     if verbose:
-        print(stdout1 + '\n')
-        print(stderr1 + '\n\n')
-    intermediate = input_file + '_igphyml_tree.txt_gy94'
+        print(stdout1 + "\n")
+        print(stderr1 + "\n\n")
+    intermediate = input_file + "_igphyml_tree.txt_gy94"
 
     # now  we fit the HLP17 model once the tree topology is fixed
-    igphyml_cmd2 = 'igphyml -i {0} -m HLP17 --root {1} -o lr -u {}_igphyml_tree.txt_gy94 -o {}'.format(input_file,
-                                                                                                       root,
-                                                                                                       tree_file)
+    igphyml_cmd2 = "igphyml -i {0} -m HLP17 --root {1} -o lr -u {}_igphyml_tree.txt_gy94 -o {}".format(
+        input_file, root, tree_file
+    )
     p2 = sp.Popen(igphyml_cmd2, stdout=sp.PIPE, stderr=sp.PIPE)
     stdout2, stderr2 = p2.communicate()
     if verbose:
-        print(stdout2 + '\n')
-        print(stderr2 + '\n')
-    return tree_file + '_igphyml_tree.txt'
+        print(stdout2 + "\n")
+        print(stderr2 + "\n")
+    return tree_file + "_igphyml_tree.txt"
 
 
-
-
-#--------------------------------
+# --------------------------------
 #      PHYLOGENETIC TREES
-#--------------------------------
+# --------------------------------
 
 
-def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_file=None,
-        seq_field=None, name_field=None, aa=False, species='human', unrooted=False, ladderize=True,
-        root=None, root_name=None, show_root_name=False, color_dict=None, color_function=None,
-        order_dict=None, order_function=None, color_node_labels=False, label_colors=None,
-        scale=None, branch_vert_margin=None, fontsize=12, show_names=True, show_scale=False,
-        mirror=False, min_order_fraction=0.1, figname_prefix=None, figname_suffix=None,
-        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50, 
-        compact_alignment=False, scale_factor=1, rename_function=None, linewidth=1.0,
-        delete_nodes=None, quiet=True):
-    '''
+def phylogeny(
+    sequences=None,
+    project_dir=None,
+    name=None,
+    aln_file=None,
+    tree_file=None,
+    seq_field=None,
+    name_field=None,
+    aa=False,
+    species="human",
+    unrooted=False,
+    ladderize=True,
+    root=None,
+    root_name=None,
+    show_root_name=False,
+    color_dict=None,
+    color_function=None,
+    order_dict=None,
+    order_function=None,
+    color_node_labels=False,
+    label_colors=None,
+    scale=None,
+    branch_vert_margin=None,
+    fontsize=12,
+    show_names=True,
+    show_scale=False,
+    mirror=False,
+    min_order_fraction=0.1,
+    figname_prefix=None,
+    figname_suffix=None,
+    # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
+    compact_alignment=False,
+    scale_factor=1,
+    rename_function=None,
+    linewidth=1.0,
+    delete_nodes=None,
+    quiet=True,
+):
+    """
     Generates a lineage phylogeny figure.
 
     Args:
@@ -261,17 +381,19 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
         figname_suffix: by default, figures will be named <lineage_id>.pdf. If suffix='_suffix' and
             the lineage ID is 'ABC123', the figure file will be named 'ABC123_suffix.pdf'.
-    '''
+    """
 
     if project_dir is None:
-        print('\nERROR: project_dir is required\n')
+        print("\nERROR: project_dir is required\n")
         sys.exit(1)
     else:
         project_dir = os.path.abspath(project_dir)
 
     # make a name if one isn't provided
     if name is None:
-        name = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+        name = "".join(
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(8)
+        )
 
     # if sequences are provided, need to process them
     if sequences is not None and all([arg is None for arg in [aln_file, tree_file]]):
@@ -281,7 +403,11 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         # if custom seq_field is specified, copy to the .sequence attribute
         if seq_field is not None:
             if not all([seq_field in list(s.annotations.keys()) for s in sequences]):
-                print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(seq_field))
+                print(
+                    "\nERROR: {} is not present in all of the supplied sequences.\n".format(
+                        seq_field
+                    )
+                )
                 sys.exit(1)
             for s in sequences:
                 s.alignment_sequence = s[seq_field]
@@ -292,7 +418,11 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         # if custom name_field is specified, copy to the .id attribute
         if name_field is not None:
             if not all([name_field in list(s.annotations.keys()) for s in sequences]):
-                print('\nERROR: {} is not present in all of the supplied sequences.\n'.format(name_field))
+                print(
+                    "\nERROR: {} is not present in all of the supplied sequences.\n".format(
+                        name_field
+                    )
+                )
                 sys.exit(1)
             for s in sequences:
                 s.alignment_id = s[name_field]
@@ -306,19 +436,27 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             root_name = None
         elif root is None:
             if not quiet:
-                print('\nRoot sequence was was not provided. Using the germline V-gene.')
-            if not all(['v_gene' in list(s.annotations.keys()) for s in sequences]):
-                print('\nInput sequences to not appear to be AbStar annotated. Annotating now...')
+                print(
+                    "\nRoot sequence was was not provided. Using the germline V-gene."
+                )
+            if not all(["v_gene" in list(s.annotations.keys()) for s in sequences]):
+                print(
+                    "\nInput sequences to not appear to be AbStar annotated. Annotating now..."
+                )
                 sequences = abstar.run(*[(s.id, s.sequence) for s in sequences])
-                print('Done.')
-            if not all(['full' in list(s['v_gene'].keys()) for s in sequences]):
-                print('\nInput sequences to not appear to be AbStar annotated. Annotating now...')
+                print("Done.")
+            if not all(["full" in list(s["v_gene"].keys()) for s in sequences]):
+                print(
+                    "\nInput sequences to not appear to be AbStar annotated. Annotating now..."
+                )
                 sequences = abstar.run(*[(s.id, s.sequence) for s in sequences])
-                print('Done.')
-            top_vgene = sorted(list(Counter([s['v_gene']['full'] for s in sequences]).items()),
-                               key=lambda x: x[1],
-                               reverse=True)[0][0]
-            vgene = get_imgt_germlines(species, 'V', gene=top_vgene)
+                print("Done.")
+            top_vgene = sorted(
+                list(Counter([s["v_gene"]["full"] for s in sequences]).items()),
+                key=lambda x: x[1],
+                reverse=True,
+            )[0][0]
+            vgene = get_imgt_germlines(species, "V", gene=top_vgene)
             if aa:
                 root = Sequence(vgene.ungapped_aa_sequence, id=top_vgene)
             else:
@@ -326,31 +464,45 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             root.alignment_id = root.id
             root.alignment_sequence = root.sequence
             if not quiet:
-                print('Top V-gene: {}'.format(root.alignment_id))
+                print("Top V-gene: {}".format(root.alignment_id))
                 print(root.alignment_sequence)
         elif type(root) in STR_TYPES:
             root = [s for s in sequences if s.alignment_id == root][0]
             if not root:
-                print('\nERROR: The name of the root sequence ({}) was not found in the list of input sequences.'.format(root))
-                print('\n')
+                print(
+                    "\nERROR: The name of the root sequence ({}) was not found in the list of input sequences.".format(
+                        root
+                    )
+                )
+                print("\n")
                 sys.exit(1)
             sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
         elif type(root) == Sequence:
             if seq_field is not None:
                 if seq_field not in list(root.anotations.keys()):
-                    print('\nERROR: {} is not present in the supplied root sequence.\n'.format(seq_field))
+                    print(
+                        "\nERROR: {} is not present in the supplied root sequence.\n".format(
+                            seq_field
+                        )
+                    )
                     sys.exit(1)
                 root.alignment_sequence = root[seq_field]
             if name_field is not None:
                 if name_field not in list(root.anotations.keys()):
-                    print('\nERROR: {} is not present in the supplied root sequence.\n'.format(name_field))
+                    print(
+                        "\nERROR: {} is not present in the supplied root sequence.\n".format(
+                            name_field
+                        )
+                    )
                     sys.exit(1)
                 root.alignment_id = root[name_field]
             sequences = [s for s in sequences if s.alignment_id != root.alignment_id]
         else:
-            print('\nERROR: If root is provided, it must be the name of a sequence \
-            found in the supplied list of sequences or it must be a Sequence object.')
-            print('\n')
+            print(
+                "\nERROR: If root is provided, it must be the name of a sequence \
+            found in the supplied list of sequences or it must be a Sequence object."
+            )
+            print("\n")
             sys.exit(1)
         if not unrooted:
             if root_name is not None:
@@ -362,14 +514,16 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
     # parse sequences from aln_file, if provided
     elif aln_file is not None:
         if not unrooted and type(root) not in STR_TYPES:
-            print('\nERROR: If providing an aln_file, the name of the root sequence must \
-            be provided (as a string) using the root keyword argument')
-            print('\n')
+            print(
+                "\nERROR: If providing an aln_file, the name of the root sequence must \
+            be provided (as a string) using the root keyword argument"
+            )
+            print("\n")
             sys.exit(1)
         _sequences = []
         _root = None
-        for rec in AlignIO.read(open(aln_file), 'fasta'):
-            s = str(rec.seq).replace('-', '')
+        for rec in AlignIO.read(open(aln_file), "fasta"):
+            s = str(rec.seq).replace("-", "")
             if rec.id == root:
                 _root = Sequence(s, rec.id)
                 _root.alignment_id = _root.id
@@ -382,8 +536,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         else:
             sequence_ids = [s.id for s in sequences]
             if any([_s.alignment_id not in sequence_ids for _s in _sequences]):
-                print('\nWARNING: Sequences were found in the alignment file that were not included \
-                      in the input sequence list. This may cause problems.')
+                print(
+                    "\nWARNING: Sequences were found in the alignment file that were not included \
+                      in the input sequence list. This may cause problems."
+                )
             for s in sequences:
                 s.alignment_id = s.id
                 s.alignment_sequence = s.sequence
@@ -392,29 +548,41 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             root_name = None
         else:
             if _root is None:
-                print('\nERROR: The specified root ({}) was not found in the provided alignment file.'.format(root))
-                print('\n')
+                print(
+                    "\nERROR: The specified root ({}) was not found in the provided alignment file.".format(
+                        root
+                    )
+                )
+                print("\n")
                 sys.exit(1)
             root = _root
             if root_name is not None:
                 root.alignment_id = root_name
             else:
                 root_name = root.alignment_id
-            sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
+            sequences = [
+                s
+                for s in sequences
+                if all(
+                    [s.alignment_id != name for name in [root.id, root.alignment_id]]
+                )
+            ]
             sequences.append(root)
 
     # parse sequences from tree_file, if provided
     elif tree_file is not None:
         if not unrooted and type(root) not in STR_TYPES:
-            print('\nERROR: If providing a tree_file, the name of the root sequence must \
-            be provided (as a string) using the root keyword argument')
-            print('\n')
+            print(
+                "\nERROR: If providing a tree_file, the name of the root sequence must \
+            be provided (as a string) using the root keyword argument"
+            )
+            print("\n")
             sys.exit(1)
         _sequences = []
         _root = None
-        tree = Phylo.read(open(tree_file), 'newick')
+        tree = Phylo.read(open(tree_file), "newick")
         for leaf in tree.get_terminals():
-            s = ''
+            s = ""
             if leaf.name == root:
                 _root = Sequence(s, leaf.name)
                 _root.alignment_id = _root.id
@@ -427,8 +595,10 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
         else:
             sequence_ids = [s.id for s in sequences]
             if any([_s.alignment_id not in sequence_ids for _s in _sequences]):
-                print('\nWARNING: Sequences were found in the alignment file that were not included \
-                      in the input sequence list. This may cause problems.')
+                print(
+                    "\nWARNING: Sequences were found in the alignment file that were not included \
+                      in the input sequence list. This may cause problems."
+                )
             for s in sequences:
                 s.alignment_id = s.id
                 s.alignment_sequence = s.sequence
@@ -436,8 +606,12 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
             root = None
             root_name = None
         elif _root is None:
-            print('\nERROR: The specified root ({}) was not found in the provided tree file.'.format(root))
-            print('\n')
+            print(
+                "\nERROR: The specified root ({}) was not found in the provided tree file.".format(
+                    root
+                )
+            )
+            print("\n")
             sys.exit(1)
         else:
             root = _root
@@ -445,7 +619,13 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
                 root.alignment_id = root_name
             else:
                 root_name = root.alignment_id
-            sequences = [s for s in sequences if all([s.alignment_id != name for name in [root.id, root.alignment_id]])]
+            sequences = [
+                s
+                for s in sequences
+                if all(
+                    [s.alignment_id != name for name in [root.id, root.alignment_id]]
+                )
+            ]
             sequences.append(root)
 
     # set up colors and color ordering
@@ -460,60 +640,87 @@ def phylogeny(sequences=None, project_dir=None, name=None, aln_file=None, tree_f
 
     # make msa (if necessary)
     if all([aln_file is None, tree_file is None]):
-        aln_file = os.path.abspath(os.path.join(project_dir, '{}.aln'.format(name)))
+        aln_file = os.path.abspath(os.path.join(project_dir, "{}.aln".format(name)))
         # muscle(seqs, aln_file, as_file=True)
         do_print = False if quiet else True
         if do_print:
-            print('\n')
+            print("\n")
         seqs = [(s.alignment_id, s.alignment_sequence) for s in sequences]
-        mafft(seqs, aln_file, as_file=True, print_stdout=do_print, print_stderr=do_print)
+        mafft(
+            seqs, aln_file, as_file=True, print_stdout=do_print, print_stderr=do_print
+        )
 
     # make treefile (if necessary)
     if tree_file is None:
-        tree_file = os.path.abspath(os.path.join(project_dir, '{}.nw'.format(name)))
+        tree_file = os.path.abspath(os.path.join(project_dir, "{}.nw".format(name)))
         fasttree(aln_file, tree_file, is_aa=aa, quiet=quiet)
 
     # make phylogeny
-    prefix = '' if figname_prefix is None else figname_prefix
-    suffix = '' if figname_suffix is None else figname_suffix
-    fig_file = os.path.join(project_dir, '{}{}{}.pdf'.format(prefix, name, suffix))
-    _make_tree_figure(tree_file,
-                      fig_file,
-                      color_dict,
-                      order_dict,
-                      None if root is None else root.alignment_id,
-                      rename_function=rename_function,
-                      show_names=show_names,
-                      name_field=name_field,
-                      branch_vert_margin=branch_vert_margin,
-                      scale=scale,
-                      color_node_labels=color_node_labels,
-                      label_colors=label_colors,
-                      show_root_name=show_root_name,
-                      tree_orientation=1 if mirror else 0,
-                      fontsize=fontsize,
-                      min_order_fraction=min_order_fraction,
-                    #   linked_alignment=linked_alignment,
-                    #   alignment_fontsize=alignment_fontsize,
-                    #   alignment_height=alignment_height,
-                    #   alignment_width=alignment_width,
-                      show_scale=show_scale,
-                      compact_alignment=compact_alignment,
-                      scale_factor=scale_factor,
-                      linewidth=linewidth,
-                      ladderize=ladderize,
-                      delete_nodes=delete_nodes)
+    prefix = "" if figname_prefix is None else figname_prefix
+    suffix = "" if figname_suffix is None else figname_suffix
+    fig_file = os.path.join(project_dir, "{}{}{}.pdf".format(prefix, name, suffix))
+    _make_tree_figure(
+        tree_file,
+        fig_file,
+        color_dict,
+        order_dict,
+        None if root is None else root.alignment_id,
+        rename_function=rename_function,
+        show_names=show_names,
+        name_field=name_field,
+        branch_vert_margin=branch_vert_margin,
+        scale=scale,
+        color_node_labels=color_node_labels,
+        label_colors=label_colors,
+        show_root_name=show_root_name,
+        tree_orientation=1 if mirror else 0,
+        fontsize=fontsize,
+        min_order_fraction=min_order_fraction,
+        #   linked_alignment=linked_alignment,
+        #   alignment_fontsize=alignment_fontsize,
+        #   alignment_height=alignment_height,
+        #   alignment_width=alignment_width,
+        show_scale=show_scale,
+        compact_alignment=compact_alignment,
+        scale_factor=scale_factor,
+        linewidth=linewidth,
+        ladderize=ladderize,
+        delete_nodes=delete_nodes,
+    )
 
 
-def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None,
-        fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
-        tree_orientation=0, min_order_fraction=0.1, show_root_name=False, chain=None,
-        # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
-        compact_alignment=False, scale_factor=1, linewidth=1, show_scale=False, ladderize=True, delete_nodes=None):
+def _make_tree_figure(
+    tree,
+    fig,
+    colors,
+    orders,
+    root_name,
+    scale=None,
+    branch_vert_margin=None,
+    fontsize=12,
+    show_names=True,
+    name_field="seq_id",
+    rename_function=None,
+    color_node_labels=False,
+    label_colors=None,
+    tree_orientation=0,
+    min_order_fraction=0.1,
+    show_root_name=False,
+    chain=None,
+    # linked_alignment=None, alignment_fontsize=11, alignment_height=50, alignment_width=50,
+    compact_alignment=False,
+    scale_factor=1,
+    linewidth=1,
+    show_scale=False,
+    ladderize=True,
+    delete_nodes=None,
+):
     if delete_nodes is None:
         delete_nodes = []
     elif type(delete_nodes) in STR_TYPES:
-        delete_nodes = [delete_nodes, ]
+        delete_nodes = [
+            delete_nodes,
+        ]
     if show_root_name is True:
         show_names.append(root_name)
     # if linked_alignment is not None:
@@ -521,7 +728,7 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     #     ete3.faces.SequenceItem = MySequenceItem
     t = ete3.Tree(tree)
     if root_name is not None:
-        t.set_outgroup(t&root_name)
+        t.set_outgroup(t & root_name)
     # style the nodes
     for node in t.traverse():
         if node.name in delete_nodes:
@@ -535,7 +742,7 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
                     color = colors[order]
                     break
         else:
-            color = colors.get(node.name, '#000000')
+            color = colors.get(node.name, "#000000")
         # if linked_alignment is not None:
         #     node.add_feature('aln_fontsize', alignment_fontsize)
         #     node.add_feature('aln_height', alignment_height)
@@ -544,18 +751,22 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
         #     node.add_feature('format', 'seq')
         #     node.add_feature('scale_factor', scale_factor)
         style = ete3.NodeStyle()
-        style['size'] = 0
-        style['vt_line_width'] = float(linewidth)
-        style['hz_line_width'] = float(linewidth)
-        style['vt_line_color'] = color
-        style['hz_line_color'] = color
-        style['vt_line_type'] = 0
-        style['hz_line_type'] = 0
+        style["size"] = 0
+        style["vt_line_width"] = float(linewidth)
+        style["hz_line_width"] = float(linewidth)
+        style["vt_line_color"] = color
+        style["hz_line_color"] = color
+        style["vt_line_type"] = 0
+        style["hz_line_type"] = 0
         if show_names is True:
-            tf = _build_node_text_face(node, color_node_labels, color, label_colors, fontsize, rename_function)
+            tf = _build_node_text_face(
+                node, color_node_labels, color, label_colors, fontsize, rename_function
+            )
             node.add_face(tf, column=0)
         elif node.name in show_names:
-            tf = _build_node_text_face(node, color_node_labels, color, label_colors, fontsize, rename_function)
+            tf = _build_node_text_face(
+                node, color_node_labels, color, label_colors, fontsize, rename_function
+            )
             node.add_face(tf, column=0)
         node.set_style(style)
     t.dist = 0
@@ -574,49 +785,49 @@ def _make_tree_figure(tree, fig, colors, orders, root_name, scale=None, branch_v
     t.render(fig, tree_style=ts)
 
 
-def _build_node_text_face(node, color_node_labels, color, label_colors, fontsize, rename_function):
+def _build_node_text_face(
+    node, color_node_labels, color, label_colors, fontsize, rename_function
+):
     if color_node_labels:
         if label_colors is None:
             node_color = color
         elif type(label_colors) == dict:
-            node_color = label_colors.get(node.name, '#000000')
+            node_color = label_colors.get(node.name, "#000000")
         elif type(label_colors) in [list, tuple]:
-            node_color = color if node.name in label_colors else '#000000'
+            node_color = color if node.name in label_colors else "#000000"
         else:
-            node_color = '#000000'
+            node_color = "#000000"
     else:
-        node_color = '#000000'
+        node_color = "#000000"
     node_name = node.name if rename_function is None else rename_function(node.name)
-    tf = ete3.TextFace(node_name,
-                       fsize=fontsize,
-                       fgcolor=node_color)
+    tf = ete3.TextFace(node_name, fsize=fontsize, fgcolor=node_color)
     return tf
 
 
-
-
-#-----------------------------------------
+# -----------------------------------------
 #      PHYLOGENETIC LAPLACIAN SPECTRA
-#-----------------------------------------
+# -----------------------------------------
 
 
-class PLS():
-    '''
+class PLS:
+    """
     Object representing a collection of Phylogenetic Laplacian Spectra.
-    '''
+    """
+
     def __init__(self, spectral_trees, n_processes=0):
         self.trees = spectral_trees
         self.n_processes = mp.cpu_count() if n_processes == 0 else n_processes
         self.compute_kdes()
 
-    
     @lazy_property
     def distance_matrix(self):
         dist = {}
         p = mp.Pool(processes=self.n_processes)
         async_results = []
         for t in self.trees:
-            async_results.append(p.apply_async(self.calc_distance_row, args=(t, self.trees)))
+            async_results.append(
+                p.apply_async(self.calc_distance_row, args=(t, self.trees))
+            )
         dists = [ar.get() for ar in async_results]
         p.close()
         p.join()
@@ -625,7 +836,6 @@ class PLS():
                 dist[t1.name][t2.name] = d
         return pd.DataFrame(dist)
 
-
         # for t1, t2 in itertools.product(self.trees, repeat=2):
         #     dist[t1.name] = {}
         #     if t1.name not in dist:
@@ -633,13 +843,11 @@ class PLS():
         #     dist[t1.name][t2.name] = self.compare_trees(t1, t2)
         # return pd.DataFrame(dist)
 
-
     def calc_distance_row(self, t1, trees):
         dists = []
         for t2 in trees:
             dists.append(self.compare_trees(t1, t2))
         return dists
-
 
     def compare_trees(self, t1, t2, n_points=100):
         maxw = max([t1.principal_eigenvalue, t2.principal_eigenvalue])
@@ -661,7 +869,6 @@ class PLS():
         if base is not None:
             js /= np.log(base)
         return np.sqrt(js / 2.0)
-
 
     def compute_kdes(self):
         if self.n_processes == 1:
@@ -686,7 +893,7 @@ class PLS():
 
     @staticmethod
     def compute_kde(tree):
-        '''
+        """
         For a SpectralTree, computes the KDE.
 
         Args:
@@ -696,10 +903,9 @@ class PLS():
         Returns:
 
             the KDE function
-        '''
+        """
         return tree.kde
 
-    
     def clustermap(self, cmap=None, figfile=None):
         cm = sns.clustermap(self.distance_matrix, cmap=cmap)
         if figfile is not None:
@@ -708,15 +914,13 @@ class PLS():
             plt.show()
 
 
-class SpectralTree():
-    
+class SpectralTree:
     def __init__(self, tree_file, subject=None):
         self.subject = subject
         self.name = os.path.basename(tree_file)
         self.tree_file = tree_file
         self.t = ete3.Tree(tree_file)
-        
-    
+
     @lazy_property
     def nodes(self):
         num = 0
@@ -727,11 +931,11 @@ class SpectralTree():
                 num += 1
             nodes.append(n)
         return nodes
-    
+
     @lazy_property
     def node_names(self):
         return [n.name for n in self.nodes]
-    
+
     @lazy_property
     def distances(self):
         distances = []
@@ -741,20 +945,20 @@ class SpectralTree():
                 if n1 == n2:
                     continue
                 dist[n2] = self.t.get_distance(n1, n2)
-            dist[n1] = -1. * sum(dist.values())
+            dist[n1] = -1.0 * sum(dist.values())
             distances.append([dist[n] for n in self.nodes])
         return np.asarray(distances)
-    
+
     @lazy_property
     def eigenvalues(self):
         gl = scipy.sparse.csgraph.laplacian(self.distances)
         w, v = np.linalg.eig(gl)
         return [e for e in sorted(w, reverse=True) if e >= 1]
-    
+
     @lazy_property
     def log_eigenvalues(self):
         return np.real(np.log(self.eigenvalues))
-    
+
     @property
     def principal_eigenvalue(self):
         return max(self.eigenvalues)
@@ -763,10 +967,8 @@ class SpectralTree():
     def kde(self):
         return scipy.stats.gaussian_kde(self.eigenvalues)
 
-    
     def pdf(self, x):
         return [v.real for v in self.kde.pdf(x)]
- 
 
     def plot(self, xs=None, figfile=None, xlim=None):
         if xs is None:
@@ -778,8 +980,8 @@ class SpectralTree():
         plt.fill_between(xs, ys, alpha=0.2)
         # style
         ax = plt.gca()
-        ax.set_xlabel('eigenvalue (ln)')
-        ax.set_ylabel('density')
+        ax.set_xlabel("eigenvalue (ln)")
+        ax.set_ylabel("density")
         if xlim is not None:
             ax.set_xlim(xlim)
         if figfile is not None:

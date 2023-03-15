@@ -32,7 +32,7 @@ import os
 
 
 def setup_logging(logfile, print_log_location=True, debug=False):
-    '''
+    """
     Set up logging using the built-in ``logging`` package.
 
     A stream handler is added to all logs, so that logs at or above
@@ -50,28 +50,26 @@ def setup_logging(logfile, print_log_location=True, debug=False):
         debug (bool): If true, the log level will be set to ``logging.DEBUG``.
             If ``False``, the log level will be set to ``logging.INFO``.
             Default is ``False``.
-    '''
+    """
     log_dir = os.path.dirname(logfile)
     make_dir(log_dir)
-    fmt = '[%(levelname)s] %(name)s %(asctime)s %(message)s'
+    fmt = "[%(levelname)s] %(name)s %(asctime)s %(message)s"
     if debug:
-        logging.basicConfig(filename=logfile,
-                            filemode='w',
-                            format=fmt,
-                            level=logging.DEBUG)
+        logging.basicConfig(
+            filename=logfile, filemode="w", format=fmt, level=logging.DEBUG
+        )
     else:
-        logging.basicConfig(filename=logfile,
-                            filemode='w',
-                            format=fmt,
-                            level=logging.INFO)
-    logger = logging.getLogger('log')
+        logging.basicConfig(
+            filename=logfile, filemode="w", format=fmt, level=logging.INFO
+        )
+    logger = logging.getLogger("log")
     logger = add_stream_handler(logger)
     if print_log_location:
-        logger.info('LOG LOCATION: {}'.format(logfile))
+        logger.info("LOG LOCATION: {}".format(logfile))
 
 
 def get_logger(name=None):
-    '''
+    """
     Get a logging handle.
 
     As with ``setup_logging``, a stream handler is added to the
@@ -80,7 +78,7 @@ def get_logger(name=None):
     Arguments:
 
         name (str): Name of the log handle. Default is ``None``.
-    '''
+    """
     logger = logging.getLogger(name)
     if len(logger.handlers) == 0:
         logger = add_stream_handler(logger)

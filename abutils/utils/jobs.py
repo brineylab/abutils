@@ -32,7 +32,9 @@ import time
 from . import progbar
 
 
-def monitor_mp_jobs(results, start_time=None, completion_string='\n', print_progress=True):
+def monitor_mp_jobs(
+    results, start_time=None, completion_string="\n", print_progress=True
+):
     finished = 0
     jobs = len(results)
     while finished < jobs:
@@ -42,11 +44,18 @@ def monitor_mp_jobs(results, start_time=None, completion_string='\n', print_prog
         if print_progress:
             progbar.progress_bar(finished, jobs, start_time=start_time)
     if print_progress:
-        progbar.progress_bar(finished, jobs, start_time=start_time,
-                             complete=True, completion_string=completion_string)
+        progbar.progress_bar(
+            finished,
+            jobs,
+            start_time=start_time,
+            complete=True,
+            completion_string=completion_string,
+        )
 
 
-def monitor_celery_jobs(results, start_time=None, completion_string='\n', print_progress=True):
+def monitor_celery_jobs(
+    results, start_time=None, completion_string="\n", print_progress=True
+):
     finished = 0
     jobs = len(results)
     while finished < jobs:
@@ -57,8 +66,13 @@ def monitor_celery_jobs(results, start_time=None, completion_string='\n', print_
         if print_progress:
             progbar.progress_bar(finished, jobs, start_time=start_time)
     if print_progress:
-        progbar.progress_bar(finished, jobs, start_time=start_time,
-                             complete=True, completion_string=completion_string)
+        progbar.progress_bar(
+            finished,
+            jobs,
+            start_time=start_time,
+            complete=True,
+            completion_string=completion_string,
+        )
 
 
 @contextmanager

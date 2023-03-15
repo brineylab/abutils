@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# filename: tl.py
+# filename: hue.py
 
 
 #
-# Copyright (c) 2020 Bryan Briney
+# Copyright (c) 2022 Bryan Briney
 # License: The MIT license (http://opensource.org/licenses/MIT)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -22,4 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from .features import *
+
+class HueMixin():
+
+    def is_continuous_hue(self):
+        if self.hue is not None:
+            hue_vals = self.df[self.hue]
+            if all([isinstance(h, float) for h in hue_vals]):
+                return True
+            return False

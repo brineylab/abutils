@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# filename: batch_cellranger
+# filename: circos.py
 
 
 #
-# Copyright (c) 2015 Bryan Briney
+# Copyright (c) 2022 Bryan Briney
 # License: The MIT license (http://opensource.org/licenses/MIT)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -22,12 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-import warnings
-
-from abutils.single_cell import batch_cellranger
 
 
-if __name__ == '__main__':
-    warnings.filterwarnings("ignore")
-    args = batch_cellranger.parse_arguments()
-    batch_cellranger.main(args)
+
+
+
+
+
+
+

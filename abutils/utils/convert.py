@@ -35,7 +35,7 @@ from .pipeline import list_files, make_dir
 
 
 def abi_to_fasta(input, output):
-    '''
+    """
     Converts ABI or AB1 files to FASTA format.
 
     Args:
@@ -44,27 +44,29 @@ def abi_to_fasta(input, output):
             zip archives of abi/ab1 files
 
         output (str): Path to a directory for the output FASTA files
-    '''
-    direcs = [input, ]
+    """
+    direcs = [
+        input,
+    ]
     # unzip any zip archives
-    zip_files = list_files(input, ['zip'])
+    zip_files = list_files(input, ["zip"])
     if zip_files:
         direcs.extend(_process_zip_files(zip_files))
     # convert files
     for d in direcs:
-        files = list_files(d, ['ab1', 'abi'])
-        seqs = [SeqIO.read(open(f, 'rb'), 'abi') for f in files]
+        files = list_files(d, ["ab1", "abi"])
+        seqs = [SeqIO.read(open(f, "rb"), "abi") for f in files]
         # seqs = list(chain.from_iterable(seqs))
-        fastas = ['>{}\n{}'.format(s.id, str(s.seq)) for s in seqs]
-        ofile = os.path.basename(os.path.normpath(d)) + '.fasta'
+        fastas = [">{}\n{}".format(s.id, str(s.seq)) for s in seqs]
+        ofile = os.path.basename(os.path.normpath(d)) + ".fasta"
         opath = os.path.join(output, ofile)
-        open(opath, 'w').write('\n'.join(fastas))
+        open(opath, "w").write("\n".join(fastas))
 
 
 def _process_zip_files(zip_files):
     out_dirs = []
     for z in zip_files:
-        out_path = '.'.join(z.split('.')[:-1])
+        out_path = ".".join(z.split(".")[:-1])
         make_dir(out_path)
         zhandle = ZipFile(z)
         zhandle.extractall(out_path)

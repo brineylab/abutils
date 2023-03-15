@@ -58,7 +58,7 @@ from ..utils.decorators import lazy_property
 
 
 class Lineage(object):
-    '''
+    """
     Methods for manipulating an antibody lineage.
 
 
@@ -137,13 +137,13 @@ class Lineage(object):
             orders and the values should be hex strings. As before, any order values
             not present in the dict will be colored black.
 
-    '''
+    """
+
     def __init__(self, pairs, name=None):
         super(Lineage, self).__init__()
         self.pairs = pairs
         self.rmp_threshold = 0.9
         self.rmp_alt_allowed_mismatches = 1
-
 
     def __contains__(self, item):
         if item in self.pair_dict.keys():
@@ -159,55 +159,56 @@ class Lineage(object):
     def __iter__(self):
         return iter(self.pairs)
 
-
     @lazy_property
     def pair_dict(self):
         return {p.name: p for p in self.pairs}
 
     @lazy_property
     def name(self):
-        '''
+        """
         Returns the lineage name, or None if the name cannot be found.
-        '''
-        clonify_ids = [p.heavy['clonify']['id'] for p in self.heavies if 'clonify' in p.heavy]
+        """
+        clonify_ids = [
+            p.heavy["clonify"]["id"] for p in self.heavies if "clonify" in p.heavy
+        ]
         if len(clonify_ids) > 0:
             return clonify_ids[0]
         return None
 
     @lazy_property
     def just_pairs(self):
-        '''
+        """
         Returns all lineage Pair objects that contain both
         heavy and light chains.
-        '''
+        """
         return [p for p in self.pairs if p.is_pair]
 
     @lazy_property
     def verified_pairs(self):
-        '''
+        """
         Returns all lineage Pair objects that contain verified pairings.
-        '''
-        if not hasattr(self.just_pairs[0], 'verified'):
+        """
+        if not hasattr(self.just_pairs[0], "verified"):
             self.verify_light_chains()
         return [p for p in self.just_pairs if p.verified]
 
     @lazy_property
     def heavies(self):
-        '''
+        """
         Returns all lineage Pair objects that contain a heavy chain.
-        '''
+        """
         return [p for p in self.pairs if p.heavy is not None]
 
     @lazy_property
     def lights(self):
-        '''
+        """
         Returns all lineage Pair objects that contain a light chain.
-        '''
+        """
         return [p for p in self.pairs if p.light is not None]
 
     @lazy_property
     def uca(self):
-        '''
+        """
         Calculates the unmutated common ancestor (UCA) of the lineage.
 
         The UCA is computed by using the germline V(D)J genes as well
@@ -220,7 +221,7 @@ class Lineage(object):
         Returns
         -------
         A VaxTools Pair object containing the UCA.
-        '''
+        """
         return self._calculate_uca()
 
     @lazy_property
@@ -229,36 +230,36 @@ class Lineage(object):
 
     @lazy_property
     def subject(self):
-        return self._get_metadata('subject')
+        return self._get_metadata("subject")
 
     @lazy_property
     def group(self):
-        return self._get_metadata('group')
+        return self._get_metadata("group")
 
     @lazy_property
     def experiment(self):
-        return self._get_metadata('experiment')
+        return self._get_metadata("experiment")
 
     @lazy_property
     def timepoints(self):
         if self.heavies:
-            _timepoints = [p.heavy._mongo.get('timepoint', None) for p in self.heavies]
+            _timepoints = [p.heavy._mongo.get("timepoint", None) for p in self.heavies]
             return list(set([g for g in _timepoints if g is not None]))
         if self.lights:
-            _timepoints = [p.light._mongo.get('timepoint', None) for p in self.lights]
+            _timepoints = [p.light._mongo.get("timepoint", None) for p in self.lights]
             return list(set([g for g in _timepoints if g is not None]))
         return []
 
     @lazy_property
     def has_insertion(self):
-        ins = ['v_ins' in p.heavy for p in self.heavies]
-        ins += ['v_ins' in p.light for p in self.lights]
+        ins = ["v_ins" in p.heavy for p in self.heavies]
+        ins += ["v_ins" in p.light for p in self.lights]
         return True if any(ins) else False
 
     @lazy_property
     def has_deletion(self):
-        dels = ['v_del' in p.heavy for p in self.heavies]
-        dels += ['v_del' in p.light for p in self.lights]
+        dels = ["v_del" in p.heavy for p in self.heavies]
+        dels += ["v_del" in p.light for p in self.lights]
         return True if any(dels) else False
 
     @lazy_property
@@ -267,9 +268,8 @@ class Lineage(object):
             return True
         return False
 
-
     def size(self, pairs_only=False):
-        '''
+        """
         Calculate the size of the lineage.
 
         Inputs (optional)
@@ -279,15 +279,14 @@ class Lineage(object):
         Returns
         -------
         Lineage size (int)
-        '''
+        """
         if pairs_only:
             return len(self.just_pairs)
         else:
             return len(self.heavies)
 
-
     def verify_light_chains(self, threshold=0.9):
-        '''
+        """
         Clusters the light chains to identify potentially spurious (non-lineage)
         pairings. Following clustering, all pairs in the largest light chain
         cluster are assumed to be correctly paired. For each of those pairs,
@@ -297,7 +296,7 @@ class Lineage(object):
         Inputs (optional)
         -----------------
         threshold: CD-HIT clustering threshold. Default is 0.9.
-        '''
+        """
         lseqs = [l.light for l in self.lights]
         clusters = cluster(lseqs, threshold=threshold)
         clusters.sort(key=lambda x: x.size, reverse=True)
@@ -305,10 +304,17 @@ class Lineage(object):
         for p in self.lights:
             p.verified = True if p.name in verified_ids else False
 
-
-    def dot_alignment(self, seq_field='vdj_nt', name_field='seq_id', uca=None,
-            chain='heavy', uca_name='UCA', as_fasta=False, just_alignment=False):
-        '''
+    def dot_alignment(
+        self,
+        seq_field="vdj_nt",
+        name_field="seq_id",
+        uca=None,
+        chain="heavy",
+        uca_name="UCA",
+        as_fasta=False,
+        just_alignment=False,
+    ):
+        """
         Returns a multiple sequence alignment of all lineage sequence with the UCA
         where matches to the UCA are shown as dots and mismatches are shown as the
         mismatched residue.
@@ -322,50 +328,51 @@ class Lineage(object):
         Returns
         -------
         The dot alignment (string)
-        '''
+        """
         if uca is None:
-            uca = self.uca.heavy if chain == 'heavy' else self.uca.light
-        uca.id = 'UCA'
-        if chain == 'heavy':
+            uca = self.uca.heavy if chain == "heavy" else self.uca.light
+        uca.id = "UCA"
+        if chain == "heavy":
             sequences = [p.heavy for p in self.heavies if seq_field in p.heavy]
-            if name_field != 'seq_id':
-                uca[name_field] = uca['seq_id']
+            if name_field != "seq_id":
+                uca[name_field] = uca["seq_id"]
             sequences.append(uca)
             seqs = [(s[name_field], s[seq_field]) for s in sequences]
         else:
             sequences = [p.light for p in self.lights if seq_field in p.light]
-            if name_field != 'seq_id':
-                uca[name_field] = uca['seq_id']
+            if name_field != "seq_id":
+                uca[name_field] = uca["seq_id"]
             sequences.append(uca)
             seqs = [(s[name_field], s[seq_field]) for s in sequences]
         aln = muscle(seqs)
-        g_aln = [a for a in aln if a.id == 'UCA'][0]
-        dots = [(uca_name, str(g_aln.seq)), ]
-        for seq in [a for a in aln if a.id != 'UCA']:
-            s_aln = ''
+        g_aln = [a for a in aln if a.id == "UCA"][0]
+        dots = [
+            (uca_name, str(g_aln.seq)),
+        ]
+        for seq in [a for a in aln if a.id != "UCA"]:
+            s_aln = ""
             for g, q in zip(str(g_aln.seq), str(seq.seq)):
-                if g == q == '-':
-                    s_aln += '-'
+                if g == q == "-":
+                    s_aln += "-"
                 elif g == q:
-                    s_aln += '.'
+                    s_aln += "."
                 else:
                     s_aln += q
             dots.append((seq.id, s_aln))
         if just_alignment:
-                return [d[1] for d in dots]
+            return [d[1] for d in dots]
         name_len = max([len(d[0]) for d in dots]) + 2
         dot_aln = []
         for d in dots:
             if as_fasta:
-                dot_aln.append('>{}\n{}'.format(d[0], d[1]))
+                dot_aln.append(">{}\n{}".format(d[0], d[1]))
             else:
                 spaces = name_len - len(d[0])
-                dot_aln.append(d[0] + ' ' * spaces + d[1])
-        return '\n'.join(dot_aln)
+                dot_aln.append(d[0] + " " * spaces + d[1])
+        return "\n".join(dot_aln)
 
-
-    def pixel(self, seq_field='vdj_nt', figfile=None):
-        if 'aa' in seq_field:
+    def pixel(self, seq_field="vdj_nt", figfile=None):
+        if "aa" in seq_field:
             colors = _aa_pixel_colors
         else:
             colors = _nt_pixel_colors
@@ -378,17 +385,16 @@ class Lineage(object):
         for dot in dot_alignment:
             data.append([res_vals.get(res.upper(), len(res_vals) + 1) for res in dot])
         mag = (int(math.log10(len(data[0]))) + int(math.log10(len(data)))) / 2
-        x_dim = len(data[0]) / 10**mag
-        y_dim = len(data) / 10**mag
+        x_dim = len(data[0]) / 10 ** mag
+        y_dim = len(data) / 10 ** mag
         plt.figure(figsize=(x_dim, y_dim), dpi=100)
-        plt.imshow(data, cmap=cmap, interpolation='none')
-        plt.axis('off')
+        plt.imshow(data, cmap=cmap, interpolation="none")
+        plt.axis("off")
         if figfile is not None:
-            plt.savefig(figfile, bbox_inches='tight', dpi=400)
+            plt.savefig(figfile, bbox_inches="tight", dpi=400)
             plt.close()
         else:
             plt.show()
-
 
     # def phylogeny(self, project_dir, aln_file=None, tree_file=None, root=None, seq_field='vdj_nt', aa=False,
     #         root_name=None, show_root_name=False, colors=None, color_function=None, orders=None, order_function=None,
@@ -511,7 +517,6 @@ class Lineage(object):
     #         alignment_height=alignment_height, alignment_width=alignment_width, show_scale=show_scale,
     #         compact_alignment=compact_alignment, scale_factor=scale_factor, linewidth=linewidth)
 
-
     def _get_metadata(self, field):
         _metadata = None
         if self.heavies:
@@ -521,9 +526,9 @@ class Lineage(object):
                 metadata = _metadata[0]
             elif len(list(set(_metadata))) > 1:
                 mcount = Counter(_metadata)
-                metadata = sorted([s for s in mcount.keys()],
-                                key=lambda x: mcount[s],
-                                reverse=True)[0]
+                metadata = sorted(
+                    [s for s in mcount.keys()], key=lambda x: mcount[s], reverse=True
+                )[0]
         if self.lights and metadata is None:
             _metadata = [p.light._mongo.get(field, None) for p in self.lights]
             _metadata = [g for g in _metadata if g is not None]
@@ -531,11 +536,10 @@ class Lineage(object):
                 metadata = _metadata[0]
             elif len(list(set(_metadata))) > 1:
                 mcount = Counter(_metadata)
-                metadata = sorted([s for s in mcount.keys()],
-                                key=lambda x: mcount[s],
-                                reverse=True)[0]
+                metadata = sorted(
+                    [s for s in mcount.keys()], key=lambda x: mcount[s], reverse=True
+                )[0]
         return metadata
-
 
     # def _make_tree_figure(self, tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None,
     #         fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
@@ -633,7 +637,6 @@ class Lineage(object):
     #     # render the tree
     #     t.render(fig, tree_style=ts)
 
-
     # def _phyloalignment_layout_function(self, node):
     #     leaf_color = "#000000"
     #     node.img_style["shape"] = "circle"
@@ -676,7 +679,6 @@ class Lineage(object):
     #     else:
     #         node.img_style["size"] = 0
 
-
     # def _get_phyloalignment_colors(self, root=False):
     #     bg = '#000000'
     #     fg = '#FFFFFF'
@@ -688,9 +690,9 @@ class Lineage(object):
     #     fg_colors['-'] = '#000000'
     #     return bg_colors, fg_colors
 
-
     def _calculate_uca(self, paired_only=False):
         from abstar import run as run_abstar
+
         if paired_only:
             heavies = self.just_pairs
             lights = self.just_pairs
@@ -699,18 +701,21 @@ class Lineage(object):
             lights = self.lights
         # heavy chain UCA
         if len(heavies) >= 1:
-            lmhc = sorted(heavies, key=lambda x: x.heavy['nt_identity']['v'], reverse=True)[0].heavy
-            hc_uca = run_abstar(('UCA', lmhc['vdj_germ_nt']), isotype=False)
+            lmhc = sorted(
+                heavies, key=lambda x: x.heavy["nt_identity"]["v"], reverse=True
+            )[0].heavy
+            hc_uca = run_abstar(("UCA", lmhc["vdj_germ_nt"]), isotype=False)
         else:
             hc_uca = None
         # light chain UCA
         if len(lights) >= 1:
-            lmlc = sorted(lights, key=lambda x: x.light['nt_identity']['v'], reverse=True)[0].light
-            lc_uca = run_abstar(('UCA', lmlc['vdj_germ_nt']), isotype=False)
+            lmlc = sorted(
+                lights, key=lambda x: x.light["nt_identity"]["v"], reverse=True
+            )[0].light
+            lc_uca = run_abstar(("UCA", lmlc["vdj_germ_nt"]), isotype=False)
         else:
             lc_uca = None
         return Pair([uca for uca in [hc_uca, lc_uca] if uca is not None])
-
 
     def _calculate_recalled_memory_precursor(self, paired_only=False):
         if paired_only:
@@ -729,52 +734,55 @@ class Lineage(object):
             lc_rmp = None
         return Pair([hc_rmp, lc_rmp])
 
-
     def _rmp(self, sequences):
         from abstar import run as run_abstar
-        rmp = ''
-        seqs = [(s['seq_id'], s['vdj_nt']) for s in sequences]
+
+        rmp = ""
+        seqs = [(s["seq_id"], s["vdj_nt"]) for s in sequences]
         aln = muscle(seqs)
-        g_aln = [a for a in aln if a.id == 'UCA'][0]
-        query_seqs = [str(a.seq) for a in aln if a.id != 'UCA']
+        g_aln = [a for a in aln if a.id == "UCA"][0]
+        query_seqs = [str(a.seq) for a in aln if a.id != "UCA"]
         for i, g in enumerate(g_aln):
             qcounts = Counter([q[i] for q in query_seqs])
-            qmax = sorted(qcounts.keys(),
-                          key=lambda x: qcounts[x],
-                          reverse=True)[0]
+            qmax = sorted(qcounts.keys(), key=lambda x: qcounts[x], reverse=True)[0]
             qmax_fraction = float(qcounts[qmax]) / sum(qcounts.values())
             qmax_alt_mismatches = sum(qcounts.values()) - qcounts[qmax]
-            if any([qmax_fraction >= self.rmp_threshold,
-                    qmax_alt_mismatches <= self.rmp_alt_allowed_mismatches]):
+            if any(
+                [
+                    qmax_fraction >= self.rmp_threshold,
+                    qmax_alt_mismatches <= self.rmp_alt_allowed_mismatches,
+                ]
+            ):
                 rmp += qmax
             else:
                 rmp += g
-        return run_abstar(Sequence(rmp.replace('-', ''), id='RMP'))
-
+        return run_abstar(Sequence(rmp.replace("-", ""), id="RMP"))
 
     def _germline_field_map(self, field):
-        fmap = {'fr1_nt': 'fr1_germ_nt',
-                'fr2_nt': 'fr2_germ_nt',
-                'fr3_nt': 'fr3_germ_nt',
-                'fr4_nt': 'fr4_germ_nt',
-                'cdr1_nt': 'cdr1_germ_nt',
-                'cdr2_nt': 'cdr2_germ_nt',
-                'fr1_aa': 'fr1_germ_aa',
-                'fr2_aa': 'fr2_germ_aa',
-                'fr3_aa': 'fr3_germ_aa',
-                'fr4_aa': 'fr4_germ_aa',
-                'cdr1_aa': 'cdr1_germ_aa',
-                'cdr2_aa': 'cdr2_germ_aa',
-                'vdj_nt': 'vdj_germ_nt',
-                'vdj_aa': 'vdj_germ_aa'}
+        fmap = {
+            "fr1_nt": "fr1_germ_nt",
+            "fr2_nt": "fr2_germ_nt",
+            "fr3_nt": "fr3_germ_nt",
+            "fr4_nt": "fr4_germ_nt",
+            "cdr1_nt": "cdr1_germ_nt",
+            "cdr2_nt": "cdr2_germ_nt",
+            "fr1_aa": "fr1_germ_aa",
+            "fr2_aa": "fr2_germ_aa",
+            "fr3_aa": "fr3_germ_aa",
+            "fr4_aa": "fr4_germ_aa",
+            "cdr1_aa": "cdr1_germ_aa",
+            "cdr2_aa": "cdr2_germ_aa",
+            "vdj_nt": "vdj_germ_nt",
+            "vdj_aa": "vdj_germ_aa",
+        }
         return fmap.get(field.lower(), None)
 
 
 def fast_tree(alignment, tree, is_aa, show_output=False):
     if is_aa:
-        ft_cmd = 'fasttree {} > {}'.format(alignment, tree)
+        ft_cmd = "fasttree {} > {}".format(alignment, tree)
     else:
-        ft_cmd = 'fasttree -nt {} > {}'.format(alignment, tree)
+        ft_cmd = "fasttree -nt {} > {}".format(alignment, tree)
     ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = ft.communicate()
     if show_output:
@@ -784,12 +792,26 @@ def fast_tree(alignment, tree, is_aa, show_output=False):
     return tree
 
 
-def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_color=None, singleton_color='lightgrey', shuffle_colors=False, seed=1234,
-          text_kws={}, pie_kws={}, fontsize=28, linewidth=2):
+def donut(
+    lineages,
+    figfile=None,
+    figsize=(6, 6),
+    pairs_only=False,
+    monochrome_color=None,
+    singleton_color="lightgrey",
+    shuffle_colors=False,
+    seed=1234,
+    text_kws={},
+    pie_kws={},
+    fontsize=28,
+    linewidth=2,
+):
     lineages = sorted(lineages, key=lambda x: x.size(pairs_only), reverse=True)
     non_singletons = [l for l in lineages if l.size(pairs_only) > 1]
     singleton_count = sum([1 for l in lineages if l.size(pairs_only) == 1])
-    lineage_sizes = [l.size(pairs_only) for l in lineages if l.size(pairs_only) > 1] + [singleton_count]
+    lineage_sizes = [l.size(pairs_only) for l in lineages if l.size(pairs_only) > 1] + [
+        singleton_count
+    ]
     if monochrome_color is not None:
         colors = _get_monochrome_colors(monochrome_color, len(non_singletons))
         # we shuffle the colors differently if we're using a monochrome palette, because
@@ -816,21 +838,21 @@ def donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False, monochrome_c
     fig = plt.figure(figsize=figsize)
     ax = plt.gca()
     # fig, ax = plt.subplots()
-    ax.axis('equal')
+    ax.axis("equal")
     width = 0.55
     kwargs = dict(colors=colors, startangle=90)
     for k, v in pie_kws.items():
         kwargs[k] = v
     inside, _ = ax.pie(lineage_sizes, radius=1, pctdistance=1 - width / 2, **kwargs)
-    plt.setp(inside, width=width, edgecolor='white')
+    plt.setp(inside, width=width, edgecolor="white")
 
     for w in inside:
         w.set_linewidth(linewidth)
 
-    kwargs = dict(size=fontsize, color='k', va='center', fontweight='bold')
+    kwargs = dict(size=fontsize, color="k", va="center", fontweight="bold")
     for k, v in text_kws.items():
         kwargs[k] = v
-    ax.text(0, 0, str(sum(lineage_sizes)), ha='center', **kwargs)
+    ax.text(0, 0, str(sum(lineage_sizes)), ha="center", **kwargs)
 
     plt.tight_layout()
 
@@ -857,23 +879,18 @@ def _get_monochrome_colors(monochrome_color, N):
     return RGB_tuples
 
 
-
 def group_lineages(pairs, just_pairs=False):
     lineages = {}
     if just_pairs:
         pairs = [p for p in pairs if p.is_pair]
     for p in pairs:
         if p.heavy is not None:
-            if 'clonify' in p.heavy:
-                l = p.heavy['clonify']['id']
+            if "clonify" in p.heavy:
+                l = p.heavy["clonify"]["id"]
                 if l not in lineages:
                     lineages[l] = []
                 lineages[l].append(p)
     return [Lineage(v) for v in lineages.values()]
-
-
-
-
 
 
 # class MySequenceItem(QGraphicsRectItem):
@@ -981,31 +998,31 @@ def group_lineages(pairs, just_pairs=False):
 # }
 
 _aa_pixel_colors = {
-    'A': "#C8C8C8",
-    'R': "#145AFF",
-    'N': "#00DCDC",
-    'D': "#E60A0A",
-    'C': "#E6E600",
-    'Q': "#00DCDC",
-    'E': "#E60A0A",
-    'G': "#EBEBEB",
-    'H': "#8282D2",
-    'I': "#0F820F",
-    'L': "#0F820F",
-    'K': "#145AFF",
-    'M': "#E6E600",
-    'F': "#3232AA",
-    'P': "#DC9682",
-    'S': "#FA9600",
-    'T': "#FA9600",
-    'W': "#B45AB4",
-    'Y': "#3232AA",
-    'V': "#0F820F",
-    'B': "#FF69B4",
-    'Z': "#FF69B4",
-    'X': "#BEA06E",
-    '.': "#F2F2F2",
-    '-': "#FFFFFF",
+    "A": "#C8C8C8",
+    "R": "#145AFF",
+    "N": "#00DCDC",
+    "D": "#E60A0A",
+    "C": "#E6E600",
+    "Q": "#00DCDC",
+    "E": "#E60A0A",
+    "G": "#EBEBEB",
+    "H": "#8282D2",
+    "I": "#0F820F",
+    "L": "#0F820F",
+    "K": "#145AFF",
+    "M": "#E6E600",
+    "F": "#3232AA",
+    "P": "#DC9682",
+    "S": "#FA9600",
+    "T": "#FA9600",
+    "W": "#B45AB4",
+    "Y": "#3232AA",
+    "V": "#0F820F",
+    "B": "#FF69B4",
+    "Z": "#FF69B4",
+    "X": "#BEA06E",
+    ".": "#F2F2F2",
+    "-": "#FFFFFF",
 }
 
 # _ntfgcolors = {
@@ -1033,12 +1050,12 @@ _aa_pixel_colors = {
 # }
 
 _nt_pixel_colors = {
-    'A': '#E12427',
-    'C': '#3B7FB6',
-    'G': '#63BE7A',
-    'T': '#E1E383',
+    "A": "#E12427",
+    "C": "#3B7FB6",
+    "G": "#63BE7A",
+    "T": "#E1E383",
     # 'U': '#E1E383',
-    '.': "#F2F2F2",
-    '-': "#FFFFFF",
+    ".": "#F2F2F2",
+    "-": "#FFFFFF",
     # ' ': "#FFFFFF"
 }

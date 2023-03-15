@@ -23,7 +23,6 @@
 #
 
 
-
 from abc import ABCMeta, abstractmethod
 import json
 import os
@@ -38,10 +37,11 @@ from ..core.sequence import Sequence
 
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [str, ]
+    STR_TYPES = [
+        str,
+    ]
 else:
     STR_TYPES = [str, unicode]
-
 
 
 # def read_input(input, data_type,
@@ -88,23 +88,40 @@ def from_fasta(fasta_file, verbose=False):
     return FASTAInput(fasta_file, verbose=verbose)
 
 
-def from_json(json_file, seq_field='vdj_nt', verbose=False):
+def from_json(json_file, seq_field="vdj_nt", verbose=False):
     return JSONInput(json_file, seq_field=seq_field, verbose=verbose)
 
 
-def from_mongodb(db, collection=None, ip='localhost', port=27017, user=None, password=None,
-                 query=None, projection=None, seq_field='vdj_nt', verbose=False):
-    return MongoDBInput(database=db, collection=collection, ip=ip, port=port,
-                        user=user, password=password, query=query, projection=projection,
-                        seq_field=seq_field, verbose=verbose)
+def from_mongodb(
+    db,
+    collection=None,
+    ip="localhost",
+    port=27017,
+    user=None,
+    password=None,
+    query=None,
+    projection=None,
+    seq_field="vdj_nt",
+    verbose=False,
+):
+    return MongoDBInput(
+        database=db,
+        collection=collection,
+        ip=ip,
+        port=port,
+        user=user,
+        password=password,
+        query=query,
+        projection=projection,
+        seq_field=seq_field,
+        verbose=verbose,
+    )
 
 
-
-
-class BaseInput():
-    '''
+class BaseInput:
+    """
     Base class for parsing inputs (JSON, MongoDB, FASTA files, etc)
-    '''
+    """
 
     __metaclass__ = ABCMeta
 
@@ -114,26 +131,26 @@ class BaseInput():
     @property
     @abstractmethod
     def data_type(self):
-        'Returns the data type'
+        "Returns the data type"
         pass
 
     @property
     @abstractmethod
     def as_list(self):
-        'Returns the input as a list of Sequence objects'
+        "Returns the input as a list of Sequence objects"
         pass
 
     @property
     @abstractmethod
     def as_generator(self):
-        ' Returns the input as a genarator of Sequence objects'
+        " Returns the input as a genarator of Sequence objects"
         pass
 
 
 class FASTAInput(BaseInput):
-    '''
+    """
     Representation of FASTA input data.
-    '''
+    """
 
     def __init__(self, data, verbose=False):
         self.input = data
@@ -141,15 +158,17 @@ class FASTAInput(BaseInput):
 
     @property
     def data_type(self):
-        return 'fasta'
+        return "fasta"
 
     @property
     def files(self):
         if type(self.input) in STR_TYPES:
             if os.path.isdir(self.input):
-                return list_files(self.input, 'json')
+                return list_files(self.input, "json")
             else:
-                return [self.input, ]
+                return [
+                    self.input,
+                ]
         else:
             return self.input
 
@@ -159,8 +178,8 @@ class FASTAInput(BaseInput):
         for input_file in self.files:
             if self.verbose:
                 print(input_file)
-            with open(input_file, 'r') as f:
-                for seq in SeqIO.parse(f, 'fasta'):
+            with open(input_file, "r") as f:
+                for seq in SeqIO.parse(f, "fasta"):
                     sequences.append(Sequence(str(seq.seq), id=seq.id))
         return sequences
 
@@ -169,32 +188,34 @@ class FASTAInput(BaseInput):
         for input_file in self.files:
             if self.verbose:
                 print(input_file)
-            with open(input_file, 'r') as f:
-                for seq in SeqIO.parse(f, 'fasta'):
+            with open(input_file, "r") as f:
+                for seq in SeqIO.parse(f, "fasta"):
                     yield Sequence(str(seq.seq), id=seq.id)
 
 
 class JSONInput(BaseInput):
-    '''
+    """
     Representation of JSON input data
-    '''
+    """
 
-    def __init__(self, data, seq_field='vdj_nt', verbose=False):
+    def __init__(self, data, seq_field="vdj_nt", verbose=False):
         self.input = data
         self.seq_field = seq_field
         self.verbose = verbose
 
     @property
     def data_type(self):
-        return 'json'
+        return "json"
 
     @property
     def files(self):
         if type(self.input) in STR_TYPES:
             if os.path.isdir(self.input):
-                return list_files(self.input, 'json')
+                return list_files(self.input, "json")
             else:
-                return [self.input, ]
+                return [
+                    self.input,
+                ]
         else:
             return self.input
 
@@ -204,9 +225,9 @@ class JSONInput(BaseInput):
         for input_file in self.files:
             if self.verbose:
                 print(input_file)
-            with open(input_file, 'r') as f:
+            with open(input_file, "r") as f:
                 for line in f:
-                    j = json.loads(line.strip().lstrip(']').rstrip(']').rstrip(','))
+                    j = json.loads(line.strip().lstrip("]").rstrip("]").rstrip(","))
                     sequences.append(Sequence(j, seq_key=self.seq_field))
         return sequences
 
@@ -215,20 +236,32 @@ class JSONInput(BaseInput):
         for input_file in self.files:
             if self.verbose:
                 print(input_file)
-            with open(input_file, 'r') as f:
+            with open(input_file, "r") as f:
                 for line in f:
-                    j = json.loads(line.strip().lstrip('[').rstrip(']').rstrip().rstrip(','))
+                    j = json.loads(
+                        line.strip().lstrip("[").rstrip("]").rstrip().rstrip(",")
+                    )
                     yield Sequence(j, seq_key=self.seq_field)
 
 
 class MongoDBInput(BaseInput):
-    '''
+    """
     Representation of MongoDB input data
-    '''
+    """
 
-
-    def __init__(self, database, collection, ip, port, user, password,
-                 query, projection, seq_field='vdj_nt', verbose=False):
+    def __init__(
+        self,
+        database,
+        collection,
+        ip,
+        port,
+        user,
+        password,
+        query,
+        projection,
+        seq_field="vdj_nt",
+        verbose=False,
+    ):
         self.db_name = database
         self.raw_collections = collection
         self.ip = ip
@@ -242,17 +275,24 @@ class MongoDBInput(BaseInput):
 
     @property
     def data_type(self):
-        return 'mongodb'
+        return "mongodb"
 
     @property
     def db(self):
-        return mongodb.get_db(self.db_name, ip=self.ip, port=self.port,
-                              user=self.user, password=self.password)
+        return mongodb.get_db(
+            self.db_name,
+            ip=self.ip,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+        )
 
     @property
     def collections(self):
         if type(self.raw_collections) in STR_TYPES:
-            return [self.raw_collections, ]
+            return [
+                self.raw_collections,
+            ]
         elif self.raw_collections is None:
             return mongodb.get_collections(self.db)
         else:
@@ -282,17 +322,13 @@ class MongoDBInput(BaseInput):
                     continue
                 yield Sequence(r, seq_key=self.seq_field)
 
-        
     def _process_collections(self, collection):
         if type(collection) in STR_TYPES:
-            return [collection, ]
+            return [
+                collection,
+            ]
         elif collection is None:
             return mongodb.get_collections(self.db)
         else:
             return collection
-
-
-
-
-
 

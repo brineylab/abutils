@@ -24,69 +24,57 @@
 
 
 from collections import Counter
-import itertools
-import os
-import re
-import sys
+from typing import Union, Iterable, Optional
 
 import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-import scanpy as sc
 
 import seaborn as sns
 
-from anndata import AnnData
-
 from natsort import natsorted
 
-from abutils.utils.color import get_cmap
-from abutils.utils.utilities import nested_dict_lookup
-
-
+from ..utils.color import get_cmap
 
 
 def bar(
-    x=None,
-    y=None, 
-    hue=None, 
-    data=None,
-    order=None, 
-    hue_order=None, 
-    palette=None,
-    color=None,
-    alt_color='#D3D3D3',
-    normalize=False, 
-    highlight=None, 
-    highlight_color=None,  
-    orientation='vertical',
-    plot_kwargs=None,
-    legend_kwargs=None,
-    hide_legend=False,
-    xlabel=None,
-    ylabel=None,
-    xlabel_fontsize=16,
-    ylabel_fontsize=16,
-    xtick_labelsize=14,
-    ytick_labelsize=14,
-    xtick_labelrotation=0,
-    ytick_labelrotation=0,
-    show=False,
-    figsize=None,
-    figfile=None,):
-    '''
+    x: Union[str, Iterable, None] = None,
+    y: Union[str, Iterable, None] = None,
+    hue: Union[str, Iterable, None] = None,
+    data: Optional[pd.DataFrame] = None,
+    order: Optional[Iterable] = None,
+    hue_order: Optional[Iterable] = None,
+    palette: Union[dict, Iterable, None] = None,
+    color: Union[str, Iterable, None] = None,
+    alt_color: Union[str, Iterable] = "#D3D3D3",
+    normalize: bool = False,
+    highlight: Union[str, Iterable, None] = None,
+    highlight_color: Union[str, Iterable, None] = None,
+    orientation: str = "vertical",
+    plot_kwargs: Optional[dict] = None,
+    legend_kwargs: Optional[dict] = None,
+    hide_legend: bool = False,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    xlabel_fontsize: Union[int, float] = 16,
+    ylabel_fontsize: Union[int, float] = 16,
+    xtick_labelsize: Union[int, float] = 14,
+    ytick_labelsize: Union[int, float] = 14,
+    xtick_labelrotation: Union[int, float] = 0,
+    ytick_labelrotation: Union[int, float] = 0,
+    ax: Optional[mpl.axes.Axes] = None,
+    show: bool = False,
+    figsize: Optional[Iterable] = None,
+    figfile: Optional[str] = None,
+):
+    """
     Produces a bar plot of categorical data. For data with distinct batches, a stacked 
     bar plot will be constructed.
 
     Parameters
     ----------
-
     x : str or list, optional  
         Name of a column in `data` or an iterable of values to be plotted on the 
         x-axis. Required if `orientation` is ``'horizontal'``.
@@ -192,27 +180,27 @@ def bar(
     figfile : str, optional  
         Path at which to save the figure file. If not provided, the figure is not saved
         and is either shown (if `show` is ``True``) or the ``Axes`` object is returned.  
-    '''
+    """
     # process input data
-    if orientation == 'horizontal':
+    if orientation == "horizontal":
         if y is not None:
             x, y = y, x
     if data is None:
         _data = {}
         if x is not None:
-            _data['x'] = x
-            x = 'x'
+            _data["x"] = x
+            x = "x"
         if y is not None:
-            _data['y'] = y
-            y = 'y'
+            _data["y"] = y
+            y = "y"
         if hue is not None:
-            _data['hue'] = hue
-            hue = 'hue'
+            _data["hue"] = hue
+            hue = "hue"
         data = pd.DataFrame(_data)
-    
+
     # figure size
     if figsize is None:
-        if orientation == 'horizontal':
+        if orientation == "horizontal":
             figsize = [4, 6]
         else:
             figsize = [6, 4]
@@ -221,16 +209,14 @@ def bar(
         x_vals = natsorted(data[x].unique())
     else:
         x_vals = order
-    
+
     # process hue, if provided
     if hue is not None:
         hue_vals = data[hue]
-        hue_order = (
-            hue_order
-            if hue_order is not None
-            else natsorted(set(hue_vals))
-        )
-        hue_batches = [data[[_hue_val == h for _hue_val in hue_vals]] for h in hue_order]
+        hue_order = hue_order if hue_order is not None else natsorted(set(hue_vals))
+        hue_batches = [
+            data[[_hue_val == h for _hue_val in hue_vals]] for h in hue_order
+        ]
     else:
         hue_order = [
             None,
@@ -238,7 +224,7 @@ def bar(
         hue_batches = [
             data,
         ]
-        
+
     # process batches
     batch_data = []
     for batch in hue_batches:
@@ -266,7 +252,7 @@ def bar(
                 for xval in x_vals:
                     yval = y_dict.get(xval, 0)
                     y_dict[xval] = yval / tot
-        
+
     # colors
     if palette is None:
         if len(hue_batches) > 1:
@@ -289,11 +275,11 @@ def bar(
                 else:
                     _colors.append(alt_color)
             else:
-                _colors.append(palette.get(_hue, palette.get(_x, alt_color)))
+                _colors.append(palette.get(_hue, palette.get(_x, color)))
         colors.append(_colors)
-            
+
     # plot kwargs
-    if orientation == 'horizontal':
+    if orientation == "horizontal":
         default_plot_kwargs = {"height": 0.8, "linewidth": 1.5, "edgecolor": "w"}
     else:
         default_plot_kwargs = {"width": 0.8, "linewidth": 1.5, "edgecolor": "w"}
@@ -306,21 +292,22 @@ def bar(
     if legend_kwargs is not None:
         default_legend_kwargs.update(legend_kwargs)
     legend_kwargs = default_legend_kwargs
-    
+
     # make the plot
-    plt.figure(figsize=figsize)
+    if ax is None:
+        plt.figure(figsize=figsize)
+        ax = plt.gca()
     bottom = np.zeros(len(x_vals))
     for h, d, c in zip(hue_order, batch_data, colors):
         y_vals = np.asarray([d.get(_x, 0) for _x in x_vals])
-        if orientation == 'horizontal':
-            plt.barh(x_vals, y_vals, left=bottom, color=c, label=h, **plot_kwargs)
+        if orientation == "horizontal":
+            ax.barh(x_vals, y_vals, left=bottom, color=c, label=h, **plot_kwargs)
         else:
-            plt.bar(x_vals, y_vals, bottom=bottom, color=c, label=h, **plot_kwargs)
+            ax.bar(x_vals, y_vals, bottom=bottom, color=c, label=h, **plot_kwargs)
         bottom += y_vals
-        
+
     # style the plot
-    ax = plt.gca()
-    if orientation == 'horizontal':
+    if orientation == "horizontal":
         if xlabel is None:
             xlabel = "Frequency (%)" if normalize else "Count"
     else:
@@ -331,26 +318,29 @@ def bar(
     ax.tick_params(
         axis="x", labelsize=xtick_labelsize, labelrotation=xtick_labelrotation
     )
-    ax.tick_params(axis="y", labelsize=ytick_labelsize, labelrotation=ytick_labelrotation)
+    ax.tick_params(
+        axis="y", labelsize=ytick_labelsize, labelrotation=ytick_labelrotation
+    )
     for s in ["left", "right", "top"]:
         ax.spines[s].set_visible(False)
-        
-    if orientation == 'horizontal':
+
+    if orientation == "horizontal":
         ax.set_ylim([-0.75, len(x_vals) - 0.25])
     else:
         ax.set_xlim([-0.75, len(x_vals) - 0.25])
 
     # legend
     if len(hue_batches) > 1 and not hide_legend:
-        if orientation == 'horizontal':
-            leg_kwargs = {'loc': 'center left', 
-                          'bbox_to_anchor': [1.01, 0.5]}
+        if orientation == "horizontal":
+            leg_kwargs = {"loc": "center left", "bbox_to_anchor": [1.01, 0.5]}
             leg_kwargs.update(legend_kwargs)
         else:
             leg_kwargs = legend_kwargs
         ax.legend(**leg_kwargs)
     if hide_legend or palette is None:
-        ax.get_legend().remove()
+        l = ax.get_legend()
+        if l is not None:
+            l.remove()
 
     # save, show or return the ax
     if figfile is not None:
@@ -360,9 +350,4 @@ def bar(
         plt.show()
     else:
         return ax
-
-
-
-
-
 

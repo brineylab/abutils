@@ -32,13 +32,15 @@ import sys
 from . import log
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [str, ]
+    STR_TYPES = [
+        str,
+    ]
 else:
     STR_TYPES = [str, unicode]
 
 
 def initialize(log_file, project_dir=None, debug=False):
-    '''
+    """
     Initializes an AbTools pipeline.
 
     Initialization includes printing the AbTools splash, setting up logging,
@@ -58,33 +60,33 @@ def initialize(log_file, project_dir=None, debug=False):
     Returns:
 
         logger
-    '''
+    """
     print_splash()
     log.setup_logging(log_file, print_log_location=False, debug=debug)
-    logger = log.get_logger('pipeline')
+    logger = log.get_logger("pipeline")
     if project_dir is not None:
         make_dir(os.path.normpath(project_dir))
-        logger.info('PROJECT DIRECTORY: {}'.format(project_dir))
-        logger.info('')
-    logger.info('LOG LOCATION: {}'.format(log_file))
-    print('')
+        logger.info("PROJECT DIRECTORY: {}".format(project_dir))
+        logger.info("")
+    logger.info("LOG LOCATION: {}".format(log_file))
+    print("")
     return logger
 
 
 def make_dir(d):
-    '''
+    """
     Makes a directory, if it doesn't already exist. 
 
     Args:
 
         d (str): Path to a directory.
-    '''
+    """
     if not os.path.exists(d):
         os.makedirs(os.path.abspath(d))
 
 
 def list_files(d, extension=None):
-    '''
+    """
     Lists files in a given directory.
 
     Args:
@@ -98,29 +100,45 @@ def list_files(d, extension=None):
     Returns:
 
         list: A sorted list of file paths.
-    '''
+    """
     if os.path.isdir(d):
         expanded_dir = os.path.expanduser(d)
-        files = sorted(glob.glob(expanded_dir + '/*'))
+        files = sorted(glob.glob(expanded_dir + "/*"))
     else:
-        files = [d, ]
+        files = [
+            d,
+        ]
     if extension is not None:
         if type(extension) in STR_TYPES:
-            extension = [extension, ]
-        files = [f for f in files if any([f.split('.')[-1] in extension,
-                                          f.split('.')[-1].upper() in extension,
-                                          f.split('.')[-1].lower() in extension])]
+            extension = [
+                extension,
+            ]
+        files = [
+            f
+            for f in files
+            if any(
+                [
+                    f.split(".")[-1] in extension,
+                    f.split(".")[-1].upper() in extension,
+                    f.split(".")[-1].lower() in extension,
+                ]
+            )
+        ]
     return files
 
 
 def print_splash():
-    splash = '''     _    _     _   _ _   _ _       ____  _            _ _            
+    splash = """
+     _    _     _   _ _   _ _       ____  _            _ _            
     / \  | |__ | | | | |_(_) |___  |  _ \(_)_ __   ___| (_)_ __   ___ 
    / _ \ | '_ \| | | | __| | / __| | |_) | | '_ \ / _ \ | | '_ \ / _ \\
   / ___ \| |_) | |_| | |_| | \__ \ |  __/| | |_) |  __/ | | | | |  __/
  /_/   \_\_.__/ \___/ \__|_|_|___/ |_|   |_| .__/ \___|_|_|_| |_|\___|
-                                           |_|                        '''
-    print('')
+                                           |_|                        
+    """
+    print("")
     print(splash)
-    print('(c) 2017 Bryan Briney\nDistributed under the MIT License (http://opensource.org/licenses/MIT)')
-    print('\n')
+    print(
+        "(c) 2023 Bryan Briney\nDistributed under the MIT License (http://opensource.org/licenses/MIT)"
+    )
+    print("")
