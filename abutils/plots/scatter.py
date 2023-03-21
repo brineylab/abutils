@@ -369,9 +369,10 @@ def scatter(
         if not isinstance(y, str) and len(y) == df.shape[0]:
             df["y"] = y
             y = "y"
-        if not isinstance(hue, str) and len(hue) == df.shape[0]:
-            df["hue"] = hue
-            hue = "hue"
+        if hue is not None:
+            if not isinstance(hue, str) and len(hue) == df.shape[0]:
+                df["hue"] = hue
+                hue = "hue"
 
     # figure size
     if figsize is None:
