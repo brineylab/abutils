@@ -215,7 +215,7 @@ def ridge(
             cat: color
             for cat, color in zip(order, sns.hls_palette(n_categories, l=0.5, s=0.8))
         }
-    elif palette is not None and isinstance(palette, [list, tuple]):
+    elif palette is not None and isinstance(palette, (list, tuple)):
         iter_colors = itertools.cycle(palette)
         palette = {cat: color for cat, color in zip(order, iter_colors)}
     elif palette is not None and isinstance(palette, dict):
