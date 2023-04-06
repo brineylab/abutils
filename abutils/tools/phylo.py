@@ -30,7 +30,7 @@ import os
 import platform
 import subprocess as sp
 import tempfile
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Iterable, List, Optional, Union
 import uuid
 
 import matplotlib.pyplot as plt
@@ -155,8 +155,8 @@ class Phylogeny:
         cluster: bool = True,
         clustering_threshold: float = 1.0,
         rename: Optional[Union[dict, Callable]] = None,
-        id_key: Optional[str] = None,
-        sequence_key: Optional[str] = None,
+        id_key: str = "sequence_id",
+        sequence_key: str = "sequence",
     ):
         """
         Phylogenetic representation of an antibody lineage.
@@ -197,10 +197,10 @@ class Phylogeny:
             Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
 
         """
-        self.sequences = sequences
+        self.sequences = self.process_sequences(sequences)
         self.name = name if name is not None else uuid.uuid4()
-        self.id_key = (id_key,)
-        self.seq_key = (sequence_key,)
+        self.id_key = id_key
+        self.seq_key = sequence_key
         self._root = root
         self._rename = rename
         self.do_clustering = cluster
@@ -240,7 +240,9 @@ class Phylogeny:
 
     @property
     def root(self):
-        """ """
+        """
+        Root of the tree.
+        """
         if self._root is None:
             top_v = Counter(
                 [s.get("v_call", None) for s in self.sequences]
@@ -280,13 +282,9 @@ class Phylogeny:
         if self._fasta_string is None:
             if self.do_clustering:
                 sequences = self.clusters.centroids
-            else:
-                sequences = self.sequences
             if self.root is not None:
                 sequences = [self.root] + sequences
-            self._fasta_string = to_fasta(
-                sequences, id_key=self.id_key, sequence_key=self.seq_key, as_string=True
-            )
+            self._fasta_string = to_fasta(sequences)
         return self._fasta_string
 
     @fasta_string.setter
@@ -313,6 +311,9 @@ class Phylogeny:
 
     @property
     def tree_string(self):
+        """
+        Newick tree file, as a string.
+        """
         if self._tree_string is None:
             tree_string = fasttree(self.aln_string)
             # reroot only if the root sequence exists
@@ -329,10 +330,15 @@ class Phylogeny:
 
     @property
     def germ_db(self):
+        """
+        Identifies the germline database used to annotate the sequences. If
+        multiple databases were used, the most common one is selected.
+        """
         if self._germ_db is None:
-            db = Counter(
+            db_counts = Counter(
                 [s.get("germline_database", None) for s in self.sequences]
-            ).most_common()[0][0]
+            )
+            db = db_counts.most_common()[0][0]
             self._germ_db = db
         return self._germ_db
 
@@ -363,10 +369,85 @@ class Phylogeny:
         self._aln_string = None
         self._tree_string = None
 
+    def sanitize_name(self, name: str) -> str:
+        """
+        Sanitizes sequence names to be used in the tree, by replacing characters
+        that are not allowed in Newick tree files with tokens that can be used to
+        un-sanitize the names later.
+
+        Characters that are not allowed in Newick tree files are:
+            - colon (:)
+            - semicolon (;)
+            - comma (,)
+            - space ( )
+            - open parenthesis (()
+            - close parenthesis ())
+            - open bracket ([)
+            - close bracket (])
+            - single quote (')
+        """
+        return (
+            name.replace(":", "<colon>")
+            .replace(";", "<semi>")
+            .replace(",", "<comma>")
+            .replace(" ", "<blank>")
+            .replace("(", "<open>")
+            .replace(")", "<close>")
+            .replace("[", "<openbracket>")
+            .replace("]", "<closebracket>")
+            .replace("'", "<quote>")
+        )
+
+    def unsanitize_name(self, name: str) -> str:
+        """
+        Un-sanitizes sequence names to be used in the tree, by replacing tokens
+        with the original characters.
+        """
+        return (
+            name.replace("<colon>", ":")
+            .replace("<semi>", ";")
+            .replace("<comma>", ",")
+            .replace("<blank>", " ")
+            .replace("<open>", "(")
+            .replace("<close>", ")")
+            .replace("<openbracket>", "[")
+            .replace("<closebracket>", "]")
+            .replace("<quote>", "'")
+        )
+
+    def process_sequences(self, sequences: List[Sequence]) -> List[Sequence]:
+        """
+        Processes sequences to be used in the tree. Sequence names are sanitized.
+
+        Parameters
+        ----------
+        sequences : list of Sequence objects
+            Sequences to be processed.
+
+        Returns
+        -------
+        sequences : list of Sequence objects
+            Processed sequences.
+        """
+        sequences = deepcopy(sequences)
+        sequences = [
+            Sequence(
+                s[self.sequence_key],
+                id=self.sanitize_name(s[self.id_key]),
+            )
+            for s in self.sequences
+        ]
+        return sequences
+
     def rename(self, old: str) -> str:
         """
-        Sequence renamer
+        Sequence renamer. The ``old`` name is sanitized before being passed to
+        the ``rename`` function. If ``rename`` is a ``dict``, the unsanitized name
+        is used as the key to look up the new name. If ``rename`` is a ``callable``,
+        the unsanitized name is passed to the function and the return value is used
+        as the new name. If ``rename`` is ``None``, the unsanitized name is returned.
         """
+        old = self.unsanitize_name(old)
         if self._rename is None:
             return old
         if callable(self._rename):
@@ -375,19 +456,175 @@ class Phylogeny:
             new = self._rename.get(old, None)
         return new if new is not None else old
 
-    def get_size(self, name, min_size=1, default=1, multiplier=1):
-        """ """
-        s = self.sizes.get(name, default)
+    def get_size(
+        self,
+        name: str,
+        size: Union[Callable, dict, int, float, None] = None,
+        min_size: Union[int, float] = 1,
+        default: Union[int, float] = 1,
+        multiplier: Union[int, float] = 1,
+    ) -> Union[int, float]:
+        """
+        Get the size of a leaf marker, based on the provided ``size`` argument.
+
+        Parameters
+        ----------
+        name : str
+            Name of the leaf node.
+
+        size : callable, dict, int, float, or None
+            If ``callable``, it should take a single argument (the name of the
+            leaf node) and return a size. If ``dict``, it should map leaf node
+            names to sizes. If ``int`` or ``float``, it should be the size of
+            all leaf nodes. If ``None``, the size of all leaf nodes will be 1.
+
+        min_size : int or float
+            Minimum size of a leaf node. If the size of a leaf node is less than
+            ``min_size``, it will be set to 0.
+
+        default : int or float
+            Default size of a leaf node, if it is not found in the ``size``
+            argument.
+
+        multiplier : int or float
+            Multiplier for the size of a leaf node.
+
+        """
+        name = self.unsanitize_name(name)
+        if callable(size):
+            s = size(name)
+        elif isinstance(size, dict):
+            s = size.get(name, default)
+        elif isinstance(size, (int, float)):
+            s = size
+        else:
+            s = self.sizes.get(name, default)
         if s >= min_size:
             return s * multiplier
         return 0
 
+    def get_color(
+        self,
+        name: str,
+        color: Union[Callable, dict, str, Iterable, None] = None,
+        default: Union[str, Iterable] = "black",
+    ) -> Union[str, Iterable]:
+        """
+        Get the color of a leaf marker, based on the provided ``color`` argument.
+
+        Parameters
+        ----------
+        name : str
+            Name of the leaf node.
+
+        color : callable, dict, str, iterable, or None
+            If ``callable``, it should take a single argument (the name of the
+            leaf node) and return a color. If ``dict``, it should map leaf node
+            names to colors. If ``str``, it should be the color of all leaf nodes.
+            If ``iterable``, it should be the color of all leaf nodes, as an
+            iterable of RGB(A) values. If ``None``, the color of all leaf nodes
+            will be `default`.
+
+        default : str or iterable
+            Default color of a leaf node, if it is not found in the ``color``.
+
+        """
+        name = self.unsanitize_name(name)
+        # color is a function
+        if callable(color):
+            c = color(name)
+        # color is a dict
+        elif isinstance(color, dict):
+            c = color.get(name, default)
+        # a single color, as a string
+        elif isinstance(color, str):
+            c = color
+        # a single color, as an iterable of RGB(A) values
+        elif (
+            isinstance(color, (list, tuple))
+            and 3 <= len(color) <= 4
+            and all([isinstance(c, (int, float)) for c in color])
+        ):
+            c = color
+        else:
+            c = default
+        return c
+
+    # def get_marker_edgecolor(
+    #     self,
+    #     name: str,
+    #     edgecolor: Union[Callable, dict, str, Iterable, None] = None,
+    #     color: Union[Callable, dict, str, Iterable, None] = None,
+    #     default: Union[str, Iterable] = "black",
+    # ) -> Union[str, Iterable]:
+    #     """ """
+    #     name = self.unsanitize_name(name)
+    #     # color is a function
+    #     if callable(edgecolor):
+    #         c = edgecolor(name)
+    #     # color is a dict
+    #     elif isinstance(edgecolor, dict):
+    #         c = edgecolor.get(name, default)
+    #     # a single color, as a string
+    #     elif isinstance(edgecolor, str):
+    #         c = edgecolor
+    #     # a single color, as an iterable of RGB(A) values
+    #     elif (
+    #         isinstance(edgecolor, (list, tuple))
+    #         and 3 <= len(edgecolor) <= 4
+    #         and all([isinstance(c, (int, float)) for c in edgecolor])
+    #     ):
+    #         c = edgecolor
+    #     else:
+    #         c = self.get_color(name, color=color)
+    #     return c
+
+    def get_marker_edgewidth(
+        self,
+        name: str,
+        edgewidth: Union[Callable, dict, int, float, None] = None,
+        default: Union[int, float] = 1,
+    ) -> Union[int, float]:
+        """
+        Get the edge width of a leaf marker, based on the provided ``edgewidth`` argument.
+
+        Parameters
+        ----------
+        name : str
+            Name of the leaf node.
+
+        edgewidth : callable, dict, int, float, or None
+            If ``callable``, it should take a single argument (the name of the
+            leaf node) and return an edge width. If ``dict``, it should map leaf node
+            names to edge widths. If ``int`` or ``float``, it should be the edge width of
+            all leaf nodes. If ``None``, the edge width of all leaf nodes will be `default`.
+
+        default : int or float
+            Default edge width of a leaf node, if it is not found in the ``edgewidth``.
+
+        """
+        name = self.unsanitize_name(name)
+        if callable(edgewidth):
+            w = edgewidth(name)
+        elif isinstance(edgewidth, dict):
+            w = edgewidth.get(name, default)
+        elif isinstance(edgewidth, (int, float)):
+            w = edgewidth
+        else:
+            w = default
+        return w
+
     def cluster(self):
         """
-        Cluster sequences prior to alignment
+        Cluster sequences prior to alignment.
         """
         clusters = cluster(
-            self.sequences, threshold=self.clustering_threshold, algo="vsearch", iddef=1
+            self.sequences,
+            threshold=self.clustering_threshold,
+            algo="vsearch",
+            iddef=1,
+            id_key=self.id_key,
+            seq_key=self.sequence_key,
         )
         sizes = {}
         centroids = []
@@ -399,43 +636,208 @@ class Phylogeny:
 
     def plot(
         self,
-        figsize=[8, 8],
-        size=None,
-        color=None,
-        min_size=1,
-        size_multiplier=10,
+        size: Union[Callable, dict, int, float, None] = None,
+        color: Union[Callable, dict, Iterable, str, None] = None,
+        alpha: float = 0.75,
+        min_size: int = 1,
+        size_multiplier: Union[int, float] = 10,
+        linewidth: Union[int, float] = 2,
+        color_branches: bool = False,
+        x_attr: Callable = lambda k: k.height,
+        y_attr: Callable = lambda k: k.y,
+        connection_type: str = "baltic",
+        radial: bool = False,
+        radial_start: float = 0,
+        radial_fraction: float = 1.0,
+        inward_space: float = 0.1,
+        marker: str = "o",
+        marker_edgewidth: Union[Callable, dict, int, float] = 0,
+        marker_edgecolor: Union[Callable, dict, str, Iterable, None] = None,
+        marker_halign: str = "left",
+        marker_valign: str = "center",
+        figsize: Iterable[Union[int, float]] = [8, 8],
+        show: bool = False,
+        figfile: Union[str, Path] = None,
         **kwargs,
     ):
         """
         Plot the phylogenetic tree.
+
+        Parameters
+        ----------
+        size : callable or dict or int or float or None, optional
+            Size of the markers at leaf edges. If a callable, it should take
+            a ``baltic`` leaf as input and return a size. If a ``dict``, it
+            should have leaf names as keys and sizes as values. If an ``int``,
+            or ``float``, all markers will have the same size. If ``None``, the
+            cluster sizes will be used.
+
+        color : callable or dict or iterable or str or None, optional
+            Color of the markers at leaf edges. If a callable, it should take
+            a ``baltic`` leaf object as input and return a color. If a ``dict``,
+            it should have leaf names as keys and colors as values. If a ``str``,
+            or an iterable of RGB(A) values, all markers will have the same color.
+            If ``None``, all markers will be black.
+
+        alpha : float, optional
+            Alpha value for the markers.
+
+        min_size : int, optional
+            Minimum size of the markers. Any leaf edges with a size smaller than
+            `min_size` will not have a marker.
+
+        size_multiplier : int or float, optional
+            Multiplier for the marker sizes.
+
+        linewidth : int or float, optional
+            Width of the tree lines.
+
+        color_branches : bool, optional
+            Whether to color the branches of the tree. If ``True``, the branches
+            will be colored according to the color of the leaf edges.
+
+        x_attr : callable, optional
+            Attribute of the ``baltic`` tree object to use for the x-axis.
+
+        y_attr : callable, optional
+            Attribute of the ``baltic`` tree object to use for the y-axis.
+
+        connection_type : str, optional
+            Type of connection to use. One of ``'baltic'``, ``'direct'``, or ``'elbow'``.
+
+        radial : bool, optional
+            Whether to plot the tree in a radial fashion.
+
+        radial_start : float, optional
+            Starting point for the radial plot, as a fraction of the circle.
+
+        radial_fraction : float, optional
+            Fraction of the circle to use for the radial plot.
+
+        inward_space : float, optional
+            Fraction of the circle to leave empty at the center of the radial plot.
+
+        marker : str, optional
+            Marker style. See ``matplotlib.pyplot.scatter`` for more details.
+
+         marker_edgewidth : callable or dict or int or float, optional
+            Width of the marker edges. If a callable, it should take a ``baltic`` leaf
+            as input and return a width. If a ``dict``, it should have leaf names as
+            keys and widths as values. If an ``int``, or ``float``, all markers will
+            have the same width.
+
+        marker_edgecolor : callable or dict or str or iterable or None, optional
+            Color of the marker edges. If a callable, it should take a ``baltic`` leaf
+            object as input and return a color. If a ``dict``, it should have leaf names
+            as keys and colors as values. If a ``str``, or an iterable of RGB(A) values,
+            all markers will have the same color. If ``None``, all marker edges will
+            match the marker color.
+
+        marker_halign : str, optional
+            Horizontal alignment of the markers. One of ``'left'``, ``'center'``, or
+            ``'right'``.
+
+        marker_valign : str, optional
+            Vertical alignment of the markers. One of ``'top'``, ``'center'``, or
+            ``'bottom'``.
+
+        figsize : iterable of int or float, optional
+            Figure size, by default [8, 8]
+
+        show : bool, optional
+            Whether to show the figure.
+
+        figfile : str or Path, optional
+            Path to save the figure to.
+
         """
         plt.figure(figsize=figsize)
         ax = plt.gca()
-
-        if size is None:
-            size = lambda k: self.get_size(
-                k.name, default=1, min_size=min_size, multiplier=size_multiplier
-            )
-        if color is None:
-            color = lambda k: "k"
-        self.tree.plotTree(ax, x_attr=lambda k: k.height, width=2)
-        self.tree.plotPoints(
-            ax,
-            x_attr=lambda k: k.height,
+        # plot parameters
+        size = lambda k: self.get_size(
+            k.name,
             size=size,
-            colour=color,
-            zorder=100,
-            outline=0,
-            marker=align_marker("o", halign="left"),
-            **kwargs,
+            default=1,
+            min_size=min_size,
+            multiplier=size_multiplier,
         )
-
-        # remove spines, ticks and ticklabels
+        color = lambda k: self.get_color(k.name, color=color, default="black")
+        marker = align_marker(marker, halign=marker_halign, valign=marker_valign)
+        if marker_edgecolor is None:
+            marker_edgecolor = color
+        else:
+            marker_edgecolor = lambda k: self.get_color(
+                k.name, color=marker_edgecolor, default="black"
+            )
+        marker_edgewidth = lambda k: self.get_marker_edgecolor(
+            k.name, marker_edgewidth=marker_edgewidth, default=0
+        )
+        # make the plot
+        if radial:
+            inward_space = inward_space * self.tree.treeHeight
+            self.tree.plotCircularTree(
+                ax,
+                x_attr=x_attr,
+                y_attr=y_attr,
+                width=linewidth,
+                connection_type=connection_type,
+                circStart=radial_start,
+                circFraction=radial_fraction,
+                inwardSpace=inward_space,
+            )
+            self.tree.plotCircularPoints(
+                ax,
+                x_attr=x_attr,
+                y_attr=y_attr,
+                size=size,
+                colour=color,
+                zorder=100,
+                marker=marker,
+                outline_size=marker_edgewidth,
+                outline_colour=marker_edgecolor,
+                circStart=radial_start,
+                circFraction=radial_fraction,
+                inwardSpace=inward_space,
+                alpha=alpha,
+                **kwargs,
+            )
+        else:
+            self.tree.plotTree(
+                ax,
+                x_attr=x_attr,
+                y_attr=y_attr,
+                width=linewidth,
+                colour=color if color_branches else None,
+                connection_type=connection_type,
+            )
+            self.tree.plotPoints(
+                ax,
+                x_attr=x_attr,
+                y_attr=y_attr,
+                size=size,
+                colour=color,
+                zorder=100,
+                marker=marker,
+                outline_size=marker_edgewidth,
+                outline_colour=marker_edgecolor,
+                alpha=alpha,
+                **kwargs,
+            )
+        # style the plot
         for s in ax.spines.keys():
             ax.spines[s].set_visible(False)
         ax.set_xticks([])
         ax.set_yticks([])
         ax.tick_params(length=0, labelsize=0)
+        # save or show
+        if show:
+            plt.tight_layout()
+            plt.show()
+        elif figfile is not None:
+            plt.tight_layout()
+            plt.savefig(figfile)
+        else:
+            return ax
 
     def _get_top_germline_v(self) -> Union[Sequence, None]:
         """
@@ -523,11 +925,12 @@ def align_marker(
     marker: str = "o", halign: str = "center", valign: str = "middle"
 ) -> Path:
     """
-    create markers with specified alignment.
+    Create markers with specified alignment.
+    https://stackoverflow.com/questions/26686722/align-matplotlib-scatter-marker-left-and-or-right
+
 
     Parameters
     ----------
-
     marker : a valid marker specification.
       See mpl.markers
 
@@ -543,7 +946,6 @@ def align_marker(
 
     Returns
     -------
-
     marker_array : numpy.ndarray
       A Nx2 array that specifies the marker path relative to the
       plot target point at (0, 0).
@@ -555,7 +957,6 @@ def align_marker(
         ax.plot(1, 1, marker=align_marker('>', 'left'))
 
     """
-
     if isinstance(halign, str):
         halign = {
             "right": -1.0,
@@ -563,7 +964,6 @@ def align_marker(
             "center": 0.0,
             "left": 1.0,
         }[halign]
-
     if isinstance(valign, str):
         valign = {
             "top": -1.0,
@@ -571,14 +971,8 @@ def align_marker(
             "center": 0.0,
             "bottom": 1.0,
         }[valign]
-
     m = markers.MarkerStyle(marker)
-    # Get the marker path and apply the marker transform to get the
-    # actual marker vertices (they should all be in a unit-square
-    # centered at (0, 0))
     m_arr = m.get_path().transformed(m.get_transform()).vertices
-    # Shift the marker vertices for the specified alignment.
     m_arr[:, 0] += halign / 2
     m_arr[:, 1] += valign / 2
-
     return Path(m_arr, m.get_path().codes)
