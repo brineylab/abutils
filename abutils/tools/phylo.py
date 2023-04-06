@@ -197,10 +197,10 @@ class Phylogeny:
             Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
 
         """
-        self.sequences = self.process_sequences(sequences)
-        self.name = name if name is not None else uuid.uuid4()
         self.id_key = id_key
         self.seq_key = sequence_key
+        self.sequences = self.process_sequences(sequences)
+        self.name = name if name is not None else uuid.uuid4()
         self._root = root
         self._rename = rename
         self.do_clustering = cluster
@@ -212,6 +212,7 @@ class Phylogeny:
         self._tree = None
         self._sizes = None
         self._clusters = None
+        self._cluster_dict = None
 
     def __eq__(self, other):
         """
@@ -365,9 +366,21 @@ class Phylogeny:
     @clusters.setter
     def clusters(self, clusters):
         self._clusters = clusters
+        self._cluster_dict = None
         self._fasta_string = None
         self._aln_string = None
         self._tree_string = None
+
+    @property
+    def cluster_dict(self):
+        """
+        Returns a dict mapping cluster centroid IDs to a list of
+        all sequence IDs in the corresponding cluster.
+        """
+        if self._cluster_dict is None:
+            d = {c.centroid.id: c.seq_ids for c in self.clusters}
+            self._cluster_dict = d
+        return self._cluster_dict
 
     def sanitize_name(self, name: str) -> str:
         """
@@ -432,10 +445,10 @@ class Phylogeny:
         sequences = deepcopy(sequences)
         sequences = [
             Sequence(
-                s[self.sequence_key],
+                s[self.seq_key],
                 id=self.sanitize_name(s[self.id_key]),
             )
-            for s in self.sequences
+            for s in sequences
         ]
         return sequences
 
@@ -489,12 +502,16 @@ class Phylogeny:
         multiplier : int or float
             Multiplier for the size of a leaf node.
 
+        Returns
+        -------
+        size : int or float
+            Size of the leaf node.
         """
-        name = self.unsanitize_name(name)
+        unsanitized_name = self.unsanitize_name(name)
         if callable(size):
-            s = size(name)
+            s = size(unsanitized_name)
         elif isinstance(size, dict):
-            s = size.get(name, default)
+            s = size.get(unsanitized_name, default)
         elif isinstance(size, (int, float)):
             s = size
         else:
@@ -511,6 +528,8 @@ class Phylogeny:
     ) -> Union[str, Iterable]:
         """
         Get the color of a leaf marker, based on the provided ``color`` argument.
+        If the provided name is a cluster centroid, all sequences in the corresponding
+        cluster will be evaluated and the most common color will be used.
 
         Parameters
         ----------
@@ -528,56 +547,82 @@ class Phylogeny:
         default : str or iterable
             Default color of a leaf node, if it is not found in the ``color``.
 
+        Returns
+        -------
+        color : str or iterable
+            The color of the marker, as a string or an iterable of RGB(A) values.
         """
-        name = self.unsanitize_name(name)
-        # color is a function
-        if callable(color):
-            c = color(name)
-        # color is a dict
-        elif isinstance(color, dict):
-            c = color.get(name, default)
-        # a single color, as a string
-        elif isinstance(color, str):
-            c = color
-        # a single color, as an iterable of RGB(A) values
-        elif (
-            isinstance(color, (list, tuple))
-            and 3 <= len(color) <= 4
-            and all([isinstance(c, (int, float)) for c in color])
-        ):
-            c = color
-        else:
-            c = default
-        return c
+        names = self.cluster_dict.get(name, [name])
+        colors = []
+        for n in names:
+            n = self.unsanitize_name(n)
+            # color is a function
+            if callable(color):
+                c = color(n)
+            # color is a dict
+            elif isinstance(color, dict):
+                c = color.get(n, default)
+            # a single color, as a string
+            elif isinstance(color, str):
+                c = color
+            # a single color, as an iterable of RGB(A) values
+            elif (
+                isinstance(color, (list, tuple))
+                and 3 <= len(color) <= 4
+                and all([isinstance(c, (int, float)) for c in color])
+            ):
+                c = color
+            else:
+                c = default
+            colors.append(c)
+        color = Counter(colors).most_common()[0][0]
+        return color
 
-    # def get_marker_edgecolor(
-    #     self,
-    #     name: str,
-    #     edgecolor: Union[Callable, dict, str, Iterable, None] = None,
-    #     color: Union[Callable, dict, str, Iterable, None] = None,
-    #     default: Union[str, Iterable] = "black",
-    # ) -> Union[str, Iterable]:
-    #     """ """
-    #     name = self.unsanitize_name(name)
-    #     # color is a function
-    #     if callable(edgecolor):
-    #         c = edgecolor(name)
-    #     # color is a dict
-    #     elif isinstance(edgecolor, dict):
-    #         c = edgecolor.get(name, default)
-    #     # a single color, as a string
-    #     elif isinstance(edgecolor, str):
-    #         c = edgecolor
-    #     # a single color, as an iterable of RGB(A) values
-    #     elif (
-    #         isinstance(edgecolor, (list, tuple))
-    #         and 3 <= len(edgecolor) <= 4
-    #         and all([isinstance(c, (int, float)) for c in edgecolor])
-    #     ):
-    #         c = edgecolor
-    #     else:
-    #         c = self.get_color(name, color=color)
-    #     return c
+    def get_branch_color(
+        self,
+        k: Union[bt.node, bt.leaf],
+        color: Union[Callable, dict, str, Iterable, None] = None,
+        default: Union[str, Iterable] = "black",
+    ) -> Union[str, Iterable]:
+        """
+        Get the color of a branch, based on the provided ``color`` argument.
+
+        Parameters
+        ----------
+        k : bt.node or bt.leaf
+            The branch to get the color of. If a node, the most common color of
+            all child leaves will be returned.
+
+        color : callable, dict, str, iterable, or None
+            If ``callable``, it should take a single argument (the name of the
+            leaf node) and return a color. If ``dict``, it should map leaf node
+            names to colors. If ``str``, it should be the color of all leaf nodes.
+            If ``iterable``, it should be the color of all leaf nodes, as an
+            iterable of RGB(A) values. If ``None``, the color of all leaf nodes
+            will be `default`.
+
+        default : str or iterable
+            Default color of a leaf node, if it is not found in the ``color``.
+
+        Returns
+        -------
+        color : str or iterable
+            The color of the branch, as a string or an iterable of RGB(A) values.
+        """
+        if k.is_node():
+            leaves = list(k.leaves)
+        else:
+            leaves = [k]
+        colors = []
+        for leaf in leaves:
+            if not isinstance(leaf, str):
+                leaf = leaf.name
+            names = self.cluster_dict.get(leaf, [leaf])
+            for name in names:
+                c = self.get_color(name, color=color, default=default)
+                colors.append(c)
+        color = Counter(colors).most_common()[0][0]
+        return color
 
     def get_marker_edgewidth(
         self,
@@ -602,6 +647,10 @@ class Phylogeny:
         default : int or float
             Default edge width of a leaf node, if it is not found in the ``edgewidth``.
 
+        Returns
+        -------
+        edgewidth : int or float
+            The edge width of the marker.
         """
         name = self.unsanitize_name(name)
         if callable(edgewidth):
@@ -624,15 +673,14 @@ class Phylogeny:
             algo="vsearch",
             iddef=1,
             id_key=self.id_key,
-            seq_key=self.sequence_key,
+            seq_key=self.seq_key,
         )
         sizes = {}
         centroids = []
         for c in clusters:
-            centroids.append(c.centroid)
             sizes[c.centroid.id] = c.size
-        self._sizes = sizes
         self._clusters = clusters
+        self._sizes = sizes
 
     def plot(
         self,
@@ -754,23 +802,26 @@ class Phylogeny:
         plt.figure(figsize=figsize)
         ax = plt.gca()
         # plot parameters
-        size = lambda k: self.get_size(
+        size_func = lambda k: self.get_size(
             k.name,
             size=size,
             default=1,
             min_size=min_size,
             multiplier=size_multiplier,
         )
-        color = lambda k: self.get_color(k.name, color=color, default="black")
+        color_func = lambda k: self.get_color(k.name, color=color, default="black")
+        branch_color_func = lambda k: self.get_branch_color(
+            k, color=color, default="black"
+        )
         marker = align_marker(marker, halign=marker_halign, valign=marker_valign)
         if marker_edgecolor is None:
-            marker_edgecolor = color
+            marker_edgecolor_func = color_func
         else:
-            marker_edgecolor = lambda k: self.get_color(
+            marker_edgecolor_func = lambda k: self.get_color(
                 k.name, color=marker_edgecolor, default="black"
             )
-        marker_edgewidth = lambda k: self.get_marker_edgecolor(
-            k.name, marker_edgewidth=marker_edgewidth, default=0
+        marker_edgewidth_func = lambda k: self.get_marker_edgewidth(
+            k.name, edgewidth=marker_edgewidth, default=0
         )
         # make the plot
         if radial:
@@ -780,23 +831,24 @@ class Phylogeny:
                 x_attr=x_attr,
                 y_attr=y_attr,
                 width=linewidth,
+                colour=branch_color_func if color_branches else None,
                 connection_type=connection_type,
                 circStart=radial_start,
-                circFraction=radial_fraction,
+                circFracn=radial_fraction,
                 inwardSpace=inward_space,
             )
             self.tree.plotCircularPoints(
                 ax,
                 x_attr=x_attr,
                 y_attr=y_attr,
-                size=size,
-                colour=color,
+                size=size_func,
+                colour=color_func,
                 zorder=100,
                 marker=marker,
-                outline_size=marker_edgewidth,
-                outline_colour=marker_edgecolor,
+                outline_size=marker_edgewidth_func,
+                outline_colour=marker_edgecolor_func,
                 circStart=radial_start,
-                circFraction=radial_fraction,
+                circFrac=radial_fraction,
                 inwardSpace=inward_space,
                 alpha=alpha,
                 **kwargs,
@@ -807,19 +859,19 @@ class Phylogeny:
                 x_attr=x_attr,
                 y_attr=y_attr,
                 width=linewidth,
-                colour=color if color_branches else None,
+                colour=branch_color_func if color_branches else None,
                 connection_type=connection_type,
             )
             self.tree.plotPoints(
                 ax,
                 x_attr=x_attr,
                 y_attr=y_attr,
-                size=size,
-                colour=color,
+                size=size_func,
+                colour=color_func,
                 zorder=100,
                 marker=marker,
-                outline_size=marker_edgewidth,
-                outline_colour=marker_edgecolor,
+                outline_size=marker_edgewidth_func,
+                outline_colour=marker_edgecolor_func,
                 alpha=alpha,
                 **kwargs,
             )
@@ -867,8 +919,8 @@ def phylogeny(
     cluster: bool = True,
     clustering_threshold: float = 1.0,
     rename: Optional[Union[dict, Callable]] = None,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
 ) -> Phylogeny:
     """
     Phylogenetic representation of an antibody lineage.
@@ -908,6 +960,10 @@ def phylogeny(
     sequence_key : str, default=None
         Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
 
+    Returns
+    -------
+    phylogeny : Phylogeny
+        An ``abutils.Phylogeny`` object.
     """
     return Phylogeny(
         sequences=sequences,
