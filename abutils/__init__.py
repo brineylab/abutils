@@ -12,6 +12,8 @@ from .core.sequence import Sequence
 from .core.pair import Pair
 from .core.lineage import Lineage
 
+from .tools.phylo import Phylogeny
+
 from .utils import (
     alignment,
     cluster,
