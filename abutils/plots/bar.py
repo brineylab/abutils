@@ -36,6 +36,8 @@ import seaborn as sns
 
 from natsort import natsorted
 
+from .data import process_input_data
+from ..core.sequence import Sequence
 from ..utils.color import get_cmap
 
 
@@ -44,6 +46,7 @@ def bar(
     y: Union[str, Iterable, None] = None,
     hue: Union[str, Iterable, None] = None,
     data: Optional[pd.DataFrame] = None,
+    sequences: Optional[Iterable[Sequence]] = None,
     order: Optional[Iterable] = None,
     hue_order: Optional[Iterable] = None,
     palette: Union[dict, Iterable, None] = None,
@@ -70,133 +73,141 @@ def bar(
     figfile: Optional[str] = None,
 ):
     """
-    Produces a bar plot of categorical data. For data with distinct batches, a stacked 
+    Produces a bar plot of categorical data. For data with distinct batches, a stacked
     bar plot will be constructed.
 
     Parameters
     ----------
-    x : str or list, optional  
-        Name of a column in `data` or an iterable of values to be plotted on the 
+    x : str or list, optional
+        Name of a column in `data` or an iterable of values to be plotted on the
         x-axis. Required if `orientation` is ``'horizontal'``.
 
-    y : str or list, optional  
-        Name of a column in `data` or an iterable of values to be plotted on the 
+    y : str or list, optional
+        Name of a column in `data` or an iterable of values to be plotted on the
         y-axis. Required if `orientation` is ``'horizontal'``.
 
-    hue : str, optional  
-        Name of a column in `data` or an iterable of hue categories to be used to 
-        group data into stacked bars. If not provided, an un-stacked bar plot is created.  
+    hue : str, optional
+        Name of a column in `data` or an iterable of hue categories to be used to
+        group data into stacked bars. If not provided, an un-stacked bar plot is created.
 
-    data : pandas.DataFrame, optional  
-        A ``DataFrame`` object containing the input data. If provided, `x` and/or `y` should 
+    data : pandas.DataFrame, optional
+        A ``DataFrame`` object containing the input data. If provided, `x` and/or `y` should
         be column names in `data`.
-        
-    order : iterable object, optional  
-        List of `x` or `y` categories in the order they should be plotted. If `order` contains a 
-        subset of all categories found in `x` or `y`, only the supplied categories will be plotted.  
-        If not provided, categories will be plotted in ``natsort.natsorted()`` order.
-        
-    hue_order : iterable object, optional  
-        List of `hue` categories in the order they should be plotted. If `hue_order` contains a 
-        subset of all categories found in `hue`, only the supplied categories will be plotted.  
-        If not provided, `hue` categories will be plotted in ``natsort.natsorted()`` order.
-        
-    palette : dict, optional  
-        Dictionary mapping `hue`, `x` or `y` names to colors. If if keys in `palette` match 
-        more than one category, `hue` categories take priority. If `palette` is not provided, 
-        bars are colored using `color` (if `hue` is ``None``) or a palette is generated 
-        automatically using ``sns.hls_palette()``.   
 
-    color : str or iterable, optional  
-        Single color to be used for the bar plot. If not provided, the first color in the 
-        default ``Seaborn`` color palette will be used. If `highlight` is provided but 
-        `highlight_color` is not, `color` will be used to color highlighted bars.  
-        
-    alt_color : str or iterable, default='#D3D3D3'  
-        Alternate color for the bar plot. Used to color categories not provided in `palette` 
-        or to color categories not present in `highlight`.  
+    sequences : iterable of abutils.core.sequence.Sequence, optional
+        An iterable of ``Sequence`` objects. If provided, `x`, `y` and/or `hue` should be annotations
+        in the ``Sequence`` objects. Alternatively, `x`, `y` and/or `hue` can be an iterable of
+        values to be plotted, but must be the same length as `sequences`.
+
+    order : iterable object, optional
+        List of `x` or `y` categories in the order they should be plotted. If `order` contains a
+        subset of all categories found in `x` or `y`, only the supplied categories will be plotted.
+        If not provided, categories will be plotted in ``natsort.natsorted()`` order.
+
+    hue_order : iterable object, optional
+        List of `hue` categories in the order they should be plotted. If `hue_order` contains a
+        subset of all categories found in `hue`, only the supplied categories will be plotted.
+        If not provided, `hue` categories will be plotted in ``natsort.natsorted()`` order.
+
+    palette : dict, optional
+        Dictionary mapping `hue`, `x` or `y` names to colors. If if keys in `palette` match
+        more than one category, `hue` categories take priority. If `palette` is not provided,
+        bars are colored using `color` (if `hue` is ``None``) or a palette is generated
+        automatically using ``sns.hls_palette()``.
+
+    color : str or iterable, optional
+        Single color to be used for the bar plot. If not provided, the first color in the
+        default ``Seaborn`` color palette will be used. If `highlight` is provided but
+        `highlight_color` is not, `color` will be used to color highlighted bars.
+
+    alt_color : str or iterable, default='#D3D3D3'
+        Alternate color for the bar plot. Used to color categories not provided in `palette`
+        or to color categories not present in `highlight`.
 
     orientation : str, optional
-        Orientation of the plot. Options are ``'vertical'`` or ``'horizontal'``. Default is 
+        Orientation of the plot. Options are ``'vertical'`` or ``'horizontal'``. Default is
         ``'vertical'``.
-        
-    normalize : bool, default=False  
-        If ``True``, normalized frequencies are plotted instead of raw counts. If multiple `hue`
-        categories are present, data will be normalized such that all 
-        bars extend from [0,1] and each stacked bar is sized according to the `hue`'s  fraction. 
-        If `hue` is not provided or there is only one `hue` category, the entire 
-        dataset is normalized.
-        
-    highlight : iterable, optional
-        List of `x` or `hue` categories to be highlighted. If `highlight_color` is provided, 
-        categories in `highlight` will use `highlight_color` and all others will use `alt_color`. 
-        If `highlight_color` is not provided, `palette` will be used. If both `highlight_color` 
-        and `palette` are not provided, `color` will be used. 
-        
-    highlight_color : str or iterable, optional  
-        Color to be used for categories in `highlight`. If  
 
-    plot_kwargs : dict, optional  
+    normalize : bool, default=False
+        If ``True``, normalized frequencies are plotted instead of raw counts. If multiple `hue`
+        categories are present, data will be normalized such that all
+        bars extend from [0,1] and each stacked bar is sized according to the `hue`'s  fraction.
+        If `hue` is not provided or there is only one `hue` category, the entire
+        dataset is normalized.
+
+    highlight : iterable, optional
+        List of `x` or `hue` categories to be highlighted. If `highlight_color` is provided,
+        categories in `highlight` will use `highlight_color` and all others will use `alt_color`.
+        If `highlight_color` is not provided, `palette` will be used. If both `highlight_color`
+        and `palette` are not provided, `color` will be used.
+
+    highlight_color : str or iterable, optional
+        Color to be used for categories in `highlight`. If
+
+    plot_kwargs : dict, optional
         Dictionary containing keyword arguments that will be passed to ``pyplot.bar()``.
 
-    legend_kwargs : dict, optional  
+    legend_kwargs : dict, optional
         Dictionary containing keyword arguments that will be passed to ``ax.legend()``.
 
-    hide_legend : bool, default=False  
-        By default, a plot legend will be shown if multiple batches are plotted. If ``True``, 
-        the legend will not be shown.  
-        
-    xlabel : str, optional  
-        Text for the X-axis label. 
+    hide_legend : bool, default=False
+        By default, a plot legend will be shown if multiple batches are plotted. If ``True``,
+        the legend will not be shown.
 
-    ylabel : str, optional  
-        Text for the Y-axis label.  
-        
-    xlabel_fontsize : int or float, default=16  
+    xlabel : str, optional
+        Text for the X-axis label.
+
+    ylabel : str, optional
+        Text for the Y-axis label.
+
+    xlabel_fontsize : int or float, default=16
         Fontsize for the X-axis label text.
 
-    ylabel_fontsize : int or float, default=16  
+    ylabel_fontsize : int or float, default=16
         Fontsize for the Y-axis label text.
 
-    xtick_labelsize : int or float, default=14  
-        Fontsize for the X-axis tick labels.  
+    xtick_labelsize : int or float, default=14
+        Fontsize for the X-axis tick labels.
 
-    ytick_labelsize : int or float, default=14  
-        Fontsize for the Y-axis tick labels.  
+    ytick_labelsize : int or float, default=14
+        Fontsize for the Y-axis tick labels.
 
-    xtick_labelrotation : int or float, default=0  
-        Rotation of the X-axis tick labels.  
-    
-    ytick_labelrotation : int or float, default=0  
-        Rotation of the Y-axis tick labels. 
+    xtick_labelrotation : int or float, default=0
+        Rotation of the X-axis tick labels.
 
-    show :bool, default=False  
+    ytick_labelrotation : int or float, default=0
+        Rotation of the Y-axis tick labels.
+
+    show :bool, default=False
         If ``True``, plot is shown and the plot ``Axes`` object is not returned. Default
         is ``False``, which does not call ``pyplot.show()`` and returns the ``Axes`` object.
 
-    figsize : iterable object, default=[6, 4]  
-        List containing the figure size (as ``[x-dimension, y-dimension]``) in inches. 
+    figsize : iterable object, default=[6, 4]
+        List containing the figure size (as ``[x-dimension, y-dimension]``) in inches.
 
-    figfile : str, optional  
+    figfile : str, optional
         Path at which to save the figure file. If not provided, the figure is not saved
-        and is either shown (if `show` is ``True``) or the ``Axes`` object is returned.  
+        and is either shown (if `show` is ``True``) or the ``Axes`` object is returned.
     """
     # process input data
     if orientation == "horizontal":
         if y is not None:
             x, y = y, x
-    if data is None:
-        _data = {}
-        if x is not None:
-            _data["x"] = x
-            x = "x"
-        if y is not None:
-            _data["y"] = y
-            y = "y"
-        if hue is not None:
-            _data["hue"] = hue
-            hue = "hue"
-        data = pd.DataFrame(_data)
+    # if data is None:
+    #     _data = {}
+    #     if x is not None:
+    #         _data["x"] = x
+    #         x = "x"
+    #     if y is not None:
+    #         _data["y"] = y
+    #         y = "y"
+    #     if hue is not None:
+    #         _data["hue"] = hue
+    #         hue = "hue"
+    #     data = pd.DataFrame(_data)
+    data, x, y, hue = process_input_data(
+        x=x, y=y, hue=hue, data=data, sequences=sequences
+    )
 
     # figure size
     if figsize is None:
@@ -350,4 +361,3 @@ def bar(
         plt.show()
     else:
         return ax
-

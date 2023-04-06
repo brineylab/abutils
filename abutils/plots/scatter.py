@@ -36,7 +36,9 @@ import seaborn as sns
 
 from natsort import natsorted
 
-from abutils.utils.color import get_cmap
+from .data import process_input_data
+from ..core.sequence import Sequence
+from ..utils.color import get_cmap
 
 
 def scatter(
@@ -45,6 +47,7 @@ def scatter(
     hue: Union[str, Iterable, None] = None,
     marker: str = "o",
     data: Optional[pd.DataFrame] = None,
+    sequences: Optional[Iterable[Sequence]] = None,
     hue_order: Optional[Iterable] = None,
     force_categorical_hue: bool = False,
     force_continuous_hue: bool = False,
@@ -132,8 +135,13 @@ def scatter(
               length as `x` and `y`.
 
     data : pandas.DataFrame, optional
-        A ``DataFrame`` object containing the input data. If provided, `x` and/or `y` should
+        A ``DataFrame`` object containing the input data. If provided, `x`, `y` and/or `hue` should
         be column names in `data`.
+
+    sequences : iterable of abutils.core.sequence.Sequence, optional
+        An iterable of ``Sequence`` objects. If provided, `x`, `y` and/or `hue` should be annotations
+        in the ``Sequence`` objects. Alternatively, `x`, `y` and/or `hue` can be an iterable of
+        values to be plotted, but must be the same length as `sequences`.
 
     hue_order : iterable object, optional
         List of `hue` categories in the order they should be plotted. If `hue_order` contains a
@@ -351,28 +359,31 @@ def scatter(
 
     """
     # process input data
-    if data is None:
-        _data = {}
-        _data["x"] = x
-        x = "x"
-        _data["y"] = y
-        y = "y"
-        if hue is not None:
-            _data["hue"] = hue
-            hue = "hue"
-        df = pd.DataFrame(_data)
-    else:
-        df = data.copy()
-        if not isinstance(x, str) and len(x) == df.shape[0]:
-            df["x"] = x
-            x = "x"
-        if not isinstance(y, str) and len(y) == df.shape[0]:
-            df["y"] = y
-            y = "y"
-        if hue is not None:
-            if not isinstance(hue, str) and len(hue) == df.shape[0]:
-                df["hue"] = hue
-                hue = "hue"
+    # if data is None:
+    #     _data = {}
+    #     _data["x"] = x
+    #     x = "x"
+    #     _data["y"] = y
+    #     y = "y"
+    #     if hue is not None:
+    #         _data["hue"] = hue
+    #         hue = "hue"
+    #     df = pd.DataFrame(_data)
+    # else:
+    #     df = data.copy()
+    #     if not isinstance(x, str) and len(x) == df.shape[0]:
+    #         df["x"] = x
+    #         x = "x"
+    #     if not isinstance(y, str) and len(y) == df.shape[0]:
+    #         df["y"] = y
+    #         y = "y"
+    #     if hue is not None:
+    #         if not isinstance(hue, str) and len(hue) == df.shape[0]:
+    #             df["hue"] = hue
+    #             hue = "hue"
+    df, x, y, hue = process_input_data(
+        x=x, y=y, hue=hue, data=data, sequences=sequences
+    )
 
     # figure size
     if figsize is None:
