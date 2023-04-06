@@ -26,7 +26,6 @@
 import os
 import platform
 import random
-import shutil
 import string
 import subprocess as sp
 import sys
@@ -35,9 +34,9 @@ from typing import Iterable, Optional, Union
 
 from Bio.Align import AlignInfo
 
-from .alignment import mafft
-from .decorators import lazy_property
-from .pipeline import make_dir
+from ..utils.alignment import mafft
+from ..utils.decorators import lazy_property
+from ..utils.pipeline import make_dir
 
 from ..core.sequence import Sequence, read_fasta, to_fasta
 
