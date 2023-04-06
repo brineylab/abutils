@@ -297,5 +297,4 @@ def ridge(
         g.savefig(figfile)
     elif show:
         plt.show()
-    else:
-        return g
+    return g
