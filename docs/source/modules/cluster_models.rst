@@ -1,5 +1,5 @@
 models
 ===================
 
-.. autoclass:: abutils.utils.cluster.Clusters
-.. autoclass:: abutils.utils.cluster.Cluster
+.. autoclass:: abutils.tools.cluster.Clusters
+.. autoclass:: abutils.tools.cluster.Cluster

@@ -8,19 +8,19 @@ of the immune response to infection and immunization. Accordingly,
 there is a need for open, scalable software for the genetic analysis of 
 repertoire-scale antibody sequence data.
 
-We build abutils to provide a standardized set of models and utilities for 
-working with antibody repertoire data. The components in abutils were designed to be flexible: 
+We built ``abutils`` to provide a cohesive set of tools designed for the specific challenges inherent in 
+working with antibody repertoire data. The components in ``abutils`` were designed to be flexible: 
 equally at home when used used interactively (in a Jupyter Notebook, for example) or when 
 integrated into more complex programs and/or pipelines (such as abstar_, which is capable of annotating 
 billions of antibody sequences).
 
-models
----------
+core models
+-----------
 
 To represent antibody repertoire data at varying levels of granularity, abutils provides three core models: 
 ``Sequence``, ``Pair``, and ``Lineage``. These models are heirarchical -- a ``Lineage`` is composed of one 
-or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain data and methods appropriate
-for each level of granularity. 
+or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain methods 
+appropriate for each level of granularity. 
 
   * ``Sequence``: model for representing a single antibody sequnce (either heavy or light chain).
     Provides a means to store and access abstar annotations. Includes common methods of sequence
@@ -32,27 +32,26 @@ for each level of granularity.
     objects. Includes methods for lineage manipulation, including generating dot alignments and UCA calculation.
 
 
-utilities
----------
+tools
+------
 
-In addition to the core models, abutils provides a number of commonly used functions (clustering, alignment, etc). 
-These functions are widely used throughput the ab[x] toolkit and are suitable for incorporation into custom pipelines or for use 
-when performing interactive analyses (for example, using the Jupyter Notebook). 
-Most utilities fall into one of several categories:
+In addition to the core models, abutils provides a number of commonly used functions. 
+These functions are widely used throughput the ab[x] toolkit and are suitable for incorporation 
+into custom pipelines or for use when performing interactive analyses:
 
-  * **alignment**: local (Smith-Waterman) and global (Needleman-Wunsch) pairwise alignment methods, 
-    as well as methods for multiple sequence alignment using MAFFT_ or MUSCLE_.
+  * **alignment**: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global pairwise sequence alignment, 
+    as well as multiple sequence alignment using MAFFT_ or MUSCLE_
 
-  * **clustering**: clustering sequences with CD-HIT, generation of cluster consensus or centroid sequences.
+  * **clustering**: identity-based sequence clustering with VSEARCH_ or MMseqs2_
 
-  * **database**: import, query and updating of records in MongoDB databases.
-
-  * **phylogeny**: computing lineage phylogenies with FastTree or IgPhyML, drawing phylogenetic trees.
-
-  * **plotting**: simple creation of basic summary plots, including germline gene frequencies and 
-    CDR3 length histograms
+  * **phylogeny**: computing lineage phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
 
 
+
+plots
+------
+
+``abutils`` provides a
 
 
 
@@ -60,3 +59,8 @@ Most utilities fall into one of several categories:
 .. _abstar: https://github.com/briney/abstar
 .. _MAFFT: https://mafft.cbrc.jp/alignment/software/
 .. _MUSCLE: https://www.drive5.com/muscle/
+.. _VSEARCH: https://github.com/torognes/vsearch
+.. _MMseqs2: https://github.com/soedinglab/MMseqs2
+.. _FastTree: http://www.microbesonline.org/fasttree/
+.. _IgPhyML: https://github.com/kbhoehn/IgPhyML
+.. _baltic: https://github.com/evogytis/baltic

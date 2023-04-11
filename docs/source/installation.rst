@@ -1,75 +1,72 @@
 install
 =======
 
-The easiest way to install abutils locally (on macOS or Linux) is to use pip::
+The easiest way to install ``abutils`` locally (on macOS or Linux) is to use ``pip``::
 
     $ pip install abutils
 
-If you don't have pip, the Anaconda_ Python distribution contains pip along 
+If you don't have ``pip``, the Anaconda_ Python distribution contains ``pip`` along 
 with a ton of useful scientific Python packages and is a great way to get 
 started with Python.
 
-abutils does not run natively on Windows, but Windows users can use Docker_ (the abstar Docker container also includes abutils)::
+``abutils`` does not run natively on Windows, but Windows users can use Docker_ 
+(the brineylab datascience_ Docker container contains the entire ab[x] toolkit,
+which includes ``abutils``)::
 
-    $ docker pull briney/abstar
-    $ docker run -it briney/abstar
+    $ docker pull brineylab/datascience
+    $ docker run -it brineylab/datascience
 
-Stable_ and development_ versions of abstar can also be downloaded from Github. 
-You can manually install the latest version of abstar with::
+Stable_ and development_ versions of ``abutils`` can also be downloaded from Github. 
+You can manually install the latest version of ``abutils`` with::
 
     $ git clone https://github.com/briney/abutils
     $ cd abutils/
     $ python setup.py install
 
-.. note::
-
-    If installing manually via setup.py and you don't already have scikit-bio installed, 
-    you may get an error when setuptools attempts to install scikit-bio. This can be fixed 
-    by first installing scikit-bio with pip::
-
-        $ pip install scikit-bio
-
-    and then retrying the manual install of abutils. Starting with version 0.5, scikit-bio 
-    dropped support for Python 2.7, so install scikit-bio on Python 2.7 with::
-
-        $ pip install scikit-bio<=0.4.2
-
 
 requirements
 ------------
 
-* Python 3.5+
+* Python 3.7+
+* baltic_
 * biopython_
 * celery_
 * ete3_
+* fastcluster_
 * matplotlib_
+* mnemonic_
 * numpy_
 * nwalign3_
 * pandas_
 * paramiko_
+* parasail_
 * pymongo_
 * pytest_
-* `scikit bio`_
+* python-circos_
+* python-Levenshtein_
+* pyyaml_
+* sample-sheet_
+* scikit-learn_
+* scipy_
 * seaborn_
 
 
 additional dependencies
----------------------
+-----------------------
 
-abutils has a few additional non-python dependencies that are not required for installation
-but are necessary for specific functions:
+Whenever possible, ``abutils`` bundles required third-party binaries, but there are a few 
+additional non-python dependencies that must be separately installed. These tools are 
+not needed for installation, but are necessary for specific functions:
 
-* ``abutils.alignment.mafft`` requires MAFFT_
-* ``abutils.mongodb.mongoimport`` requires MongoDB_
-* ``abutils.phylogeny.fasttree`` requires FastTree_
-* ``abutils.phylogeny.igphyml`` requires IgPhyML_
-* ``abutils.phylogeny.lsd`` requires LSD_
+* ``abutils.tl.igphyml`` requires IgPhyML_
+* ``abutils.tl.lsd`` requires LSD_
 * ``abutils.s3`` requires s3cmd_
 
 If using Docker, all of the the optional dependencies are included.
 
 
 .. _Docker: https://www.docker.com/
+.. _datascience: https://hub.docker.com/repository/docker/brineylab/datascience/general
 .. _Anaconda: https://www.continuum.io/downloads
 .. _stable: https://github.com/briney/abstar/releases
 .. _development: https://github.com/briney/abstar
@@ -92,7 +89,13 @@ If using Docker, all of the the optional dependencies are included.
 .. _FastTree: http://www.microbesonline.org/fasttree/
 .. _IgPhyML: https://github.com/kbhoehn/IgPhyML
 .. _LSD: https://github.com/tothuhien/lsd-0.3beta
-
-
-
-
+.. _parasail: https://github.com/jeffdaily/parasail-python
+.. _baltic: https://github.com/evogytis/baltic
+.. _fastcluster: https://github.com/dmuellner/fastcluster
+.. _mnemonic: https://github.com/trezor/python-mnemonic
+.. _python-circos: https://github.com/ponnhide/pyCircos
+.. _python-Levenshtein: https://github.com/ztane/python-Levenshtein
+.. _pyyaml: https://pyyaml.org/
+.. _sample-sheet: https://github.com/clintval/sample-sheet
+.. _scikit-learn: https://scikit-learn.org/stable/
+.. _scipy: https://www.scipy.org/
