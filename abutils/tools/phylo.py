@@ -578,6 +578,10 @@ class Phylogeny:
         color = Counter(colors).most_common()[0][0]
         return color
 
+    # TODO: add support for branch color orders
+    # useful for things like longitudinal data, where the timepoint of the
+    # branch can be used to color by the earliest timepoint in the branch
+
     def get_branch_color(
         self,
         k: Union[bt.node, bt.leaf],
@@ -676,7 +680,6 @@ class Phylogeny:
             seq_key=self.seq_key,
         )
         sizes = {}
-        centroids = []
         for c in clusters:
             sizes[c.centroid.id] = c.size
         self._clusters = clusters
@@ -825,6 +828,7 @@ class Phylogeny:
         )
         # make the plot
         if radial:
+            # circular phlogenetic tree
             inward_space = inward_space * self.tree.treeHeight
             self.tree.plotCircularTree(
                 ax,
@@ -854,6 +858,7 @@ class Phylogeny:
                 **kwargs,
             )
         else:
+            # standard phlogenetic tree
             self.tree.plotTree(
                 ax,
                 x_attr=x_attr,
