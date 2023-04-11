@@ -1,11 +1,11 @@
 abstar >= 0.5.9
+baltic
 biopython >= 1.78
 celery
 ete3
 matplotlib
 natsort
 numpy
-# nwalign3
 pandas
 paramiko
 parasail
@@ -14,7 +14,6 @@ pytest
 python-circos
 pyyaml
 sample-sheet
-# scikit-bio==0.5.6
 scikit-learn
 scipy
 seaborn >= 0.11
