@@ -37,13 +37,17 @@ import seaborn as sns
 from natsort import natsorted
 
 from .data import process_input_data
+from .utils import get_inset_axes_bounds
 from ..core.sequence import Sequence
 from ..utils.color import get_cmap
 
 
+__all__ = ["scatter"]
+
+
 def scatter(
-    x: Union[str, Iterable, None] = None,
-    y: Union[str, Iterable, None] = None,
+    x: Union[str, Iterable],
+    y: Union[str, Iterable],
     hue: Union[str, Iterable, None] = None,
     marker: str = "o",
     data: Optional[pd.DataFrame] = None,
@@ -690,32 +694,32 @@ def scatter(
         return ax
 
 
-def get_inset_axes_bounds(loc, bbox_to_anchor, width, height):
-    if bbox_to_anchor is None:
-        loc_dict = {
-            "upper left": [0, 1 - height],
-            "upper center": [0.5 - width / 2, 1 - height],
-            "upper right": [1 - width, 1 - height],
-            "center left": [0, 0.5 - height / 2],
-            "center": [0.5 - width / 2, 0.5 - height / 2],
-            "center right": [1 - width, 0.5 - height / 2],
-            "lower left": [0, 0],
-            "lower center": [0.5 - width / 2, 0],
-            "lower right": [1 - width, 0],
-        }
-        x0, y0 = loc_dict.get(loc, [0, 0])
-    else:
-        x, y = bbox_to_anchor[:2]
-        loc_dict = {
-            "upper left": [x, y - height],
-            "upper center": [x - width / 2, y - height],
-            "upper right": [x - width, y - height],
-            "center left": [x, y - height / 2],
-            "center": [x - width / 2, y - height / 2],
-            "center right": [x - width, y - height / 2],
-            "lower left": [x, y],
-            "lower center": [x - width / 2, y],
-            "lower right": [x - width, y],
-        }
-        x0, y0 = loc_dict.get(loc, [0, 0])
-    return [x0, y0, width, height]
+# def get_inset_axes_bounds(loc, bbox_to_anchor, width, height):
+#     if bbox_to_anchor is None:
+#         loc_dict = {
+#             "upper left": [0, 1 - height],
+#             "upper center": [0.5 - width / 2, 1 - height],
+#             "upper right": [1 - width, 1 - height],
+#             "center left": [0, 0.5 - height / 2],
+#             "center": [0.5 - width / 2, 0.5 - height / 2],
+#             "center right": [1 - width, 0.5 - height / 2],
+#             "lower left": [0, 0],
+#             "lower center": [0.5 - width / 2, 0],
+#             "lower right": [1 - width, 0],
+#         }
+#         x0, y0 = loc_dict.get(loc, [0, 0])
+#     else:
+#         x, y = bbox_to_anchor[:2]
+#         loc_dict = {
+#             "upper left": [x, y - height],
+#             "upper center": [x - width / 2, y - height],
+#             "upper right": [x - width, y - height],
+#             "center left": [x, y - height / 2],
+#             "center": [x - width / 2, y - height / 2],
+#             "center right": [x - width, y - height / 2],
+#             "lower left": [x, y],
+#             "lower center": [x - width / 2, y],
+#             "lower right": [x - width, y],
+#         }
+#         x0, y0 = loc_dict.get(loc, [0, 0])
+#     return [x0, y0, width, height]
