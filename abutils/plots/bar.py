@@ -41,6 +41,9 @@ from ..core.sequence import Sequence
 from ..utils.color import get_cmap
 
 
+__all__ = ["bar"]
+
+
 def bar(
     x: Union[str, Iterable, None] = None,
     y: Union[str, Iterable, None] = None,
@@ -80,11 +83,19 @@ def bar(
     ----------
     x : str or list, optional
         Name of a column in `data` or an iterable of values to be plotted on the
-        x-axis. Required if `orientation` is ``'horizontal'``.
+        x-axis. Required if `orientation` is ``"vertical"``. If only `x` is provided,
+        the unique values in `x` will be used as the x-axis values and the counts of each
+        unique `x` value  will be used for as the y-axis values. If `x` and `y` are both
+        provided, `x` will be used as the x-axis values and `y` will be used as the
+        y-axis values.
 
     y : str or list, optional
         Name of a column in `data` or an iterable of values to be plotted on the
-        y-axis. Required if `orientation` is ``'horizontal'``.
+        y-axis. If `orientation` is ``"horizontal"``, and only `y` is provided, the
+        unique values in `y` will be used as the y-axis values and the counts of each
+        unique `y` value  will be used for as the x-axis values. If `x` and `y` are both
+        provided, `x` will always be used for bar names and `y` will always be used
+        for bar lengths, regardless of `orientation`.
 
     hue : str, optional
         Name of a column in `data` or an iterable of hue categories to be used to
@@ -190,8 +201,8 @@ def bar(
         and is either shown (if `show` is ``True``) or the ``Axes`` object is returned.
     """
     # process input data
-    if orientation == "horizontal":
-        if y is not None:
+    if orientation.lower() == "horizontal":
+        if x is None and y is not None:
             x, y = y, x
     # if data is None:
     #     _data = {}
