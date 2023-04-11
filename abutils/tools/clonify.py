@@ -14,7 +14,7 @@ from scipy.cluster.hierarchy import fcluster
 from mnemonic import Mnemonic
 
 from ..core.sequence import Sequence
-from ..tl import cluster
+from ..tools import cluster
 from ..utils.utilities import nested_dict_lookup
 
 

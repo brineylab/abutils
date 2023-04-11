@@ -40,9 +40,9 @@ from natsort import natsorted
 
 
 def ridge(
-    data: Optional[pd.DataFrame] = None,
     categories: Union[str, Iterable, None] = None,
     values: Union[str, Iterable, None] = None,
+    data: Optional[pd.DataFrame] = None,
     order: Optional[Iterable] = None,
     palette: Union[dict, Iterable, None] = None,
     alt_color: Union[Iterable, str] = "lightgrey",
@@ -70,9 +70,6 @@ def ridge(
 
     Parameters
     ----------
-    data : Optional[pd.DataFrame], optional
-        Input ``DataFrame``. If not provided, ``categories`` and ``values`` must be provided.
-
     categories : Union[str, Iterable, None], optional
         Category information. Can be any of the following:
           - if `data` is provided and `values` is not provided, `categories`
@@ -86,6 +83,9 @@ def ridge(
           - if `data` and `categories` are provided, `values` should be a column name in `data`
           - if `data` is not provided, `values` must be a list of values
         Note that `values` cannot be provided without `categories`.
+
+    data : Optional[pd.DataFrame], optional
+        Input ``DataFrame``. If not provided, ``categories`` and ``values`` must be provided.
 
     order : Optional[Iterable], optional
         Order of categories in the plot. If not provided, categories will be sorted using ``natsort``.
@@ -268,17 +268,7 @@ def ridge(
     category_label_xoffset = (xmax - xmin) * category_label_xoffset
     g.fig.subplots_adjust(hspace=adjust_hspace)
     g.set_titles("")
-    g.set(
-        xticks=range(
-            int(
-                np.floor(
-                    xmin,
-                )
-            ),
-            int(np.ceil(xmax)) + 1,
-            2,
-        )
-    )
+    g.set(xticks=range(int(np.floor(xmin,)), int(np.ceil(xmax)) + 1, 2,))
     g.set(xlim=(xmin - category_label_xoffset, xmax + 0.25))
     g.set(yticks=[])
     g.despine(bottom=True, left=True)
