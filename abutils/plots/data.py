@@ -154,49 +154,55 @@ class InputData:
         self.values_name = None
         self.categories_name = None
         self.hue_name = None
-        self._agg_method = agg_method
+        self.agg_method = agg_method
 
     @property
     def agg(self):
-        if callable(self._agg_method):
-            return self._agg_method
-        elif self._agg_method == "count":
+        if callable(self.agg_method):
+            return self.agg_method
+        elif self.agg_method == "count":
             return self._count
 
-    @property
-    def needs_aggragation(self):
-        """
-        Determines whether aggregation is needed.
+    # @property
+    # def needs_aggragation(self):
+    #     """
+    #     Determines whether aggregation is needed.
 
-        Note::
-        this should only be called after `load`, since certain cases (such as
-        when a ``dict` is provided as `values`) will cause this function to
-        incorrectly return ``True`` when aggregation is not needed.
-        """
-        if isinstance(self.x, (list, tuple)) and self.y is None:
-            return True
-        if isinstance(self.values, (list, tuple)) and self.categories is None:
-            return True
-        return False
+    #     Note::
+    #     this should only be called after `load`, since certain cases (such as
+    #     when a ``dict` is provided as `values`) will cause this function to
+    #     incorrectly return ``True`` when aggregation is not needed.
+    #     """
+    #     if isinstance(self.x, (list, tuple)) and self.y is None:
+    #         return True
+    #     if isinstance(self.values, (list, tuple)) and self.categories is None:
+    #         return True
+    #     return False
 
     def load(self):
         # reformat inputs if `x` or `categories` is a ``dict``
         if isinstance(self.input_x, dict):
-            self.x = list(self.input_x.keys())
-            self.y = list(self.input_x.values())
+            self.x_vals = list(self.input_x.keys())
+            self.y_vals = list(self.input_x.values())
         else:
-            self.x = self.input_x
-            self.y = self.input_y
+            self.x_vals = self.input_x
+            self.y_vals = self.input_y
         if isinstance(self.input_categories, dict):
-            self.categories = list(self.input_categories.keys())
-            self.values = list(self.input_categories.values())
+            self.categories_vals = list(self.input_categories.keys())
+            self.values_vals = list(self.input_categories.values())
         else:
-            self.categories = self.input_categories
-            self.values = self.input_values
+            self.categories_vals = self.input_categories
+            self.values_vals = self.input_values
         # read all of the input values (from either sequences or data)
         d = {}
         val_names = ["x", "y", "categories", "values", "hue"]
-        vals = [self.x, self.y, self.categories, self.values, self.hue]
+        vals = [
+            self.x_vals,
+            self.y_vals,
+            self.categories_vals,
+            self.values_vals,
+            self.hue_vals,
+        ]
         for val, name in zip(vals, val_names):
             if val is not None:
                 val_name, parsed_vals = self.parse_vals(val, name=name)
@@ -215,16 +221,25 @@ class InputData:
         for group in hue_groups:
             hue_data = {}
             if any([self.x_name is not None, self.y_name is not None]):
-                hue_x, hue_y = self.parse_xy(group, group, self.y)
+                hue_x, hue_y = self.parse_xy(data=group, x=self.x, y=self.y)
                 hue_data[self.x_name] = hue_x
                 hue_data[self.y_name] = hue_y
                 if self.input_hue is not None:
                     hue_val = group[self.hue_name].unique()[0]
                     hue_data[self.hue_name] = [hue_val] * len(hue_x)
             else:
-                self.categories, self.values = self.parse_catval(
-                    self.input_categories, self.input_values
+                hue_categories, hue_values = self.parse_catval(
+                    data=group,
+                    categories=self.input_categories,
+                    values=self.input_values,
                 )
+                hue_data[self.categories_name] = hue_categories
+                hue_data[self.values_name] = hue_values
+                if self.input_hue is not None:
+                    hue_val = group[self.hue_name].unique()[0]
+                    hue_data[self.hue_name] = [hue_val] * len(hue_x)
+            hue_dfs.append(pd.DataFrame(hue_data))
+        self.data = pd.concat(hue_dfs)
 
     def parse_xy(self, data, x, y):
         if y is None:
