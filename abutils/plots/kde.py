@@ -535,6 +535,7 @@ def kde(
         legend_params = {
             "loc": "best",
             "title": legend_title,
+            "title_fontize": legend_title_fontsize,
             "fontsize": legend_fontsize,
             "frameon": True,
         }
@@ -589,9 +590,7 @@ def kde(
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_xlabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
-                labelpad=cbar_title_labelpad,
+                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
             )
         else:
             if cbar_title_loc is None:
@@ -600,9 +599,7 @@ def kde(
             cbax.yaxis.set_ticks_position(ticks_position)
             cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
-                labelpad=cbar_title_labelpad,
+                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
             )
 
     # style the plot
