@@ -187,7 +187,15 @@ def scatter(
     cmap : str or matplotlib.color.Colormap, default='flare'
         Colormap to be used for continuous `hue` data.
 
-    zero_color : str or list of RGB(A) values
+    hue_min : float, default=0
+        Minimum value for `hue` when `hue` is continuous. Values below `hue_min` will be set to
+        `under_color`.
+
+    hue_max : float, default=1
+        Maximum value for `hue` when `hue` is continuous. Values at or above `hue_max` will
+        all be colored as the maxmum value in `cmap`.
+
+    under_color : str or list of RGB(A) values
         Separate color for ``0`` values when `hue` is continuous. By default, `cmap` is
         used for all values. An example use would be GEx plots for which visualization is
         improved if ``0`` values are more obviously distinguished from low count values.
@@ -544,9 +552,7 @@ def scatter(
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_xlabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
-                labelpad=cbar_title_labelpad,
+                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
             )
         else:
             if cbar_title_loc is None:
@@ -555,9 +561,7 @@ def scatter(
             cbax.yaxis.set_ticks_position(ticks_position)
             cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
-                labelpad=cbar_title_labelpad,
+                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
             )
 
     # style the plot
