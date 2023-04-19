@@ -24,5 +24,6 @@
 
 from .plots.bar import bar
 from .plots.donut import donut
+from .plots.kde import kde
 from .plots.ridge import ridge
 from .plots.scatter import scatter
