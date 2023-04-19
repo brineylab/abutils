@@ -81,6 +81,7 @@ def kde(
     highlight_alpha: float = 0.9,
     kde_kwargs: Optional[dict] = None,
     scatter_kwargs: Optional[dict] = None,
+    legend_marker_alpha: Optional[float] = None,
     legend_fontsize: Union[int, float] = 12,
     legend_title: Optional[str] = None,
     legend_title_fontsize: int = 14,
@@ -254,8 +255,16 @@ def kde(
     highlight_alpha : float, default=0.9
         Alpha of the highlight points.
 
-    plot_kwargs : dict, optional
+    scatter_kwargs : dict, optional
         Dictionary containing keyword arguments that will be passed to ``pyplot.scatter()``.
+
+    kde_kwargs : dict, optional
+        Dictionary containing keyword arguments that will be passed to ``seaborn.kdeplot()``.
+
+    legend_marker_alpha : float, default=None
+        Opacity for legend markers (or legend labels if `legend_on_data` is ``True``).
+        By default, legend markers will use `alpha` and legend labels will be completely
+        opaque, equivalent to `legend_marker_alpha` of ``1.0``.
 
     legend_fontsize : int or float, default=12
         Fontsize for legend labels.
@@ -371,6 +380,8 @@ def kde(
     df, x, y, hue = process_input_data(
         x=x, y=y, hue=hue, data=data, sequences=sequences
     )
+    if y is None:
+        show_scatter = False
 
     # figure size
     if figsize is None:
@@ -421,11 +432,13 @@ def kde(
     # support marker style assignment by list, so we'd need to make
     # a separate plt.scatter() call for each marker style
 
+    # init plot
+    if ax is None:
+        plt.figure(figsize=figsize)
+
     # kde kwargs
-    default_kde_kwargs = {"fill": True, "alpha": 0.5}
-    if kde_kwargs is not None:
-        default_kde_kwargs.update(kde_kwargs)
-    kde_kwargs = default_kde_kwargs
+    if kde_kwargs is None:
+        kde_kwargs = {}
     # scatter kwargs
     default_scatter_kwargs = {"linewidths": 0}
     if scatter_kwargs is not None:
@@ -535,7 +548,7 @@ def kde(
         legend_params = {
             "loc": "best",
             "title": legend_title,
-            "title_fontize": legend_title_fontsize,
+            "title_fontsize": legend_title_fontsize,
             "fontsize": legend_fontsize,
             "frameon": True,
         }
@@ -558,6 +571,7 @@ def kde(
                     [0],
                     marker=highlight_marker,
                     color="w",
+                    alpha=legend_marker_alpha,
                     mec=highlight_color,
                     mfc=highlight_color,
                     ms=highlight_size / 10,
@@ -590,7 +604,9 @@ def kde(
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_xlabel(
-                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
         else:
             if cbar_title_loc is None:
@@ -599,10 +615,24 @@ def kde(
             cbax.yaxis.set_ticks_position(ticks_position)
             cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
-                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
 
     # style the plot
+    # spines
+    if y is not None:
+        remove_spines = ["top", "right"]
+        outward_spines = ["left", "bottom"]
+    else:
+        remove_spines = ["top", "left", "right"]
+        outward_spines = []
+    for spine in remove_spines:
+        ax.spines[spine].set_visible(False)
+    for spine in outward_spines:
+        ax.spines[spine].set_position(("outward", 10))
+    # axis labels and ticklabels
     ax.set_xlabel(xlabel if xlabel is not None else x, fontsize=xlabel_fontsize)
     ax.set_ylabel(ylabel if ylabel is not None else y, fontsize=ylabel_fontsize)
     ax.tick_params(
@@ -611,10 +641,12 @@ def kde(
     ax.tick_params(
         axis="y", labelsize=ytick_labelsize, labelrotation=ytick_labelrotation
     )
+    # hide legend
     if hide_legend:
         l = ax.get_legend()
         if l is not None:
             l.remove()
+    # hide ticks
     if hide_ticks:
         ax.set_xticks([])
         ax.set_yticks([])
