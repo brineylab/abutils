@@ -79,19 +79,14 @@ def show_palettes() -> None:
 
     nrows = len(palettes)
     figh = 1 + (nrows + (nrows - 1) * 0.1) * 0.75
-    fig, axs = plt.subplots(
-        nrows=nrows + 1,
-        figsize=(6.4, figh),
-    )
+    fig, axs = plt.subplots(nrows=nrows + 1, figsize=(6.4, figh),)
     fig.subplots_adjust(
         top=1 - 0.35 / figh, bottom=0.15 / figh, left=0.2, right=0.99, hspace=0.6
     )
     for ax, name in zip(axs, palettes):
         cmap = ListedColormap(palettes[name])
         ax.imshow(
-            gradient,
-            aspect="auto",
-            cmap=cmap,
+            gradient, aspect="auto", cmap=cmap,
         )
         ax.text(
             -0.02,
@@ -170,7 +165,7 @@ def get_cmap(
     """
     if isinstance(c, Colormap):
         cmap = c
-    elif isinstance(c, str) and c in cm.cmap_d:
+    elif isinstance(c, str) and c in plt.colormaps():
         cmap = plt.get_cmap(c)
     elif dark:
         cmap = sns.dark_palette(c, as_cmap=True)
