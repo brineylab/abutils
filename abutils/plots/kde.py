@@ -424,6 +424,7 @@ def kde(
     else:
         hue_order = []
         hue_dict = {}
+        df["color"] = [color if color is not None else under_color] * df.shape[1]
 
     # markers
     # TODO: allow different markers that correspond to marker "categories"
