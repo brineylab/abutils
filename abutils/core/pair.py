@@ -92,7 +92,10 @@ class Pair(object):
         return not self == other
 
     def __hash__(self):
-        return hash((self.heavy, self.light))
+        name = self.name
+        heavy = self.heavy.sequence if self.heavy is not None else None
+        light = self.light.sequence if self.light is not None else None
+        return hash((name, heavy, light))
 
     @property
     def receptor(self):
@@ -812,4 +815,3 @@ def loose_vrc01_like(pair):
             # unknown format
             loose_vrc01_like = None
     return loose_vrc01_like
-

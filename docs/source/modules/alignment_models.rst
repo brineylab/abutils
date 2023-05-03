@@ -1,6 +1,6 @@
 models
 ===================
 
-.. autoclass:: abutils.utils.alignment.BaseAlignment
-.. autoclass:: abutils.utils.alignment.NWAlignment
-.. autoclass:: abutils.utils.alignment.SSWAlignment
+.. autoclass:: abutils.tools.alignment.LocalAlignment
+.. autoclass:: abutils.utils.alignment.GlobalAlignment
+.. autoclass:: abutils.utils.alignment.SemiGlobalAlignment

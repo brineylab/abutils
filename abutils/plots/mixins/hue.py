@@ -23,11 +23,10 @@
 #
 
 
-class HueMixin():
-
+class HueMixin:
     def is_continuous_hue(self):
         if self.hue is not None:
             hue_vals = self.df[self.hue]
             if all([isinstance(h, float) for h in hue_vals]):
                 return True
-            return False
+        return False

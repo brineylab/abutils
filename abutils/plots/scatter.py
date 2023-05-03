@@ -36,15 +36,22 @@ import seaborn as sns
 
 from natsort import natsorted
 
-from abutils.utils.color import get_cmap
+from .data import process_input_data
+from .utils import get_inset_axes_bounds
+from ..core.sequence import Sequence
+from ..utils.color import get_cmap
+
+
+__all__ = ["scatter"]
 
 
 def scatter(
-    x: Union[str, Iterable, None] = None,
-    y: Union[str, Iterable, None] = None,
+    x: Union[str, Iterable],
+    y: Union[str, Iterable],
     hue: Union[str, Iterable, None] = None,
     marker: str = "o",
     data: Optional[pd.DataFrame] = None,
+    sequences: Optional[Iterable[Sequence]] = None,
     hue_order: Optional[Iterable] = None,
     force_categorical_hue: bool = False,
     force_continuous_hue: bool = False,
@@ -132,8 +139,13 @@ def scatter(
               length as `x` and `y`.
 
     data : pandas.DataFrame, optional
-        A ``DataFrame`` object containing the input data. If provided, `x` and/or `y` should
+        A ``DataFrame`` object containing the input data. If provided, `x`, `y` and/or `hue` should
         be column names in `data`.
+
+    sequences : iterable of abutils.core.sequence.Sequence, optional
+        An iterable of ``Sequence`` objects. If provided, `x`, `y` and/or `hue` should be annotations
+        in the ``Sequence`` objects. Alternatively, `x`, `y` and/or `hue` can be an iterable of
+        values to be plotted, but must be the same length as `sequences`.
 
     hue_order : iterable object, optional
         List of `hue` categories in the order they should be plotted. If `hue_order` contains a
@@ -175,7 +187,15 @@ def scatter(
     cmap : str or matplotlib.color.Colormap, default='flare'
         Colormap to be used for continuous `hue` data.
 
-    zero_color : str or list of RGB(A) values
+    hue_min : float, default=0
+        Minimum value for `hue` when `hue` is continuous. Values below `hue_min` will be set to
+        `under_color`.
+
+    hue_max : float, default=1
+        Maximum value for `hue` when `hue` is continuous. Values at or above `hue_max` will
+        all be colored as the maxmum value in `cmap`.
+
+    under_color : str or list of RGB(A) values
         Separate color for ``0`` values when `hue` is continuous. By default, `cmap` is
         used for all values. An example use would be GEx plots for which visualization is
         improved if ``0`` values are more obviously distinguished from low count values.
@@ -351,27 +371,31 @@ def scatter(
 
     """
     # process input data
-    if data is None:
-        _data = {}
-        _data["x"] = x
-        x = "x"
-        _data["y"] = y
-        y = "y"
-        if hue is not None:
-            _data["hue"] = hue
-            hue = "hue"
-        df = pd.DataFrame(_data)
-    else:
-        df = data.copy()
-        if not isinstance(x, str) and len(x) == df.shape[0]:
-            df["x"] = x
-            x = "x"
-        if not isinstance(y, str) and len(y) == df.shape[0]:
-            df["y"] = y
-            y = "y"
-        if not isinstance(hue, str) and len(hue) == df.shape[0]:
-            df["hue"] = hue
-            hue = "hue"
+    # if data is None:
+    #     _data = {}
+    #     _data["x"] = x
+    #     x = "x"
+    #     _data["y"] = y
+    #     y = "y"
+    #     if hue is not None:
+    #         _data["hue"] = hue
+    #         hue = "hue"
+    #     df = pd.DataFrame(_data)
+    # else:
+    #     df = data.copy()
+    #     if not isinstance(x, str) and len(x) == df.shape[0]:
+    #         df["x"] = x
+    #         x = "x"
+    #     if not isinstance(y, str) and len(y) == df.shape[0]:
+    #         df["y"] = y
+    #         y = "y"
+    #     if hue is not None:
+    #         if not isinstance(hue, str) and len(hue) == df.shape[0]:
+    #             df["hue"] = hue
+    #             hue = "hue"
+    df, x, y, hue = process_input_data(
+        x=x, y=y, hue=hue, data=data, sequences=sequences
+    )
 
     # figure size
     if figsize is None:
@@ -528,9 +552,7 @@ def scatter(
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_xlabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
-                labelpad=cbar_title_labelpad,
+                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
             )
         else:
             if cbar_title_loc is None:
@@ -539,9 +561,7 @@ def scatter(
             cbax.yaxis.set_ticks_position(ticks_position)
             cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
-                cbar_title,
-                fontsize=cbar_title_fontsize,
-                labelpad=cbar_title_labelpad,
+                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
             )
 
     # style the plot
@@ -678,32 +698,32 @@ def scatter(
         return ax
 
 
-def get_inset_axes_bounds(loc, bbox_to_anchor, width, height):
-    if bbox_to_anchor is None:
-        loc_dict = {
-            "upper left": [0, 1 - height],
-            "upper center": [0.5 - width / 2, 1 - height],
-            "upper right": [1 - width, 1 - height],
-            "center left": [0, 0.5 - height / 2],
-            "center": [0.5 - width / 2, 0.5 - height / 2],
-            "center right": [1 - width, 0.5 - height / 2],
-            "lower left": [0, 0],
-            "lower center": [0.5 - width / 2, 0],
-            "lower right": [1 - width, 0],
-        }
-        x0, y0 = loc_dict.get(loc, [0, 0])
-    else:
-        x, y = bbox_to_anchor[:2]
-        loc_dict = {
-            "upper left": [x, y - height],
-            "upper center": [x - width / 2, y - height],
-            "upper right": [x - width, y - height],
-            "center left": [x, y - height / 2],
-            "center": [x - width / 2, y - height / 2],
-            "center right": [x - width, y - height / 2],
-            "lower left": [x, y],
-            "lower center": [x - width / 2, y],
-            "lower right": [x - width, y],
-        }
-        x0, y0 = loc_dict.get(loc, [0, 0])
-    return [x0, y0, width, height]
+# def get_inset_axes_bounds(loc, bbox_to_anchor, width, height):
+#     if bbox_to_anchor is None:
+#         loc_dict = {
+#             "upper left": [0, 1 - height],
+#             "upper center": [0.5 - width / 2, 1 - height],
+#             "upper right": [1 - width, 1 - height],
+#             "center left": [0, 0.5 - height / 2],
+#             "center": [0.5 - width / 2, 0.5 - height / 2],
+#             "center right": [1 - width, 0.5 - height / 2],
+#             "lower left": [0, 0],
+#             "lower center": [0.5 - width / 2, 0],
+#             "lower right": [1 - width, 0],
+#         }
+#         x0, y0 = loc_dict.get(loc, [0, 0])
+#     else:
+#         x, y = bbox_to_anchor[:2]
+#         loc_dict = {
+#             "upper left": [x, y - height],
+#             "upper center": [x - width / 2, y - height],
+#             "upper right": [x - width, y - height],
+#             "center left": [x, y - height / 2],
+#             "center": [x - width / 2, y - height / 2],
+#             "center right": [x - width, y - height / 2],
+#             "lower left": [x, y],
+#             "lower center": [x - width / 2, y],
+#             "lower right": [x - width, y],
+#         }
+#         x0, y0 = loc_dict.get(loc, [0, 0])
+#     return [x0, y0, width, height]
