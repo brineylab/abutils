@@ -124,9 +124,9 @@ def fasttree(
         make_dir(os.path.dirname(tree_file))
     # run FastTree
     if is_aa:
-        ft_cmd = "fasttree {} > {}".format(alignment_file, tree_file)
+        ft_cmd = f"{fasttree_bin} {alignment_file} > {tree_file}"
     else:
-        ft_cmd = "fasttree -nt {} > {}".format(alignment_file, tree_file)
+        ft_cmd = f"{fasttree_bin} -nt {alignment_file} > {tree_file}"
     ft = sp.Popen(ft_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = ft.communicate()
     if debug:
