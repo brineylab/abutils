@@ -165,7 +165,10 @@ def mafft(
     if reorder:
         aln_format += "--reorder "
     if mafft_bin is None:
-        mafft_bin = "mafft"
+        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        mafft_bin = os.path.join(
+            mod_dir, "bin/mafft_{}".format(platform.system().lower())
+        )
     mafft_cline = "{} --thread {} {}{} > {}".format(
         mafft_bin, threads, aln_format, ffile, alignment_file
     )
