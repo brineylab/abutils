@@ -251,13 +251,13 @@ def heatmap(
         https://matplotlib.org/stable/tutorials/colors/colormaps.html
     .. _Matplotlib Axes:
         https://matplotlib.org/stable/api/axes_api.html
+
     """
     # reformat data to a DataFrame
     if isinstance(data, pd.DataFrame):
         val_df = data.copy()
     else:
         val_df = pd.DataFrame(data)
-    n_rows, n_columns = val_df.shape
 
     # row lables and ordering
     if row_labels is not None:
@@ -284,6 +284,7 @@ def heatmap(
         val_df = val_df[column_labels]
 
     # clip, transform, and normalize the input data
+    n_rows, n_columns = val_df.shape
     val_data = val_df.to_numpy()
     clip_df = val_df.clip(lower=vmin, upper=vmax)
     transform_df = transform_values(clip_df, transform=transform)
@@ -293,16 +294,16 @@ def heatmap(
 
     # colors
     if row_colors is not None:
-        if (n_row_colors := len(row_colors)) != n_rows:
-            err = f"\nERROR: the number of row_colors must match the number of rows in the input dataset.\n"
+        if (n_row_colors := len(row_colors)) < n_rows:
+            err = f"\nERROR: the number of row_colors must be equal or greater to the number of rows in the input dataset.\n"
             err += f"The input dataset has {n_rows} rows, but {n_row_colors} colors were provided.\n"
             print(err)
             sys.exit()
         row_cmaps = [abutils.color.get_cmap(c) for c in row_colors]
         color_df = get_color_values(norm_df, cmap=row_cmaps, by_row=True)
     elif column_colors is not None:
-        if (n_column_colors := len(column_colors)) != n_columns:
-            err = f"\nERROR: the number of row_colors must match the number of rows in the input dataset.\n"
+        if (n_column_colors := len(column_colors)) < n_columns:
+            err = f"\nERROR: the number of row_colors must be equal or greater to the number of rows in the input dataset.\n"
             err += f"The input dataset has {n_columns} rows, but {n_column_colors} colors were provided.\n"
             print(err)
             sys.exit()
@@ -387,8 +388,8 @@ def heatmap(
     ax.spines[:].set_visible(False)
 
     # draw gridlines separating the heatmap boxes
-    ax.set_xticks(np.arange(data.shape[1] + 1) - 0.5, minor=True)
-    ax.set_yticks(np.arange(data.shape[0] + 1) - 0.5, minor=True)
+    ax.set_xticks(np.arange(val_df.shape[1] + 1) - 0.5, minor=True)
+    ax.set_yticks(np.arange(val_df.shape[0] + 1) - 0.5, minor=True)
     ax.grid(
         which="minor",
         color=linecolor,
