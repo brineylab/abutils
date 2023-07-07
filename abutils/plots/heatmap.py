@@ -40,8 +40,8 @@ def heatmap(
     color: Union[str, Iterable, mpl.colors.Colormap] = "Greys",
     row_colors: Optional[Iterable] = None,
     column_colors: Optional[Iterable] = None,
-    scale_color_by_row: bool = False,
-    scale_color_by_column: bool = False,
+    normalize_color_by_row: bool = False,
+    normalize_color_by_column: bool = False,
     transform: Optional[str] = None,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
@@ -94,7 +94,7 @@ def heatmap(
 
     row_colors : Optional[Iterable], optional
         A list of colors to use for each row. The number of colors must match the number of rows.
-        Each list item can be anything accepted by `color`. If `row_colors` is provided, 
+        Each list item can be anything accepted by `color`. If `row_colors` is provided,
         `color` will be ignored. Default is ``None``.
 
     column_colors : Optional[Iterable], optional
@@ -102,14 +102,14 @@ def heatmap(
         columns. Each list item can be anything accepted by `color`. If `column_colors` is
         provided, `color` will be ignored. Default is ``None``.
 
-    scale_color_by_row : bool, optional
-        If ``True``, the color values will be separately scaled for each row. 
-        If both `scale_color_by_row` and `scale_color_by_column` are ``False``, the color values
+    normalize_color_by_row : bool, optional
+        If ``True``, the color values will be separately scaled for each row.
+        If both `normalize_color_by_row` and `normalize_color_by_column` are ``False``, the color values
         will be scaled across the entire heatmap. Default is ``False``.
 
-    scale_color_by_column : bool, optional
-        If ``True``, the color values will be separately scaled for each column. 
-        If both `scale_color_by_row` and `scale_color_by_column` are ``False``, the color values
+    normalize_color_by_column : bool, optional
+        If ``True``, the color values will be separately scaled for each column.
+        If both `normalize_color_by_row` and `normalize_color_by_column` are ``False``, the color values
         will be scaled across the entire heatmap. Default is ``False``.
 
     transform : Optional[str], optional
@@ -183,9 +183,9 @@ def heatmap(
         The font weight of the values. Default is ``'normal'``.
 
     values_color : Union[str, Iterable], optional
-        The color of the values. Can be a color string, either from 
-        `Matplotlib's set of named colors`_ or a hex color value, or a list of RGB(A) 
-        values. Default is ``None``, which will use `values_lightcolor` 
+        The color of the values. Can be a color string, either from
+        `Matplotlib's set of named colors`_ or a hex color value, or a list of RGB(A)
+        values. Default is ``None``, which will use `values_lightcolor`
         for dark backgrounds and `values_darkcolor` for light backgrounds.
 
     values_lightcolor : Union[str, Iterable]
@@ -223,7 +223,7 @@ def heatmap(
         Default is ``'#FFFFFF'`` (white).
 
     linestyle : str, optional
-        The style of the lines that will divide each box. Default is ``'-'``, which is a 
+        The style of the lines that will divide each box. Default is ``'-'``, which is a
         solid line.
 
     ax : Optional[mpl.axes.Axes], optional
@@ -235,7 +235,7 @@ def heatmap(
         the dimensions of the input data to infer an appropriate size.
 
     figfile : Optional[str], optional
-        The path to save the figure to. If ``None``, the figure will not be saved and 
+        The path to save the figure to. If ``None``, the figure will not be saved and
         the figure ``Axes`` will be returned. Default is ``None``.
 
     Returns
@@ -257,14 +257,38 @@ def heatmap(
         val_df = data.copy()
     else:
         val_df = pd.DataFrame(data)
-    val_data = val_df.to_numpy()
     n_rows, n_columns = val_df.shape
 
+    # row lables and ordering
+    if row_labels is not None:
+        if (n_row_labels := len(row_labels)) != val_df.shape[0]:
+            err = f"\nERROR: the number of row_labels must match the number of rows in the input dataset.\n"
+            err += f"The input dataset has {n_rows} rows, but {n_row_labels} labels were provided.\n"
+            print(err)
+            sys.exit()
+        val_df.index = row_labels
+    if row_order is not None:
+        row_labels = [r for r in row_order if r in val_df.index.values]
+        val_df = val_df.loc[row_labels]
+
+    # column labels and ordering
+    if column_labels is not None:
+        if (n_column_labels := len(column_labels)) != val_df.shape[1]:
+            err = f"\nERROR: the number of column_labels must match the number of columns in the input dataset.\n"
+            err += f"The input dataset has {n_columns} columns, but {n_column_labels} labels were provided.\n"
+            print(err)
+            sys.exit()
+        val_df.columns = column_labels
+    if column_order is not None:
+        column_labels = [c for c in column_order if c in val_df.columns.values]
+        val_df = val_df[column_labels]
+
     # clip, transform, and normalize the input data
+    val_data = val_df.to_numpy()
     clip_df = val_df.clip(lower=vmin, upper=vmax)
     transform_df = transform_values(clip_df, transform=transform)
     norm_df = normalize_values(
-        transform_df, by_row=scale_color_by_row, by_column=scale_color_by_column
+        transform_df, by_row=normalize_color_by_row, by_column=normalize_color_by_column
     )
 
     # colors
@@ -299,12 +323,10 @@ def heatmap(
     # set figsize and aspect
     if figsize is None:
         figsize = np.array(color_df.shape[::-1]) / 2
-        # figsize = color_df.shape
     plt.figure(figsize=figsize)
-    aspect = "equal" if square else "auto"
 
     # plot
-    im = plt.imshow(color_data, aspect=aspect)
+    im = plt.imshow(color_data, aspect="equal" if square else "auto")
     ax = plt.gca()
 
     # row label positions
@@ -313,19 +335,19 @@ def heatmap(
         labelright = True
         tickleft = False
         tickright = True if show_row_ticks else False
-        row_label_ha = "left"
     else:
         labelleft = True
         labelright = False
         tickleft = True if show_row_ticks else False
         tickright = False
-        row_label_ha = "right"
     # row labels
     if row_labels is None:
         row_labels = val_df.index.values
     ax.set_yticks(np.arange(val_df.shape[0]), labels=row_labels)
     ax.tick_params(
-        axis="y", labelrotation=row_label_rotation, labelsize=row_label_fontsize,
+        axis="y",
+        labelrotation=row_label_rotation,
+        labelsize=row_label_fontsize,
     )
 
     # column label positions
@@ -334,19 +356,19 @@ def heatmap(
         labelbottom = False
         ticktop = True if show_column_ticks else False
         tickbottom = False
-        column_label_ha = "left"
     else:
         labeltop = False
         labelbottom = True
         ticktop = False
         tickbottom = True if show_column_ticks else False
-        column_label_ha = "right"
     # column labels
     if column_labels is None:
         column_labels = val_df.columns.values
     ax.set_xticks(np.arange(val_df.shape[1]), labels=column_labels)
     ax.tick_params(
-        axis="x", labelrotation=column_label_rotation, labelsize=column_label_fontsize,
+        axis="x",
+        labelrotation=column_label_rotation,
+        labelsize=column_label_fontsize,
     )
 
     # show/hide ticks and labels
@@ -368,25 +390,26 @@ def heatmap(
     ax.set_xticks(np.arange(data.shape[1] + 1) - 0.5, minor=True)
     ax.set_yticks(np.arange(data.shape[0] + 1) - 0.5, minor=True)
     ax.grid(
-        which="minor", color=linecolor, linestyle=linestyle, linewidth=linewidth,
+        which="minor",
+        color=linecolor,
+        linestyle=linestyle,
+        linewidth=linewidth,
     )
-    ax.tick_params(which="minor", bottom=False, left=False)
+    ax.tick_params(which="minor", bottom=False, left=False, top=False, right=False)
 
     # show values
     if show_values:
-
-        # Normalize the threshold to the values
+        # set the threshold for light/dark text
         if values_color_threshold is not None:
             threshold = values_color_threshold
         else:
             threshold = val_data.max() / 2
 
-        # Get the formatter in case a string is supplied
+        # get the string formatter for the values
         if isinstance(values_fmt, str):
             values_fmt = mpl.ticker.StrMethodFormatter(values_fmt)
 
-        # Loop over the data and create a `Text` for each "pixel".
-        # Change the text's color depending on the data.
+        # write the values
         lightcolor = values_color if values_color is not None else values_lightcolor
         darkcolor = values_color if values_color is not None else values_darkcolor
         for i in range(val_data.shape[0]):
@@ -403,7 +426,7 @@ def heatmap(
                     fontweight=values_fontweight,
                 )
 
-    # save or return ax
+    # save or return
     if figfile is not None:
         plt.tight_layout()
         plt.savefig(figfile)
@@ -414,12 +437,12 @@ def heatmap(
 def transform_values(df: pd.DataFrame, transform: Optional[str] = None) -> pd.DataFrame:
     """
     Performs log transformation on a DataFrame.
-    
+
     Parameters
     ----------
     df : pd.DataFrame
         Untransformed data.
-        
+
     transform : str, default=None
         Name of the transformation to be performed, as a ``str``. Options are:
             * ``"log"``: natural log
@@ -427,11 +450,11 @@ def transform_values(df: pd.DataFrame, transform: Optional[str] = None) -> pd.Da
             * ``"log10"``: log base 10
             * ``"linear"``: no transformation
         Default is ``None``, which results in no transformation.
-        
+
     Returns
     -------
     transform_df : pd.DataFrame
-    
+
     """
     df = df.copy()
     if transform is None:
@@ -599,7 +622,7 @@ def get_colors_by_row(
     Returns
     -------
     color_df : pd.DataFrame
-        DataFrame containing colors for each value in ``df``. 
+        DataFrame containing colors for each value in ``df``.
     """
     df = get_colors_by_column(df.T, cmaps=cmaps)
     return df.T
