@@ -79,14 +79,19 @@ def show_palettes() -> None:
 
     nrows = len(palettes)
     figh = 1 + (nrows + (nrows - 1) * 0.1) * 0.75
-    fig, axs = plt.subplots(nrows=nrows + 1, figsize=(6.4, figh),)
+    fig, axs = plt.subplots(
+        nrows=nrows + 1,
+        figsize=(6.4, figh),
+    )
     fig.subplots_adjust(
         top=1 - 0.35 / figh, bottom=0.15 / figh, left=0.2, right=0.99, hspace=0.6
     )
     for ax, name in zip(axs, palettes):
         cmap = ListedColormap(palettes[name])
         ax.imshow(
-            gradient, aspect="auto", cmap=cmap,
+            gradient,
+            aspect="auto",
+            cmap=cmap,
         )
         ax.text(
             -0.02,
@@ -121,8 +126,9 @@ def get_cmap(
     c : ``str``, ``Colormap`` or ``tuple``
         Can be one of several things:
             * matplotlib ``Colormap``
+            * the name of a matplotlib ``Colormap`` (e.g. ``'viridis'``)
             * hex code
-            * `Matplotlib color`_
+            * a `matplotlib color`_
             * RGB tuple
         If a single color is provided, a ``Colormap`` will be built from
         white to the provided color (or from the color to black if `dark`
