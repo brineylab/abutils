@@ -270,8 +270,8 @@ class PlotData:
 
     def transform(
         self,
-        subset: Union[Iterable, str, None] = None,
         func: Union[Callable, str, None] = None,
+        subset: Union[Iterable, str, None] = None,
         use_raw: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
