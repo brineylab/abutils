@@ -32,7 +32,8 @@ import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import abutils
+from .models.data import PlotData
+from ..utils.color import get_cmap
 
 
 def heatmap(
@@ -40,9 +41,12 @@ def heatmap(
     color: Union[str, Iterable, mpl.colors.Colormap] = "Greys",
     row_colors: Optional[Iterable] = None,
     column_colors: Optional[Iterable] = None,
-    normalize_color_by_row: bool = False,
-    normalize_color_by_column: bool = False,
+    scale_color_by_row: bool = False,
+    scale_color_by_column: bool = False,
     transform: Optional[str] = None,
+    norm: bool = False,
+    percent: bool = False,
+    norm_axis: Union[int, str] = "columns",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     row_order: Optional[Iterable] = None,
@@ -58,8 +62,8 @@ def heatmap(
     column_label_fontsize: float = 14.0,
     show_column_ticks: bool = False,
     show_values: bool = False,
-    values_fmt: Union[str, mpl.ticker.Formatter] = "{x:0.2f}",
-    values_fontsize: float = 8.0,
+    values_fmt: Union[str, mpl.ticker.Formatter] = "{x:0.1f}",
+    values_fontsize: float = 9.0,
     values_fontweight: str = "normal",
     values_color: Union[str, Iterable, None] = None,
     values_lightcolor: Union[str, Iterable] = "#FFFFFF",
@@ -102,14 +106,14 @@ def heatmap(
         columns. Each list item can be anything accepted by `color`. If `column_colors` is
         provided, `color` will be ignored. Default is ``None``.
 
-    normalize_color_by_row : bool, optional
+    scale_color_by_row : bool, optional
         If ``True``, the color values will be separately scaled for each row.
-        If both `normalize_color_by_row` and `normalize_color_by_column` are ``False``, the color values
+        If both `scale_color_by_row` and `scale_color_by_column` are ``False``, the color values
         will be scaled across the entire heatmap. Default is ``False``.
 
-    normalize_color_by_column : bool, optional
+    scale_color_by_column : bool, optional
         If ``True``, the color values will be separately scaled for each column.
-        If both `normalize_color_by_row` and `normalize_color_by_column` are ``False``, the color values
+        If both `scale_color_by_row` and `scale_color_by_column` are ``False``, the color values
         will be scaled across the entire heatmap. Default is ``False``.
 
     transform : Optional[str], optional
@@ -253,44 +257,35 @@ def heatmap(
         https://matplotlib.org/stable/api/axes_api.html
 
     """
-    # reformat data to a DataFrame
-    if isinstance(data, pd.DataFrame):
-        val_df = data.copy()
-    else:
-        val_df = pd.DataFrame(data)
+    data = PlotData(data=data, column_labels=column_labels, row_labels=row_labels,)
 
-    # row lables and ordering
-    if row_labels is not None:
-        if (n_row_labels := len(row_labels)) != val_df.shape[0]:
-            err = f"\nERROR: the number of row_labels must match the number of rows in the input dataset.\n"
-            err += f"The input dataset has {n_rows} rows, but {n_row_labels} labels were provided.\n"
-            print(err)
-            sys.exit()
-        val_df.index = row_labels
-    if row_order is not None:
-        row_labels = [r for r in row_order if r in val_df.index.values]
-        val_df = val_df.loc[row_labels]
+    # reorder data
+    data.reorder(row_order=row_order, column_order=column_order)
+    column_labels = data.df.columns.values.tolist()
+    row_labels = data.df.index.values.tolist()
 
-    # column labels and ordering
-    if column_labels is not None:
-        if (n_column_labels := len(column_labels)) != val_df.shape[1]:
-            err = f"\nERROR: the number of column_labels must match the number of columns in the input dataset.\n"
-            err += f"The input dataset has {n_columns} columns, but {n_column_labels} labels were provided.\n"
-            print(err)
-            sys.exit()
-        val_df.columns = column_labels
-    if column_order is not None:
-        column_labels = [c for c in column_order if c in val_df.columns.values]
-        val_df = val_df[column_labels]
+    # norm
+    if norm or percent:
+        data.norm(axis=norm_axis, as_percent=percent)
 
-    # clip, transform, and normalize the input data
-    n_rows, n_columns = val_df.shape
+    # freeze values
+    val_df = data.df.copy()
     val_data = val_df.to_numpy()
-    clip_df = val_df.clip(lower=vmin, upper=vmax)
-    transform_df = transform_values(clip_df, transform=transform)
-    norm_df = normalize_values(
-        transform_df, by_row=normalize_color_by_row, by_column=normalize_color_by_column
-    )
+    n_rows, n_columns = val_df.shape
+
+    # clip data
+    data.clip(lower=vmin, upper=vmax)
+
+    # transform
+    data.transform(func=transform)
+
+    # scale
+    if scale_color_by_row:
+        data.scale(axis="rows")
+    elif scale_color_by_column:
+        data.scale(axis="columns")
+    else:
+        data.scale()
 
     # colors
     if row_colors is not None:
@@ -299,19 +294,19 @@ def heatmap(
             err += f"The input dataset has {n_rows} rows, but {n_row_colors} colors were provided.\n"
             print(err)
             sys.exit()
-        row_cmaps = [abutils.color.get_cmap(c) for c in row_colors]
-        color_df = get_color_values(norm_df, cmap=row_cmaps, by_row=True)
+        row_cmaps = [get_cmap(c) for c in row_colors]
+        color_df = get_color_values(data.df, cmap=row_cmaps, by_row=True)
     elif column_colors is not None:
         if (n_column_colors := len(column_colors)) < n_columns:
             err = f"\nERROR: the number of row_colors must be equal or greater to the number of rows in the input dataset.\n"
             err += f"The input dataset has {n_columns} rows, but {n_column_colors} colors were provided.\n"
             print(err)
             sys.exit()
-        column_cmaps = [abutils.color.get_cmap(c) for c in column_colors]
-        color_df = get_color_values(norm_df, cmap=column_cmaps, by_column=True)
+        column_cmaps = [get_cmap(c) for c in column_colors]
+        color_df = get_color_values(data.df, cmap=column_cmaps, by_column=True)
     else:
-        cmap = abutils.color.get_cmap(color)
-        color_df = get_color_values(norm_df, cmap=cmap)
+        cmap = get_cmap(color)
+        color_df = get_color_values(data.df, cmap=cmap)
 
     # reformat the color data
     #
@@ -346,9 +341,7 @@ def heatmap(
         row_labels = val_df.index.values
     ax.set_yticks(np.arange(val_df.shape[0]), labels=row_labels)
     ax.tick_params(
-        axis="y",
-        labelrotation=row_label_rotation,
-        labelsize=row_label_fontsize,
+        axis="y", labelrotation=row_label_rotation, labelsize=row_label_fontsize,
     )
 
     # column label positions
@@ -367,9 +360,7 @@ def heatmap(
         column_labels = val_df.columns.values
     ax.set_xticks(np.arange(val_df.shape[1]), labels=column_labels)
     ax.tick_params(
-        axis="x",
-        labelrotation=column_label_rotation,
-        labelsize=column_label_fontsize,
+        axis="x", labelrotation=column_label_rotation, labelsize=column_label_fontsize,
     )
 
     # show/hide ticks and labels
@@ -391,10 +382,7 @@ def heatmap(
     ax.set_xticks(np.arange(val_df.shape[1] + 1) - 0.5, minor=True)
     ax.set_yticks(np.arange(val_df.shape[0] + 1) - 0.5, minor=True)
     ax.grid(
-        which="minor",
-        color=linecolor,
-        linestyle=linestyle,
-        linewidth=linewidth,
+        which="minor", color=linecolor, linestyle=linestyle, linewidth=linewidth,
     )
     ax.tick_params(which="minor", bottom=False, left=False, top=False, right=False)
 
@@ -433,114 +421,6 @@ def heatmap(
         plt.savefig(figfile)
     else:
         return ax
-
-
-def transform_values(df: pd.DataFrame, transform: Optional[str] = None) -> pd.DataFrame:
-    """
-    Performs log transformation on a DataFrame.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Untransformed data.
-
-    transform : str, default=None
-        Name of the transformation to be performed, as a ``str``. Options are:
-            * ``"log"``: natural log
-            * ``"log2"``: log base 2
-            * ``"log10"``: log base 10
-            * ``"linear"``: no transformation
-        Default is ``None``, which results in no transformation.
-
-    Returns
-    -------
-    transform_df : pd.DataFrame
-
-    """
-    df = df.copy()
-    if transform is None:
-        transform_func = lambda x: x
-    else:
-        transform = transform.lower()
-        if transform == "log":
-            transform_func = np.log
-        elif transform == "log10":
-            transform_func = np.log10
-        elif transform == "log2":
-            transform_func = np.log2
-        else:
-            transform_func = lambda x: x
-    for c in df.columns:
-        df[c] = transform_func(df[c])
-    return df
-
-
-def normalize_values(
-    df: pd.DataFrame, by_row: bool = False, by_column: bool = False
-) -> pd.DataFrame:
-    """
-    Normalizes values in a DataFrame.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Data to be normalized.
-
-    by_row : bool, default=False
-        If ``True``, normalize by row. If both `by_row and `by_column` are
-        ``False``, normalize by the entire DataFrame.
-
-    by_column : bool, default=False
-        If ``True``, normalize by column. If both `by_row and `by_column` are
-        ``False``, normalize by the entire DataFrame.
-
-    Returns
-    -------
-    norm_df : pd.DataFrame
-        Normalized data.
-    """
-    if by_row:
-        return normalize_by_row(df)
-    elif by_column:
-        return normalize_by_column(df)
-    else:
-        return (df - df.min()) / (df.max() - df.min())
-
-
-def normalize_by_column(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Normalizes values in a DataFrame by column.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Data to be normalized.
-
-    Returns
-    -------
-    norm_df : pd.DataFrame
-    """
-    norm_df = df.copy()
-    for c in df.columns:
-        norm_df[c] = (df[c] - df[c].min()) / (df[c].max() - df[c].min())
-    return norm_df
-
-
-def normalize_by_row(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Normalizes values in a DataFrame by row.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Data to be normalized.
-
-    Returns
-    -------
-    norm_df : pd.DataFrame
-    """
-    norm_df = normalize_by_column(df.T)
-    return norm_df.T
 
 
 def get_color_values(
