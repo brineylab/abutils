@@ -43,7 +43,7 @@ from Bio import Phylo
 
 from abstar.core.germline import get_imgt_germlines
 
-from ..core.sequence import Sequence, to_fasta
+from ..core.sequence import Sequence, to_fasta, read_fasta
 from ..utils.alignment import mafft
 from ..tools.cluster import cluster
 from ..utils.pipeline import make_dir
@@ -444,10 +444,7 @@ class Phylogeny:
         """
         sequences = deepcopy(sequences)
         sequences = [
-            Sequence(
-                s[self.seq_key],
-                id=self.sanitize_name(s[self.id_key]),
-            )
+            Sequence(s[self.seq_key], id=self.sanitize_name(s[self.id_key]),)
             for s in sequences
         ]
         return sequences
@@ -806,11 +803,7 @@ class Phylogeny:
         ax = plt.gca()
         # plot parameters
         size_func = lambda k: self.get_size(
-            k.name,
-            size=size,
-            default=1,
-            min_size=min_size,
-            multiplier=size_multiplier,
+            k.name, size=size, default=1, min_size=min_size, multiplier=size_multiplier,
         )
         color_func = lambda k: self.get_color(k.name, color=color, default="black")
         branch_color_func = lambda k: self.get_branch_color(
@@ -918,7 +911,7 @@ class Phylogeny:
 
 
 def phylogeny(
-    sequences: Iterable[Sequence],
+    sequences: Union[str, Iterable[Sequence]],
     name: Optional[str] = None,
     root: Optional[Union[str, Sequence]] = None,
     cluster: bool = True,
@@ -932,8 +925,9 @@ def phylogeny(
 
     Parameters
     ----------
-    sequences : list of Sequence
-        A list of ``abutils.Sequence`` objects. Required.
+    sequences : str or list of Sequence
+        A list of ``abutils.Sequence`` objects or the path to a FASTA-formatted file. 
+        Required.
 
     name : str, default=None
         Name of the lineage. If not provided, a random name will be generated
@@ -970,6 +964,8 @@ def phylogeny(
     phylogeny : Phylogeny
         An ``abutils.Phylogeny`` object.
     """
+    if isinstance(sequences, str):
+        sequences = read_fasta(sequences)
     return Phylogeny(
         sequences=sequences,
         name=name,
@@ -1019,19 +1015,9 @@ def align_marker(
 
     """
     if isinstance(halign, str):
-        halign = {
-            "right": -1.0,
-            "middle": 0.0,
-            "center": 0.0,
-            "left": 1.0,
-        }[halign]
+        halign = {"right": -1.0, "middle": 0.0, "center": 0.0, "left": 1.0,}[halign]
     if isinstance(valign, str):
-        valign = {
-            "top": -1.0,
-            "middle": 0.0,
-            "center": 0.0,
-            "bottom": 1.0,
-        }[valign]
+        valign = {"top": -1.0, "middle": 0.0, "center": 0.0, "bottom": 1.0,}[valign]
     m = markers.MarkerStyle(marker)
     m_arr = m.get_path().transformed(m.get_transform()).vertices
     m_arr[:, 0] += halign / 2
