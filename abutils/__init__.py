@@ -3,9 +3,12 @@
 
 import os
 
-from . import tl
-from . import pl
+from . import cl
 from . import io
+from . import pl
+from . import tl
+
+from . import cl as color
 
 from .core import lineage, pair, sequence
 from .core.sequence import Sequence
@@ -17,7 +20,7 @@ from .tools.phylo import Phylogeny
 from .utils import (
     alignment,
     cluster,
-    color,
+    # color,
     decorators,
     jobs,
     log,
