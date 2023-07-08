@@ -101,7 +101,7 @@ class PlotData:
         self.df = self.raw_df.copy()
 
     @property
-    def transform_funcs(self):
+    def transform_funcs(self) -> dict:
         funcs = {
             "log": np.log,
             "log2": np.log2,
@@ -113,7 +113,7 @@ class PlotData:
         return funcs
 
     @property
-    def agg_funcs(self):
+    def agg_funcs(self) -> dict:
         funcs = {
             "mean": "mean",
             "average": "mean",
@@ -409,7 +409,7 @@ class PlotData:
             elif not callable(a):
                 agg_block = "\n  - ".join(self.agg_funcs.keys())
                 err = f"\nERROR: invalid aggregation function.\n"
-                err += f"<agg> must be a callable function or the name of a built-in aggregation function.\n"
+                err += f"<agg> must be a function or the name of a built-in aggregation function.\n"
                 err += f"Built-in options are: {agg_block}\n"
                 err + +f"You provided: '{a}'\n"
                 print(err)
