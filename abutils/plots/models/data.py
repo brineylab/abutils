@@ -31,8 +31,6 @@ import pandas as pd
 
 from scipy import stats
 
-from natsort import natsorted
-
 
 class PlotData:
     """
@@ -301,6 +299,46 @@ class PlotData:
         # transform
         for c in subset:
             df[c] = func(df[c])
+
+        # update or return
+        if inplace:
+            self.df = df
+        else:
+            return df
+
+    def clip(
+        self,
+        lower: Union[int, float, None] = None,
+        upper: Union[int, float, None] = None,
+        axis: Union[int, str, None] = None,
+        subset: Union[Iterable, str, None] = None,
+        use_raw: bool = False,
+        inplace: bool = True,
+    ) -> Optional[pd.DataFrame]:
+        """ """
+        df = self.raw_df.copy() if use_raw else self.df.copy()
+        if isinstance(subset, str):
+            subset = [subset]
+
+        # clip across the entire entire dataframe
+        if axis is None:
+            df = df.clip(lower=lower, upper=upper)
+
+        # clip each column separately
+        if axis in [0, "columns", "column"]:
+            subset = subset if subset is not None else df.columns
+            subset = [s for s in subset if s in df.columns]
+            for c in subset:
+                df[c] = df[c].clip(lower=lower, upper=upper)
+
+        # scale each row separately
+        if axis in [1, "rows", "row"]:
+            df = df.T
+            subset = subset if subset is not None else df.columns
+            subset = [s for s in subset if s in df.columns]
+            for c in subset:
+                df[c] = df[c].clip(lower=lower, upper=upper)
+            df = df.T
 
         # update or return
         if inplace:
