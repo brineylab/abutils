@@ -320,9 +320,27 @@ class PlotData:
     ) -> Optional[pd.DataFrame]:
         """ """
         df = self.raw_df.copy() if use_raw else self.df.copy()
+
+        # reorder based on row/column values
         if by is not None:
             if axis in [0, "columns", "column"]:
                 df = df.sort_values(by=by, axis=0, ascending=ascending)
+            if axis in [1, "rows", "row"]:
+                df = df.sort_values(by=by, axis=1, ascending=ascending)
+
+        # reorder based on column names
+        if column_order is not None:
+            df = df[column_order]
+
+        # reorder based on row names (index)
+        if row_order is not None:
+            df = df.loc[row_order]
+
+        # update or return
+        if inplace:
+            self.df = df
+        else:
+            return df
 
     def to_squareform(
         self,
@@ -330,8 +348,6 @@ class PlotData:
         columns: Optional[str] = None,
         values: Optional[str] = None,
         agg: Union[Iterable, Callable, str] = "size",
-        column_order: Optional[Iterable] = None,
-        row_order: Optional[Iterable] = None,
         use_raw: bool = False,
         reset_index: bool = False,
         inplace: bool = True,
@@ -379,14 +395,6 @@ class PlotData:
 
         # pivot to squareform
         sq_df = agg_df.unstack()
-        if column_order is not None:
-            sq_df = sq_df[column_order]
-        else:
-            sq_df = sq_df[natsorted(sq_df.columns)]
-        if row_order is not None:
-            sq_df = sq_df.loc[row_order]
-        else:
-            sq_df = sq_df.loc[natsorted(sq_df.index)]
         if reset_index:
             sq_df.reset_index(inplace=True)
 
