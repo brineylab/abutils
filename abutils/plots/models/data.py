@@ -34,17 +34,6 @@ from scipy import stats
 from natsort import natsorted
 
 
-import sys
-from typing import Callable, Iterable, Optional, Union
-
-import numpy as np
-import pandas as pd
-
-from scipy import stats
-
-from natsort import natsorted
-
-
 class PlotData:
     """
     Provides methods for processing input data.
@@ -318,6 +307,22 @@ class PlotData:
             self.df = df
         else:
             return df
+
+    def reorder(
+        self,
+        by: Union[Iterable, str, None] = None,
+        axis: Union[int, str] = "rows",
+        row_order: Optional[Iterable] = None,
+        column_order: Optional[Iterable] = None,
+        ascending: bool = True,
+        use_raw: bool = False,
+        inplace: bool = True,
+    ) -> Optional[pd.DataFrame]:
+        """ """
+        df = self.raw_df.copy() if use_raw else self.df.copy()
+        if by is not None:
+            if axis in [0, "columns", "column"]:
+                df = df.sort_values(by=by, axis=0, ascending=ascending)
 
     def to_squareform(
         self,
