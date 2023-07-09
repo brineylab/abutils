@@ -157,7 +157,9 @@ class PlotData:
         column_labels: Optional[Iterable] = None,
         row_labels: Optional[Iterable] = None,
     ) -> pd.DataFrame:
-        """ """
+        """
+        Reads input datasets and returns a ``DataFrame`` containing x, y, and hue data.
+        """
         # input can be provided as iterables passed to x, y and/or hue
         # the column names for x, y and hue are set to 'x', 'y', and 'hue', respectively
         if all([data is None, sequences is None]):
@@ -220,7 +222,14 @@ class PlotData:
         use_raw: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """ """
+        """
+        Drop missing or NA values from the data. Default settings will drop all rows with any
+        missing values. See the `pandas.DataFrame.dropna`_ documentation for more information.
+
+        .. _pandas.DataFrame.dropna:
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.dropna.html
+
+        """
         df = self.raw_df.copy() if use_raw else self.df.copy()
         df.dropna(axis=axis, how=how, thresh=thresh, subset=subset, inplace=True)
         if inplace:
@@ -236,7 +245,38 @@ class PlotData:
         use_raw: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """ """
+        """
+        Normalize the data. By default, each column is normalized to sum to 1.
+
+        Parameters
+        ----------
+        subset : Union[Iterable, str, None]
+            The columns or rows to normalize. If ``None``, all columns or rows will be normalized.
+            Default is ``None``.
+
+        axis : Union[int, str]
+            The axis to normalize. If ``0``, ``"column"``, or ``"columns"``, each column will
+            be  normalized. If ``1``, ``"row"``, or ``"rows"``, each row will be normalized.
+            Default is ``"columns"``.
+
+        as_percent : bool
+            If ``True``, the data will be multiplied by ``100`` after normalization. Default is
+            ``False``.
+
+        use_raw : bool
+            If ``True``, the raw data will be normalized. Otherwise, the processed data will be
+            normalized. Default is ``False``.
+
+        inplace : bool
+            If ``True``, the normalized data will replace ``self.df``. Otherwise, the normalized
+            ``DataFrame`` will be returned. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, the normalized ``DataFrame`` will be returned.
+
+        """
         df = self.raw_df.copy() if use_raw else self.df.copy()
         if isinstance(subset, str):
             subset = [subset]
@@ -271,7 +311,37 @@ class PlotData:
         use_raw: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """ """
+        """
+        Scale the data to be between 0 and 1. By default, the entire dataset is scaled
+        according to the global minimum and maximum values in the dataset. Alternatively, each
+        column or row can be scaled separately.
+
+        Parameters
+        ----------
+        subset : Union[Iterable, str, None]
+            The columns or rows to scale. Can be either a single row/column name, or an iterable
+            of row/column names. If ``None``, all columns or rows will be scaled. Default is
+            ``None``.
+
+        axis : Union[int, str, None]
+            The axis to scale. If ``0``, ``"column"``, or ``"columns"``, each column will be
+            scaled separately. If ``1``, ``"row"``, or ``"rows"``, each row will be scaled separately.
+            If ``None``, the entire dataset will be scaled. Default is ``None``.
+
+        use_raw : bool
+            If ``True``, the raw data will be scaled. Otherwise, the processed data will be scaled.
+            Default is ``False``.
+
+        inplace : bool
+            If ``True``, the scaled data will replace ``self.df``. Otherwise, the scaled
+            ``DataFrame`` will be returned. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, the scaled ``DataFrame`` will be returned.
+
+        """
         df = self.raw_df.copy() if use_raw else self.df.copy()
         if isinstance(subset, str):
             subset = [subset]
@@ -309,7 +379,41 @@ class PlotData:
         use_raw: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """ """
+        """
+        Transform the data (log, expoonential, etc). By default, the function is applied
+        to all columns the dataset. Alternatively, a subset of columns can be transformed.
+
+        Parameters
+        ----------
+        func : Union[Callable, str, None]
+            The function to apply to the data. If ``None``, the data will not be transformed.
+            If a string, the function must be one of the following:
+                * ``"log"``: natural log
+                * ``"log10"``: log base 10
+                * ``"log2"``: log base 2
+                * ``"log1p"``: natural log of (value + 1)
+                * ``"exp"``: exponential
+                * ``"linear"``: no transformation
+
+        subset : Union[Iterable, str, None]
+            The columns to transform. Can be either a single column name, or an iterable
+            of column names. If ``None``, all columns will be transformed. Default is
+            ``None``.
+
+        use_raw : bool
+            If ``True``, the raw data will be transformed. Otherwise, the processed data will be
+            transformed. Default is ``False``.
+
+        inplace : bool
+            If ``True``, the transformed data will replace ``self.df``. Otherwise, the transformed
+            ``DataFrame`` will be returned. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, the transformed ``DataFrame`` will be returned.
+
+        """
         if isinstance(func, str):
             func = self.transform_funcs.get(func.lower(), None)
             if func is None:
@@ -344,28 +448,61 @@ class PlotData:
         self,
         lower: Union[int, float, None] = None,
         upper: Union[int, float, None] = None,
-        axis: Union[int, str, None] = None,
+        axis: Union[int, str] = "columns",
         subset: Union[Iterable, str, None] = None,
         use_raw: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """ """
+        """
+        Clip the data. Values less than `lower` will be replaced with `lower` and values
+        greater than `upper` will be replaced with `upper`. By default, the entire dataset
+        will be clipped. Alternatively, a subset of columns can be clipped.
+
+        Parameters
+        ----------
+        lower : Union[int, float, None]
+            The lower bound. If ``None``, no lower bound will be applied. Default is ``None``.
+
+        upper : Union[int, float, None]
+            The upper bound. If ``None``, no upper bound will be applied. Default is ``None``.
+
+        axis : Union[int, str, None]
+            The axis to clip. Only used if `subset` is also provided. If ``0``, ``"column"``,
+            or ``"columns"``, only column names in `subset` will be clipped. If ``1``,
+            ``"row"``, or ``"rows"``, only row names in `subset` will be clipped. Default is
+            ``"columns"``.
+
+        subset : Union[Iterable, str, None]
+            The columns or rows to clip. Can be either a single column/row name, or an iterable
+            of column/row names. If ``None``, all columns/rows will be clipped. Default is
+            ``None``.
+
+        use_raw : bool
+            If ``True``, the raw data will be clipped. Otherwise, the processed data will be
+            clipped. Default is ``False``.
+
+        inplace : bool
+            If ``True``, the transformed data will replace ``self.df``. Otherwise, the transformed
+            ``DataFrame`` will be returned. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, the transformed ``DataFrame`` will be returned.
+
+        """
         df = self.raw_df.copy() if use_raw else self.df.copy()
         if isinstance(subset, str):
             subset = [subset]
 
-        # clip across the entire entire dataframe
-        if axis is None:
-            df = df.clip(lower=lower, upper=upper)
-
-        # clip each column separately
+        # clip by column
         if axis in [0, "columns", "column"]:
             subset = subset if subset is not None else df.columns
             subset = [s for s in subset if s in df.columns]
             for c in subset:
                 df[c] = df[c].clip(lower=lower, upper=upper)
 
-        # scale each row separately
+        # clip by row
         if axis in [1, "rows", "row"]:
             df = df.T
             subset = subset if subset is not None else df.columns
