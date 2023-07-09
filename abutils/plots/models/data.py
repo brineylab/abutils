@@ -237,6 +237,104 @@ class PlotData:
         else:
             return df
 
+    def fillna(
+        self,
+        value: Optional[Union[int, float, str]] = None,
+        axis: Union[int, str] = "columns",
+        subset: Optional[Union[str, Iterable]] = None,
+        method: Optional[str] = None,
+        limit: Optional[int] = None,
+        downcast: Optional[dict] = None,
+        use_raw: bool = False,
+        inplace: bool = True,
+    ) -> Optional[pd.DataFrame]:
+        """
+        Fill missing or NA values in the data. The default settings will fill all missing values
+        with ``0``. See the `pandas.DataFrame.fillna`_ documentation for more information.
+
+        Parameters
+        ----------
+        value : Optional[Union[int, float, str]]
+            Value to use to fill holes. If ``None``, the ``method`` parameter must be specified.
+
+        axis : Union[int, str]
+            Only used in combination with `subset`. If ``0``, ``"column"``, or ``"columns"``,
+            columns in `subset` will be filled. If ``1``, ``"row"``, or ``"rows"``, rows in
+            `subset` will be filled. Default is ``"columns"``, so columns in `subset` will be
+            filled.
+
+        subset : Optional[Union[str, Iterable]]
+            Subset of columns or rows to fill. If ``None``, all columns or rows will be filled.
+
+        method : Optional[str]
+            Method to use to fill holes. See the `pandas.DataFrame.fillna`_ documentation for
+            available methods.
+
+        limit : Optional[int]
+            Maximum number of consecutive NaN values to forward/backward fill.
+
+        downcast : Optional[dict]
+            A dict of item->dtype of what to downcast if possible, or the string "infer" which
+            will try to downcast to an appropriate equal type (e.g. float64 to int64 if possible).
+            See the `pandas.DataFrame.fillna`_ documentation for more information.
+
+        use_raw : bool
+            If ``True``, fill missing values in the raw data. If ``False``, fill missing values in
+            the processed data. Default is ``False``
+
+        inplace : bool
+            If ``True``, fill missing values in place. If ``False``, return a copy of the DataFrame
+            with missing values filled. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, returns a copy of the DataFrame with missing values filled.
+            Otherwise, returns ``None``.
+
+
+        .. _pandas.DataFrame.fillna:
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.fillna.html
+
+        """
+        df = self.raw_df.copy() if use_raw else self.df.copy()
+        if method is None:
+            value = 0 if value is None else value
+
+        # fill columns
+        if axis in [0, "column", "columns"]:
+            subset = subset if subset is not None else df.columns
+            subset = [s for s in subset if s in df.columns]
+            for s in subset:
+                df[s].fillna(
+                    value=value,
+                    method=method,
+                    limit=limit,
+                    downcast=downcast,
+                    inplace=True,
+                )
+
+        # fill rows
+        if axis in [1, "row", "rows"]:
+            df = df.T
+            subset = subset if subset is not None else df.columns
+            subset = [s for s in subset if s in df.columns]
+            for s in subset:
+                df[s].fillna(
+                    value=value,
+                    method=method,
+                    limit=limit,
+                    downcast=downcast,
+                    inplace=True,
+                )
+            df = df.T
+
+        # update or return
+        if inplace:
+            self.df = df
+        else:
+            return df
+
     def norm(
         self,
         subset: Union[Iterable, str, None] = None,
