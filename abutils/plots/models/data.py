@@ -31,6 +31,8 @@ import pandas as pd
 
 from scipy import stats
 
+from abutils import Sequence
+
 
 class PlotData:
     """
@@ -39,9 +41,10 @@ class PlotData:
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, Iterable, None] = None,
         x: Union[Iterable, str, None] = None,
         y: Union[Iterable, str, None] = None,
+        data: Union[pd.DataFrame, Iterable, dict, None] = None,
+        sequences: Optional[Iterable[Sequence]] = None,
         hue: Union[Iterable, str, None] = None,
         column_labels: Optional[Iterable] = None,
         row_labels: Optional[Iterable] = None,
@@ -52,8 +55,14 @@ class PlotData:
         Parameters
         ----------
         data : Union[pd.DataFrame, Iterable, None], optional
-            Input data. Can be a ``DataFrame``, an iterable, or ``None``. If ``None``, the x, y, and hue
-            data must be provided as iterables to `x`, `y`, and `hue`, respectively.
+            Input data. Can be a ``DataFrame``, a ``dict``, or an iterable. If both `data` and `sequences`
+            are provided, only `sequences` is used. If neither `data` nor `sequences` are provided, the
+            x, y, and hue data must be provided as iterables to `x`, `y`, and `hue`, respectively.
+
+        sequences : Optional[Iterable[Sequence]], optional
+            Input data. Must be an iterable of ``abutils.Sequence`` objects. If both `data` and `sequences`
+            are provided, only `sequences` is used. If neither `data` nor `sequences` are provided, the
+            x, y, and hue data must be provided as iterables to `x`, `y`, and `hue`, respectively.
 
         x : Union[Iterable, str, None], optional
             The x-axis data. Can be an iterable, a string, or ``None``. If an iterable, the length should
@@ -80,6 +89,7 @@ class PlotData:
 
         """
         self.raw_data = data
+        self.raw_sequences = sequences
         self.raw_x = x
         self.raw_y = y
         self.raw_hue = hue
@@ -91,9 +101,10 @@ class PlotData:
         self.hue_name = None
 
         self.raw_df = self.process_input(
-            data=data,
             x=x,
             y=y,
+            data=data,
+            sequences=sequences,
             hue=hue,
             column_labels=column_labels,
             row_labels=row_labels,
@@ -138,9 +149,10 @@ class PlotData:
 
     def process_input(
         self,
-        data: Optional[pd.DataFrame] = None,
         x: Union[str, Iterable, None] = None,
         y: Union[str, Iterable, None] = None,
+        data: Union[pd.DataFrame, Iterable, dict, None] = None,
+        sequences: Optional[Iterable[Sequence]] = None,
         hue: Union[str, Iterable, None] = None,
         column_labels: Optional[Iterable] = None,
         row_labels: Optional[Iterable] = None,
@@ -148,7 +160,7 @@ class PlotData:
         """ """
         # input can be provided as iterables passed to x, y and/or hue
         # the column names for x, y and hue are set to 'x', 'y', and 'hue', respectively
-        if data is None:
+        if all([data is None, sequences is None]):
             _data = {}
             _data["x"] = x
             self.x_name = "x"
@@ -159,13 +171,15 @@ class PlotData:
                 self.hue_name = "hue"
             df = pd.DataFrame(_data)
 
-        # or input can be passed to data as a DataFrame or iterable
+        # input can also be passed to data as a DataFrame or iterable
+        # or to sequences as an iterable of abutils.Sequence objects
         else:
-            if isinstance(data, pd.DataFrame):
+            if sequences is not None:
+                df = [s.annotations for s in sequences]
+            elif isinstance(data, pd.DataFrame):
                 df = data.copy()
             else:
                 df = pd.DataFrame(data)
-
             # if any of the other inputs are iterables, add them to the DataFrame
             # also, set the x, y, and hue names
             if x is not None:
@@ -187,12 +201,32 @@ class PlotData:
                 elif isinstance(hue, str):
                     self.hue_name = hue
 
+        # drop any columns that aren't x, y, or hue
+        df = df[[self.x_name, self.y_name, self.hue_name]]
+
         # set column/row labels
         if column_labels is not None and len(column_labels) == df.shape[1]:
             df.columns = column_labels
         if row_labels is not None and len(row_labels) == df.shape[0]:
             df.index = row_labels
         return df
+
+    def dropna(
+        self,
+        axis: Union[int, str] = "rows",
+        how: str = "any",
+        thresh: Optional[int] = None,
+        subset: Optional[Union[str, Iterable]] = None,
+        use_raw: bool = False,
+        inplace: bool = True,
+    ) -> Optional[pd.DataFrame]:
+        """ """
+        df = self.raw_df.copy() if use_raw else self.df.copy()
+        df.dropna(axis=axis, how=how, thresh=thresh, subset=subset, inplace=True)
+        if inplace:
+            self.df = df
+        else:
+            return df
 
     def norm(
         self,
