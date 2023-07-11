@@ -44,7 +44,14 @@ from matplotlib.colors import (
 # -----------------
 
 palettes = {
-    "muted_neon": ["#ef476f", "#ffd166", "#06d6a0", "#118ab2", "#6c6678", "#073b4c",],
+    "muted_neon": [
+        "#ef476f",
+        "#ffd166",
+        "#06d6a0",
+        "#118ab2",
+        "#6c6678",
+        "#073b4c",
+    ],
     "pastel": ["#9b5de5", "#f15bb5", "#fee440", "#00bbf9", "#00f5d4"],
     "sunset": ["#264653", "#40768c", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51"],
     "vibrant": ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93"],
@@ -62,6 +69,8 @@ palettes = {
     "primary": ["#246eb9", "#4cb944", "#c73e1d", "#ffbe0b", "#401f3e"],
 }
 
+true_false_palette = {True: "#e41a1c", False: "#d1d1d1"}
+
 
 def show_palettes() -> None:
     """
@@ -72,14 +81,19 @@ def show_palettes() -> None:
 
     nrows = len(palettes)
     figh = 1 + (nrows + (nrows - 1) * 0.1) * 0.75
-    fig, axs = plt.subplots(nrows=nrows + 1, figsize=(6.4, figh),)
+    fig, axs = plt.subplots(
+        nrows=nrows + 1,
+        figsize=(6.4, figh),
+    )
     fig.subplots_adjust(
         top=1 - 0.35 / figh, bottom=0.15 / figh, left=0.2, right=0.99, hspace=0.6
     )
     for ax, name in zip(axs, palettes):
         cmap = ListedColormap(palettes[name])
         ax.imshow(
-            gradient, aspect="auto", cmap=cmap,
+            gradient,
+            aspect="auto",
+            cmap=cmap,
         )
         ax.text(
             -0.02,
