@@ -31,7 +31,7 @@ import pandas as pd
 
 from scipy import stats
 
-from abutils import Sequence
+from ...core.sequence import Sequence
 
 
 class PlotData:
