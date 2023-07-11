@@ -429,7 +429,7 @@ def scatter(
                 hue_dict = {h: palette.get(h, missing_color) for h in hue_order}
             else:
                 if all([isinstance(h, bool) for h in hue_order]):
-                    palette = true_false_palette
+                    hue_dict = true_false_palette
                 else:
                     n_colors = max(1, len(hue_order))
                     if color is None:
