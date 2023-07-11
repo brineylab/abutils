@@ -4,6 +4,7 @@ include docs/*.txt
 include abutils/bin/*
 include abutils/core/*
 include abutils/plots/*
+include abutils/plots/models/*
 include abutils/tenx/*
 include abutils/tools/*
 include abutils/utils/*
