@@ -39,7 +39,7 @@ from natsort import natsorted
 from .data import process_input_data
 from .utils import get_inset_axes_bounds
 from ..core.sequence import Sequence
-from ..utils.color import get_cmap
+from ..utils.color import get_cmap, true_false_palette
 
 
 __all__ = ["scatter"]
@@ -428,12 +428,15 @@ def scatter(
                 missing_color = color if color is not None else "lightgrey"
                 hue_dict = {h: palette.get(h, missing_color) for h in hue_order}
             else:
-                n_colors = max(1, len(hue_order))
-                if color is None:
-                    color = sns.color_palette(n_colors=n_colors)
-                if len(color) < n_colors:
-                    color = itertools.cycle(color)
-                hue_dict = {h: c for h, c in zip(hue_order, color)}
+                if all([isinstance(h, bool) for h in hue_order]):
+                    palette = true_false_palette
+                else:
+                    n_colors = max(1, len(hue_order))
+                    if color is None:
+                        color = sns.color_palette(n_colors=n_colors)
+                    if len(color) < n_colors:
+                        color = itertools.cycle(color)
+                    hue_dict = {h: c for h, c in zip(hue_order, color)}
             df["color"] = [hue_dict[h] for h in df[hue]]
     else:
         hue_order = []
@@ -552,7 +555,9 @@ def scatter(
             cbax.xaxis.set_ticks_position(ticks_position)
             cbax.xaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_xlabel(
-                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
         else:
             if cbar_title_loc is None:
@@ -561,7 +566,9 @@ def scatter(
             cbax.yaxis.set_ticks_position(ticks_position)
             cbax.yaxis.set_label_position(cbar_title_loc)
             cbar.ax.set_ylabel(
-                cbar_title, fontsize=cbar_title_fontsize, labelpad=cbar_title_labelpad,
+                cbar_title,
+                fontsize=cbar_title_fontsize,
+                labelpad=cbar_title_labelpad,
             )
 
     # style the plot
