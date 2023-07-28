@@ -32,7 +32,7 @@ import operator
 import os
 import sys
 import tempfile
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 import uuid
 
 from Bio import SeqIO
@@ -55,7 +55,7 @@ else:
 
 class Sequence(object):
     """
-    Container for biological (RNA and DNA) sequences.
+    Container for biological (RNA, DNA, or protein) sequences.
 
     ``seq`` can be one of several things:
 
@@ -88,10 +88,10 @@ class Sequence(object):
 
     If ``seq`` is a dictionary, an optional ``id_key`` and ``seq_key`` can be provided,
     which tells the ``Sequence`` object which field to use to populate ``Sequence.id`` and
-    ``Sequence.sequence``. Defaults for both ``id_key`` and ``seq_key`` are ``None``, which 
-    results in abutils trying to determine the appropriate key. For ``id_key``, the following 
+    ``Sequence.sequence``. Defaults for both ``id_key`` and ``seq_key`` are ``None``, which
+    results in abutils trying to determine the appropriate key. For ``id_key``, the following
     keys are tried: ``['seq_id', 'sequence_id']``. For ``seq_key``, the following keys are tried:
-    ``['vdj_nt', 'sequence_nt', 'sequence']``. If none of the attempts are successful, the 
+    ``['vdj_nt', 'sequence_nt', 'sequence']``. If none of the attempts are successful, the
     ``Sequence.id`` or ``Sequence.sequence`` attributes will be ``None``.
 
     Alternately, the ``__getitem__()`` interface can be used to obtain a slice from the
@@ -124,7 +124,14 @@ class Sequence(object):
         because their IDs will have been randomly generated.
     """
 
-    def __init__(self, seq, id=None, qual=None, id_key=None, seq_key=None):
+    def __init__(
+        self,
+        seq: Union[str, Iterable, dict, SeqRecord],
+        id: Optional[str] = None,
+        qual: Optional[str] = None,
+        id_key: Optional[str] = None,
+        seq_key: Optional[str] = None,
+    ):
         super(Sequence, self).__init__()
         self._input_sequence = None
         self._input_id = id
@@ -150,9 +157,7 @@ class Sequence(object):
         return len(self.sequence)
 
     def __iter__(self):
-        """
-        iter: Returns an iterator over the ``sequence`` attribute
-        """
+        """iter: Returns an iterator over the ``sequence`` attribute"""
         return iter(self.sequence)
 
     def __reversed__(self):
@@ -381,13 +386,13 @@ def translate(
         ``Sequence`` object to be translated. Required.
 
     sequence_key : str, default=None
-        Name of the annotation field containg the sequence to be translated. 
+        Name of the annotation field containg the sequence to be translated.
         If not provided, ``sequence.sequence`` is used.
 
     frame : int, default=1
         Reading frame to translate. Default is ``1``.
 
-    
+
     Returns
     -------
     translated : str
@@ -430,29 +435,29 @@ def read_json(
         Path to the input JSON file. Required.
 
     match : dict, default=None
-        A ``dict`` for filtering sequences from the input file. 
+        A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which 
+        the following ``dict`` will filter out all sequences for which
         the ``'locus'`` field is no ``'IGH'``:
             ``{'locus': 'IGH'}
-    
+
     fields : list, default=None
-        A ``list`` of fields to be retained in the output ``Sequence`` 
+        A ``list`` of fields to be retained in the output ``Sequence``
         objects. Fields must be column names in the input file.
 
     id_key : str, default="seq_id"
-        Name of the annotation field containing the sequence ID. Used to 
+        Name of the annotation field containing the sequence ID. Used to
         populate the ``Sequence.id`` property.
 
     sequence_key : str, default="vdj_nt"
-        Name of the annotation field containg the sequence. Used to 
+        Name of the annotation field containg the sequence. Used to
         populate the ``Sequence.sequence`` property.
 
-    
+
     Returns
     -------
     sequences : list of ``Sequences``
-    
+
     """
     if match is None:
         match = {}
@@ -500,29 +505,29 @@ def read_csv(
         Column delimiter. Default is ``","``.
 
     match : dict, default=None
-        A ``dict`` for filtering sequences from the input file. 
+        A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which 
+        the following ``dict`` will filter out all sequences for which
         the ``'locus'`` field is no ``'IGH'``:
             ``{'locus': 'IGH'}
-    
+
     fields : list, default=None
-        A ``list`` of fields to be retained in the output ``Sequence`` 
+        A ``list`` of fields to be retained in the output ``Sequence``
         objects. Fields must be column names in the input file.
 
     id_key : str, default="sequence_id"
-        Name of the annotation field containing the sequence ID. Used to 
+        Name of the annotation field containing the sequence ID. Used to
         populate the ``Sequence.id`` property.
 
     sequence_key : str, default="sequence"
-        Name of the annotation field containg the sequence. Used to 
+        Name of the annotation field containg the sequence. Used to
         populate the ``Sequence.sequence`` property.
 
-    
+
     Returns
     -------
     sequences : list of ``Sequences``
-    
+
     """
     if match is None:
         match = {}
@@ -558,17 +563,17 @@ def read_airr(
         Path to the input TSV file. Required.
 
     match : dict, default=None
-        A ``dict`` for filtering sequences from the input file. 
+        A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which 
+        the following ``dict`` will filter out all sequences for which
         the ``'locus'`` field is no ``'IGH'``:
             ``{'locus': 'IGH'}
-    
+
     fields : list, default=None
-        A ``list`` of fields to be retained in the output ``Sequence`` 
+        A ``list`` of fields to be retained in the output ``Sequence``
         objects. Fields must be column names in the input file.
 
-    
+
     Returns
     -------
     sequences : list of ``Sequences``
@@ -638,7 +643,7 @@ def to_fasta(
         Return a FASTA-formatted string rather than writing to file.
 
     id_key : str, default=None
-        Name of the annotation field containing the sequence ID. If not provided, 
+        Name of the annotation field containing the sequence ID. If not provided,
         ``sequence.id`` is used.
 
     sequence_key : str, default=None
@@ -646,11 +651,11 @@ def to_fasta(
         ``sequence.sequence`` is used.
 
     tempfile_dir : str, default="/tmp"
-        If `fasta_file` is not provided, directory into which the tempfile 
-        should be created. If the directory does not exist, it will be 
+        If `fasta_file` is not provided, directory into which the tempfile
+        should be created. If the directory does not exist, it will be
         created. Default is "/tmp".
 
-    
+
     Returns
     --------
     fasta : str

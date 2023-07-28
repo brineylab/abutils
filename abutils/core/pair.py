@@ -267,45 +267,6 @@ class Pair(object):
                 self._lineage = self.heavy["clonify"]["id"]
         return self._lineage
 
-    # @property
-    # def vrc01_like(self):
-    #     if self._vrc01_like is None:
-    #         if any([self.heavy is None, self.light is None]):
-    #             self._vrc01_like = False
-    #         else:
-    #             try:
-    #                 # abstar's JSON output format
-    #                 self._vrc01_like = all([self.heavy['v_gene']['gene'] == 'IGHV1-2', self.light['cdr3_len'] == 5])
-    #             except KeyError:
-    #                 try:
-    #                     # AIRR format
-    #                     self._vrc01_like = all([self.heavy['v_call'] == 'IGHV1-2', self.light['junction_aa_length'] == 7])
-    #                 except KeyError:
-    #                     # unknown format
-    #                     pass
-    #     return self._vrc01_like
-
-    # @property
-    # def loose_vrc01_like(self):
-    #     if self._loose_vrc01_like is None:
-    #         try:
-    #             # abstar's JSON output format
-    #             if any([l['cdr3_len'] == 5 for l in p._lights]) and any([h['v_gene']['gene'] == 'IGHV1-2' for h in p._heavies]):
-    #                 self._loose_vrc01_like = True
-    #             else:
-    #                 self._loose_vrc01_like = False
-    #         except KeyError:
-    #             try:
-    #                 # AIRR format
-    #                 if any([l['junction_aa_length'] == 7 for l in p._lights]) and any([h['v_call'] == 'IGHV1-2' for h in p._heavies]):
-    #                     self._loose_vrc01_like = True
-    #                 else:
-    #                     self._loose_vrc01_like = False
-    #             except:
-    #                 # unknown format
-    #                 pass
-    #     return self._loose_vrc01_like
-
     @property
     def name(self):
         if self._name is None:
