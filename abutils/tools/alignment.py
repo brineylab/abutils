@@ -871,6 +871,12 @@ class CIGAR:
 
     @property
     def cigar_list(self):
+        """
+        Returns a list of CIGAR elements parsed from the CIGAR string. If the CIGAR string has not yet been parsed,
+        it is parsed and the resulting list is cached for future use.
+
+        :return: A list of `CIGARElement` objects representing the parsed CIGAR string.
+        """
         if self._cigar_list is None:
             cigar_list = []
             cig_iter = groupby(self.cigar_string, lambda c: c.isdigit())
@@ -1306,7 +1312,7 @@ def dot_alignment(
         root = abstar.run(("centroid", centroid.sequence))
         root.alignment_id = "centroid"
         root.alignment_sequence = root[seq_field]
-    elif type(root) in STR_TYPES:
+    elif isinstance(root, str):
         root = [s for s in sequences if s.alignment_id == root][0]
         if not root:
             print(
