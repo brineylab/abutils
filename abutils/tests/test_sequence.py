@@ -7,7 +7,7 @@ import tempfile
 
 from Bio.SeqRecord import SeqRecord
 
-from abutils import Sequence, read_fasta, read_airr, to_fasta
+from ..core.sequence import Sequence, read_fasta, read_airr, to_fasta
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ def test_sequence_strand():
 
 
 def test_sequence_translate():
-    seq = Sequence("ATGCGTAA")
+    seq = Sequence("ATGTGCTAA")
     assert seq.translate() == "MC*"
 
 
@@ -206,27 +206,30 @@ def test_read_airr(airr_sequence):
 
 
 def test_to_fasta_with_sequence_objects(sequences):
-    fasta = to_fasta(sequences)
+    fasta = to_fasta(sequences, as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
 
 
 def test_to_fasta_with_fasta_string():
     fasta_string = ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT"
-    fasta = to_fasta(fasta_string)
+    fasta = to_fasta(fasta_string, as_string=True)
     assert isinstance(fasta, str)
     assert fasta == fasta_string
 
 
-def test_to_fasta_with_fasta_file():
-    fasta_file = "tests/data/test.fasta"
-    fasta = to_fasta(fasta_file)
+def test_to_fasta_with_fasta_file(sequences):
+    fasta_string = "\n".join([s.fasta for s in sequences])
+    fasta_file = tempfile.NamedTemporaryFile(delete=False)
+    fasta_file.write(fasta_string.encode("utf-8"))
+    fasta_file.close()
+    fasta = to_fasta(fasta_file.name, as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
 
 
 def test_to_fasta_with_seqrecord_objects(seq_records):
-    fasta = to_fasta(seq_records)
+    fasta = to_fasta(seq_records, as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
 
@@ -237,30 +240,29 @@ def test_to_fasta_with_list_of_lists():
         ["seq2", "GCTA"],
         ["seq3", "TTTT"],
     ]
-    fasta = to_fasta(seqs)
+    fasta = to_fasta(seqs, as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
 
 
 def test_to_fasta_with_id_key(sequences):
-    fasta = to_fasta(sequences, id_key="name")
+    fasta = to_fasta(sequences, id_key="name", as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
 
 
 def test_to_fasta_with_sequence_key(sequences):
-    fasta = to_fasta(sequences, sequence_key="seq")
+    fasta = to_fasta(sequences, sequence_key="seq", as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
 
 
 def test_to_fasta_with_fasta_file_output(sequences):
-    with tempfile.TemporaryDirectory() as tempdir:
-        fasta_file = os.path.join(tempdir, "test.fasta")
-        fasta = to_fasta(sequences, fasta_file=fasta_file)
+    with tempfile.NamedTemporaryFile(delete=False) as fasta_file:
+        fasta = to_fasta(sequences, fasta_file=fasta_file.name)
         assert isinstance(fasta, str)
-        assert fasta == fasta_file
-        with open(fasta_file, "r") as f:
+        assert fasta == fasta_file.name
+        with open(fasta_file.name, "r") as f:
             fasta_string = f.read()
         assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta_string
 

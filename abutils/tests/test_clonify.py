@@ -1,81 +1,122 @@
+from collections import Counter
 import pytest
 
-from abutils import Sequence
-from abutils.tools.clonify import clonify, pairwise_distance
+from ..core.sequence import Sequence
+from ..tools.clonify import clonify, pairwise_distance
 
 
 @pytest.fixture
 def clonify_seqs():
     return [
         Sequence(
-            id="seq1",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq1",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq2",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq2",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq3",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq3",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq4",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq4",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq5",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq5",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq6",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq6",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq7",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq7",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq8",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq8",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-2",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq9",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq9",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-69",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
         Sequence(
-            id="seq10",
-            seq="ATCGATCGATCG",
-            v_gene="IGHV1-2",
-            j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            dict(
+                sequence_id="seq10",
+                sequence="ATCGATCGATCG",
+                v_gene="IGHV1-69",
+                j_gene="IGHJ4",
+                cdr3_aa="CASSLDRYFDYW",
+                v_mutations=[],
+                locus="IGH",
+            )
         ),
     ]
 
@@ -83,26 +124,47 @@ def clonify_seqs():
 @pytest.fixture
 def pairwise_distance_seqs():
     seq1 = Sequence(
-        "seq1", "ATCGATCGATCG", cdr3="CASSLDRYFDYW", mutations=["V1A", "V2G", "V3C"]
+        dict(
+            sequence_id="seq1",
+            sequence="ATCGATCGATCG",
+            cdr3="CASSLDRYFDYW",
+            mutations=["V1A", "V2G", "V3C"],
+        )
     )
     seq2 = Sequence(
-        "seq2", "ATCGATCGATCG", cdr3="CASSLDRYFDYW", mutations=["V1A", "V2G", "V3C"]
+        dict(
+            sequence_id="seq2",
+            sequence="ATCGATCGATCG",
+            cdr3="CASSLDRYFDYW",
+            mutations=["V1A", "V2G", "V3C"],
+        )
     )
     seq3 = Sequence(
-        "seq3", "ATCGATCGATCG", cdr3="CASSLDYFDYW", mutations=["V1A", "V2G", "V3T"]
+        dict(
+            sequence_id="seq3",
+            sequence="ATCGATCGATCG",
+            cdr3="CASSLDYFDYW",
+            mutations=["V1A", "V2G", "V3T"],
+        )
     )
     return seq1, seq2, seq3
 
 
 def test_clonify(clonify_seqs):
-    results = clonify(clonify_seqs)
+    results = clonify(clonify_seqs, return_assignment_dict=True)
+    # sanity checks on the results
     assert isinstance(results, dict)
-    assert len(results) == 1
-    lineage = list(results.values())[0]
-    assert isinstance(lineage, list)
-    assert len(lineage) == len(clonify_seqs)
     for seq in clonify_seqs:
-        assert seq in lineage
+        assert seq.id in results
+    # check for correct lineage sizes
+    lineage_sizes = Counter(results.values())
+    lineage_sizes = dict(
+        sorted(lineage_sizes.items(), key=lambda x: x[1], reverse=True)
+    )
+    assert len(lineage_sizes) == 2
+    lineage_names = list(lineage_sizes.keys())
+    assert lineage_sizes[lineage_names[0]] == 8
+    assert lineage_sizes[lineage_names[1]] == 2
 
 
 def test_pairwise_distance(pairwise_distance_seqs):

@@ -7,8 +7,8 @@ import numpy as np
 
 from matplotlib.path import Path
 
-from abutils import Sequence
-from abutils.tools.phylo import fasttree, phylogeny, Phylogeny, align_marker
+from ..core.sequence import Sequence
+from ..tools.phylo import fasttree, phylogeny, Phylogeny, align_marker
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def fasta_string(sequences):
 
 
 @pytest.fixture
-def aln_file(fasta_string):
+def fasta_file(fasta_string):
     fasta_file = tempfile.NamedTemporaryFile(delete=False)
     fasta_file.write(fasta_string.encode("utf-8"))
     fasta_file.close()
@@ -106,7 +106,7 @@ def test_fasttree_with_string_input(fasta_string):
 
 def test_fasttree_with_aa_file_input(fasta_file_aa):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
-    tree_path = fasttree(fasta_file_aa, tree_file=tree_file.name, is_aa=True)
+    tree_path = fasttree(fasta_file_aa.name, tree_file=tree_file.name, is_aa=True)
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:
         tree_string = f.read()
@@ -131,7 +131,7 @@ def test_fasttree_with_custom_binary(fasta_file):
     )
     tree_file = tempfile.NamedTemporaryFile(delete=False)
     tree_path = fasttree(
-        fasta_file, tree_file=tree_file.name, fasttree_bin=fasttree_bin
+        fasta_file.name, tree_file=tree_file.name, fasttree_bin=fasttree_bin
     )
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:
@@ -145,8 +145,14 @@ def test_fasttree_with_custom_binary(fasta_file):
 # ---------------------------
 
 
+def test_phylogeny_with_sequence_input(sequences):
+    phylo = phylogeny(sequences)
+    assert isinstance(phylo, Phylogeny)
+    assert len(phylo.sequences) == 3
+
+
 def test_phylogeny_with_file_input(fasta_file):
-    phylo = phylogeny(fasta_file)
+    phylo = phylogeny(fasta_file.name)
     assert isinstance(phylo, Phylogeny)
     assert len(phylo.sequences) == 3
 
@@ -159,42 +165,47 @@ def test_phylogeny_with_list_input(sequences):
 
 def test_phylogeny_with_name(fasta_file):
     name = "test_phylogeny_with_name"
-    phylo = phylogeny(fasta_file, name=name)
+    phylo = phylogeny(fasta_file.name, name=name)
     assert isinstance(phylo, Phylogeny)
     assert phylo.name == name
 
 
 def test_phylogeny_with_root_sequence(fasta_file, root_sequence):
-    phylo = phylogeny(fasta_file, root=root_sequence)
+    phylo = phylogeny(fasta_file.name, root=root_sequence)
     assert isinstance(phylo, Phylogeny)
     assert phylo.root.id == root_sequence.id
 
 
 def test_phylogeny_with_root_sequence_id(fasta_file):
     root_seq_id = "seq1"
-    phylo = phylogeny(fasta_file, root=root_seq_id)
+    phylo = phylogeny(fasta_file.name, root=root_seq_id)
     assert isinstance(phylo, Phylogeny)
     assert phylo.root.id == root_seq_id
 
 
 def test_phylogeny_with_cluster(fasta_file):
-    phylo = phylogeny(fasta_file, cluster=True)
+    phylo = phylogeny(fasta_file.name, cluster=True, clustering_algo="cdhit")
     assert isinstance(phylo, Phylogeny)
-    assert len(phylo.sequences) == 1
+    assert len(phylo.sequences) == 3
+    assert len(phylo.clusters) == 3
 
 
 def test_phylogeny_with_clustering_threshold(fasta_file):
     clustering_threshold = 0.95
     phylo = phylogeny(
-        fasta_file, cluster=True, clustering_threshold=clustering_threshold
+        fasta_file.name,
+        cluster=True,
+        clustering_threshold=clustering_threshold,
+        clustering_algo="cdhit",
     )
     assert isinstance(phylo, Phylogeny)
-    assert len(phylo.sequences) == 2
+    assert len(phylo.sequences) == 3
+    assert len(phylo.clusters) == 2
 
 
 def test_phylogeny_with_rename_dict(fasta_file):
     rename_dict = {"seq1": "new_seq1", "seq2": "new_seq2"}
-    phylo = phylogeny(fasta_file, rename=rename_dict)
+    phylo = phylogeny(fasta_file.name, rename=rename_dict)
     assert isinstance(phylo, Phylogeny)
     phylo_ids = [s.id for s in phylo.sequences]
     assert "new_seq1" in phylo_ids
@@ -210,7 +221,7 @@ def test_phylogeny_with_rename_callable(fasta_file):
         else:
             return None
 
-    phylo = phylogeny(fasta_file, rename=rename_func)
+    phylo = phylogeny(fasta_file.name, rename=rename_func)
     assert isinstance(phylo, Phylogeny)
     phylo_ids = [s.id for s in phylo.sequences]
     assert "new_seq1" in phylo_ids
@@ -240,7 +251,11 @@ def test_align_marker_with_center_alignment():
     valign = "middle"
     marker_path = align_marker(marker, halign=halign, valign=valign)
     assert isinstance(marker_path, Path)
-    assert np.allclose(marker_path.vertices.mean(axis=0), [0, 0])
+    assert np.allclose(marker_path.vertices[:, 0].max(), 0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 0].min(), -0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].max(), 0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].min(), -0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices.mean(axis=0), [0, 0], atol=0.05)
 
 
 def test_align_marker_with_left_alignment():
@@ -249,7 +264,11 @@ def test_align_marker_with_left_alignment():
     valign = "middle"
     marker_path = align_marker(marker, halign=halign, valign=valign)
     assert isinstance(marker_path, Path)
-    assert np.allclose(marker_path.vertices[:, 0].min(), -1)
+    assert np.allclose(marker_path.vertices[:, 0].max(), 1, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 0].min(), 0, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].max(), 0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].min(), -0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices.mean(axis=0), [0.5, 0], atol=0.05)
 
 
 def test_align_marker_with_right_alignment():
@@ -258,7 +277,11 @@ def test_align_marker_with_right_alignment():
     valign = "middle"
     marker_path = align_marker(marker, halign=halign, valign=valign)
     assert isinstance(marker_path, Path)
-    assert np.allclose(marker_path.vertices[:, 0].max(), 1)
+    assert np.allclose(marker_path.vertices[:, 0].max(), 0, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 0].min(), -1, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].max(), 0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].min(), -0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices.mean(axis=0), [-0.5, 0], atol=0.05)
 
 
 def test_align_marker_with_top_alignment():
@@ -267,7 +290,11 @@ def test_align_marker_with_top_alignment():
     valign = "top"
     marker_path = align_marker(marker, halign=halign, valign=valign)
     assert isinstance(marker_path, Path)
-    assert np.allclose(marker_path.vertices[:, 1].max(), 1)
+    assert np.allclose(marker_path.vertices[:, 0].max(), 0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 0].min(), -0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].max(), 0, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].min(), -1, atol=0.05)
+    assert np.allclose(marker_path.vertices.mean(axis=0), [0, -0.5], atol=0.05)
 
 
 def test_align_marker_with_bottom_alignment():
@@ -276,4 +303,8 @@ def test_align_marker_with_bottom_alignment():
     valign = "bottom"
     marker_path = align_marker(marker, halign=halign, valign=valign)
     assert isinstance(marker_path, Path)
-    assert np.allclose(marker_path.vertices[:, 1].min(), -1)
+    assert np.allclose(marker_path.vertices[:, 0].max(), 0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 0].min(), -0.5, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].max(), 1, atol=0.05)
+    assert np.allclose(marker_path.vertices[:, 1].min(), 0, atol=0.05)
+    assert np.allclose(marker_path.vertices.mean(axis=0), [0, 0.5], atol=0.05)

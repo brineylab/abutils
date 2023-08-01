@@ -6,8 +6,8 @@ import os
 import pytest
 import tempfile
 
-from abutils import Pair, Sequence
-from abutils.core.pair import assign_pairs
+from ..core.pair import assign_pairs, Pair
+from ..core.sequence import Sequence
 
 
 @pytest.fixture
@@ -18,6 +18,7 @@ def bcr_hk_seqs():
     ]
 
 
+@pytest.fixture
 def bcr_hl_seqs():
     return [
         Sequence({"locus": "IGH", "sequence": "AAAAA", "sequence_id": "seq1"}),
@@ -41,9 +42,9 @@ def tcr_dg_seqs():
     ]
 
 
-def test_init(bcr_seqs):
-    pair = Pair(bcr_seqs)
-    assert pair._seqs == bcr_seqs
+def test_init(bcr_hk_seqs, bcr_hl_seqs):
+    pair = Pair(bcr_hk_seqs + bcr_hl_seqs)
+    assert pair._seqs == bcr_hk_seqs + bcr_hl_seqs
     assert pair._receptor is None
     assert pair._heavy is None
     assert pair._light is None
@@ -249,18 +250,18 @@ def test_is_pair(bcr_hk_seqs, bcr_hl_seqs, tcr_ab_seqs, tcr_dg_seqs):
 def test_name():
     pair = Pair(
         [
-            Sequence({"locus": "IGH", "sequence": "AAAAA", "sequence_id": "bcr_pair"}),
-            Sequence({"locus": "IGK", "sequence": "CCCCC", "sequence_id": "bcr_pair"}),
+            Sequence({"locus": "IGH", "sequence": "AAAAA", "sequence_id": "bcr-pair"}),
+            Sequence({"locus": "IGK", "sequence": "CCCCC", "sequence_id": "bcr-pair"}),
         ]
     )
-    assert pair.name == "bcr_pair"
+    assert pair.name == "bcr-pair"
     pair = Pair(
         [
-            Sequence({"locus": "TRA", "sequence": "AAAAA", "sequence_id": "tcr_pair"}),
-            Sequence({"locus": "TRB", "sequence": "CCCCC", "sequence_id": "tcr_pair"}),
+            Sequence({"locus": "TRA", "sequence": "AAAAA", "sequence_id": "tcr-pair"}),
+            Sequence({"locus": "TRB", "sequence": "CCCCC", "sequence_id": "tcr-pair"}),
         ]
     )
-    assert pair.name == "tcr_pair"
+    assert pair.name == "tcr-pair"
 
 
 def test_select_chain():
@@ -305,7 +306,7 @@ def test_select_chain():
                 }
             ),
         ],
-        chain_selector=umi_selector,
+        chain_selection_func=umi_selector,
     )
     assert len(pair.heavies) == 2
     assert pair.heavy is not None
@@ -390,9 +391,11 @@ def test_assign_pairs_with_tenx_annot_file():
         Sequence({"sequence_id": "seq2_heavy", "sequence": "ATCG", "locus": "IGH"}),
         Sequence({"sequence_id": "seq2_kappa", "sequence": "ATCG", "locus": "IGK"}),
     ]
-    pairs = assign_pairs(seqs, tenx_annot_file=tenx_annot_path)
+    pairs = assign_pairs(
+        seqs, tenx_annot_file=tenx_annot_file.name, delim="_", delim_occurance=1
+    )
     assert isinstance(pairs, list)
-    assert len(pairs) == 1
+    assert len(pairs) == 2
     for pair in pairs:
         assert isinstance(pair, Pair)
         if pair.name == "seq1":
