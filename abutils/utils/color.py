@@ -39,6 +39,20 @@ from matplotlib.colors import (
 )
 
 
+__all__ = [
+    "get_cmap",
+    "palettes",
+    "show_palettes",
+    "hex_to_rgb",
+    "rgb_to_hex",
+    "hls",
+    "husl",
+    "truncate_colormap",
+    "cmaps",
+    "monochrome_palette",
+]
+
+
 # -----------------
 #    PALETTES
 # -----------------
@@ -310,10 +324,10 @@ def truncate_colormap(
 
     http://stackoverflow.com/questions/18926031/how-to-extract-a-subset-of-a-colormap-as-a-new-colormap-in-matplotlib
     """
-    cmap = get_cmap(cmap)
+    # cmap = get_cmap(cmap)
     name = "%s-trunc-%.2g-%.2g" % (cmap.name, minval, maxval)
     return colors.LinearSegmentedColormap.from_list(
-        name, cmap(np.linspace(minval, maxval, n))
+        name, cmap(np.linspace(minval, maxval, n)), N=n
     )
 
 
