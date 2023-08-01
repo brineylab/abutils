@@ -35,7 +35,7 @@ from .tools.alignment import (
     mafft,
 )
 from .tools.clonify import clonify
-from .tools.cluster import cluster, cluster_vsearch, cluster_mmseqs
+from .tools.cluster import cluster, cluster_cdhit, cluster_vsearch, cluster_mmseqs
 from .tools.phylo import fasttree, phylogeny, Phylogeny
 
 # from .utils.alignment import (
