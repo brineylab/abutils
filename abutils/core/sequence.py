@@ -129,6 +129,7 @@ class Sequence(object):
         seq: Union[str, Iterable, dict, SeqRecord],
         id: Optional[str] = None,
         qual: Optional[str] = None,
+        annotations: Optional[dict] = None,
         id_key: Optional[str] = None,
         seq_key: Optional[str] = None,
     ):
@@ -136,10 +137,10 @@ class Sequence(object):
         self._input_sequence = None
         self._input_id = id
         self._input_qual = qual
+        self._annotations = annotations
         self.id = None
         self.sequence = None
         self.qual = None
-        self._annotations = None
         self._fasta = None
         self._fastq = None
         self._reverse_complement = None
@@ -371,7 +372,9 @@ class Sequence(object):
             self.sequence = seq.get(self.seq_key, None)
             self.qual = qual
             self._input_sequence = self.sequence
-            self._annotations = seq
+            for k in seq:
+                if k not in self.annotations:
+                    self.annotations[k] = seq[k]
 
 
 def translate(
@@ -683,7 +686,9 @@ def to_fasta(
         fasta_string = "\n".join(f">{i}\n{s}" for i, s in zip(ids, seqs))
     # anything else..
     else:
-        fasta_string = "\n".join([Sequence(s).fasta for s in sequences])
+        fasta_string = "\n".join(
+            [Sequence(s, id_key=id_key, seq_key=sequence_key).fasta for s in sequences]
+        )
     # output
     if as_string:
         return fasta_string
