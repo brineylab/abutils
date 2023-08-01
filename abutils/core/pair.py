@@ -271,27 +271,59 @@ class Pair(object):
     def name(self):
         if self._name is None:
             if self.heavy is not None:
-                try:
-                    # abstar's JSON format
+                if self.heavy.id is not None:
+                    self._name = self.heavy.id
+                elif self.heavy["sequence_id"] is not None:
+                    self._name = self.heavy["sequence_id"]
+                elif self.heavy["seq_id"] is not None:
                     self._name = self.heavy["seq_id"]
-                except KeyError:
-                    try:
-                        # AIRR format
-                        self._name = self.heavy["sequence_id"]
-                    except KeyError:
-                        # unknown format
-                        pass
+                else:
+                    pass
             elif self.light is not None:
-                try:
-                    # abstar's JSON format
+                if self.light.id is not None:
+                    self._name = self.light.id
+                elif self.light["sequence_id"] is not None:
+                    self._name = self.light["sequence_id"]
+                elif self.light["seq_id"] is not None:
                     self._name = self.light["seq_id"]
-                except KeyError:
-                    try:
-                        # AIRR format
-                        self._name = self.light["sequence_id"]
-                    except KeyError:
-                        # unknown format
-                        pass
+                else:
+                    pass
+            elif self.alpha is not None:
+                if self.alpha.id is not None:
+                    self._name = self.alpha.id
+                elif self.alpha["sequence_id"] is not None:
+                    self._name = self.alpha["sequence_id"]
+                elif self.alpha["seq_id"] is not None:
+                    self._name = self.alpha["seq_id"]
+                else:
+                    pass
+            elif self.beta is not None:
+                if self.beta.id is not None:
+                    self._name = self.beta.id
+                elif self.beta["sequence_id"] is not None:
+                    self._name = self.beta["sequence_id"]
+                elif self.beta["seq_id"] is not None:
+                    self._name = self.beta["seq_id"]
+                else:
+                    pass
+            elif self.delta is not None:
+                if self.delta.id is not None:
+                    self._name = self.delta.id
+                elif self.delta["sequence_id"] is not None:
+                    self._name = self.delta["sequence_id"]
+                elif self.delta["seq_id"] is not None:
+                    self._name = self.delta["seq_id"]
+                else:
+                    pass
+            elif self.gamma is not None:
+                if self.gamma.id is not None:
+                    self._name = self.gamma.id
+                elif self.gamma["sequence_id"] is not None:
+                    self._name = self.gamma["sequence_id"]
+                elif self.gamma["seq_id"] is not None:
+                    self._name = self.gamma["seq_id"]
+                else:
+                    pass
         return self._name
 
     @name.setter
@@ -641,7 +673,7 @@ def assign_pairs(
                 umis[r[key]] = r["umis"]
                 annots[r[key]] = r
         for s in seqs:
-            s["umis"] = umis.get(s[id_key], 0)
+            s["umis"] = int(umis.get(s[id_key], 0))
             s["tenx_annots"] = annots.get(s[id_key], {})
 
     # identify pairs
