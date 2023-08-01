@@ -24,12 +24,4 @@
 
 from seaborn import color_palette as seaborn_palette, hls_palette, husl_palette
 
-from .utils.color import (
-    cmaps,
-    get_cmap,
-    palettes,
-    monochrome_palette,
-    show_palettes,
-    hex_to_rgb,
-    rgb_to_hex,
-)
+from .utils.color import *
