@@ -154,9 +154,10 @@ class Phylogeny:
         root: Optional[Union[str, Sequence]] = None,
         cluster: bool = True,
         clustering_threshold: float = 1.0,
+        clustering_algo: str = "auto",
         rename: Optional[Union[dict, Callable]] = None,
-        id_key: str = "sequence_id",
-        sequence_key: str = "sequence",
+        id_key: Optional[str] = None,
+        sequence_key: Optional[str] = None,
     ):
         """
         Phylogenetic representation of an antibody lineage.
@@ -199,12 +200,12 @@ class Phylogeny:
         """
         self.id_key = id_key
         self.seq_key = sequence_key
-        self.sequences = self.process_sequences(sequences)
-        self.name = name if name is not None else uuid.uuid4()
-        self._root = root
-        self._rename = rename
+        self.name = name if name is not None else str(uuid.uuid4())
         self.do_clustering = cluster
         self.clustering_threshold = clustering_threshold
+        self.clustering_algo = clustering_algo
+        self._root = root
+        self._rename = rename
         self._fasta_string = None
         self._aln_string = None
         self._tree_string = None
@@ -213,6 +214,8 @@ class Phylogeny:
         self._sizes = None
         self._clusters = None
         self._cluster_dict = None
+        # wait until all other attributes are set before processing sequences
+        self.sequences = self.process_sequences(sequences)
 
     def __eq__(self, other):
         """
@@ -444,7 +447,12 @@ class Phylogeny:
         """
         sequences = deepcopy(sequences)
         sequences = [
-            Sequence(s[self.seq_key], id=self.sanitize_name(s[self.id_key]),)
+            Sequence(
+                s[self.seq_key] if self.seq_key is not None else s.sequence,
+                id=self.sanitize_name(
+                    self.rename(s[self.id_key] if self.id_key is not None else s.id)
+                ),
+            )
             for s in sequences
         ]
         return sequences
@@ -671,7 +679,7 @@ class Phylogeny:
         clusters = cluster(
             self.sequences,
             threshold=self.clustering_threshold,
-            algo="vsearch",
+            algo=self.clustering_algo,
             iddef=1,
             id_key=self.id_key,
             seq_key=self.seq_key,
@@ -803,7 +811,11 @@ class Phylogeny:
         ax = plt.gca()
         # plot parameters
         size_func = lambda k: self.get_size(
-            k.name, size=size, default=1, min_size=min_size, multiplier=size_multiplier,
+            k.name,
+            size=size,
+            default=1,
+            min_size=min_size,
+            multiplier=size_multiplier,
         )
         color_func = lambda k: self.get_color(k.name, color=color, default="black")
         branch_color_func = lambda k: self.get_branch_color(
@@ -916,9 +928,10 @@ def phylogeny(
     root: Optional[Union[str, Sequence]] = None,
     cluster: bool = True,
     clustering_threshold: float = 1.0,
+    clustering_algo: str = "auto",
     rename: Optional[Union[dict, Callable]] = None,
-    id_key: str = "sequence_id",
-    sequence_key: str = "sequence",
+    id_key: Optional[str] = None,
+    sequence_key: Optional[str] = None,
 ) -> Phylogeny:
     """
     Phylogenetic representation of an antibody lineage.
@@ -926,7 +939,7 @@ def phylogeny(
     Parameters
     ----------
     sequences : str or list of Sequence
-        A list of ``abutils.Sequence`` objects or the path to a FASTA-formatted file. 
+        A list of ``abutils.Sequence`` objects or the path to a FASTA-formatted file.
         Required.
 
     name : str, default=None
@@ -972,6 +985,7 @@ def phylogeny(
         root=root,
         cluster=cluster,
         clustering_threshold=clustering_threshold,
+        clustering_algo=clustering_algo,
         rename=rename,
         id_key=id_key,
         sequence_key=sequence_key,
@@ -1015,9 +1029,19 @@ def align_marker(
 
     """
     if isinstance(halign, str):
-        halign = {"right": -1.0, "middle": 0.0, "center": 0.0, "left": 1.0,}[halign]
+        halign = {
+            "right": -1.0,
+            "middle": 0.0,
+            "center": 0.0,
+            "left": 1.0,
+        }[halign]
     if isinstance(valign, str):
-        valign = {"top": -1.0, "middle": 0.0, "center": 0.0, "bottom": 1.0,}[valign]
+        valign = {
+            "top": -1.0,
+            "middle": 0.0,
+            "center": 0.0,
+            "bottom": 1.0,
+        }[valign]
     m = markers.MarkerStyle(marker)
     m_arr = m.get_path().transformed(m.get_transform()).vertices
     m_arr[:, 0] += halign / 2
