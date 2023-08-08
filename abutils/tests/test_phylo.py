@@ -86,7 +86,9 @@ def root_sequence():
 
 def test_fasttree_with_file_input(fasta_file):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
-    tree_path = fasttree(fasta_file.name, tree_file=tree_file.name)
+    tree_path = fasttree(
+        fasta_file.name, tree_file=tree_file.name, debug=True, quiet=False
+    )
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:
         tree_string = f.read()
@@ -96,7 +98,9 @@ def test_fasttree_with_file_input(fasta_file):
 
 def test_fasttree_with_string_input(fasta_string):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
-    tree_path = fasttree(fasta_string, tree_file=tree_file.name)
+    tree_path = fasttree(
+        fasta_string, tree_file=tree_file.name, debug=True, quiet=False
+    )
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:
         tree_string = f.read()
@@ -106,7 +110,13 @@ def test_fasttree_with_string_input(fasta_string):
 
 def test_fasttree_with_aa_file_input(fasta_file_aa):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
-    tree_path = fasttree(fasta_file_aa.name, tree_file=tree_file.name, is_aa=True)
+    tree_path = fasttree(
+        fasta_file_aa.name,
+        tree_file=tree_file.name,
+        is_aa=True,
+        debug=True,
+        quiet=False,
+    )
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:
         tree_string = f.read()
@@ -116,7 +126,9 @@ def test_fasttree_with_aa_file_input(fasta_file_aa):
 
 def test_fasttree_with_aa_string_input(fasta_string_aa):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
-    tree_path = fasttree(fasta_string_aa, tree_file=tree_file.name, is_aa=True)
+    tree_path = fasttree(
+        fasta_string_aa, tree_file=tree_file.name, is_aa=True, debug=True, quiet=False
+    )
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:
         tree_string = f.read()
@@ -131,7 +143,11 @@ def test_fasttree_with_custom_binary(fasta_file):
     )
     tree_file = tempfile.NamedTemporaryFile(delete=False)
     tree_path = fasttree(
-        fasta_file.name, tree_file=tree_file.name, fasttree_bin=fasttree_bin
+        fasta_file.name,
+        tree_file=tree_file.name,
+        fasttree_bin=fasttree_bin,
+        debug=True,
+        quiet=False,
     )
     assert os.path.isfile(tree_path)
     with open(tree_path, "r") as f:

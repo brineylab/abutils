@@ -113,9 +113,12 @@ def fasttree(
     # set the FastTree binary
     if fasttree_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        fasttree_bin = os.path.join(
-            mod_dir, f"bin/fasttree_{platform.system().lower()}"
-        )
+        # fasttree_bin = os.path.join(
+        #     mod_dir, f"bin/fasttree_{platform.system().lower()}"
+        # )
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        fasttree_bin = os.path.join(mod_dir, f"bin/fasttree_{system}_{machine}")
     # make output directory if necessary
     if tree_file is None:
         as_file = False
