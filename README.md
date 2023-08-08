@@ -66,7 +66,7 @@ smart_open
   
 All of the above dependencies can be installed with `pip`, and will be installed automatically when installing `abutils` with `pip`.  
   
-`abutils` packages several additional external binaries required for specific functions:
+`abutils` packages several additional external binaries that are required for specific functions:
 
 * ``abutils.tl.mafft`` uses [MAFFT](https://mafft.cbrc.jp/alignment/software/)
 * ``abutils.tl.muscle`` uses [MUSCLE](https://www.drive5.com/muscle/)

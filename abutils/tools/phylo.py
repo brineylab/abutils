@@ -119,6 +119,7 @@ def fasttree(
         system = platform.system().lower()
         machine = platform.machine().lower()
         fasttree_bin = os.path.join(mod_dir, f"bin/fasttree_{system}_{machine}")
+        fasttree_bin = fasttree_bin.replace("x86_64", "amd64")
     # make output directory if necessary
     if tree_file is None:
         as_file = False
