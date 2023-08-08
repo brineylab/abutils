@@ -35,7 +35,7 @@ cd abutils
 pytest
 ```
 
-The same tests are run after every commit.  
+This test suite is automatically run following every commit, and is tested against all supported versions of Python.
   
 
 ### requirements  
@@ -54,7 +54,6 @@ numpy
 pandas  
 paramiko  
 parasail  
-pymongo
 pytest  
 python-circos  
 python-Levenshtein  
@@ -66,8 +65,6 @@ seaborn
 smart_open  
   
 All of the above dependencies can be installed with `pip`, and will be installed automatically when installing `abutils` with `pip`.  
-
-If you're new to Python, a great way to get started is to install the [Anaconda Python distribution](https://www.continuum.io/downloads), which includes pip as well as a ton of useful scientific Python packages.
   
 `abutils` packages several additional external binaries required for specific functions:
 
