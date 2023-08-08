@@ -12,6 +12,7 @@ parasail
 pymongo
 pytest
 python-circos
+python-Levenshtein
 pyyaml
 sample-sheet
 scikit-learn
