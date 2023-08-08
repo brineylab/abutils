@@ -79,7 +79,7 @@ setup(
     version=__version__,
     author="Bryan Briney",
     author_email="briney@scripps.edu",
-    description="Utilities for analysis of antibody NGS data",
+    description="Utilities for analysis of adaptive immune receptor repertoire (AIRR) data",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/briney/abutils",
