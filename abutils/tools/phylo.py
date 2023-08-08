@@ -49,6 +49,9 @@ from ..tools.cluster import cluster
 from ..utils.pipeline import make_dir
 
 
+__all__ = ["fasttree", "Phylogeny", "phylogeny"]
+
+
 def fasttree(
     aln: str,
     tree_file: Optional[str] = None,

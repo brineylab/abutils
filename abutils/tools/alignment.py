@@ -53,9 +53,9 @@ __all__ = [
     "global_alignment",
     "semiglobal_alignment",
     "dot_alignment",
-    "LocalAlignment",
-    "GlobalAlignment",
-    "SemiGlobalAlignment",
+    # "LocalAlignment",
+    # "GlobalAlignment",
+    # "SemiGlobalAlignment",
 ]
 
 

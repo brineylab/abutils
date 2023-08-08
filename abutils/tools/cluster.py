@@ -41,6 +41,9 @@ from ..utils.pipeline import make_dir
 from ..core.sequence import Sequence, read_fasta, to_fasta
 
 
+__all__ = ["cluster", "cluster_vsearch", "cluster_mmseqs", "cluster_cdhit"]
+
+
 class Cluster:
     """
     Docstring for Cluster.
