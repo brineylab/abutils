@@ -6,50 +6,79 @@
 
 # abutils
 
-Models and general-purpose utilities for working with antibody repertoire data.
-abutils is a core component of the ab\[x\] toolkit for antibody sequence analysis.
+Models, functions and visualization tools for working with adaptive immune receptore repertoire (AIRR) data. The primary purpose of `abutils` is to provide generalizable tools suitable for direct use analyzing bulk AIRR datasets, and is used by [`scab`](https://github.com/briney/scab) for single cell AIRR analysis. `abutils` is a core component of the ab\[x\] toolkit for AIRR data analysis.
   
   - Source code: [github.com/briney/abutils](https://github.com/briney/abutils)  
   - Documentation: [abutils.readthedocs.org](http://abutils.readthedocs.org)  
   - Download: [pypi.python.org/pypi/abutils](https://pypi.python.org/pypi/abutils)  
-  - Docker: [hub.docker.com/r/briney/abstar/](https://hub.docker.com/r/briney/abstar/)  
+  <!-- - Docker: [hub.docker.com/r/briney/abstar/](https://hub.docker.com/r/briney/abstar/)   -->  
   
 ### install  
 `pip install abutils`  
 
 
 ### api  
-The intended use of abutils is through the public API, enabling incorporation of abutils' methods and utilities into integrated analysis pipelines, other standalone software tools, or for interative analysis of antibody repertoires. See the abutils [documentation](http://abutils.readthedocs.org) for more detail about the API.  
+We've tried to design the  `abutils` API to be intuitive yet powerful, with the goal of enabling both interactive analyses (via environments like Jupyter notebooks) as well as integration of `abutils` tools into more complex analysis pipelines and/or standalone software tools. See the [documentation](http://abutils.readthedocs.org) for more detail about the API. As always, any feedback is greatly appreciated!!  
 
 
 ### testing  
-To run the test suite, clone or download the repository and run `pytest ./` from the top-level directory. The same tests are run after every commit using TravisCI.  
+You can run the complete `abutils` test suite by first installing `pytest`:
+```
+pip install pytest
+```
+
+followed by:
+
+```
+git clone https://github.com/briney/abutils
+cd abutils
+pytest
+```
+
+The same tests are run after every commit.  
   
 
 ### requirements  
-Python 3.6+  
+**python 3.8+**  
+  
+abstar  
+baltic  
 biopython  
 celery  
 ete3  
+fastcluster  
 matplotlib  
+mnemonic  
+natsort  
 numpy  
-nwalign3  
 pandas  
 paramiko  
-pymongo  
+parasail  
+pymongo
 pytest  
-scikit bio  
-seaborn   
+python-circos  
+python-Levenshtein  
+pyyaml  
+sample-sheet  
+scikit-learn  
+scipy  
+seaborn  
+smart_open  
   
-All of the above dependencies can be installed with pip, and will be installed automatically when installing abstar with pip.  
+All of the above dependencies can be installed with `pip`, and will be installed automatically when installing `abutils` with `pip`.  
+
 If you're new to Python, a great way to get started is to install the [Anaconda Python distribution](https://www.continuum.io/downloads), which includes pip as well as a ton of useful scientific Python packages.
   
-abutils has a few additional non-python dependencies that are not required for installation
-but are necessary for specific functions:
+`abutils` packages several additional external binaries required for specific functions:
 
-* ``abutils.alignment.mafft`` requires [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-* ``abutils.mongodb.mongoimport`` requires [MongoDB](https://www.mongodb.org/)
-* ``abutils.phylogeny.fasttree`` requires [FastTree](http://www.microbesonline.org/fasttree/)
-* ``abutils.phylogeny.igphyml`` requires [IgPhyML](https://github.com/kbhoehn/IgPhyML)
-* ``abutils.phylogeny.lsd`` [requires LSD](https://github.com/tothuhien/lsd-0.3beta)
-* ``abutils.s3`` requires [s3cmd](https://s3tools.org/s3cmd)
+* ``abutils.tl.mafft`` uses [MAFFT](https://mafft.cbrc.jp/alignment/software/)
+* ``abutils.tl.muscle`` uses [MUSCLE](https://www.drive5.com/muscle/)
+* ``abutils.tl.cluster`` requires:
+  * [CD-HIT](https://cd-hit.org)
+  * [MMseqs2](https://github.com/soedinglab/MMseqs2)
+  * [VSEARCH](https://github.com/torognes/vsearch)
+* ``abutils.tl.fasttree`` requires [FastTree](http://www.microbesonline.org/fasttree/)
+
+Althogh these binaries are all packaged into `abutils`, each respective `abutils` function provides the option to supply a different binary path in case you'd prefer to use a different version or an alternate compilation.  
+
+
