@@ -5,6 +5,7 @@ celery
 ete3
 fastcluster
 matplotlib
+mnemonic
 natsort
 numpy
 pandas
