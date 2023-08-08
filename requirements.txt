@@ -3,6 +3,7 @@ baltic
 biopython >= 1.78
 celery
 ete3
+fastcluster
 matplotlib
 natsort
 numpy
