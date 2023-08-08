@@ -171,10 +171,11 @@ def mafft(
         # )
         system = platform.system().lower()
         machine = platform.machine().lower()
-        if system == "darwin":
-            mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
-        else:
-            mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}")
+        mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
+        # if system == "darwin":
+        #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
+        # else:
+        #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}")
     mafft_cline = "{} --thread {} {}{} > {}".format(
         mafft_bin, threads, aln_format, ffile, alignment_file
     )
