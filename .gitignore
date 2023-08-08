@@ -58,3 +58,4 @@ target/
 
 *.sublime-*
 .DS_Store
+.vscode/settings.json

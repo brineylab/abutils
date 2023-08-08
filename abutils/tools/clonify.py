@@ -41,82 +41,82 @@ def clonify(
     Assigns BCR sequences to clonal lineages using the clonify_ [Briney16]_ algorithm.
 
     .. seealso::
-       | Bryan Briney, Khoa Le, Jiang Zhu, and Dennis R Burton  
+       | Bryan Briney, Khoa Le, Jiang Zhu, and Dennis R Burton
        | Clonify: unseeded antibody lineage assignment from next-generation sequencing data.
        | *Scientific Reports* 2016. https://doi.org/10.1038/srep23901
 
-    Parameters  
+    Parameters
     ----------
     sequences : Iterable[Sequence]
-        Iterable of ``abutils.core.Sequence`` objects containing annotated sequence data.  
+        Iterable of ``abutils.core.Sequence`` objects containing annotated sequence data.
 
-    distance_cutoff : float, default=0.32  
-        Distance threshold for lineage clustering.  
+    distance_cutoff : float, default=0.32
+        Distance threshold for lineage clustering.
 
-    shared_mutation_bonus : float, default=0.65  
-        Bonus applied for each shared V-gene mutation.  
+    shared_mutation_bonus : float, default=0.65
+        Bonus applied for each shared V-gene mutation.
 
-    length_penalty_multiplier : int, default=2  
-        Multiplier for the CDR3 length penalty. Default is ``2``, resulting in CDR3s that 
+    length_penalty_multiplier : int, default=2
+        Multiplier for the CDR3 length penalty. Default is ``2``, resulting in CDR3s that
         differ by ``n`` amino acids being penalized ``n * 2``.
-        
+
     group_by_v : bool, default=True
         If ``True``, sequences are grouped by V-gene use prior to lineage assignment. This
         option is additive with ``group_by_j``. For example, if ``group_by_v == True`` and
         ``group_by_j == True``, sequences will be grouped by both V-gene and J-gene.
-        
+
     group_by_j : bool, default=True
-        If ``True``, sequences are grouped by J-gene use prior to lineage assignment. This 
+        If ``True``, sequences are grouped by J-gene use prior to lineage assignment. This
         option is additive with ``group_by_v``. For example, if ``group_by_v == True`` and
         ``group_by_j == True``, sequences will be grouped by both V-gene and J-gene.
 
-    preclustering : bool, default=False  
-        If ``True``, V/J groups are pre-clustered on the `preclustering_field` sequence, 
-        which can potentially speed up lineage assignment and reduce memory usage. 
-        If ``False``, each V/J group is processed in its entirety without pre-clustering. 
+    preclustering : bool, default=False
+        If ``True``, V/J groups are pre-clustered on the `preclustering_field` sequence,
+        which can potentially speed up lineage assignment and reduce memory usage.
+        If ``False``, each V/J group is processed in its entirety without pre-clustering.
 
-    preclustering_threshold : float, default=0.65  
-        Identity threshold for pre-clustering the V/J groups prior to lineage assignment. 
+    preclustering_threshold : float, default=0.65
+        Identity threshold for pre-clustering the V/J groups prior to lineage assignment.
 
     vgene_key : str, default='v_gene'
         Annotation field containing the V-gene name.
 
     jgene_key : str, default='j_gene'
         Annotation field containing the J-gene name.
-    
+
     cdr3_key : str, default='cdr3_aa'
         Annotation field containing the CDR3 amino acid sequence.
-    
+
     muts_key : str, default='v_mutations'
         Annotation field containing the V-gene mutations.
 
-    preclustering_key : str, default='cdr3_nt'  
-        Annotation field on which to pre-cluster sequences.  
+    preclustering_key : str, default='cdr3_nt'
+        Annotation field on which to pre-cluster sequences.
 
     muts_delimiter : str, default='|'
         Delimiter used to separate mutations in the `muts_key` annotation field.
 
-    lineage_field : str, default='lineage'  
-        Name of the lineage assignment field.  
+    lineage_field : str, default='lineage'
+        Name of the lineage assignment field.
 
-    lineage_size_field : str, default='lineage_size'  
-        Name of the lineage size field.  
-        
-    return_assignment_dict : bool, default=False  
-        If ``True``, a dictionary linking sequence IDs to lineage names will be returned. 
-        If ``False``, the input ``anndata.AnnData`` object will be returned, with lineage 
-        annotations included.  
+    lineage_size_field : str, default='lineage_size'
+        Name of the lineage size field.
+
+    return_assignment_dict : bool, default=False
+        If ``True``, a dictionary linking sequence IDs to lineage names will be returned.
+        If ``False``, the input ``anndata.AnnData`` object will be returned, with lineage
+        annotations included.
 
     Returns
     -------
     output : ``Iterable[Sequence]`` or ``dict``
-        By default (``return_assignment_dict == False``), a list of input sequences are 
+        By default (``return_assignment_dict == False``), a list of input sequences are
         returned with two additional annotations: the lineage name (added to `lineage_field`)
-        and lineage size (added to `lineage_size_field`). If ``return_assignment_dict == True``, 
-        a ``dict`` mapping sequence IDs to lineage names is returned. 
+        and lineage size (added to `lineage_size_field`). If ``return_assignment_dict == True``,
+        a ``dict`` mapping sequence IDs to lineage names is returned.
 
 
-    .. _clonify: https://github.com/briney/clonify    
+    .. _clonify: https://github.com/briney/clonify
     """
     # select the appropriate data fields
     # if annotation_format.lower() == "airr":
@@ -154,8 +154,10 @@ def clonify(
         muts = h[muts_key]
         if any([pd.isnull(muts), muts is None]):
             s["mutations"] = []
-        else:
+        elif isinstance(muts, str):
             muts = muts.split(muts_delimiter)
+        else:
+            muts = list(muts)
             s["mutations"] = [m for m in muts if m.strip()]
         if preclustering:
             s["preclustering"] = nested_dict_lookup(h, preclustering_key.split("."))
@@ -245,13 +247,13 @@ def pairwise_distance(
     ----------
     s1 : Sequence
         The first input sequence
-    
+
     s2 : Sequence
         The second input sequence
-    
+
     shared_mutation_bonus : float, optional
         The bonus for each shared mutation, by default 0.65
-    
+
     length_penalty_multiplier : Union[int, float], optional
         Used to compute the penalty for differences in CDR3 length. The length
         difference is multiplied by `length_penalty_multiplier`, by default 2
@@ -263,7 +265,7 @@ def pairwise_distance(
     mutations_field : str, optional
         Name of the field in `s1` and `s2` containing mutation information,
         by default ``"mutations"``
-        
+
     Returns
     -------
     distance: float

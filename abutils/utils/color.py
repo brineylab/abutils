@@ -39,12 +39,26 @@ from matplotlib.colors import (
 )
 
 
+__all__ = [
+    "get_cmap",
+    "palettes",
+    "show_palettes",
+    "hex_to_rgb",
+    "rgb_to_hex",
+    "hls",
+    "husl",
+    "truncate_colormap",
+    "cmaps",
+    "monochrome_palette",
+]
+
+
 # -----------------
 #    PALETTES
 # -----------------
 
 palettes = {
-    "muted neon rainbow": [
+    "muted_neon": [
         "#ef476f",
         "#ffd166",
         "#06d6a0",
@@ -52,12 +66,12 @@ palettes = {
         "#6c6678",
         "#073b4c",
     ],
-    "neon pastel": ["#9b5de5", "#f15bb5", "#fee440", "#00bbf9", "#00f5d4"],
-    "muted sunset": ["#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51"],
-    "vibrant rainbow": ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93"],
-    "bright pastel": ["#826aed", "#c879ff", "#ffb7ff", "#3bf4fb", "#caff8a"],
-    "fresh rainbow": ["#1be7ff", "#6eeb83", "#e4ff1a", "#ffb800", "#ff5714"],
-    "cool rainbow": [
+    "pastel": ["#9b5de5", "#f15bb5", "#fee440", "#00bbf9", "#00f5d4"],
+    "sunset": ["#264653", "#40768c", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51"],
+    "vibrant": ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93"],
+    "bright_pastel": ["#826aed", "#c879ff", "#ffb7ff", "#3bf4fb", "#caff8a"],
+    "fresh": ["#1be7ff", "#6eeb83", "#e4ff1a", "#ffb800", "#ff5714"],
+    "cool": [
         "#065275",
         "#029099",
         "#7ccba1",
@@ -66,8 +80,10 @@ palettes = {
         "#dc3978",
         "#7c1e6f",
     ],
-    "bright primary": ["#246eb9", "#4cb944", "#c73e1d", "#ffbe0b", "#401f3e"],
+    "primary": ["#246eb9", "#4cb944", "#c73e1d", "#ffbe0b", "#401f3e"],
 }
+
+true_false_palette = {True: "#e41a1c", False: "#d1d1d1"}
 
 
 def show_palettes() -> None:
@@ -79,14 +95,19 @@ def show_palettes() -> None:
 
     nrows = len(palettes)
     figh = 1 + (nrows + (nrows - 1) * 0.1) * 0.75
-    fig, axs = plt.subplots(nrows=nrows + 1, figsize=(6.4, figh),)
+    fig, axs = plt.subplots(
+        nrows=nrows + 1,
+        figsize=(6.4, figh),
+    )
     fig.subplots_adjust(
         top=1 - 0.35 / figh, bottom=0.15 / figh, left=0.2, right=0.99, hspace=0.6
     )
     for ax, name in zip(axs, palettes):
         cmap = ListedColormap(palettes[name])
         ax.imshow(
-            gradient, aspect="auto", cmap=cmap,
+            gradient,
+            aspect="auto",
+            cmap=cmap,
         )
         ax.text(
             -0.02,
@@ -121,8 +142,9 @@ def get_cmap(
     c : ``str``, ``Colormap`` or ``tuple``
         Can be one of several things:
             * matplotlib ``Colormap``
+            * the name of a matplotlib ``Colormap`` (e.g. ``'viridis'``)
             * hex code
-            * `Matplotlib color`_
+            * a `matplotlib color`_
             * RGB tuple
         If a single color is provided, a ``Colormap`` will be built from
         white to the provided color (or from the color to black if `dark`
@@ -302,10 +324,10 @@ def truncate_colormap(
 
     http://stackoverflow.com/questions/18926031/how-to-extract-a-subset-of-a-colormap-as-a-new-colormap-in-matplotlib
     """
-    cmap = get_cmap(cmap)
+    # cmap = get_cmap(cmap)
     name = "%s-trunc-%.2g-%.2g" % (cmap.name, minval, maxval)
     return colors.LinearSegmentedColormap.from_list(
-        name, cmap(np.linspace(minval, maxval, n))
+        name, cmap(np.linspace(minval, maxval, n)), N=n
     )
 
 

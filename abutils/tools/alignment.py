@@ -53,9 +53,9 @@ __all__ = [
     "global_alignment",
     "semiglobal_alignment",
     "dot_alignment",
-    "LocalAlignment",
-    "GlobalAlignment",
-    "SemiGlobalAlignment",
+    # "LocalAlignment",
+    # "GlobalAlignment",
+    # "SemiGlobalAlignment",
 ]
 
 
@@ -132,7 +132,7 @@ def mafft(
         Default is ``False``.
 
     fasta : str, optional
-        Path to a FASTA-formatted input file. Depricated (use `sequences`
+        Path to a FASTA-formatted input file. *Depricated* (use `sequences`
         for all types if input), but retained for backwards compatibility.
 
 
@@ -166,9 +166,16 @@ def mafft(
         aln_format += "--reorder "
     if mafft_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        mafft_bin = os.path.join(
-            mod_dir, "bin/mafft_{}".format(platform.system().lower())
-        )
+        # mafft_bin = os.path.join(
+        #     mod_dir, "bin/mafft_{}".format(platform.system().lower())
+        # )
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
+        # if system == "darwin":
+        #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
+        # else:
+        #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}")
     mafft_cline = "{} --thread {} {}{} > {}".format(
         mafft_bin, threads, aln_format, ffile, alignment_file
     )
@@ -182,7 +189,8 @@ def mafft(
     stdout, stderr = mafft.communicate()
     # return output
     if debug:
-        print(mafft_cline)
+        print("mafft binary path:", mafft_bin)
+        print("mafft command:", mafft_cline)
         print(stdout)
         print(stderr)
     if os.stat(alignment_file).st_size == 0:
@@ -275,6 +283,21 @@ def muscle(
     .. _MUSCLE:
         https://www.drive5.com/muscle/
     """
+    # >>>>>> TEMPORARY FIX for MUSCLE 5.0 and MacOS
+    if platform.system().lower() == "darwin" and muscle_bin is None:
+        return muscle_v3(
+            sequences=sequences,
+            alignment_file=alignment_file,
+            as_file=as_file,
+            as_string=as_string,
+            fmt="fasta",
+            id_key=id_key,
+            seq_key=seq_key,
+            debug=debug,
+            fasta=fasta,
+        )
+    # <<<<<< END TEMPORARY FIX
+
     # process input
     if fasta is not None:
         sequences = fasta
@@ -288,9 +311,10 @@ def muscle(
     # muscle binary
     if muscle_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        muscle_bin = os.path.join(
-            mod_dir, "bin/muscle_{}".format(platform.system().lower())
-        )
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        muscle_bin = os.path.join(mod_dir, f"bin/muscle_{system}_{machine}")
+
     # do the alignment
     muscle_cline = f"{muscle_bin} -align {ffile} -output {alignment_file}"
     if threads is not None:
@@ -305,7 +329,7 @@ def muscle(
     # output
     if os.stat(alignment_file).st_size == 0:
         err = "WARNING: output alignment file is empty. "
-        err += "Please verify that the input data is valid"
+        err += "Verify that MUSCLE is installed and the input data is valid"
         print(err)
         return None
     if as_file:
@@ -409,57 +433,89 @@ def muscle_v3(
 
     """
     # process input
+    # if fasta is not None:
+    #     sequences = fasta
+    # fasta_string = to_fasta(
+    #     sequences,
+    #     as_string=True,
+    #     id_key=id_key,
+    #     sequence_key=seq_key,
+    # )
     if fasta is not None:
         sequences = fasta
-    fasta_string = to_fasta(
-        sequences,
-        as_string=True,
-        id_key=id_key,
-        sequence_key=seq_key,
-    )
+    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    # configure output path
+    if alignment_file is None:
+        # as_file = False
+        alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+    else:
+        alignment_file = os.path.abspath(alignment_file)
     # configure output path
     if alignment_file is None:
         as_file = False
         alignment_file = tempfile.NamedTemporaryFile(delete=False).name
     else:
         alignment_file = os.path.abspath(alignment_file)
+
     # muscle binary
     if muscle_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        muscle_bin = os.path.join(
-            mod_dir, "bin/muscle3_{}".format(platform.system().lower())
-        )
+        system = platform.system().lower()
+        muscle_bin = os.path.join(mod_dir, f"bin/muscle3_{system}")
     # do the alignment
-    aln_format = ""
-    if fmt == "clustal":
-        aln_format = " -clwstrict"
-    muscle_cline = "{}{} ".format(muscle_bin, aln_format)
+    aln_lookup = {
+        "fasta": "-fastaout",
+        "phylip": "-phyiout",
+        "clustal": "-clwstrict -clwout",
+    }
+    if fmt.lower() not in aln_lookup.keys():
+        err = f"\tERROR: invalid alignment format: '{fmt.lower()}'\n"
+        err += "Valid formats are 'fasta', 'phylip', and 'clustal'.\n"
+        raise ValueError(err)
+    aln_format = aln_lookup[fmt.lower()]
+    muscle_cline = f"{muscle_bin} -in {ffile} {aln_format} {alignment_file}"
     if maxiters is not None:
-        muscle_cline += " -maxiters {}".format(maxiters)
+        muscle_cline += f" -maxiters {maxiters}"
     if diags:
         muscle_cline += " -diags"
     if all([gap_open is not None, gap_extend is not None]):
-        muscle_cline += " -gapopen {} -gapextend {}".format(gap_open, gap_extend)
+        muscle_cline += f" -gapopen {gap_open} -gapextend {gap_extend}"
     if debug:
         print("muscle binary path:", muscle_bin)
         print("muscle command:", muscle_cline)
     muscle = sp.Popen(
         str(muscle_cline),
-        stdin=sp.PIPE,
         stdout=sp.PIPE,
         stderr=sp.PIPE,
         universal_newlines=True,
         shell=True,
     )
-    alignment, stderr = muscle.communicate(input=fasta_string)
+    stdout, stderr = muscle.communicate()
     if debug:
+        print(stdout)
         print(stderr)
     # output
+    if os.stat(alignment_file).st_size == 0:
+        err = "WARNING: output alignment file is empty. "
+        err += "Verify that MUSCLE is installed and the input data is valid"
+        print(err)
+        return None
+    if as_file:
+        return alignment_file
+    with open(alignment_file, "r") as f:
+        if as_string:
+            aln = f.read()
+        else:
+            aln = AlignIO.read(f, fmt)
+    os.unlink(alignment_file)
+    return aln
+
     if as_string:
         return alignment
     elif as_file:
         with open(alignment_file, "w") as f:
             f.write(alignment)
+        return alignment_file
     else:
         return AlignIO.read(StringIO(alignment), fmt)
 
@@ -468,7 +524,7 @@ def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
     summary_align = AlignInfo.SummaryInfo(aln)
     consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
     if name is None:
-        name = uuid.uuid4()
+        name = str(uuid.uuid4())
     consensus_string = str(consensus).replace("-", "")
     return (name, consensus_string.upper())
 
@@ -871,6 +927,12 @@ class CIGAR:
 
     @property
     def cigar_list(self):
+        """
+        Returns a list of CIGAR elements parsed from the CIGAR string. If the CIGAR string has not yet been parsed,
+        it is parsed and the resulting list is cached for future use.
+
+        :return: A list of `CIGARElement` objects representing the parsed CIGAR string.
+        """
         if self._cigar_list is None:
             cigar_list = []
             cig_iter = groupby(self.cigar_string, lambda c: c.isdigit())
@@ -1306,7 +1368,7 @@ def dot_alignment(
         root = abstar.run(("centroid", centroid.sequence))
         root.alignment_id = "centroid"
         root.alignment_sequence = root[seq_field]
-    elif type(root) in STR_TYPES:
+    elif isinstance(root, str):
         root = [s for s in sequences if s.alignment_id == root][0]
         if not root:
             print(

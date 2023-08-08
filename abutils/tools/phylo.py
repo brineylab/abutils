@@ -43,10 +43,13 @@ from Bio import Phylo
 
 from abstar.core.germline import get_imgt_germlines
 
-from ..core.sequence import Sequence, to_fasta
+from ..core.sequence import Sequence, to_fasta, read_fasta
 from ..utils.alignment import mafft
 from ..tools.cluster import cluster
 from ..utils.pipeline import make_dir
+
+
+__all__ = ["fasttree", "Phylogeny", "phylogeny"]
 
 
 def fasttree(
@@ -110,9 +113,12 @@ def fasttree(
     # set the FastTree binary
     if fasttree_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        fasttree_bin = os.path.join(
-            mod_dir, f"bin/fasttree_{platform.system().lower()}"
-        )
+        # fasttree_bin = os.path.join(
+        #     mod_dir, f"bin/fasttree_{platform.system().lower()}"
+        # )
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        fasttree_bin = os.path.join(mod_dir, f"bin/fasttree_{system}_{machine}")
     # make output directory if necessary
     if tree_file is None:
         as_file = False
@@ -154,9 +160,10 @@ class Phylogeny:
         root: Optional[Union[str, Sequence]] = None,
         cluster: bool = True,
         clustering_threshold: float = 1.0,
+        clustering_algo: str = "auto",
         rename: Optional[Union[dict, Callable]] = None,
-        id_key: str = "sequence_id",
-        sequence_key: str = "sequence",
+        id_key: Optional[str] = None,
+        sequence_key: Optional[str] = None,
     ):
         """
         Phylogenetic representation of an antibody lineage.
@@ -199,12 +206,12 @@ class Phylogeny:
         """
         self.id_key = id_key
         self.seq_key = sequence_key
-        self.sequences = self.process_sequences(sequences)
-        self.name = name if name is not None else uuid.uuid4()
-        self._root = root
-        self._rename = rename
+        self.name = name if name is not None else str(uuid.uuid4())
         self.do_clustering = cluster
         self.clustering_threshold = clustering_threshold
+        self.clustering_algo = clustering_algo
+        self._root = root
+        self._rename = rename
         self._fasta_string = None
         self._aln_string = None
         self._tree_string = None
@@ -213,6 +220,8 @@ class Phylogeny:
         self._sizes = None
         self._clusters = None
         self._cluster_dict = None
+        # wait until all other attributes are set before processing sequences
+        self.sequences = self.process_sequences(sequences)
 
     def __eq__(self, other):
         """
@@ -445,8 +454,10 @@ class Phylogeny:
         sequences = deepcopy(sequences)
         sequences = [
             Sequence(
-                s[self.seq_key],
-                id=self.sanitize_name(s[self.id_key]),
+                s[self.seq_key] if self.seq_key is not None else s.sequence,
+                id=self.sanitize_name(
+                    self.rename(s[self.id_key] if self.id_key is not None else s.id)
+                ),
             )
             for s in sequences
         ]
@@ -674,7 +685,7 @@ class Phylogeny:
         clusters = cluster(
             self.sequences,
             threshold=self.clustering_threshold,
-            algo="vsearch",
+            algo=self.clustering_algo,
             iddef=1,
             id_key=self.id_key,
             seq_key=self.seq_key,
@@ -918,22 +929,24 @@ class Phylogeny:
 
 
 def phylogeny(
-    sequences: Iterable[Sequence],
+    sequences: Union[str, Iterable[Sequence]],
     name: Optional[str] = None,
     root: Optional[Union[str, Sequence]] = None,
     cluster: bool = True,
     clustering_threshold: float = 1.0,
+    clustering_algo: str = "auto",
     rename: Optional[Union[dict, Callable]] = None,
-    id_key: str = "sequence_id",
-    sequence_key: str = "sequence",
+    id_key: Optional[str] = None,
+    sequence_key: Optional[str] = None,
 ) -> Phylogeny:
     """
     Phylogenetic representation of an antibody lineage.
 
     Parameters
     ----------
-    sequences : list of Sequence
-        A list of ``abutils.Sequence`` objects. Required.
+    sequences : str or list of Sequence
+        A list of ``abutils.Sequence`` objects or the path to a FASTA-formatted file.
+        Required.
 
     name : str, default=None
         Name of the lineage. If not provided, a random name will be generated
@@ -970,12 +983,15 @@ def phylogeny(
     phylogeny : Phylogeny
         An ``abutils.Phylogeny`` object.
     """
+    if isinstance(sequences, str):
+        sequences = read_fasta(sequences)
     return Phylogeny(
         sequences=sequences,
         name=name,
         root=root,
         cluster=cluster,
         clustering_threshold=clustering_threshold,
+        clustering_algo=clustering_algo,
         rename=rename,
         id_key=id_key,
         sequence_key=sequence_key,

@@ -26,17 +26,10 @@ from .core.lineage import group_lineages
 from .core.pair import assign_pairs
 from .core.sequence import translate
 
-from .tools.alignment import (
-    global_alignment,
-    local_alignment,
-    dot_alignment,
-    muscle,
-    muscle_v3,
-    mafft,
-)
+from .tools.alignment import *
 from .tools.clonify import clonify
-from .tools.cluster import cluster, cluster_vsearch, cluster_mmseqs
-from .tools.phylo import fasttree, phylogeny, Phylogeny
+from .tools.cluster import *
+from .tools.phylo import *
 
 # from .utils.alignment import (
 #     global_alignment,
