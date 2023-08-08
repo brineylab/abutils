@@ -183,9 +183,10 @@ def test_muscle_alignment(sequences):
     alignment = muscle(sequences, debug=True)
     assert isinstance(alignment, MultipleSeqAlignment)
     assert len(alignment) == 3
-    assert alignment[0].id == "seq1"
-    assert alignment[1].id == "seq2"
-    assert alignment[2].id == "seq3"
+    aln_ids = sorted([s.id for s in alignment])
+    assert aln_ids[0] == "seq1"
+    assert aln_ids[1] == "seq2"
+    assert aln_ids[2] == "seq3"
 
 
 def test_muscle_alignment_file(sequences):
