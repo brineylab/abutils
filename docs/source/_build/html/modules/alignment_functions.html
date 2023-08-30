@@ -1,0 +1,501 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="models" href="cluster_models.html" /><link rel="prev" title="models" href="alignment_models.html" />
+
+    <!-- Generated with Sphinx 7.1.1 and Furo 2023.07.26 -->
+        <title>functions - abutils 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">abutils 0.1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky">
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="functions">
+<h1>functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="abutils.tools.alignment.mafft">
+<span class="sig-prename descclassname"><span class="pre">abutils.tools.alignment.</span></span><span class="sig-name descname"><span class="pre">mafft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'fasta'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mafft_bin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">MultipleSeqAlignment</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></span><a class="headerlink" href="#abutils.tools.alignment.mafft" title="Permalink to this definition">#</a></dt>
+<dd><p class="linemarker linemarker-1">Performs multiple sequence alignment with <a class="reference external" href="https://mafft.cbrc.jp/alignment/software/">MAFFT</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sequences</strong> (<em>(</em><em>str</em><em>, </em><em>iterable</em><em>)</em>) – <dl class="simple">
+<dt>Can be one of several things:</dt><dd><ol class="arabic simple">
+<li><p class="linemarker linemarker-5">path to a FASTA-formatted file</p></li>
+<li><p class="linemarker linemarker-6">a FASTA-formatted string</p></li>
+<li><p class="linemarker linemarker-7">a list of BioPython <code class="docutils literal notranslate"><span class="pre">SeqRecord</span></code> objects</p></li>
+<li><p class="linemarker linemarker-8">a list of abutils <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> objects</p></li>
+<li><p class="linemarker linemarker-9">a list of lists/tuples, of the format <code class="docutils literal notranslate"><span class="pre">[sequence_id,</span> <span class="pre">sequence]</span></code></p></li>
+</ol>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>alignment_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path for the output alignment file. Required if <code class="docutils literal notranslate"><span class="pre">as_file</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>default='fasta'</em>) – Format of the output alignment. Choices are ‘fasta’, ‘phylip’, and ‘clustal’.
+Default is ‘fasta’.</p></li>
+<li><p><strong>threads</strong> (<em>int</em><em>, </em><em>default=-1</em>) – Number of threads for MAFFT to use. Default is <code class="docutils literal notranslate"><span class="pre">-1</span></code>, which uses all
+available CPUs.</p></li>
+<li><p><strong>as_file</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns the path to the alignment file. If <code class="docutils literal notranslate"><span class="pre">False</span></code>,
+returns either a BioPython <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code> object or the alignment
+output as a <code class="docutils literal notranslate"><span class="pre">str</span></code>, depending on <cite>as_string</cite>. If <cite>alignment_file</cite> is not
+provided, a temporary file will be created with <code class="docutils literal notranslate"><span class="pre">tempfile.NamedTemporaryFile</span></code>.
+Note that this temporary file is created in <code class="docutils literal notranslate"><span class="pre">&quot;/tmp&quot;</span></code> and may be removed
+by the operating system without notice.</p></li>
+<li><p><strong>as_string</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns a the alignment output as a string. If <code class="docutils literal notranslate"><span class="pre">False</span></code>,
+returns a BioPython <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code> object (obtained by calling
+<code class="docutils literal notranslate"><span class="pre">Bio.AlignIO.read()</span></code> on the alignment file).</p></li>
+<li><p><strong>mafft_bin</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to a MAFFT executable. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>, which results in
+using the default system MAFFT binary (just calling <code class="docutils literal notranslate"><span class="pre">'mafft'</span></code>).</p></li>
+<li><p><strong>id_key</strong> (<em>str</em><em>, </em><em>default=None</em>) – Key to retrieve the sequence ID. If not provided or missing, <code class="docutils literal notranslate"><span class="pre">Sequence.id</span></code> is used.</p></li>
+<li><p><strong>sequence_key</strong> (<em>str</em><em>, </em><em>default=None</em>) – Key to retrieve the sequence. If not provided or missing, <code class="docutils literal notranslate"><span class="pre">Sequence.sequence</span></code> is used.</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, prints MAFFT’s standard output and standard error.
+Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>fasta</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to a FASTA-formatted input file. <em>Depricated</em> (use <cite>sequences</cite>
+for all types if input), but retained for backwards compatibility.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alignment</strong> – If <code class="docutils literal notranslate"><span class="pre">as_file</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns a path to the output alignment file,
+Otherwise, returns a BioPython <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code> object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abutils.tools.alignment.muscle">
+<span class="sig-prename descclassname"><span class="pre">abutils.tools.alignment.</span></span><span class="sig-name descname"><span class="pre">muscle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muscle_bin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fasta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">MultipleSeqAlignment</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></span><a class="headerlink" href="#abutils.tools.alignment.muscle" title="Permalink to this definition">#</a></dt>
+<dd><p class="linemarker linemarker-1">Performs multiple sequence alignment with <a class="reference external" href="https://www.drive5.com/muscle/">MUSCLE</a> (version 5).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sequences</strong> (<em>(</em><em>str</em><em>, </em><em>iterable</em><em>)</em>) – <dl class="simple">
+<dt>Can be one of several things:</dt><dd><ol class="arabic simple">
+<li><p class="linemarker linemarker-5">path to a FASTA-formatted file</p></li>
+<li><p class="linemarker linemarker-6">a FASTA-formatted string</p></li>
+<li><p class="linemarker linemarker-7">a list of BioPython <code class="docutils literal notranslate"><span class="pre">SeqRecord</span></code> objects</p></li>
+<li><p class="linemarker linemarker-8">a list of abutils <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> objects</p></li>
+<li><p class="linemarker linemarker-9">a list of lists/tuples, of the format <code class="docutils literal notranslate"><span class="pre">[sequence_id,</span> <span class="pre">sequence]</span></code></p></li>
+</ol>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>alignment_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path for the output alignment file. Required if <code class="docutils literal notranslate"><span class="pre">as_file</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>as_file</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns the path to the alignment file. If <code class="docutils literal notranslate"><span class="pre">False</span></code>,
+returns either a BioPython <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code> object or the alignment
+output as a <code class="docutils literal notranslate"><span class="pre">str</span></code>, depending on <cite>as_string</cite>. If <cite>alignment_file</cite> is not
+provided, a temporary file will be created with <code class="docutils literal notranslate"><span class="pre">tempfile.NamedTemporaryFile</span></code>.
+Note that this temporary file is created in <code class="docutils literal notranslate"><span class="pre">&quot;/tmp&quot;</span></code> and may be removed
+by the operating system without notice.</p></li>
+<li><p><strong>as_string</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns a the alignment output as a string. If <code class="docutils literal notranslate"><span class="pre">False</span></code>,
+returns a BioPython <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code> object (obtained by calling
+<code class="docutils literal notranslate"><span class="pre">Bio.AlignIO.read()</span></code> on the alignment file).</p></li>
+<li><p><strong>muscle_bin</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to a MUSCLE executable. If not provided, the MUSCLE binary bundled
+with <code class="docutils literal notranslate"><span class="pre">abutils</span></code> will be used.</p></li>
+<li><p><strong>threads</strong> (<em>int</em><em>, </em><em>default=None</em>) – Number of threads for MUSCLE to use. If not provided, MUSCLE uses all
+available CPUs.</p></li>
+<li><p><strong>id_key</strong> (<em>str</em><em>, </em><em>default=None</em>) – Key to retrieve the sequence ID. If not provided or missing, <code class="docutils literal notranslate"><span class="pre">Sequence.id</span></code> is used.</p></li>
+<li><p><strong>sequence_key</strong> (<em>str</em><em>, </em><em>default=None</em>) – Key to retrieve the sequence. If not provided or missing, <code class="docutils literal notranslate"><span class="pre">Sequence.sequence</span></code> is used.</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, prints MAFFT’s standard output and standard error.
+Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>fasta</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to a FASTA-formatted input file. Depricated (use <cite>sequences</cite>
+for all types if input), but retained for backwards compatibility.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alignment</strong> – If <code class="docutils literal notranslate"><span class="pre">as_file</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns a path to the output alignment file,
+Otherwise, returns a BioPython <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code> object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or <code class="docutils literal notranslate"><span class="pre">MultipleSeqAlignment</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abutils.tools.alignment.global_alignment">
+<span class="sig-prename descclassname"><span class="pre">abutils.tools.alignment.</span></span><span class="sig-name descname"><span class="pre">global_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~Bio.SeqRecord.SeqRecord</span> <span class="pre">|</span> <span class="pre">~abutils.core.sequence.Sequence</span> <span class="pre">|</span> <span class="pre">~typing.Iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~Bio.SeqRecord.SeqRecord</span> <span class="pre">|</span> <span class="pre">~abutils.core.sequence.Sequence</span> <span class="pre">|</span> <span class="pre">~typing.Iterable</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets:</span> <span class="pre">~typing.Iterable</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mismatch:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_open:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_extend:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~parasail.bindings_v2.Matrix</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment_function:</span> <span class="pre">~typing.Callable</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">nw_trace_striped_16&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aa:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_open_penalty:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_extend_penalty:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GlobalAlignment</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span></span></span><a class="headerlink" href="#abutils.tools.alignment.global_alignment" title="Permalink to this definition">#</a></dt>
+<dd><p class="linemarker linemarker-1">Needleman-Wunch global pairwise sequence alignment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<em>str</em><em>, </em><em>SeqRecord</em><em>, </em><a class="reference internal" href="sequence.html#abutils.core.sequence.Sequence" title="abutils.core.sequence.Sequence"><em>Sequence</em></a><em>, or </em><em>list</em>) – <dl class="simple">
+<dt>Query sequence. Can be any of the following:</dt><dd><ol class="arabic simple">
+<li><p class="linemarker linemarker-5">a nucleotide or amino acid sequence, as a string</p></li>
+<li><p class="linemarker linemarker-6">a Biopython <code class="docutils literal notranslate"><span class="pre">SeqRecord</span></code> object</p></li>
+<li><p class="linemarker linemarker-7">an abutils <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> object</p></li>
+<li><p class="linemarker linemarker-8">a <code class="docutils literal notranslate"><span class="pre">list</span></code> or <code class="docutils literal notranslate"><span class="pre">tuple</span></code> of the format <code class="docutils literal notranslate"><span class="pre">[seq_id,</span> <span class="pre">sequence]</span></code></p></li>
+</ol>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>target</strong> (<em>str</em><em>, </em><em>SeqRecord</em><em>, </em><a class="reference internal" href="sequence.html#abutils.core.sequence.Sequence" title="abutils.core.sequence.Sequence"><em>Sequence</em></a><em>, or </em><em>list</em><em>, </em><em>default=None</em>) – Target sequence. Can be anything accepted by <cite>query</cite>. One of
+<cite>target</cite> or <cite>targets</cite> must be provided.</p></li>
+<li><p><strong>target</strong> – Iterable of multiple target sequences. A <code class="docutils literal notranslate"><span class="pre">list</span></code> or <code class="docutils literal notranslate"><span class="pre">tuple</span></code> of
+anything accepted by <cite>query</cite>. One of <cite>target</cite> or <cite>targets</cite> must be provided.</p></li>
+<li><p><strong>match</strong> (<em>int</em><em>, </em><em>default=3</em>) – Match score. Should be a positive integer.</p></li>
+<li><p><strong>mismatch</strong> (<em>int</em><em>, </em><em>default=-2</em>) – Mismatch score. Typically should be less than or equal to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>gap_open</strong> (<em>int</em><em>, </em><em>default=-5</em>) – Gap open score. Must be  less than or equal to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>gap_extend</strong> (<em>int</em><em>, </em><em>default=-2</em>) – Gap extension score. Must be less than or equal to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>matrix</strong> (<em>str</em><em>, </em><em>dict</em><em> or </em><em>parasail.Matrix</em><em>, </em><em>default=None</em>) – <dl class="simple">
+<dt>Scoring matrix. Can be either:</dt><dd><ul>
+<li><p class="linemarker linemarker-26">the name of a <code class="docutils literal notranslate"><span class="pre">parasail</span></code> built-in matrix.</p></li>
+<li><p class="linemarker linemarker-27">path to a matrix file (in a format accepted by <code class="docutils literal notranslate"><span class="pre">parasail</span></code>).</p></li>
+<li><p class="linemarker linemarker-28">a <code class="docutils literal notranslate"><span class="pre">parasail.Matrix</span></code> object</p></li>
+</ul>
+</dd>
+</dl>
+<p class="linemarker linemarker-29">If not provided, a matrix will be created using <cite>match</cite> and <cite>mismatch</cite>.</p>
+</p></li>
+<li><p><strong>alignment_function</strong> (<em>Callable</em><em>, </em><em>default=parasail.sw_trace_striped_16</em>) – <code class="docutils literal notranslate"><span class="pre">parasail</span></code> <a href="#id1"><span class="problematic" id="id2">`global alignment function`_</span></a> to be used for alignment.</p></li>
+<li><p><strong>aa</strong> (<em>bool</em><em>, </em><em>default=False</em>) – Not used. Retained for backwards compatibility.</p></li>
+<li><p><strong>gap_open_penalty</strong> (<em>int</em><em>, </em><em>default=None</em>) – Depricated, but retained for backwards compatibility. Use <cite>gap_open</cite>
+insteaed.</p></li>
+<li><p><strong>gap_extend_penalty</strong> (<em>int</em><em>, </em><em>default=None</em>) – Depricated, but retained for backwards compatibility. Use <cite>gap_exted</cite>
+insteaed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alignment</strong> – If a single target sequence is provided (via <code class="docutils literal notranslate"><span class="pre">target</span></code>), a single <code class="docutils literal notranslate"><span class="pre">GlobalAlignment</span></code>
+object will be returned. If multiple target sequences are supplied (via <code class="docutils literal notranslate"><span class="pre">targets</span></code>),
+a list of <code class="docutils literal notranslate"><span class="pre">GlobalAlignment</span></code> objects will be returned.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="alignment_models.html#abutils.utils.alignment.GlobalAlignment" title="abutils.utils.alignment.GlobalAlignment">GlobalAlignment</a> or iterable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abutils.tools.alignment.local_alignment">
+<span class="sig-prename descclassname"><span class="pre">abutils.tools.alignment.</span></span><span class="sig-name descname"><span class="pre">local_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~Bio.SeqRecord.SeqRecord</span> <span class="pre">|</span> <span class="pre">~abutils.core.sequence.Sequence</span> <span class="pre">|</span> <span class="pre">~typing.Iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~Bio.SeqRecord.SeqRecord</span> <span class="pre">|</span> <span class="pre">~abutils.core.sequence.Sequence</span> <span class="pre">|</span> <span class="pre">~typing.Iterable</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets:</span> <span class="pre">~typing.Iterable</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mismatch:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_open:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_extend:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">-2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">~parasail.bindings_v2.Matrix</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment_function:</span> <span class="pre">~typing.Callable</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">sw_trace_striped_16&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aa:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_open_penalty:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_extend_penalty:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="alignment_models.html#abutils.tools.alignment.LocalAlignment" title="abutils.tools.alignment.LocalAlignment"><span class="pre">LocalAlignment</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span></span></span><a class="headerlink" href="#abutils.tools.alignment.local_alignment" title="Permalink to this definition">#</a></dt>
+<dd><p class="linemarker linemarker-1">Striped Smith-Waterman local pairwise sequence alignment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<em>str</em><em>, </em><em>SeqRecord</em><em>, </em><a class="reference internal" href="sequence.html#abutils.core.sequence.Sequence" title="abutils.core.sequence.Sequence"><em>Sequence</em></a><em>, or </em><em>list</em>) – <dl class="simple">
+<dt>Query sequence. Can be any of the following:</dt><dd><ol class="arabic simple">
+<li><p class="linemarker linemarker-5">a nucleotide or amino acid sequence, as a string</p></li>
+<li><p class="linemarker linemarker-6">a Biopython <code class="docutils literal notranslate"><span class="pre">SeqRecord</span></code> object</p></li>
+<li><p class="linemarker linemarker-7">an abutils <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> object</p></li>
+<li><p class="linemarker linemarker-8">a <code class="docutils literal notranslate"><span class="pre">list</span></code> or <code class="docutils literal notranslate"><span class="pre">tuple</span></code> of the format <code class="docutils literal notranslate"><span class="pre">[seq_id,</span> <span class="pre">sequence]</span></code></p></li>
+</ol>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>target</strong> (<em>str</em><em>, </em><em>SeqRecord</em><em>, </em><a class="reference internal" href="sequence.html#abutils.core.sequence.Sequence" title="abutils.core.sequence.Sequence"><em>Sequence</em></a><em>, or </em><em>list</em><em>, </em><em>default=None</em>) – Target sequence. Can be anything accepted by <cite>query</cite>. One of
+<cite>target</cite> or <cite>targets</cite> must be provided.</p></li>
+<li><p><strong>target</strong> – Iterable of multiple target sequences. A <code class="docutils literal notranslate"><span class="pre">list</span></code> or <code class="docutils literal notranslate"><span class="pre">tuple</span></code> of
+anything accepted by <cite>query</cite>. One of <cite>target</cite> or <cite>targets</cite> must be provided.</p></li>
+<li><p><strong>match</strong> (<em>int</em><em>, </em><em>default=3</em>) – Match score. Should be a positive integer.</p></li>
+<li><p><strong>mismatch</strong> (<em>int</em><em>, </em><em>default=-2</em>) – Mismatch score. Typically should be less than or equal to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>gap_open</strong> (<em>int</em><em>, </em><em>default=-5</em>) – Gap open score. Must be less than or equal to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>gap_extend</strong> (<em>int</em><em>, </em><em>default=-2</em>) – Gap extension score. Must be less than or equal to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>matrix</strong> (<em>str</em><em>, </em><em>dict</em><em> or </em><em>parasail.Matrix</em><em>, </em><em>default=None</em>) – <dl class="simple">
+<dt>Scoring matrix. Can be either:</dt><dd><ul>
+<li><p class="linemarker linemarker-26">the name of a <code class="docutils literal notranslate"><span class="pre">parasail</span></code> built-in matrix.</p></li>
+<li><p class="linemarker linemarker-27">path to a matrix file (in a format accepted by <code class="docutils literal notranslate"><span class="pre">parasail</span></code>).</p></li>
+<li><p class="linemarker linemarker-28">a <code class="docutils literal notranslate"><span class="pre">parasail.Matrix</span></code> object</p></li>
+</ul>
+</dd>
+</dl>
+<p class="linemarker linemarker-29">If not provided, a matrix will be created using <cite>match</cite> and <cite>mismatch</cite>.</p>
+</p></li>
+<li><p><strong>alignment_function</strong> (<em>Callable</em><em>, </em><em>default=parasail.sw_trace_striped_16</em>) – <code class="docutils literal notranslate"><span class="pre">parasail</span></code> <a href="#id3"><span class="problematic" id="id4">`local alignment function`_</span></a> to be used for alignment.</p></li>
+<li><p><strong>aa</strong> (<em>bool</em><em>, </em><em>default=False</em>) – Not used. Retained for backwards compatibility.</p></li>
+<li><p><strong>gap_open_penalty</strong> (<em>int</em><em>, </em><em>default=None</em>) – Depricated, but retained for backwards compatibility. Use <cite>gap_open</cite>
+insteaed.</p></li>
+<li><p><strong>gap_extend_penalty</strong> (<em>int</em><em>, </em><em>default=None</em>) – Depricated, but retained for backwards compatibility. Use <cite>gap_exted</cite>
+insteaed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alignment</strong> – If a single target sequence is provided (via <code class="docutils literal notranslate"><span class="pre">target</span></code>), a single <code class="docutils literal notranslate"><span class="pre">LocalAlignment</span></code>
+object will be returned. If multiple target sequences are supplied (via <code class="docutils literal notranslate"><span class="pre">targets</span></code>),
+a list of <code class="docutils literal notranslate"><span class="pre">LocalAlignment</span></code> objects will be returned.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="alignment_models.html#abutils.tools.alignment.LocalAlignment" title="abutils.tools.alignment.LocalAlignment">LocalAlignment</a> or iterable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abutils.tools.alignment.dot_alignment">
+<span class="sig-prename descclassname"><span class="pre">abutils.tools.alignment.</span></span><span class="sig-name descname"><span class="pre">dot_alignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_fasta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">just_alignment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#abutils.tools.alignment.dot_alignment" title="Permalink to this definition">#</a></dt>
+<dd><p class="linemarker linemarker-1">Creates a dot alignment (dots indicate identity, mismatches are represented by the mismatched
+residue) for a list of sequences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sequence</strong> (<em>list</em><em>(</em><a class="reference internal" href="sequence.html#abutils.core.sequence.Sequence" title="abutils.core.sequence.Sequence"><em>Sequence</em></a><em>)</em>) – A list of Sequence objects to be aligned.</p></li>
+<li><p><strong>seq_field</strong> (<em>str</em>) – Name of the sequence field key. Default is <code class="docutils literal notranslate"><span class="pre">vdj_nt</span></code>.</p></li>
+<li><p><strong>name_field</strong> (<em>str</em>) – Name of the name field key. Default is <code class="docutils literal notranslate"><span class="pre">seq_id</span></code>.</p></li>
+<li><p><strong>root</strong> (<em>str</em><em>, </em><a class="reference internal" href="sequence.html#abutils.core.sequence.Sequence" title="abutils.core.sequence.Sequence"><em>Sequence</em></a>) – The sequence used to ‘root’ the alignment. This sequence will be at the
+top of the alignment and is the sequence against which dots (identity) will be evaluated.
+Can be provided either as a string corresponding to the name of one of the sequences in
+<code class="docutils literal notranslate"><span class="pre">sequences</span></code> or as a Sequence object. If not provided, <code class="docutils literal notranslate"><span class="pre">sequences</span></code> will be clustered
+at <code class="docutils literal notranslate"><span class="pre">cluster_threshold</span></code> and the centroid of the largest cluster will be used.</p></li>
+<li><p><strong>root_name</strong> (<em>str</em>) – Name of the root sequence. If not provided, the existing name of the root
+sequence (<code class="docutils literal notranslate"><span class="pre">name_field</span></code>) will be used. If <code class="docutils literal notranslate"><span class="pre">root</span></code> is not provided, the default <code class="docutils literal notranslate"><span class="pre">root_name</span></code>
+is <code class="docutils literal notranslate"><span class="pre">'centroid'</span></code>.</p></li>
+<li><p><strong>cluster_threshold</strong> (<em>float</em>) – Threshold with which to cluster sequences if <code class="docutils literal notranslate"><span class="pre">root</span></code> is not provided.
+Default is <code class="docutils literal notranslate"><span class="pre">0.75</span></code>.</p></li>
+<li><p><strong>as_fasta</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns the dot alignment as a FASTA-formatted string, rather than
+a string formatted for human readability.</p></li>
+<li><p><strong>just_alignment</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns just the dot-aligned sequences as a list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">just_alignment</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, a list of dot-aligned sequences (without sequence names) will be returned.
+If <code class="docutils literal notranslate"><span class="pre">as_fasta</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, a string containing the dot-aligned sequences in FASTA format will be returned.
+Otherwise, a formatted string containing the aligned sequences (with sequence names) will be returned.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="cluster_models.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">models</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="alignment_models.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">models</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2018, Bryan Briney
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">functions</a><ul>
+<li><a class="reference internal" href="#abutils.tools.alignment.mafft"><code class="docutils literal notranslate"><span class="pre">mafft()</span></code></a></li>
+<li><a class="reference internal" href="#abutils.tools.alignment.muscle"><code class="docutils literal notranslate"><span class="pre">muscle()</span></code></a></li>
+<li><a class="reference internal" href="#abutils.tools.alignment.global_alignment"><code class="docutils literal notranslate"><span class="pre">global_alignment()</span></code></a></li>
+<li><a class="reference internal" href="#abutils.tools.alignment.local_alignment"><code class="docutils literal notranslate"><span class="pre">local_alignment()</span></code></a></li>
+<li><a class="reference internal" href="#abutils.tools.alignment.dot_alignment"><code class="docutils literal notranslate"><span class="pre">dot_alignment()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=2389946f"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>

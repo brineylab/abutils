@@ -66,6 +66,23 @@ __all__ = [
 # -------------------------------------
 
 
+class MultipleSequenceAlignment:
+    def __init__(self, aln_file, fmt="fasta"):
+        self.input_alignment = self._read_alignment(aln_file, fmt)
+        self.input_alignment_string = self._read_alignment_string(aln_file, fmt)
+        self.fmt = fmt
+
+    def _read_alignment(self, aln_file, fmt):
+        with open(aln_file, "r") as f:
+            aln = AlignIO.read(f, fmt)
+        return aln
+
+    def _read_alignment_string(self, aln_file, fmt):
+        with open(aln_file, "r") as f:
+            aln_string = f.read()
+        return aln_string
+
+
 def mafft(
     sequences: Union[str, Iterable],
     alignment_file: Optional[str] = None,
@@ -206,6 +223,7 @@ def mafft(
             aln = f.read()
         else:
             aln = AlignIO.read(f, fmt)
+            # aln = MultipleSequenceAlignment(alignment_file, fmt)
     os.unlink(alignment_file)
     return aln
 
