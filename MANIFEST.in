@@ -8,7 +8,6 @@ include abutils/tenx/*
 include abutils/tools/*
 include abutils/utils/*
 include abutils/utils/matrices/*
-
 include abutils/bin/*
 include abutils/bin/mafft_darwin_amd64/*
 include abutils/bin/mafft_darwin_amd64/mafftdir/*
