@@ -129,7 +129,7 @@ class PlotData:
             "mean": "mean",
             "average": "mean",
             "median": "median",
-            "mode": stats.mode,
+            "mode": pd.Series.mode,
             "sum": "sum",
             "count": "count",
             "size": "size",
@@ -649,6 +649,69 @@ class PlotData:
         else:
             return df
 
+    def groupby(
+        self,
+        by: Union[Iterable, str],
+        axis: Union[int, str] = "rows",
+        values: Optional[Union[Iterable, str]] = None,
+        agg: Union[Iterable, Callable, str, dict] = "size",
+        use_raw: bool = False,
+        inplace: bool = True,
+    ) -> Optional[pd.DataFrame]:
+        """ 
+        Group the data by row or column values.
+
+        Parameters
+        ----------
+        by : Union[Iterable, str]
+            The column or row values to group by. Can be either a single column/row name, or an
+            iterable of column/row names.
+
+        axis : Union[int, str]
+            The axis to group by. If ``0``, ``"column"``, or ``"columns"``, the data will be
+            grouped by column values. If ``1``, ``"row"``, or ``"rows"``, the data will be
+            grouped by row values. Default is ``"rows"``.
+
+        values : Optional[Union[Iterable, str]]
+            The columns or rows to aggregate. Can be either a single column/row name, or an
+            iterable of column/row names. If ``None``, all columns/rows will be aggregated.
+            Default is ``None``.
+
+        agg : Union[Iterable, Callable, str, dict]
+            The aggregation function(s) to apply to the grouped data. Can be a single function,
+            an iterable of functions, or a dictionary mapping column/row names to functions.
+            Default is ``"size"``.
+
+        use_raw : bool
+            If ``True``, the raw data will be grouped. Otherwise, the processed data will be
+            grouped. Default is ``False``.
+
+        inplace : bool
+            If ``True``, the transformed data will replace ``self.df``. Otherwise, the transformed
+            ``DataFrame`` will be returned. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, the transformed ``DataFrame`` will be returned.
+
+        """
+        df = self.raw_df.copy() if use_raw else self.df.copy()
+        # do the groupby
+        if axis in [1, "rows", "row"]:
+            g = df.groupby(by=by, axis=1)
+        else:
+            g = df.groupby(by=by, axis=0)
+        # filter values
+        if values is not None:
+            g = g[values]
+        # aggregate
+        agg_df = g.agg(agg)
+        if inplace:
+            self.df = agg_df
+        else:
+            return agg_df
+
     def to_squareform(
         self,
         rows: Optional[str] = None,
@@ -659,7 +722,46 @@ class PlotData:
         reset_index: bool = False,
         inplace: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """ """
+        """ 
+        Pivots the data into a squareform matrix.
+
+        Parameters
+        ----------
+        rows : Optional[str]
+            The column name to use for the rows. If ``None``, ``self.x_name`` will be used. 
+            Default is ``None``.
+        
+        columns : Optional[str]
+            The column name to use for the columns. If ``None``, ``self.y_name`` will be used. 
+            Default is ``None``.
+
+        values : Optional[str]
+            The column name to use for the aggregated values. If ``None``, all columns will 
+            be used. Default is ``None``.
+
+        agg : Union[Iterable, Callable, str]
+            The aggregation function(s) to use. If a single function is provided, it will be
+            applied to all values. If multiple functions are provided, they will be applied
+            to the corresponding values. If a string is provided, it must be a valid aggregation
+            function. Default is ``"size"``.
+
+        use_raw : bool
+            If ``True``, the raw data will be used. Otherwise, the processed data will be used.
+            Default is ``False``.
+
+        reset_index : bool
+            If ``True``, the index will be reset. Default is ``False``.
+
+        inplace : bool
+            If ``True``, the transformed data will replace ``self.df``. Otherwise, the transformed
+            ``DataFrame`` will be returned. Default is ``True``.
+
+        Returns
+        -------
+        Optional[pd.DataFrame]
+            If ``inplace`` is ``False``, the transformed ``DataFrame`` will be returned.
+
+        """
         df = self.raw_df.copy() if use_raw else self.df.copy()
         # get aggregation function(s)
         if isinstance(agg, str) or callable(agg):
@@ -696,9 +798,10 @@ class PlotData:
         g = df.groupby([rows, columns])
 
         # aggregate
-        agg_df = g.agg(agg_funcs)
         if values is not None:
-            agg_df = agg_df[values]
+            agg_df = g[values].agg(agg_funcs)
+        else:
+            agg_df = g.agg(agg_funcs)
 
         # pivot to squareform
         sq_df = agg_df.unstack()

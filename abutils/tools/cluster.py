@@ -389,9 +389,8 @@ def cluster_vsearch(
     if vsearch_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         vsearch_bin = os.path.join(mod_dir, f"bin/vsearch_{system}_{machine}")
-        vsearch_bin = vsearch_bin.replace("x86_64", "amd64")
     # do clustering
     vsearch_cmd = f"{vsearch_bin} --cluster_fast {fasta_file}"
     vsearch_cmd += f" --centroids {centroid_file}"
@@ -504,9 +503,8 @@ def cluster_mmseqs(
     if mmseqs_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         mmseqs_bin = os.path.join(mod_dir, f"bin/mmseqs_{system}_{machine}")
-        mmseqs_bin = mmseqs_bin.replace("x86_64", "amd64")
     # build the mmseqs DB
     db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_file}"
     p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
@@ -624,9 +622,8 @@ def cluster_cdhit(
     if cdhit_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         cdhit_bin = os.path.join(mod_dir, f"bin/cdhit_{system}_{machine}")
-        cdhit_bin = cdhit_bin.replace("x86_64", "amd64")
     # run CD-HIT
     # clustering options are as follows:
     #   - d: length at which to truncate sequence names in the output file,

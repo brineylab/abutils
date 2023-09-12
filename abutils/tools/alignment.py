@@ -66,6 +66,23 @@ __all__ = [
 # -------------------------------------
 
 
+class MultipleSequenceAlignment:
+    def __init__(self, aln_file, fmt="fasta"):
+        self.input_alignment = self._read_alignment(aln_file, fmt)
+        self.input_alignment_string = self._read_alignment_string(aln_file, fmt)
+        self.fmt = fmt
+
+    def _read_alignment(self, aln_file, fmt):
+        with open(aln_file, "r") as f:
+            aln = AlignIO.read(f, fmt)
+        return aln
+
+    def _read_alignment_string(self, aln_file, fmt):
+        with open(aln_file, "r") as f:
+            aln_string = f.read()
+        return aln_string
+
+
 def mafft(
     sequences: Union[str, Iterable],
     alignment_file: Optional[str] = None,
@@ -170,9 +187,8 @@ def mafft(
         #     mod_dir, "bin/mafft_{}".format(platform.system().lower())
         # )
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
-        mafft_bin = mafft_bin.replace("x86_64", "amd64")
         # if system == "darwin":
         #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
         # else:
@@ -206,6 +222,7 @@ def mafft(
             aln = f.read()
         else:
             aln = AlignIO.read(f, fmt)
+            # aln = MultipleSequenceAlignment(alignment_file, fmt)
     os.unlink(alignment_file)
     return aln
 
@@ -313,10 +330,8 @@ def muscle(
     if muscle_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         muscle_bin = os.path.join(mod_dir, f"bin/muscle_{system}_{machine}")
-        muscle_bin = muscle_bin.replace("x86_64", "amd64")
-
     # do the alignment
     muscle_cline = f"{muscle_bin} -align {ffile} -output {alignment_file}"
     if threads is not None:
