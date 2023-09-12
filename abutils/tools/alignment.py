@@ -187,9 +187,9 @@ def mafft(
         #     mod_dir, "bin/mafft_{}".format(platform.system().lower())
         # )
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
-        mafft_bin = mafft_bin.replace("x86_64", "amd64")
+        mafft_bin = mafft_bin
         # if system == "darwin":
         #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
         # else:
@@ -331,9 +331,9 @@ def muscle(
     if muscle_bin is None:
         mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         system = platform.system().lower()
-        machine = platform.machine().lower()
+        machine = platform.machine().lower().replace("x86_64", "amd64")
         muscle_bin = os.path.join(mod_dir, f"bin/muscle_{system}_{machine}")
-        muscle_bin = muscle_bin.replace("x86_64", "amd64")
+        muscle_bin = muscle_bin
 
     # do the alignment
     muscle_cline = f"{muscle_bin} -align {ffile} -output {alignment_file}"
