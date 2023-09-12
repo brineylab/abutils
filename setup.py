@@ -85,6 +85,7 @@ setup(
     url="https://github.com/briney/abutils",
     packages=find_packages(),
     install_requires=requirements,
+    include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
