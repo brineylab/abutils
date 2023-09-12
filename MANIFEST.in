@@ -18,15 +18,7 @@ include abutils/bin/mafft_darwin_arm64/*
 include abutils/bin/mafft_darwin_arm64/mafftdir/*
 include abutils/bin/mafft_darwin_arm64/mafftdir/bin/*
 include abutils/bin/mafft_darwin_arm64/mafftdir/libexec/*
-include abutils/bin/mafft_darwin_x86_64/*
-include abutils/bin/mafft_darwin_x86_64/mafftdir/*
-include abutils/bin/mafft_darwin_x86_64/mafftdir/bin/*
-include abutils/bin/mafft_darwin_x86_64/mafftdir/libexec/*
 include abutils/bin/mafft_linux_amd64/*
 include abutils/bin/mafft_linux_amd64/mafftdir/*
 include abutils/bin/mafft_linux_amd64/mafftdir/bin/*
 include abutils/bin/mafft_linux_amd64/mafftdir/libexec/*
-include abutils/bin/mafft_linux_x86_64/*
-include abutils/bin/mafft_linux_x86_64/mafftdir/*
-include abutils/bin/mafft_linux_x86_64/mafftdir/bin/*
-include abutils/bin/mafft_linux_x86_64/mafftdir/libexec/*
