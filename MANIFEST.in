@@ -21,4 +21,4 @@ include abutils/bin/mafft_linux_amd64/*
 include abutils/bin/mafft_linux_amd64/mafftdir/*
 include abutils/bin/mafft_linux_amd64/mafftdir/bin/*
 include abutils/bin/mafft_linux_amd64/mafftdir/libexec/*
-graft abutils/bin
+recursive-include abutils/bin/ cdhit* fasttree* muscle* vsearch*
