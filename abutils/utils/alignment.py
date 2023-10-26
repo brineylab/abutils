@@ -567,7 +567,7 @@ class PairwiseAlignment(ABC):
     def __str__(self):
         lines = []
         lines.append(self.aligned_query)
-        lines.append(self.aligment_midline)
+        lines.append(self.alignment_midline)
         lines.append(self.aligned_target)
         return "\n".join(lines)
 
