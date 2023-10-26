@@ -30,6 +30,7 @@ from .tools.alignment import *
 from .tools.clonify import clonify
 from .tools.cluster import *
 from .tools.phylo import *
+from .tools.similarity import repertoire_similarity
 
 # from .utils.alignment import (
 #     global_alignment,

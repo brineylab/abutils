@@ -42,6 +42,7 @@ from matplotlib.colors import (
 __all__ = [
     "get_cmap",
     "palettes",
+    "true_false_palette",
     "show_palettes",
     "hex_to_rgb",
     "rgb_to_hex",
