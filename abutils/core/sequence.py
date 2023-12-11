@@ -351,9 +351,9 @@ class Sequence(object):
         elif type(seq) == SeqRecord:
             if qual is None:
                 if "phred_quality" in seq.letter_annotations:
-                    qual = seq.letter_annotations["phred_quality"]
+                    qual = "".join(chr(q + 33) for q in seq.letter_annotations["phred_quality"])
                 elif "solexa_quality" in seq.letter_annotations:
-                    qual = seq.letter_annotations["solexa_quality"]
+                    qual = "".join(chr(q + 64) for q in seq.letter_annotations["solexa_quality"])
             self.id = id if id is not None else str(seq.id)
             self.description = str(seq.description)
             self.sequence = str(seq.seq).upper()
@@ -604,6 +604,32 @@ def read_fasta(fasta_file: str) -> Iterable[Sequence]:
     return sequences
 
 
+def read_fastq(fastq_file):
+    """
+    Reads a FASTQ-formatted  file and returns ``Sequence`` objects. 
+    Gzipped files are supported.
+
+    Parameters
+    ----------
+    fastq_file : str
+        Path to the input FASTQ file. Required.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    if fastq_file.endswith(".gz"):
+        import gzip
+        open_func = gzip.open
+    else:
+        open_func = open
+    with open_func(fastq_file, "rt") as f:
+        sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    return sequences
+
+
 def from_mongodb(db, collection, match=None, project=None, limit=None):
     if match is None:
         match = {}
@@ -617,7 +643,7 @@ def from_mongodb(db, collection, match=None, project=None, limit=None):
 
 
 def to_fasta(
-    sequences: Iterable[Sequence],
+    sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
     fasta_file: Optional[str] = None,
     as_string: bool = False,
     id_key: Optional[str] = None,
@@ -702,3 +728,95 @@ def to_fasta(
     with open(fasta_file, "w") as f:
         f.write(fasta_string)
     return fasta_file
+
+
+def to_fastq(
+    sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
+    fastq_file: Optional[str] = None,
+    as_string: bool = False,
+    id_key: Optional[str] = None,
+    sequence_key: Optional[str] = None,
+    tempfile_dir: str = "/tmp",
+) -> str:
+    """
+    Writes sequences to a FASTQ-formatted file or returns a FASTQ-formatted string.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        An iterable of any of the following:
+            1. list of abutils ``Sequence`` objects
+            2. FASTQ-formatted string
+            3. path to a FASTQ-formatted file
+            4. list of BioPython ``SeqRecord`` objects
+            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+        Required.
+
+    fastq_file : str, default=None
+        Path to the output FASTQ file. If not provided and `as_string` is ``False``,
+        a file will be created using ``tempfile.NamedTemporaryFile()``.
+
+    as_string : bool, default=False
+        Return a FASTA-formatted string rather than writing to file.
+
+    id_key : str, default=None
+        Name of the annotation field containing the sequence ID. If not provided,
+        ``sequence.id`` is used.
+
+    sequence_key : str, default=None
+        Name of the annotation field containg the sequence. If not provided,
+        ``sequence.sequence`` is used.
+
+    tempfile_dir : str, default="/tmp"
+        If `fasta_file` is not provided, directory into which the tempfile
+        should be created. If the directory does not exist, it will be
+        created. Default is "/tmp".
+
+
+    Returns
+    --------
+    fasta : str
+        Path to a FASTA file or a FASTA-formatted string
+
+    """
+    if isinstance(sequences, str):
+        # if sequences is already a FASTQ-formatted file
+        if os.path.isfile(sequences):
+            if as_string:
+                with open(sequences, "r") as f:
+                    fastq_string = f.read()
+                return fastq_string
+            return sequences
+        # if sequences is a FASTQ-formatted string
+        else:
+            fastq_string = sequences
+    # if sequences is a list of Sequences
+    elif all([type(s) == Sequence for s in sequences]):
+        if not all([s.qual is not None for s in sequences]):
+            err = "Not all provided sequences have quality scores, which are required for FASTQ format."
+            raise RuntimeError(err)
+        ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
+        seqs = [
+            s.get(sequence_key, s.sequence) if sequence_key is not None else s.sequence
+            for s in sequences
+        ]
+        quals = [s.qual for s in sequences]
+        fastq_string = "\n".join(f"@{i}\n{s}\n+\n{q}" for i, s, q in zip(ids, seqs, quals))
+    # anything else..
+    else:
+        fastq_string = "\n".join(
+            [Sequence(s, id_key=id_key, seq_key=sequence_key).fastq for s in sequences]
+        )
+    # output
+    if as_string:
+        return fastq_string
+    if fastq_file is None:
+        make_dir(tempfile_dir)
+        ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
+        ff.close()
+        fastq_file = ff.name
+    else:
+        make_dir(os.path.dirname(fastq_file))
+    with open(fastq_file, "w") as f:
+        f.write(fastq_string)
+    return fastq_file

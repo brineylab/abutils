@@ -31,6 +31,7 @@ from .core.sequence import (
     read_json,
     from_mongodb,
     to_fasta,
+    to_fastq,
 )
 
 from .utils.convert import abi_to_fasta
@@ -39,7 +40,7 @@ from .utils.pipeline import list_files, make_dir
 
 def read_sequences(
     file=None,
-    format="tabular",
+    format="airr",
     sep="\t",
     fields=None,
     match=None,
@@ -57,8 +58,8 @@ def read_sequences(
 
     file (str): path to a file containing sequence data in any of the supported formats.
 
-    format (str): format of the sequence file. Supported formats are: ``'tabular'``, ``'fasta'``,
-        ``'json'`` and ``'mongodb'``. Default is ``'tabular'``.
+    format (str): format of the sequence file. Supported formats are: ``'airr'``, ``'tabular'``, ``'fasta'``,
+        ``'json'`` and ``'mongodb'``. Default is ``'airr'``.
 
     sep (str): character used to separate fields in ``'tabular'`` input files. This option is
         only used when ``format`` is ``'tabular'``. Default is ``'\t'``, which conforms with the 
@@ -88,6 +89,8 @@ def read_sequences(
         )
     elif format == "fasta":
         return read_fasta(file)
+    elif format == "airr":
+        return read_airr(file, fields=fields, match=match)
     elif format == "tabular":
         return read_csv(
             file,
@@ -99,13 +102,11 @@ def read_sequences(
         )
     elif format == "mongodb":
         if any([db is None, collection is None]):
-            error = f'ERROR: db and collection are required arguments if the data type is "mongodb".'
-            print(error)
-            sys.exit()
+            error = '<db> and <collection> are required arguments if the data type is "mongodb".'
+            raise ValueError(error)
         return from_mongodb(db, collection, **mongodb_kwargs)
     else:
-        error = f'ERROR: format type "{format}"" is not supported. '
-        error += f'supported file types are "fasta", "json" and "tabular".'
-        print(error)
-        sys.exit()
+        error = f'Format type "{format}"" is not supported. '
+        error += 'Supported file types are "airr", "fasta", "json", and "tabular".'
+        raise ValueError(error)
 
