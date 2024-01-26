@@ -28,6 +28,7 @@ from .core.sequence import (
     read_csv,
     read_airr,
     read_fasta,
+    read_fastq,
     read_json,
     from_mongodb,
     to_fasta,
@@ -59,7 +60,7 @@ def read_sequences(
     file (str): path to a file containing sequence data in any of the supported formats.
 
     format (str): format of the sequence file. Supported formats are: ``'airr'``, ``'tabular'``, ``'fasta'``,
-        ``'json'`` and ``'mongodb'``. Default is ``'airr'``.
+        ``'fastq'``, ``'json'`` and ``'mongodb'``. Default is ``'airr'``.
 
     sep (str): character used to separate fields in ``'tabular'`` input files. This option is
         only used when ``format`` is ``'tabular'``. Default is ``'\t'``, which conforms with the 
@@ -89,6 +90,8 @@ def read_sequences(
         )
     elif format == "fasta":
         return read_fasta(file)
+    elif format == "fastq":
+        return read_fastq(file)
     elif format == "airr":
         return read_airr(file, fields=fields, match=match)
     elif format == "tabular":
