@@ -22,28 +22,26 @@
 #
 
 
-from abc import ABC, abstractmethod
-from copy import copy, deepcopy
-from io import StringIO
-from itertools import groupby
 import os
 import platform
 import subprocess as sp
 import sys
 import tempfile
-from typing import Union, Iterable, Optional, Callable
 import uuid
+from abc import ABC, abstractmethod
+from copy import copy, deepcopy
+from io import StringIO
+from itertools import groupby
+from typing import Callable, Iterable, Optional, Union
 
 import parasail
-
 from Bio import AlignIO
-from Bio.Align import MultipleSeqAlignment, AlignInfo
+from Bio.Align import AlignInfo, MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 
 from ..core.sequence import Sequence
 from ..io import to_fasta
 from ..utils.decorators import lazy_property
-
 
 __all__ = [
     "mafft",
@@ -642,7 +640,7 @@ class PairwiseAlignment(ABC):
     def __str__(self):
         lines = []
         lines.append(self.aligned_query)
-        lines.append(self.aligment_midline)
+        lines.append(self.alignment_midline)
         lines.append(self.aligned_target)
         return "\n".join(lines)
 
