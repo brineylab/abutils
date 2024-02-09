@@ -24,6 +24,7 @@
 
 import os
 import platform
+import random
 import subprocess as sp
 import sys
 import tempfile
@@ -51,6 +52,7 @@ __all__ = [
     "global_alignment",
     "semiglobal_alignment",
     "dot_alignment",
+    "make_consensus",
     # "LocalAlignment",
     # "GlobalAlignment",
     # "SemiGlobalAlignment",
@@ -525,14 +527,14 @@ def muscle_v3(
     os.unlink(alignment_file)
     return aln
 
-    if as_string:
-        return alignment
-    elif as_file:
-        with open(alignment_file, "w") as f:
-            f.write(alignment)
-        return alignment_file
-    else:
-        return AlignIO.read(StringIO(alignment), fmt)
+    # if as_string:
+    #     return alignment
+    # elif as_file:
+    #     with open(alignment_file, "w") as f:
+    #         f.write(alignment)
+    #     return alignment_file
+    # else:
+    #     return AlignIO.read(StringIO(alignment), fmt)
 
 
 def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
@@ -542,6 +544,68 @@ def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
         name = str(uuid.uuid4())
     consensus_string = str(consensus).replace("-", "")
     return (name, consensus_string.upper())
+
+
+def make_consensus(
+    sequences: Iterable[Sequence],
+    algo: str = "mafft",
+    name: Optional[str] = None,
+    downsample_to: Optional[int] = None,
+    threshold: float = 0.51,
+    ambiguous: str = "N",
+    seed: Optional[int] = None,
+    as_string: bool = False,
+) -> Sequence:
+    """
+    Makes a consensus sequence from a list of sequences.
+
+    Parameters
+    ----------
+    sequences : iterable
+        List of sequences from which to make a consensus.
+
+    algo : str, default='mafft'
+        Algorithm to use for multiple sequence alignment. Choices are 'mafft' and 'muscle'.
+
+    name : str, optional
+        Name for the consensus sequence. If not provided, a random UUID will be used.
+
+    downsample_to : int, optional
+        If provided, downsamples the input sequences to the specified number.
+
+    threshold : float, default=0.51
+        Threshold for consensus sequence generation. Default is 0.51.
+
+    ambiguous : str, default='N'
+
+    Returns
+    -------
+    consensus : ``Sequence``
+        Consensus sequence.
+
+    """
+    # downsampling
+    if downsample_to is not None and len(sequences) > downsample_to:
+        if seed is not None:
+            random.seed(seed)
+        sequences = random.sample(sequences, downsample_to)
+    # alignment
+    if algo.lower() == "mafft":
+        aln = mafft(sequences, as_file=False)
+    elif algo.lower() == "muscle":
+        aln = muscle(sequences, as_file=False)
+    else:
+        err = f"Invalid algorithm: {algo}. Must be 'mafft' or 'muscle'."
+        raise ValueError(err)
+    # consensus
+    summary_align = AlignInfo.SummaryInfo(aln)
+    consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
+    consensus_string = str(consensus).replace("-", "").upper()
+    if as_string:
+        return consensus_string
+    return Sequence(
+        consensus_string, id=name if name is not None else str(uuid.uuid4())
+    )
 
 
 # ----------------------------
