@@ -1,26 +1,27 @@
 import platform
-import pytest
 import tempfile
 
+import pytest
 from Bio.Align import MultipleSeqAlignment
-from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 from ..core.sequence import Sequence
 from ..tools.alignment import (
-    consensus,
-    mafft,
-    muscle,
-    muscle_v3,
-    PairwiseAlignment,
-    LocalAlignment,
-    GlobalAlignment,
-    SemiGlobalAlignment,
-    local_alignment,
-    global_alignment,
-    semiglobal_alignment,
     CIGAR,
     CIGARElement,
+    GlobalAlignment,
+    LocalAlignment,
+    PairwiseAlignment,
+    SemiGlobalAlignment,
+    consensus,
+    global_alignment,
+    local_alignment,
+    mafft,
+    make_consensus,
+    muscle,
+    muscle_v3,
+    semiglobal_alignment,
 )
 
 
@@ -364,6 +365,49 @@ def test_consensus(aln_sequences):
         consensus_string
         == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
     )
+
+
+def test_make_consensus(sequences):
+    # Test with default parameters
+    consensus = make_consensus(sequences)
+    assert (
+        consensus.sequence
+        == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
+    )
+
+    # Test with mafft algorithm
+    consensus = make_consensus(sequences, algo="mafft")
+    assert (
+        consensus.sequence
+        == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
+    )
+
+    # Test with muscle algorithm
+    consensus = make_consensus(sequences, algo="muscle")
+    assert (
+        consensus.sequence
+        == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
+    )
+
+    # Test with downsample_to
+    consensus = make_consensus(sequences, downsample_to=2)
+    assert len(consensus.sequence) == 60
+
+    # Test with threshold
+    consensus = make_consensus(sequences, threshold=0.6)
+    assert (
+        consensus.sequence
+        == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
+    )
+
+    # Test with invalid algorithm
+    with pytest.raises(ValueError):
+        make_consensus(sequences, algo="invalid")
+
+    # Test with as_string
+    consensus = make_consensus(sequences, as_string=True)
+    assert isinstance(consensus, str)
+    assert consensus == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
 
 
 # ---------------------------
