@@ -24,13 +24,13 @@
 
 from .core.lineage import group_lineages
 from .core.pair import assign_pairs
-from .core.sequence import translate
-
+from .core.sequence import reverse_complement, translate
 from .tools.alignment import *
 from .tools.clonify import clonify
 from .tools.cluster import *
 from .tools.phylo import *
 from .tools.similarity import repertoire_similarity
+from .utils.phylogeny import igphyml, lsd
 
 # from .utils.alignment import (
 #     global_alignment,
@@ -40,7 +40,5 @@ from .tools.similarity import repertoire_similarity
 #     muscle_v3,
 #     mafft,
 # )
-
 # from .utils.cluster import cluster, cluster_vsearch, cluster_mmseqs
 from .utils.progbar import progress_bar
-from .utils.phylogeny import lsd, igphyml
