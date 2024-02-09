@@ -34,12 +34,10 @@ from typing import Iterable, Optional, Union
 
 from Bio.Align import AlignInfo
 
-from ..utils.alignment import mafft
+from ..core.sequence import Sequence, read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 from ..utils.pipeline import make_dir
-
-from ..core.sequence import Sequence, read_fasta, to_fasta
-
+from .alignment import mafft
 
 __all__ = ["cluster", "cluster_vsearch", "cluster_mmseqs", "cluster_cdhit"]
 
