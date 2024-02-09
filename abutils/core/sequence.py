@@ -25,20 +25,19 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from collections import OrderedDict
 import csv
 import json
 import operator
 import os
 import sys
 import tempfile
-from typing import Iterable, Optional, Union
 import uuid
-
-from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
+from collections import OrderedDict
+from typing import Iterable, Optional, Union
 
 import pandas as pd
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
 
 from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
@@ -237,9 +236,10 @@ class Sequence(object):
         """
         str: Returns the reverse complement of ``Sequence.sequence``.
         """
-        if self._reverse_complement is None:
-            self._reverse_complement = self._get_reverse_complement()
-        return self._reverse_complement
+        return reverse_complement(self, in_place=False)
+        # if self._reverse_complement is None:
+        #     self._reverse_complement = self._get_reverse_complement()
+        # return self._reverse_complement
 
     @property
     def annotations(self):
@@ -308,25 +308,25 @@ class Sequence(object):
     def get(self, key, default=None):
         return self.annotations.get(key, default)
 
-    def _get_reverse_complement(self):
-        rc = {
-            "A": "T",
-            "C": "G",
-            "G": "C",
-            "T": "A",
-            "Y": "R",
-            "R": "Y",
-            "S": "S",
-            "W": "W",
-            "K": "M",
-            "M": "K",
-            "B": "V",
-            "D": "H",
-            "H": "D",
-            "V": "B",
-            "N": "N",
-        }
-        return "".join([rc.get(res, res) for res in self.sequence[::-1]])
+    # def _get_reverse_complement(self):
+    #     rc = {
+    #         "A": "T",
+    #         "C": "G",
+    #         "G": "C",
+    #         "T": "A",
+    #         "Y": "R",
+    #         "R": "Y",
+    #         "S": "S",
+    #         "W": "W",
+    #         "K": "M",
+    #         "M": "K",
+    #         "B": "V",
+    #         "D": "H",
+    #         "H": "D",
+    #         "V": "B",
+    #         "N": "N",
+    #     }
+    #     return "".join([rc.get(res, res) for res in self.sequence[::-1]])
 
     def _process_input(self, seq, id, qual):
         if type(seq) in STR_TYPES:
@@ -351,9 +351,13 @@ class Sequence(object):
         elif type(seq) == SeqRecord:
             if qual is None:
                 if "phred_quality" in seq.letter_annotations:
-                    qual = "".join(chr(q + 33) for q in seq.letter_annotations["phred_quality"])
+                    qual = "".join(
+                        chr(q + 33) for q in seq.letter_annotations["phred_quality"]
+                    )
                 elif "solexa_quality" in seq.letter_annotations:
-                    qual = "".join(chr(q + 64) for q in seq.letter_annotations["solexa_quality"])
+                    qual = "".join(
+                        chr(q + 64) for q in seq.letter_annotations["solexa_quality"]
+                    )
             self.id = id if id is not None else str(seq.id)
             self.description = str(seq.description)
             self.sequence = str(seq.seq).upper()
@@ -375,6 +379,43 @@ class Sequence(object):
             for k in seq:
                 if k not in self.annotations:
                     self.annotations[k] = seq[k]
+
+
+def reverse_complement(sequence, in_place=False):
+    """
+    Returns the reverse complement of a nucleotide sequence.
+
+    Parameters
+    ----------
+        sequence : Union[str, Sequence]: Nucleotide sequence to be reverse complemented.
+
+    Returns:
+
+        str: Reverse complement of the input sequence.
+    """
+    s = Sequence(sequence)
+    rc_dict = {
+        "A": "T",
+        "C": "G",
+        "G": "C",
+        "T": "A",
+        "Y": "R",
+        "R": "Y",
+        "S": "S",
+        "W": "W",
+        "K": "M",
+        "M": "K",
+        "B": "V",
+        "D": "H",
+        "H": "D",
+        "V": "B",
+        "N": "N",
+    }
+    rc = "".join([rc_dict.get(res, res) for res in s.sequence[::-1]])
+    if in_place:
+        s.sequence = rc
+        return s
+    return s
 
 
 def translate(
@@ -606,7 +647,7 @@ def read_fasta(fasta_file: str) -> Iterable[Sequence]:
 
 def read_fastq(fastq_file):
     """
-    Reads a FASTQ-formatted  file and returns ``Sequence`` objects. 
+    Reads a FASTQ-formatted  file and returns ``Sequence`` objects.
     Gzipped files are supported.
 
     Parameters
@@ -622,6 +663,7 @@ def read_fastq(fastq_file):
     """
     if fastq_file.endswith(".gz"):
         import gzip
+
         open_func = gzip.open
     else:
         open_func = open
@@ -801,7 +843,9 @@ def to_fastq(
             for s in sequences
         ]
         quals = [s.qual for s in sequences]
-        fastq_string = "\n".join(f"@{i}\n{s}\n+\n{q}" for i, s, q in zip(ids, seqs, quals))
+        fastq_string = "\n".join(
+            f"@{i}\n{s}\n+\n{q}" for i, s, q in zip(ids, seqs, quals)
+        )
     # anything else..
     else:
         fastq_string = "\n".join(
