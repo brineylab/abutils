@@ -415,7 +415,7 @@ def reverse_complement(sequence, in_place=False):
     if in_place:
         s.sequence = rc
         return s
-    return s
+    return rc
 
 
 def translate(
