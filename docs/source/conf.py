@@ -78,6 +78,7 @@ if os.environ.get("READTHEDOCS", None) == "True":
         "scipy",
         "scipy.ndimage",
         "scipy.signal",
+        "scipy.special",
         "scipy.cluster",
         "scipy.cluster.hierarchy",
         "smart_open",
