@@ -44,10 +44,7 @@ from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
 
 if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-    from functools import reduce
+    STR_TYPES = [str]
 else:
     STR_TYPES = [str, unicode]
 
@@ -307,26 +304,6 @@ class Sequence(object):
 
     def get(self, key, default=None):
         return self.annotations.get(key, default)
-
-    # def _get_reverse_complement(self):
-    #     rc = {
-    #         "A": "T",
-    #         "C": "G",
-    #         "G": "C",
-    #         "T": "A",
-    #         "Y": "R",
-    #         "R": "Y",
-    #         "S": "S",
-    #         "W": "W",
-    #         "K": "M",
-    #         "M": "K",
-    #         "B": "V",
-    #         "D": "H",
-    #         "H": "D",
-    #         "V": "B",
-    #         "N": "N",
-    #     }
-    #     return "".join([rc.get(res, res) for res in self.sequence[::-1]])
 
     def _process_input(self, seq, id, qual):
         if type(seq) in STR_TYPES:
