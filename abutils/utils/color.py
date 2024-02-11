@@ -23,21 +23,21 @@
 #
 
 
-from typing import Union, Tuple, Optional, Iterable
+from typing import Iterable, Optional, Tuple, Union
 
+import matplotlib as mpl
+import numpy as np
 import seaborn as sns
 
-import numpy as np
-
+# from matplotlib import cm, colors
 from matplotlib import pyplot as plt
-from matplotlib import cm, colors
-from matplotlib.colors import (
-    Colormap,
-    ListedColormap,
-    LinearSegmentedColormap,
-    to_rgba_array,
-)
 
+# from matplotlib.colors import (
+#     Colormap,
+#     LinearSegmentedColormap,
+#     ListedColormap,
+#     to_rgba_array,
+# )
 
 __all__ = [
     "get_cmap",
@@ -49,7 +49,7 @@ __all__ = [
     "hls",
     "husl",
     "truncate_colormap",
-    "cmaps",
+    # "cmaps",
     "monochrome_palette",
 ]
 
@@ -104,7 +104,7 @@ def show_palettes() -> None:
         top=1 - 0.35 / figh, bottom=0.15 / figh, left=0.2, right=0.99, hspace=0.6
     )
     for ax, name in zip(axs, palettes):
-        cmap = ListedColormap(palettes[name])
+        cmap = mpl.colors.ListedColormap(palettes[name])
         ax.imshow(
             gradient,
             aspect="auto",
@@ -127,14 +127,14 @@ def show_palettes() -> None:
 
 
 def get_cmap(
-    c: Union[Colormap, str, Iterable],
+    c: Union[mpl.colors.Colormap, str, Iterable],
     dark: bool = False,
     zero_color: Union[str, Iterable, None] = None,
     n: int = 256,
     minval: float = 0.0,
     maxval: float = 1.0,
     name: Optional[str] = None,
-) -> Colormap:
+) -> mpl.colors.Colormap:
     """
     Gets a matplotlib ``Colormap``.
 
@@ -186,7 +186,7 @@ def get_cmap(
     .. _Matplotlib color
         https://matplotlib.org/stable/tutorials/colors/colors.html
     """
-    if isinstance(c, Colormap):
+    if isinstance(c, mpl.colors.Colormap):
         cmap = c
     elif isinstance(c, str) and c in plt.colormaps():
         cmap = plt.get_cmap(c)
@@ -196,11 +196,13 @@ def get_cmap(
         cmap = sns.light_palette(c, as_cmap=True)
     if zero_color is not None:
         cmap = cmap(np.linspace(0.1, 1, n))
-        colors = [to_rgba_array(zero_color)] + list(cmap)
-        cmap = LinearSegmentedColormap.from_list(
+        colors = [mpl.colors.to_rgba_array(zero_color)] + list(cmap)
+        cmap = mpl.colors.LinearSegmentedColormap.from_list(
             name if name is not None else "", colors
         )
-    cmap = LinearSegmentedColormap.from_list(name, cmap(np.linspace(minval, maxval, n)))
+    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        name, cmap(np.linspace(minval, maxval, n))
+    )
     return cmap
 
 
@@ -245,7 +247,9 @@ def monochrome_palette(
     return colors
 
 
-def cmap_from_color(color: Union[str, Tuple], dark: bool = False) -> Colormap:
+def cmap_from_color(
+    color: Union[str, Tuple], dark: bool = False
+) -> mpl.colors.Colormap:
     """
     Generates a matplotlib colormap from a single color. Colormap will be built,
     by default, from white to ``color``.
@@ -283,13 +287,13 @@ cmaps = {
 
 
 def hex_to_rgb(hex_string):
-    rgb = colors.hex2color(hex_string)
+    rgb = mpl.colors.hex2color(hex_string)
     return tuple([int(255 * x) for x in rgb])
 
 
 def rgb_to_hex(rgb_tuple):
     div = 1 if all([v <= 1.0 for v in rgb_tuple]) else 255
-    return colors.rgb2hex([1.0 * x / div for x in rgb_tuple])
+    return mpl.colors.rgb2hex([1.0 * x / div for x in rgb_tuple])
 
 
 def hls(n_colors, hue=0.01, lightness=0.6, saturation=0.65):
@@ -301,8 +305,8 @@ def husl(n_colors, hue=0.01, saturation=0.9, lightness=0.65):
 
 
 def truncate_colormap(
-    cmap: Colormap, minval: float = 0.0, maxval: float = 1.0, n: int = 256
-) -> Colormap:
+    cmap: mpl.colors.Colormap, minval: float = 0.0, maxval: float = 1.0, n: int = 256
+) -> mpl.colors.Colormap:
     """
     Truncates a colormap, such that the new colormap consists of
     ``cmap[minval:maxval]``.
@@ -327,7 +331,7 @@ def truncate_colormap(
     """
     # cmap = get_cmap(cmap)
     name = "%s-trunc-%.2g-%.2g" % (cmap.name, minval, maxval)
-    return colors.LinearSegmentedColormap.from_list(
+    return mpl.colors.LinearSegmentedColormap.from_list(
         name, cmap(np.linspace(minval, maxval, n)), N=n
     )
 
