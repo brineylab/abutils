@@ -28,7 +28,7 @@ import subprocess as sp
 import sys
 import tarfile
 
-from abutils.utils import log
+from . import log
 
 if sys.version_info[0] > 2:
     raw_input = input
@@ -308,4 +308,3 @@ website_endpoint = http://%(bucket)s.s3-website-% (location)s.amazonaws.com/
 website_error =
 website_index = index.html
 """
-
