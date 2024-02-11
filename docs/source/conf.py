@@ -76,6 +76,7 @@ if os.environ.get("READTHEDOCS", None) == "True":
         "scikit-learn",
         "scanorama",
         "scipy",
+        "scipy.ndimage",
         "scipy.signal",
         "scipy.cluster",
         "scipy.cluster.hierarchy",
