@@ -4,3 +4,7 @@ furo
 pydata-sphinx-theme
 sphinx-material
 sphinxawesome-theme
+sphinx_copybutton
+sphinx_togglebutton
+sphinx_design
+autodocsumm

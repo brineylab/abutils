@@ -56,7 +56,7 @@ additional dependencies
 
 Whenever possible, ``abutils`` bundles required third-party binaries, but there are a few 
 additional non-python dependencies that must be separately installed. These tools are 
-not needed for installation, but are necessary for specific functions:
+not required for installation, but are needed for specific functions:
 
 * ``abutils.tl.igphyml`` requires IgPhyML_
 * ``abutils.tl.lsd`` requires LSD_
