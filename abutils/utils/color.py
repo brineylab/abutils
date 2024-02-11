@@ -280,10 +280,10 @@ def cmap_from_color(
     return get_cmap(color, dark=dark)
 
 
-cmaps = {
-    "heatmap": sns.diverging_palette(240, 10, as_cmap=True),
-    "loupe": get_cmap("YlOrBr", zero_color=[0.9, 0.9, 0.9, 1.0], minval=0.1),
-}
+# cmaps = {
+#     "heatmap": sns.diverging_palette(240, 10, as_cmap=True),
+#     "loupe": get_cmap("YlOrBr", zero_color=[0.9, 0.9, 0.9, 1.0], minval=0.1),
+# }
 
 
 def hex_to_rgb(hex_string):
