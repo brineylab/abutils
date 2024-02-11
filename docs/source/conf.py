@@ -48,6 +48,7 @@ if os.environ.get("READTHEDOCS", None) == "True":
         "harmonypy",
         "leidenalg",
         "matplotlib",
+        "matplotlib.colors",
         "matplotlib.pyplot",
         "matplotlib.lines",
         "matplotlib.patches",
