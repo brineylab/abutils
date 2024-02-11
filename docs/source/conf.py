@@ -24,6 +24,81 @@ from sphinx.application import Sphinx
 
 HERE = Path(__file__).parent
 
+if os.environ.get("READTHEDOCS", None) == "True":
+    # class Mock(MagicMock):
+    #     @classmethod
+    #     def __getattr__(cls, name):
+    #             return Mock()
+
+    MOCK_MODULES = [
+        "abstar",
+        # "abutils",
+        "pygtk",
+        "gtk",
+        "gobject",
+        "argparse",
+        "numpy",
+        "nwalign",
+        "pandas",
+        "scanpy",
+        "anndata",
+        "dnachisel",
+        "fastcluster",
+        "harmonypy",
+        "leidenalg",
+        "matplotlib",
+        "matplotlib.pyplot",
+        "matplotlib.lines",
+        "matplotlib.patches",
+        "mpl_toolkits",
+        "mpl_toolkits.axes_grid1",
+        "mpl_toolkits.axes_grid1.inset_locator",
+        "sklearn",
+        "sklearn.neighbors",
+        "mnemonic",
+        "natsort",
+        "prettytable",
+        "python-Levenshtein",
+        "Levenshtein",
+        "scanorama",
+        "scipy",
+        "scipy.signal",
+        "scipy.cluster",
+        "scipy.cluster.hierarchy",
+        "statsmodels",
+        "statsmodels.api",
+        "scrublet",
+        "scvelo",
+        "seaborn",
+        "umap-learn",
+        "Bio",
+        "abstar.core",
+        "abstar.core.abstar",
+        "abstar.core.germline",
+        "abstar.preprocess",
+        "abstar.utils",
+        "abstar.utils.abstar",
+        "abstar.utils.regions",
+        # "abutils.utils",
+        # "abutils.utils.alignment",
+        # "abutils.utils.color",
+        # "abutils.utils.cluster",
+        # "abutils.utils.utilities",
+        # "abutils.utils.alignment",
+        # "abutils.utils.codons",
+        # "abutils.utils.pipeline",
+        # "abutils.utils.decorators",
+        # "abutils.color",
+        # "abutils.core",
+        # "abutils.core.sequence",
+        # "abutils.core.pair",
+        # "abutils.tools",
+        # "abutils.tools.alignment",
+        # "abutils.tools.cluster",
+        # "abutils.tools.similarity",
+    ]
+    sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
