@@ -57,6 +57,7 @@ if os.environ.get("READTHEDOCS", None) == "True":
         "matplotlib.pyplot",
         "matplotlib.lines",
         "matplotlib.patches",
+        "matplotlib.path",
         "mpl_toolkits",
         "mpl_toolkits.axes_grid1",
         "mpl_toolkits.axes_grid1.inset_locator",
