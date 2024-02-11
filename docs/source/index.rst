@@ -7,11 +7,11 @@ abutils: utilities for AIRR sequence analysis
 ====================================================================
 
 
-`abutils` provides models and general-purpose utilities for working with adaptive immune receptor repertoire (AIRR) data.
-The purpose of `abutils`` is to provide a flexible set of tools and plotting functions that can be used directly for bulk 
-AIRR analyses and are also used by `scab` to process single cell AIRR datasets. We have attempted to provide an intuitive 
+``abutils`` provides models and general-purpose utilities for working with adaptive immune receptor repertoire (AIRR) data.
+The purpose of ``abutils`` is to provide a flexible set of tools and plotting functions that can be used directly for bulk 
+AIRR analyses and are also used by ``scab`` to process single cell AIRR datasets. We have attempted to provide an intuitive 
 API that is easy to use and designed to facilitate both interactive analysis and incorporation into more complex pipelines. 
-`abutils`` is a core component of the ab[x] toolkit, and we welcome feedback and suggestions for improvement.
+``abutils`` is a core component of the ab[x] toolkit, and we welcome feedback and suggestions for improvement.
 
 
 .
