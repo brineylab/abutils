@@ -14,8 +14,7 @@ API that is easy to use and designed to facilitate both interactive analysis and
 ``abutils`` is a core component of the ab[x] toolkit, and we welcome feedback and suggestions for improvement.
 
 
-.
-
+|
 
 .. toctree::
    :maxdepth: 1
@@ -29,8 +28,8 @@ API that is easy to use and designed to facilitate both interactive analysis and
    :maxdepth: 1
    :caption: usage
 
+   examples
    api
-   api_examples
 
 
 .. toctree::
