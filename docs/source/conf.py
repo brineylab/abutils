@@ -248,12 +248,12 @@ html_title = f"{project} v{release}"
 #
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    "**": [
-        "relations.html",  # needs 'show_related': True theme option to display
-        "searchbox.html",
-    ]
-}
+# html_sidebars = {
+#     "**": [
+#         "relations.html",  # needs 'show_related': True theme option to display
+#         "searchbox.html",
+#     ]
+# }
 
 
 # -- Options for HTMLHelp output ------------------------------------------
