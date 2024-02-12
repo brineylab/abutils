@@ -1,3 +1,5 @@
+.. _pairwise-alignment:
+
 pairwise alignment
 ===================
 
