@@ -39,7 +39,7 @@ In addition to the core models, abutils provides a number of commonly used funct
 These functions are widely used throughput the ab[x] toolkit and are suitable for incorporation 
 into custom pipelines or for use when performing interactive analyses:
 
-  * :ref:`**pairwise alignment** <pairwise-alignment>`: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global 
+  * **:ref:`pairwise alignment** <pairwise-alignment>`**: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global 
     pairwise sequence alignment, 
   
   * :ref:`**multiple sequence alignment** <multiple-sequence-alignment>` using MAFFT_ or MUSCLE_
