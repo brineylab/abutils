@@ -8,9 +8,8 @@ sphinx_copybutton
 sphinx_togglebutton
 sphinx_design
 autodocsumm
-
 # baltic
-# biopython
+biopython
 # celery
 # ete3
 # fastcluster

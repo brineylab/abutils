@@ -46,7 +46,7 @@ into custom pipelines or for use when performing interactive analyses:
 
   * :ref:`clustering <clustering>`: identity-based sequence clustering with VSEARCH_, CDHIT_, or MMseqs2_
 
-  * :ref:`phylogeny <phylogeny>``: computing lineage phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
+  * :ref:`phylogeny <phylogeny>`: computing lineage phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
 
 
 
