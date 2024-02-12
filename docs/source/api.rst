@@ -17,8 +17,8 @@ alignment
 
 .. toctree::
 
-    modules/alignment_models
-    modules/alignment_functions
+    modules/pairwise_alignment
+    modules/amultiple_sequence_alignment
 
 
 
