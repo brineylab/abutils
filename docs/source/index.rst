@@ -18,6 +18,7 @@ API that is easy to use and designed to facilitate both interactive analysis and
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: getting started
    
    overview
@@ -26,6 +27,7 @@ API that is easy to use and designed to facilitate both interactive analysis and
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: usage
 
    examples
@@ -34,6 +36,7 @@ API that is easy to use and designed to facilitate both interactive analysis and
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: about
 
    license
@@ -42,6 +45,7 @@ API that is easy to use and designed to facilitate both interactive analysis and
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: related projects
 
    abstar <https://github.com/briney/abstar>
