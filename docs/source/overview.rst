@@ -39,14 +39,14 @@ In addition to the core models, abutils provides a number of commonly used funct
 These functions are widely used throughput the ab[x] toolkit and are suitable for incorporation 
 into custom pipelines or for use when performing interactive analyses:
 
-  * **:ref:`pairwise alignment** <pairwise-alignment>`**: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global 
+  * :ref:`pairwise alignment <pairwise-alignment>`: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global 
     pairwise sequence alignment, 
   
-  * :ref:`**multiple sequence alignment** <multiple-sequence-alignment>` using MAFFT_ or MUSCLE_
+  * :ref:`multiple sequence alignment <multiple-sequence-alignment>` using MAFFT_ or MUSCLE_
 
-  * **clustering**: identity-based sequence clustering with VSEARCH_, CDHIT_, or MMseqs2_
+  * :ref:`clustering <clustering>`: identity-based sequence clustering with VSEARCH_, CDHIT_, or MMseqs2_
 
-  * **phylogeny**: computing lineage phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
+  * :ref:`phylogeny <phylogeny>``: computing lineage phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
 
 
 
