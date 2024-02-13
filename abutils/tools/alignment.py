@@ -38,6 +38,7 @@ from typing import Callable, Iterable, Optional, Union
 import parasail
 from Bio import AlignIO
 from Bio.Align import AlignInfo, MultipleSeqAlignment
+from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from ..core.sequence import Sequence
@@ -67,20 +68,219 @@ __all__ = [
 
 
 class MultipleSequenceAlignment:
-    def __init__(self, aln_file, fmt="fasta"):
-        self.input_alignment = self._read_alignment(aln_file, fmt)
-        self.input_alignment_string = self._read_alignment_string(aln_file, fmt)
+    def __init__(self, input_alignment, fmt="fasta"):
+        self._sequences = None
+
+        self.input = input_alignment
+        self.aln = self._process_alignment(input_alignment, fmt)
         self.fmt = fmt
 
-    def _read_alignment(self, aln_file, fmt):
+    def __getitem__(self, index):
+        """Access part of the alignment. Drawn heavily from `BioPython's
+        MultipleSeqAlignment object`_.
+
+        Depending on the indices, you can get a Sequence object
+        (representing a single row), a string (for a single character
+        or a single column) or another MultipleSequenceAlignment object
+        (representing some part or all of the alignment).
+
+        - align[r,c] gives a single character as a string
+        - align[r] gives a row as a Sequence
+        - align[:,c] gives a column as a string
+
+        align[:] and align[:,:] give a copy of the alignment
+
+        Anything else gives a sub alignment, e.g.
+        - align[0:2] or align[0:2,:] uses only row 0 and 1
+        - align[:,1:3] uses only columns 1 and 2
+        - align[0:2,1:3] uses only rows 0 & 1 and only cols 1 & 2
+
+        We'll use the following example alignment here for illustration:
+
+        .. code-block:: python
+            from abutils import Sequence
+
+            a = Sequence("AAAACGT", id="Alpha")
+            b = Sequence("AAA-CGT", id="Beta")
+            c = Sequence("AAAAGGT", id="Gamma")
+            d = Sequence("AAAACGT", id="Delta")
+            e = Sequence("AAA-GGT", id="Epsilon")
+
+            align = MultipleSequenceAlignment([a, b, c, d, e])
+
+        You can access a row of the alignment as a Sequence using an integer
+        index (think of the alignment as a list of Sequence objects here):
+
+        .. code-block:: python
+            first_record = align[0]
+            print("{first_record.id} {first_record.sequence}")
+            # Alpha AAAACGT
+            last_record = align[-1]
+            print("{last_record.id} {last_record.sequence}")
+            # Epsilon AAA-GGT
+
+        You can also access use python's slice notation to create a sub-alignment
+        containing only some of the Sequence objects:
+
+        .. code-block:: python
+            sub_alignment = align[2:5]
+            print(sub_alignment)
+            # Alignment with 3 rows and 7 columns
+            # AAAAGGT Gamma
+            # AAAACGT Delta
+            # AAA-GGT Epsilon
+
+        This includes support for a step, i.e. align[start:end:step], which
+        can be used to select every second sequence:
+
+        .. code-block:: python
+            sub_alignment = align[::2]
+            print(sub_alignment)
+            # Alignment with 3 rows and 7 columns
+            # AAAACGT Alpha
+            # AAAAGGT Gamma
+            # AAA-GGT Epsilon
+
+        Or to get a copy of the alignment with the rows in reverse order:
+
+        .. code-block:: python
+            rev_alignment = align[::-1]
+            print(rev_alignment)
+            # Alignment with 5 rows and 7 columns
+            # AAA-GGT Epsilon
+            # AAAACGT Delta
+            # AAAAGGT Gamma
+            # AAA-CGT Beta
+            # AAAACGT Alpha
+
+        You can also use two indices to specify both rows and columns. Using simple
+        integers gives you the entry as a single character string. e.g.
+
+        .. code-block:: python
+            align[3, 4]
+            # 'C'
+
+        This is equivalent to:
+
+        .. code-block:: python
+            align[3][4]
+            # 'C'
+
+        or:
+
+        .. code-block:: python
+            align[3].seq[4]
+            # 'C'
+
+        To get a single column (as a string) use this syntax:
+
+        .. code-block:: python
+            align[:, 4]
+            # 'CCGCG'
+
+        Or, to get part of a column,
+
+        .. code-block:: python
+            align[1:3, 4]
+            # 'CG'
+
+        However, in general you get a sub-alignment,
+
+        .. code-block:: python
+            print(align[1:5, 3:6])
+            # Alignment with 4 rows and 3 columns
+            # -CG Beta
+            # AGG Gamma
+            # ACG Delta
+            # -GG Epsilon
+
+        This should all seem familiar to anyone who has used the NumPy
+        array or matrix objects.
+
+
+        .. _BioPython's MultipleSeqAlignment object:
+            https://biopython.org/DIST/docs/api/Bio.Align.MultipleSeqAlignment-class.html
+        """
+        # single indexing (e.g. align[6] or align[1:4])
+        if isinstance(index, int):
+            # e.g. result = align[x]
+            # Return a single Sequence
+            return self.sequences[index]
+        elif isinstance(index, slice):
+            # e.g. sub_align = align[i:j:k]
+            return MultipleSequenceAlignment(self.sequences[index])
+        elif len(index) != 2:
+            raise TypeError("Invalid index type.")
+
+        # double indexing (e.g. align[6, 1] or align[1:4, 6:10])
+        row_index, col_index = index
+        if isinstance(row_index, int):
+            # e.g. row_or_part_row = align[6, 1:4], gives a Sequence
+            return Sequence(
+                self.sequences[row_index][col_index], id=self.sequences[row_index].id
+            )
+        elif isinstance(col_index, int):
+            # e.g. col_or_part_col = align[1:5, 6], gives a string
+            return "".join(seq[col_index] for seq in self.sequences[row_index])
+        else:
+            # e.g. sub_align = align[1:4, 5:7], gives a new alignment
+            return MultipleSequenceAlignment(
+                [
+                    Sequence(seq[col_index], id=seq.id)
+                    for seq in self.sequences[row_index]
+                ]
+            )
+
+    def __iter__(self):
+        for s in self.sequences:
+            yield s
+
+    def __len__(self):
+        return len(self.aln)
+
+    def __repr__(self):
+        print(self.aln)
+
+    def __str__(self):
+        return self.aln_string
+
+    def _process_alignment(self, input_alignment, fmt):
+        if isinstance(input_alignment, str):
+            if os.path.isfile(input_alignment):
+                return self._read_alignment_file(input_alignment, fmt)
+            else:
+                return self._read_alignment_string(input_alignment, fmt)
+        elif isinstance(input_alignment, (list, tuple)):
+            input_seqs = [Sequence(i) for i in input_alignment]
+            aln_seqs = [SeqRecord(Seq(s.sequence), id=s.id) for s in input_seqs]
+            aln = MultipleSeqAlignment(aln_seqs)
+            self._sequences = input_seqs
+            return aln
+        else:
+            raise ValueError(
+                "Invalid input. Must be a path to an alignment file, an alignment string, or a list of aligned Sequences."
+            )
+
+    def _read_alignment_file(self, aln_file, fmt):
         with open(aln_file, "r") as f:
             aln = AlignIO.read(f, fmt)
         return aln
 
     def _read_alignment_string(self, aln_file, fmt):
-        with open(aln_file, "r") as f:
-            aln_string = f.read()
-        return aln_string
+        return AlignIO.read(StringIO(aln_file), fmt)
+
+    @property
+    def aln_string(self):
+        return str(self.aln)
+
+    @property
+    def sequences(self):
+        if self._sequences is None:
+            self._sequences = [Sequence(s) for s in self.aln]
+        return self._sequences
+
+    def format(self, format):
+        return self.aln.format(format)
 
 
 def mafft(
