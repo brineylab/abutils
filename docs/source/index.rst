@@ -3,46 +3,48 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-abutils: utilities for AIRR sequence analysis
+abutils: utilities for AIRR analysis
 ====================================================================
 
 
 With technical breakthroughs in the throughput and read-length of 
-next-generation sequencing platforms, antibody repertoire sequencing 
-is becoming an increasingly important tool for detailed characterization 
+next-generation sequencing platforms, adaptive immune receptor repertoire sequencing 
+is invaluable for detailed characterization 
 of the immune response to infection and immunization. Accordingly, 
 there is a need for open, scalable software for the genetic analysis of 
-repertoire-scale antibody sequence data.
+adaptive immune receptor data at repertoire scale.
 
-We built ``abutils`` to provide a cohesive set of tools designed for the specific challenges inherent in 
-working with antibody repertoire data. The components in ``abutils`` were designed to be flexible: 
+We built ``abutils`` to provide a cohesive set of tools that address the specific challenges inherent in 
+working with adaptive immune receptor repertoire data. The components in ``abutils`` were designed to be flexible: 
 equally at home when used used interactively (in a Jupyter Notebook, for example) or when 
-integrated into more complex programs and/or pipelines (such as abstar_, which is capable of annotating 
-billions of antibody sequences).
+integrated into more complex programs or pipelines (such as abstar_, which is capable of annotating 
+billions of adaptive immune receptor sequences).
 
 core models
 -----------
 
-To represent antibody repertoire data at varying levels of granularity, abutils provides three core models: 
-``Sequence``, ``Pair``, and ``Lineage``. These models are heirarchical -- a ``Lineage`` is composed of one 
-or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain methods 
-appropriate for each level of granularity. 
+To represent antibody repertoire data at varying levels of granularity, abutils provides three core models:  
 
-  * ``Sequence``: model for representing a single antibody sequnce (either heavy or light chain).
+  * **``Sequence``**: model for representing a single antibody sequnce (either heavy or light chain).
     Provides a means to store and access abstar annotations. Includes common methods of sequence
     manipulation, including slicing, reverse-complement, and conversion to FASTA format. The ``Sequence``
     object is used extensively throughout the ab[x] toolkit.
-  * ``Pair``: model for representing paired (heavy and light) antibody sequences. Comprised of one 
+  * **``Pair``**: model for representing paired (heavy and light) antibody sequences. Comprised of one 
     or more ``Sequence`` objects. 
-  * ``Lineage``: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
+  * **``Lineage``**: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
     objects. Includes methods for lineage manipulation, including generating dot alignments and UCA calculation.
+
+These models are heirarchical -- a ``Lineage`` is composed of one 
+or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain methods 
+appropriate for each level of granularity.
+
 
 
 tools
 ------
 
 In addition to the core models, abutils provides a number of commonly used functions. 
-These functions are widely used throughput the ab[x] toolkit and are suitable for incorporation 
+These functions are widely used throughput the ab[x] toolkit and can be easily integrated
 into custom pipelines or for use when performing interactive analyses:
 
   * :ref:`pairwise alignment <pairwise-alignment>`: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global 
