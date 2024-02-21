@@ -72,8 +72,8 @@ class MultipleSequenceAlignment:
         self._sequences = None
 
         self.input = input_alignment
-        self.aln = self._process_alignment(input_alignment, fmt)
         self.fmt = fmt
+        self.aln = self._process_alignment(input_alignment)
 
     def __getitem__(self, index):
         """Access part of the alignment. Drawn heavily from `BioPython's
@@ -244,12 +244,12 @@ class MultipleSequenceAlignment:
     def __str__(self):
         return self.aln_string
 
-    def _process_alignment(self, input_alignment, fmt):
+    def _process_alignment(self, input_alignment):
         if isinstance(input_alignment, str):
             if os.path.isfile(input_alignment):
-                return self._read_alignment_file(input_alignment, fmt)
+                return self._read_alignment_file(input_alignment, self.fmt)
             else:
-                return self._read_alignment_string(input_alignment, fmt)
+                return self._read_alignment_string(input_alignment, self.fmt)
         elif isinstance(input_alignment, (list, tuple)):
             input_seqs = [Sequence(i) for i in input_alignment]
             aln_seqs = [SeqRecord(Seq(s.sequence), id=s.id) for s in input_seqs]
@@ -281,6 +281,24 @@ class MultipleSequenceAlignment:
 
     def format(self, format):
         return self.aln.format(format)
+
+    def make_consensus(
+        self,
+        name: Optional[str] = None,
+        threshold: float = 0.51,
+        ambiguous: str = "N",
+        as_string: bool = False,
+    ):
+        summary_align = AlignInfo.SummaryInfo(self.aln)
+        consensus = summary_align.gap_consensus(
+            threshold=threshold, ambiguous=ambiguous
+        )
+        consensus_string = str(consensus).replace("-", "")
+        if as_string:
+            return consensus_string
+        return Sequence(
+            consensus_string, id=name if name is not None else str(uuid.uuid4())
+        )
 
 
 def mafft(
