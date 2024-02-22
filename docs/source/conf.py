@@ -13,19 +13,131 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-import shlex
-import sphinx_rtd_theme
+import sys
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock
 
+import sphinx_rtd_theme
+from sphinx.application import Sphinx
+
+HERE = Path(__file__).parent
+
+if os.environ.get("READTHEDOCS", None) == "True":
+    # class Mock(MagicMock):
+    #     @classmethod
+    #     def __getattr__(cls, name):
+    #             return Mock()
+
+    MOCK_MODULES = [
+        "abstar",
+        # "abutils",
+        "pygtk",
+        "gtk",
+        "gobject",
+        "argparse",
+        "numpy",
+        "nwalign",
+        "pandas",
+        "scanpy",
+        "anndata",
+        "baltic",
+        "dnachisel",
+        "ete3",
+        "fastcluster",
+        "harmonypy",
+        "leidenalg",
+        "matplotlib",
+        "matplotlib.colors",
+        "matplotlib.colors.Colormap",
+        "matplotlib.colors.ListedColormap",
+        "matplotlib.colors.LinearSegmentedColormap",
+        "matplotlib.colors.to_rgba_array",
+        "matplotlib.pyplot",
+        "matplotlib.lines",
+        "matplotlib.patches",
+        "matplotlib.path",
+        "mpl_toolkits",
+        "mpl_toolkits.axes_grid1",
+        "mpl_toolkits.axes_grid1.inset_locator",
+        "sklearn",
+        "sklearn.neighbors",
+        "mnemonic",
+        "natsort",
+        "prettytable",
+        "python-Levenshtein",
+        "Levenshtein",
+        "paramiko",
+        "parasail",
+        "pymongo",
+        "pyyaml",
+        "sample-sheet",
+        "scikit-learn",
+        "scanorama",
+        "scipy",
+        "scipy.ndimage",
+        "scipy.signal",
+        "scipy.special",
+        "scipy.cluster",
+        "scipy.cluster.hierarchy",
+        "smart_open",
+        "statsmodels",
+        "statsmodels.api",
+        "scrublet",
+        "scvelo",
+        "seaborn",
+        "umap-learn",
+        # "Bio",
+        # "Bio.Seq",
+        # "Bio.SeqIO",
+        # "Bio.SeqRecord",
+        # "Bio.Align",
+        # "Bio.AlignIO",
+        "abstar.core",
+        "abstar.core.abstar",
+        "abstar.core.germline",
+        "abstar.preprocess",
+        "abstar.utils",
+        "abstar.utils.abstar",
+        "abstar.utils.regions",
+        # "abutils.utils",
+        # "abutils.utils.alignment",
+        # "abutils.utils.color",
+        # "abutils.utils.cluster",
+        # "abutils.utils.utilities",
+        # "abutils.utils.alignment",
+        # "abutils.utils.codons",
+        # "abutils.utils.pipeline",
+        # "abutils.utils.decorators",
+        # "abutils.color",
+        # "abutils.core",
+        # "abutils.core.sequence",
+        # "abutils.core.pair",
+        # "abutils.tools",
+        # "abutils.tools.alignment",
+        # "abutils.tools.cluster",
+        # "abutils.tools.similarity",
+    ]
+    sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("../../"))
+# sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
+
+autosummary_generate = True
+autodoc_member_order = "bysource"
+# autodoc_default_flags = ['members']
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = False
+napoleon_use_rtype = True  # having a separate entry generally helps readability
+napoleon_use_param = True
+napoleon_custom_sections = [("Params", "Parameters")]
+todo_include_todos = False
+api_dir = HERE / "api"  # function_images
 
 
 # -- General configuration ------------------------------------------------
@@ -37,7 +149,18 @@ import sphinx_rtd_theme
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
+# extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx_copybutton",
+    "sphinx_togglebutton",
+    "sphinx_design",
+    "autodocsumm",
+    # "sphinx_autodoc_typehints",  # needs to be after napoleon
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -53,7 +176,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "abutils"
-copyright = "2018, Bryan Briney"
+copyright = f"{datetime.now():%Y}, the Briney lab."
 author = "Bryan Briney"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -61,16 +184,19 @@ author = "Bryan Briney"
 # built documents.
 #
 # The short X.Y version.
-version = "0.1.0"
+from abutils.version import __version__
+
+version = __version__
+# version = '0.0.4'
 # The full version, including alpha/beta/rc tags.
-release = "0.1.0"
+release = version
 
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -78,7 +204,8 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
+# pygments_style = "sphinx"
+pygments_style = "monokai"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -105,6 +232,11 @@ html_theme = "furo"
 #
 # html_theme_options = {}
 
+# The name for this set of Sphinx documents.  If None, it defaults to
+# "<project> v<release> documentation".
+# html_title = None
+html_title = f"{project} v{release}"
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
@@ -116,12 +248,12 @@ html_theme = "furo"
 #
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    "**": [
-        "relations.html",  # needs 'show_related': True theme option to display
-        "searchbox.html",
-    ]
-}
+# html_sidebars = {
+#     "**": [
+#         "relations.html",  # needs 'show_related': True theme option to display
+#         "searchbox.html",
+#     ]
+# }
 
 
 # -- Options for HTMLHelp output ------------------------------------------

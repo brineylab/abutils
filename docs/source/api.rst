@@ -1,4 +1,4 @@
-API reference
+api reference
 =============
 
 
@@ -17,8 +17,8 @@ alignment
 
 .. toctree::
 
-    modules/alignment_models
-    modules/alignment_functions
+    modules/pairwise_alignment
+    modules/multiple_sequence_alignment
 
 
 

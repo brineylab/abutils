@@ -171,7 +171,11 @@ def cluster(
             3. path to a FASTA-formatted file
             4. list of BioPython ``SeqRecord`` objects
             5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+            6. list of strings, with each string being a separate sequence.
         Required.
+
+    .. Note::
+        If ``sequences`` is a list of ``str`` objects, they will be assigned random IDs.
 
     threshold : float, default=0.975
         Identity threshold for clustering. Must be between 0 and 1.

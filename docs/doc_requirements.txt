@@ -4,3 +4,29 @@ furo
 pydata-sphinx-theme
 sphinx-material
 sphinxawesome-theme
+sphinx_copybutton
+sphinx_togglebutton
+sphinx_design
+autodocsumm
+# baltic
+biopython
+# celery
+# ete3
+# fastcluster
+# matplotlib
+# mnemonic
+# natsort
+# numpy
+# pandas
+# paramiko
+# parasail
+# pymongo
+# pytest
+# python-circos
+# python-Levenshtein
+# pyyaml
+# sample-sheet
+# scikit-learn
+# scipy
+# seaborn
+# smart_open
