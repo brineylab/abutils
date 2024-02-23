@@ -239,13 +239,15 @@ class MultipleSequenceAlignment:
         return len(self.aln)
 
     def __repr__(self):
-        print(self.aln)
+        return str(self.aln)
 
     def __str__(self):
         return self.aln_string
 
     def _process_alignment(self, input_alignment):
-        if isinstance(input_alignment, str):
+        if isinstance(input_alignment, MultipleSeqAlignment):
+            return input_alignment
+        elif isinstance(input_alignment, str):
             if os.path.isfile(input_alignment):
                 return self._read_alignment_file(input_alignment, self.fmt)
             else:
@@ -258,7 +260,8 @@ class MultipleSequenceAlignment:
             return aln
         else:
             raise ValueError(
-                "Invalid input. Must be a path to an alignment file, an alignment string, or a list of aligned Sequences."
+                "Invalid input. Must be a path to an alignment file, a biopython \
+                    ``MultipleSeqAlignment`` object, an alignment string, or a list of aligned Sequences."
             )
 
     def _read_alignment_file(self, aln_file, fmt):
@@ -270,25 +273,89 @@ class MultipleSequenceAlignment:
         return AlignIO.read(StringIO(aln_file), fmt)
 
     @property
-    def aln_string(self):
+    def aln_string(self) -> str:
+        """
+        Returns the alignment as a string.
+
+        """
         return str(self.aln)
 
     @property
-    def sequences(self):
+    def sequences(self) -> list[Sequence]:
+        """
+        Sequences in the alignment. Note that this is a list of ``Sequence``
+        objects, not BioPython ``SeqRecord`` objects, and that the sequences
+        are aligned, meaning they are all the same length and may have gaps.
+
+        Returns
+        -------
+        list of ``Sequence`` objects
+
+        """
         if self._sequences is None:
             self._sequences = [Sequence(s) for s in self.aln]
         return self._sequences
 
-    def format(self, format):
+    def format(self, format) -> str:
+        """
+        Format the alignment as a string.
+
+        Parameters
+        ----------
+        format : str
+            Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'.
+
+        """
         return self.aln.format(format)
 
     def make_consensus(
         self,
         name: Optional[str] = None,
         threshold: float = 0.51,
-        ambiguous: str = "N",
+        ambiguous: Optional[str] = None,
         as_string: bool = False,
-    ):
+    ) -> Union[str, Sequence]:
+        """
+        Make a consensus sequence from the multiple sequence alignment.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name of the consensus sequence. If not provided, a random UUID
+            will be used.
+
+        threshold : float, default=0.51
+            Threshold for calling a consensus base. Default is 0.51, meaning
+            that a base will be called if it is present in at least 51% of
+            the sequences.
+
+        ambiguous : str, optional
+            Character to use for ambiguous bases. If not provided, the
+            default is "N" if the sequences contain only standard nucleotides
+            (A, T, G, C), and "X" otherwise.
+
+        as_string : bool, default=False
+            If ``True``, returns the consensus sequence as a string. If
+            ``False``, returns a ``Sequence`` object.
+
+        Returns
+        -------
+        consensus : str or ``Sequence``
+            If ``as_string`` is ``True``, returns the consensus sequence as
+            a string. If ``False``, returns a ``Sequence`` object.
+
+        """
+        if ambiguous is None:
+            if all(
+                [
+                    nt in ["A", "T", "G", "C", "N", "-"]
+                    for s in self.sequences
+                    for nt in s.sequence
+                ]
+            ):
+                ambiguous = "N"
+            else:
+                ambiguous = "X"
         summary_align = AlignInfo.SummaryInfo(self.aln)
         consensus = summary_align.gap_consensus(
             threshold=threshold, ambiguous=ambiguous
@@ -435,12 +502,13 @@ def mafft(
         return None
     if as_file:
         return alignment_file
-    with open(alignment_file, "r") as f:
-        if as_string:
+
+    if as_string:
+        with open(alignment_file, "r") as f:
             aln = f.read()
-        else:
-            aln = AlignIO.read(f, fmt)
-            # aln = MultipleSequenceAlignment(alignment_file, fmt)
+    else:
+        # aln = AlignIO.read(f, fmt)
+        aln = MultipleSequenceAlignment(alignment_file, fmt.lower())
     os.unlink(alignment_file)
     return aln
 
@@ -569,11 +637,12 @@ def muscle(
         return None
     if as_file:
         return alignment_file
-    with open(alignment_file, "r") as f:
-        if as_string:
+    if as_string:
+        with open(alignment_file, "r") as f:
             aln = f.read()
-        else:
-            aln = AlignIO.read(f, "fasta")
+    else:
+        # aln = AlignIO.read(f, "fasta")
+        aln = MultipleSequenceAlignment(alignment_file, "fasta")
     os.unlink(alignment_file)
     return aln
 
@@ -737,11 +806,12 @@ def muscle_v3(
         return None
     if as_file:
         return alignment_file
-    with open(alignment_file, "r") as f:
-        if as_string:
+    if as_string:
+        with open(alignment_file, "r") as f:
             aln = f.read()
-        else:
-            aln = AlignIO.read(f, fmt)
+    else:
+        # aln = AlignIO.read(f, fmt)
+        aln = MultipleSequenceAlignment(alignment_file, fmt.lower())
     os.unlink(alignment_file)
     return aln
 
@@ -755,13 +825,13 @@ def muscle_v3(
     #     return AlignIO.read(StringIO(alignment), fmt)
 
 
-def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
-    summary_align = AlignInfo.SummaryInfo(aln)
-    consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
-    if name is None:
-        name = str(uuid.uuid4())
-    consensus_string = str(consensus).replace("-", "")
-    return (name, consensus_string.upper())
+# def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
+#     summary_align = AlignInfo.SummaryInfo(aln)
+#     consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
+#     if name is None:
+#         name = str(uuid.uuid4())
+#     consensus_string = str(consensus).replace("-", "")
+#     return (name, consensus_string.upper())
 
 
 def make_consensus(
@@ -770,7 +840,7 @@ def make_consensus(
     name: Optional[str] = None,
     downsample_to: Optional[int] = None,
     threshold: float = 0.51,
-    ambiguous: str = "N",
+    ambiguous: Optional[str] = None,
     seed: Optional[int] = None,
     as_string: bool = False,
 ) -> Sequence:
@@ -816,14 +886,17 @@ def make_consensus(
         err = f"Invalid algorithm: {algo}. Must be 'mafft' or 'muscle'."
         raise ValueError(err)
     # consensus
-    summary_align = AlignInfo.SummaryInfo(aln)
-    consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
-    consensus_string = str(consensus).replace("-", "").upper()
-    if as_string:
-        return consensus_string
-    return Sequence(
-        consensus_string, id=name if name is not None else str(uuid.uuid4())
+    return aln.make_consensus(
+        name=name, threshold=threshold, ambiguous=ambiguous, as_string=as_string
     )
+    # summary_align = AlignInfo.SummaryInfo(aln)
+    # consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
+    # consensus_string = str(consensus).replace("-", "").upper()
+    # if as_string:
+    #     return consensus_string
+    # return Sequence(
+    #     consensus_string, id=name if name is not None else str(uuid.uuid4())
+    # )
 
 
 # ----------------------------
