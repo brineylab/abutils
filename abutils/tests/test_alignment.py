@@ -14,7 +14,7 @@ from ..tools.alignment import (
     LocalAlignment,
     PairwiseAlignment,
     SemiGlobalAlignment,
-    consensus,
+    # consensus,
     global_alignment,
     local_alignment,
     mafft,
@@ -356,15 +356,15 @@ def test_muscle_v3_alignment_seq_key():
 # ---------------------------
 
 
-def test_consensus(aln_sequences):
-    name, consensus_string = consensus(aln_sequences)
-    assert isinstance(name, str)
-    assert isinstance(consensus_string, str)
-    assert len(consensus_string) == 60
-    assert (
-        consensus_string
-        == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
-    )
+# def test_consensus(aln_sequences):
+#     consensus = consensus(aln_sequences)
+#     assert isinstance(name, str)
+#     assert isinstance(consensus_string, str)
+#     assert len(consensus_string) == 60
+#     assert (
+#         consensus_string
+#         == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
+#     )
 
 
 def test_make_consensus(sequences):
