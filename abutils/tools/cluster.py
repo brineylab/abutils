@@ -37,7 +37,7 @@ from Bio.Align import AlignInfo
 from ..core.sequence import Sequence, read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 from ..utils.pipeline import make_dir
-from .alignment import mafft, make_consensus
+from .alignment import make_consensus
 
 __all__ = ["cluster", "cluster_vsearch", "cluster_mmseqs", "cluster_cdhit"]
 
@@ -51,6 +51,7 @@ class Cluster:
         self.name = name
         self.sequences = sequences
         self.centroid = centroid
+        self._consensus = None
 
     def __iter__(self):
         for s in self.sequences:
@@ -64,20 +65,50 @@ class Cluster:
     def seq_ids(self):
         return [s.id for s in self.sequences]
 
-    @lazy_property
+    @property
     def consensus(self):
-        return self._make_consensus()
+        if self._consensus is None:
+            self._consensus = self.make_consensus()
+        return self._consensus()
 
-    def _make_consensus(self):
+    def make_consensus(
+        self,
+        threshold: float = 0.51,
+        algo: str = "mafft",
+        ambiguous: Optional[str] = None,
+    ) -> Sequence:
+        """
+        Makes a consensus sequence from the cluster's sequences.
+
+        Parameters
+        ----------
+        threshold : float, default=0.51
+            Threshold for calling a consensus base. Must be between 0 and 1.
+
+        algo : str, default="mafft"
+            Algorithm to be used for generating the consensus sequence. Options are
+            ``"mafft"`` and ``"muscle"``.
+
+        ambiguous : str, default=None
+            Character to use for ambiguous bases. If not provided, the default
+            ambiguous base for the sequence type will be used.
+
+        Returns
+        -------
+        consensus : ``Sequence``
+
+        """
         if len(self.sequences) == 1:
             return self.sequences[0]
         consensus = make_consensus(
             self.sequences,
-            threshold=0.51,
-            algo="mafft",
-            ambiguous="n",
+            threshold=threshold,
+            algo=algo,
+            ambiguous=ambiguous,
         )
+        self._consensus = consensus
         return consensus
+        # return consensus
         # aln = mafft(self.sequences)
         # if aln is None:
         #     print("ERROR: Failed to generate an alignmnet for a consensus sequence.")
@@ -302,10 +333,9 @@ def cluster(
             debug=debug,
         )
     else:
-        err = f"\nERROR: Invalid algo option: {algo}."
-        err += " Valid choices are: 'vsearch', 'mmseqs', or 'auto'.\n"
-        print(err)
-        sys.exit()
+        err = f"Invalid algo option: {algo}."
+        err += " Valid choices are: 'vsearch', 'mmseqs', or 'auto'."
+        raise (ValueError, err)
     cluster_info = {}
     for cname, cdata in cluster_dict.items():
         cluster_info[cname] = {
