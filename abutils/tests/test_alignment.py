@@ -2,6 +2,7 @@ import platform
 import tempfile
 
 import pytest
+
 # from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -12,9 +13,9 @@ from ..tools.alignment import (
     CIGARElement,
     GlobalAlignment,
     LocalAlignment,
+    MultipleSequenceAlignment,
     PairwiseAlignment,
     SemiGlobalAlignment,
-    MultipleSequenceAlignment
     # consensus,
     global_alignment,
     local_alignment,
