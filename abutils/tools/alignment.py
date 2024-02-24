@@ -54,6 +54,7 @@ __all__ = [
     "semiglobal_alignment",
     "dot_alignment",
     "make_consensus",
+    # "MultipleSequenceAlignment",
     # "LocalAlignment",
     # "GlobalAlignment",
     # "SemiGlobalAlignment",
@@ -281,7 +282,7 @@ class MultipleSequenceAlignment:
         return str(self.aln)
 
     @property
-    def sequences(self) -> list[Sequence]:
+    def sequences(self) -> Iterable[Sequence]:
         """
         Sequences in the alignment. Note that this is a list of ``Sequence``
         objects, not BioPython ``SeqRecord`` objects, and that the sequences
