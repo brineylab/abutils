@@ -104,28 +104,28 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
    :hidden:
    :caption: models
 
-   sequence
-   pair
-   lineage
+   modules/sequence
+   modules/pair
+   modules/lineage
 
 .. toctree::
    :maxdepth: 1
    :hidden:
    :caption: tools
 
-   alignment
-   clustering
-   phylogeny
+   modules/alignment
+   modules/clustering
+   modules/phylogeny
 
 .. toctree::
    :maxdepth: 1
    :hidden:
    :caption: plots
 
-   bar
-   scatter
-   kde
-   donut
+   modules/bar
+   modules/scatter
+   modules/kde
+   modules/donut
 
 
 .. toctree::
