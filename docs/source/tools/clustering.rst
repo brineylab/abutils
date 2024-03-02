@@ -1,7 +1,7 @@
 .. _clustering:
 
 sequence clustering
-===================
+=====================
 
 The primary clustering function is :ref:`abutils.tl.cluster <cluster-function>`, which can cluster sequences
 using CD-HIT_, VSEARCH_, or MMseqs2_. The function returns a :ref:`abutils.tl.Clusters <clusters-class>` 
