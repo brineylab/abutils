@@ -23,15 +23,16 @@ billions of adaptive immune receptor sequences).
 core models
 -----------
 
-To represent antibody repertoire data at varying levels of granularity, abutils provides three core models:  
+To represent antibody repertoire data at varying levels of granularity, ``abutils`` provides three core models:  
 
-  * **``Sequence``**: model for representing a single antibody sequnce (either heavy or light chain).
+  * ``Sequence``: model for representing a single antibody sequnce (either heavy or light chain).
     Provides a means to store and access abstar annotations. Includes common methods of sequence
     manipulation, including slicing, reverse-complement, and conversion to FASTA format. The ``Sequence``
     object is used extensively throughout the ab[x] toolkit.
-  * **``Pair``**: model for representing paired (heavy and light) antibody sequences. Comprised of one 
-    or more ``Sequence`` objects. 
-  * **``Lineage``**: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
+  * ``Pair``: model for representing paired (heavy and light) antibody sequences. Comprised of one 
+    or more ``Sequence`` objects. Heavily used in scab_, which is our toolkit for analyzing adaptive immune 
+    single cell datasets.
+  * ``Lineage``: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
     objects. Includes methods for lineage manipulation, including generating dot alignments and UCA calculation.
 
 These models are heirarchical -- a ``Lineage`` is composed of one 
@@ -47,8 +48,7 @@ In addition to the core models, abutils provides a number of commonly used funct
 These functions are widely used throughput the ab[x] toolkit and can be easily integrated
 into custom pipelines or for use when performing interactive analyses:
 
-  * :ref:`pairwise alignment <pairwise-alignment>`: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global 
-    pairwise sequence alignment, 
+  * :ref:`pairwise alignment <pairwise-alignment>`: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global pairwise sequence alignment using parasail_. 
   
   * :ref:`multiple sequence alignment <multiple-sequence-alignment>` using MAFFT_ or MUSCLE_
 
@@ -61,12 +61,27 @@ into custom pipelines or for use when performing interactive analyses:
 plots
 ------
 
-``abutils`` provides a
+``abutils`` provides a number of plotting functions for visualizing antibody repertoire data.
+These functions are built on top of matplotlib and seaborn and are designed to be easily
+integrated into custom analyses or pipelines. Plotting funcions are desogmed tp work with
+``Sequence``, ``Pair``, and ``Lineage`` objects, and fully support AIRR-C annotation formats for
+plotting adaptive immune receptor features like CDR3 length distributions and germline gene usage.
+
+  .. * :ref:`bar <bar-plot>`: plot categorical data or frequency distributions as a bar plot
+
+  .. * :ref:`scatter <scatter-plot>`: plot two-dimensional data as a scatter plot
+
+  .. * :ref:`kde <pkde-plot>`: plot one- or two-dimensional data as a kernel density estimate
+
+  .. * :ref:`donut <donut-plot>`: plot categorical data (such as lineages or germline genes) as a donut plot
+
 
 
 
 
 .. _abstar: https://github.com/briney/abstar
+.. _scab: https://github.com/briney/scab
+.. _parasail: https://github.com/jeffdaily/parasail-python
 .. _MAFFT: https://mafft.cbrc.jp/alignment/software/
 .. _MUSCLE: https://www.drive5.com/muscle/
 .. _VSEARCH: https://github.com/torognes/vsearch

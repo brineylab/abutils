@@ -27,8 +27,7 @@ clustering
 
 .. toctree::
 
-    modules/cluster_models
-    modules/cluster_functions
+    modules/clustering
 
 
 
@@ -37,8 +36,7 @@ phylogeny
 
 .. toctree::
 
-    modules/phylogeny_inference
-    modules/phylogeny_trees
+    modules/phylogeny
 
 
 
