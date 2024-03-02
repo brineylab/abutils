@@ -111,16 +111,23 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: tools
+   :caption: io (abutils.io)
+
+   io
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: tools (abutils.tl)
 
    tools/alignment
-   modules/clustering
-   modules/phylogeny
+   clustering <tools/clustering>
+   tools/phylogeny
 
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: plots
+   :caption: plots (abutils.pl)
 
    modules/bar
    modules/scatter
