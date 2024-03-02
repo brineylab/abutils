@@ -121,7 +121,7 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
    :caption: tools (abutils.tl)
 
    tools/alignment
-   clustering <tools/clustering>
+   tools/clustering
    tools/phylogeny
 
 .. toctree::
