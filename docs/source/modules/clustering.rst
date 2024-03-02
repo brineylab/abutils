@@ -3,10 +3,13 @@
 sequence clustering
 ===================
 
+The primary clustering function is :func:`abutils.tl.cluster`, which can cluster sequences
+using CD-HIT, VSEARCH, or MMseqs2_. The function returns a :class:`abutils.tl.Clusters` 
+object, which contains the clustering results.
+
+
 .. autofunction:: abutils.tools.cluster.cluster
-.. autofunction:: abutils.tools.cluster.cluster_cdhit
-.. autofunction:: abutils.tools.cluster.cluster_vsearch
-.. autofunction:: abutils.tools.cluster.cluster_mmseqs
+
 
 .. autoclass:: abutils.tools.cluster.Clusters
 .. autoclass:: abutils.tools.cluster.Cluster
