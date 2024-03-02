@@ -52,13 +52,13 @@ plots (abutils.pl)
 designed to be generalizable and flexible, and are suitable for use in both interactive and programmatic contexts.
 Primary plotting functions include:
 
-  * :ref:`bar <bar-plot>`: plot categorical data or frequency distributions as a bar plot
+  .. * :ref:`bar <bar-plot>`: plot categorical data or frequency distributions as a bar plot
 
-  * :ref:`scatter <scatter-plot>`: plot two-dimensional data as a scatter plot
+  .. * :ref:`scatter <scatter-plot>`: plot two-dimensional data as a scatter plot
 
-  * :ref:`kde <pkde-plot>`: plot one- or two-dimensional data as a kernel density estimate
+  .. * :ref:`kde <pkde-plot>`: plot one- or two-dimensional data as a kernel density estimate
 
-  * :ref:`donut <donut-plot>`: plot categorical data (such as lineages or germline genes) as a donut plot
+  .. * :ref:`donut <donut-plot>`: plot categorical data (such as lineages or germline genes) as a donut plot
 
 
 
