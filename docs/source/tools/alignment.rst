@@ -13,12 +13,6 @@ alignment
 
 .. toctree::
     :hidden:
-    :caption: pairwise
 
-    modules/pairwise_alignment
-
-.. toctree::
-    :hidden:
-    :caption: msa
-
-    modules/multiple_sequence_alignment
+    pairwise <pairwise-alignment>
+    msa <multiple-sequence-alignment>
