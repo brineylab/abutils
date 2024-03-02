@@ -1,3 +1,5 @@
+.. _seqeuence-class:
+
 sequence
 ===================
 
