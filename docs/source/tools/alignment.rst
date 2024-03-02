@@ -13,6 +13,5 @@ alignment
 
 .. toctree::
 
-    pairwise <pairwise-alignment>
-    pairwise <modules/pairwise_alignment>
-    msa <multiple-sequence-alignment>
+    pairwise <pairwise_alignment>
+    msa <multiple_sequence_alignment>
