@@ -1,4 +1,4 @@
-.. _seqeuence-class:
+.. _sequeence-class:
 
 sequence
 ===================
