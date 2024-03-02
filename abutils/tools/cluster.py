@@ -275,7 +275,6 @@ def cluster(
 
     .. _VSEARCH
         https://github.com/torognes/vsearch
-        x
     .. _MMseqs2
         https://github.com/soedinglab/MMseqs2
     .. _CD-HIT
@@ -358,7 +357,7 @@ def cluster_vsearch(
     debug: bool = False,
 ) -> Union[dict, Clusters]:
     """
-    Clusters sequences using `VSEARCH`_.
+    Clusters sequences using `VSEARCH <https://github.com/torognes/vsearch>`_.
 
     Parameters
     ----------
@@ -414,10 +413,6 @@ def cluster_vsearch(
     -------
     clusters : Path to the UC output file from ``vsearch`` or a ``dict`` of cluster info.
 
-
-    .. _VSEARCH
-        https://github.com/torognes/vsearch
-
     """
     # output files
     centroid_file = tempfile.NamedTemporaryFile(
@@ -433,11 +428,11 @@ def cluster_vsearch(
     # do clustering
     vsearch_cmd = f"{vsearch_bin} --cluster_fast {fasta_file}"
     vsearch_cmd += f" --centroids {centroid_file}"
-    vsearch_cmd += f" --clusterout_id"
+    vsearch_cmd += " --clusterout_id"
     vsearch_cmd += f" --uc {uc_file}"
     vsearch_cmd += f" --id {threshold}"
     vsearch_cmd += f" --iddef {iddef}"
-    vsearch_cmd += f" --sizeout"
+    vsearch_cmd += " --sizeout"
     vsearch_cmd += f" --strand {strand}"
     p = sp.Popen(vsearch_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = p.communicate()
@@ -483,7 +478,7 @@ def cluster_mmseqs(
     debug: bool = False,
 ):
     """
-    Clusters sequences using `MMseqs2`_.
+    Clusters sequences using `MMseqs2 <https://github.com/soedinglab/MMseqs2>`_.
 
     Parameters
     ----------
@@ -524,10 +519,6 @@ def cluster_mmseqs(
     Returns
     -------
     clusters : Path to the TSV output file from ``mmseqs`` or a ``dict`` of cluster info.
-
-
-    .. _MMseqs2
-        https://github.com/soedinglab/MMseqs2
 
     """
     # output files

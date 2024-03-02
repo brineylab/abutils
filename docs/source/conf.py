@@ -69,7 +69,7 @@ if os.environ.get("READTHEDOCS", None) == "True":
         "python-Levenshtein",
         "Levenshtein",
         "paramiko",
-        "parasail",
+        # "parasail",
         "pymongo",
         "pyyaml",
         "sample-sheet",

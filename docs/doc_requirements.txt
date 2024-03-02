@@ -19,7 +19,7 @@ biopython
 # numpy
 # pandas
 # paramiko
-# parasail
+parasail
 # pymongo
 # pytest
 # python-circos

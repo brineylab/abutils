@@ -29,7 +29,7 @@ containing functionality appropriate for their respective level of granularity.
 
 
 tools (abutils.tl)
-------------------
+---------------------
 
 In addition to the core models, abutils provides a number of commonly used functions. 
 These functions are widely used throughput the ab[x] toolkit and are suitable for incorporation 
@@ -46,7 +46,7 @@ into custom pipelines or for use when performing interactive analyses:
 
 
 plots (abutils.pl)
-------------------
+---------------------
 
 ``abutils`` provides a number of plotting functions for visualizing antibody repertoire data. These functions are
 designed to be generalizable and flexible, and are suitable for use in both interactive and programmatic contexts.
