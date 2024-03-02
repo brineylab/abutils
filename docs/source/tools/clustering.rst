@@ -10,11 +10,15 @@ object, which contains the clustering results as one or more :ref:`abutils.tl.Cl
 examples
 -----------
 
-**clustering with CD-HIT at 90% identity, using a FASTA file as input**
+**clustering with CD-HIT at 90% identity, using a FASTA file as input**  
+  
 The ``sequences`` argument can be a path to a FASTA file, a FASTA-formatted string,
-a list of ``Sequence`` objects, or a list of anything accepted by ``Sequence``.
-
-
+a list of ``Sequence`` objects, or a list of anything accepted by ``Sequence``. The 
+``algo`` argument can be 'cdhit', 'vsearch', or 'mmseqs2'. By default, ``algo`` is set 
+to "auto", which will use CD-HIT for inputs with fewer than 1000 sequences and MMseqs2 
+for inputs with 1000 or more sequences. The ``threshold`` argument is the sequence 
+identity threshold for clustering.
+  
 .. code-block:: python
 
     import abutils
@@ -27,9 +31,11 @@ a list of ``Sequence`` objects, or a list of anything accepted by ``Sequence``.
 
 
 **get the largest cluster from VSEARCH clustering of a list of ``Sequence`` objects**
-The ``Clusters`` object iterates over all of the clusters, which are themselves ``Cluster`` objects. 
-By default, they are sorted by size in descending order, so the first cluster is the largest.
-
+  
+Iterating over a ``Clusters`` object iterates over all of the clusters it contains, 
+which are themselves ``Cluster`` objects. By default, they are sorted by size in 
+descending order, so the first cluster is the largest. 
+  
 .. code-block:: python
 
     import abutils
