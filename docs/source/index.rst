@@ -7,18 +7,12 @@ abutils: utilities for AIRR analysis
 ====================================================================
 
 
-With technical breakthroughs in the throughput and read-length of 
-next-generation sequencing platforms, adaptive immune receptor repertoire sequencing 
-is invaluable for detailed characterization 
-of the immune response to infection and immunization. Accordingly, 
-there is a need for open, scalable software for the genetic analysis of 
-adaptive immune receptor data at repertoire scale.
-
-We built ``abutils`` to provide a cohesive set of tools that address the specific challenges inherent in 
-working with adaptive immune receptor repertoire data. The components in ``abutils`` were designed to be flexible: 
-equally at home when used used interactively (in a Jupyter Notebook, for example) or when 
-integrated into more complex programs or pipelines (such as abstar_, which is capable of annotating 
-billions of adaptive immune receptor sequences).
+Antibody repertoire sequencing is an increasingly important tool for detailed characterization 
+of the immune response to infection and immunization. We built abutils to provide a cohesive 
+set of tools designed for the specific challenges inherent in working with antibody repertoire data. 
+The components in abutils were designed to be flexible: equally at home when used used interactively 
+(in a Jupyter Notebook, for example) or when integrated into more complex programs and/or pipelines 
+(such as abstar_, which is capable of annotating billions of antibody sequences).
 
 core models
 -----------
@@ -34,7 +28,8 @@ To represent antibody repertoire data at varying levels of granularity, ``abutil
     single cell datasets.
   * ``Lineage``: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
     objects. Includes methods for lineage manipulation, including generating dot alignments and UCA calculation.
-
+    
+ 
 These models are heirarchical -- a ``Lineage`` is composed of one 
 or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain methods 
 appropriate for each level of granularity.
