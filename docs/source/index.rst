@@ -28,7 +28,7 @@ To represent antibody repertoire data at varying levels of granularity, ``abutil
     single cell datasets.
   * ``Lineage``: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
     objects. Includes methods for lineage manipulation, including generating dot alignments and UCA calculation.
-    
+
  
 These models are heirarchical -- a ``Lineage`` is composed of one 
 or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain methods 
@@ -96,16 +96,36 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
    :caption: getting started
    
    installation
-   tutorials
+   examples
 
 
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: usage
+   :caption: models
 
-   examples
-   api
+   sequence
+   pair
+   lineage
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: tools
+
+   alignment
+   clustering
+   phylogeny
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: plots
+
+   bar
+   scatter
+   kde
+   donut
 
 
 .. toctree::
