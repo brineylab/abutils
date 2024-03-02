@@ -13,8 +13,8 @@ examples
 **clustering with CD-HIT at 90% identity, using a FASTA file as input**  
   
 The ``sequences`` argument can be a path to a FASTA file, a FASTA-formatted string,
-a list of ``Sequence`` objects, or a list of ::ref::`anything accepted <seequence-class>` 
-by ```Sequence``. The ``algo`` argument can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
+a list of ``Sequence`` objects, or a list of :ref:`anything accepted by <seequence-class>` 
+``Sequence``. The ``algo`` argument can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
 If ``algo`` is not provided, ``cluster()`` will use CD-HIT for inputs with fewer than 1000 
 sequences or MMseqs2 for inputs with 1000 or more sequences. The ``threshold`` argument 
 is the sequence identity threshold for clustering.
