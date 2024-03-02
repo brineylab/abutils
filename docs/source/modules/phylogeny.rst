@@ -20,5 +20,4 @@ inference
 
 drawing trees
 -------------------
-.. autoclass:: abutils.utils.phylo.Phylogeny
-.. autofunction:: abutils.utils.phylo.phylogeny
+.. autofunction:: abutils.tools.phylo.phylogeny
