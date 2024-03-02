@@ -12,7 +12,7 @@ alignment
 
 
 .. toctree::
-    :hidden:
 
     pairwise <pairwise-alignment>
+    pairwise <modules/pairwise_alignment>
     msa <multiple-sequence-alignment>
