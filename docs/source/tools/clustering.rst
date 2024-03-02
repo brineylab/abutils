@@ -10,49 +10,40 @@ object, which contains the clustering results as one or more :ref:`abutils.tl.Cl
 examples
 -----------
 
+**clustering with CD-HIT at 90% identity, using a FASTA file as input**
+The ``sequences`` argument can be a path to a FASTA file, a FASTA-formatted string,
+a list of ``Sequence`` objects, or a list of anything accepted by ``Sequence``.
+
 
 .. code-block:: python
 
-    from abutils.tools import cluster
+    import abutils
 
-    # cluster sequences using CD-HIT
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9)
+    clusters = abutils.tl.cluster(
+        sequences='path/to/sequences.fasta', 
+        algo='cdhit', 
+        threshold=0.9
+    )
 
-    # cluster sequences using VSEARCH
-    clusters = cluster('sequences.fasta', method='vsearch', identity=0.9)
 
-    # cluster sequences using MMseqs2
-    clusters = cluster('sequences.fasta', method='mmseqs2', identity=0.9)
+**get the largest cluster from VSEARCH clustering of a list of ``Sequence`` objects**
+The ``Clusters`` object iterates over all of the clusters, which are themselves ``Cluster`` objects. 
+By default, they are sorted by size in descending order, so the first cluster is the largest.
 
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
+.. code-block:: python
 
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
+    import abutils
 
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
+    sequences = abutils.io.read_fasta('path/to/sequences.fasta')
+    clusters = abutils.tl.cluster(
+        sequences=sequences, 
+        algo='vsearch', 
+        threshold=0.9
+    )
+    largest_cluster = clusters[0]
 
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
 
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
 
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
-
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
-
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
-
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit', identity=0.9, output='clusters.fasta')
-
-    # cluster sequences using CD-HIT, and write the results to a file
-    clusters = cluster('sequences.fasta', method='cdhit',
 
 
 .. _cluster-function:
