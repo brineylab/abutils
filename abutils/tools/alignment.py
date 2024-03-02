@@ -1386,7 +1386,8 @@ def local_alignment(
         If not provided, a matrix will be created using `match` and `mismatch`.
 
     alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `local alignment function`_ to be used for alignment.
+        ``parasail`` `local alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_
+        to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1407,9 +1408,6 @@ def local_alignment(
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``LocalAlignment`` objects will be returned.
 
-
-    .. _local alignment function
-        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
     """
     # input processing
     query = Sequence(query)
@@ -1488,8 +1486,9 @@ def global_alignment(
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
 
-    alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `global alignment function`_ to be used for alignment.
+    alignment_function : Callable, default=parasail.nw_trace_striped_16
+        ``parasail`` `global alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_
+        to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1510,9 +1509,6 @@ def global_alignment(
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``GlobalAlignment`` objects will be returned.
 
-
-    .. _global alignment function
-        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
     """
     # input processing
     query = Sequence(query)
