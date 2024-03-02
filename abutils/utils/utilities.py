@@ -34,8 +34,8 @@ if sys.version_info[0] > 2:
         str,
     ]
     from functools import reduce
-else:
-    STR_TYPES = [str, unicode]
+# else:
+#     STR_TYPES = [str, unicode]
 
 
 # ================================
