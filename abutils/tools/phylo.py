@@ -23,31 +23,27 @@
 #
 
 
-from collections import Counter
-from copy import copy, deepcopy
-from io import StringIO
 import os
 import platform
 import subprocess as sp
 import tempfile
-from typing import Callable, Iterable, List, Optional, Union
 import uuid
+from collections import Counter
+from copy import copy, deepcopy
+from io import StringIO
+from typing import Callable, Iterable, List, Optional, Union
 
+import baltic as bt
 import matplotlib.pyplot as plt
+from abstar.core.germline import get_imgt_germlines
+from Bio import Phylo
 from matplotlib import markers
 from matplotlib.path import Path
 
-import baltic as bt
-
-from Bio import Phylo
-
-from abstar.core.germline import get_imgt_germlines
-
-from ..core.sequence import Sequence, to_fasta, read_fasta
+from ..core.sequence import Sequence, read_fasta, to_fasta
+from ..tools.cluster import Cluster, cluster
 from ..utils.alignment import mafft
-from ..tools.cluster import cluster
 from ..utils.pipeline import make_dir
-
 
 __all__ = ["fasttree", "Phylogeny", "phylogeny"]
 
@@ -240,7 +236,7 @@ class Phylogeny:
             yield o
 
     @property
-    def tree(self):
+    def tree(self) -> bt.tree:
         """
         Baltic ``Tree`` object
         """
@@ -250,7 +246,7 @@ class Phylogeny:
         return self._tree
 
     @property
-    def root(self):
+    def root(self) -> Union[bt.leaf, Sequence, None]:
         """
         Root of the tree.
         """
@@ -289,7 +285,7 @@ class Phylogeny:
             self._root = Sequence(root)
 
     @property
-    def fasta_string(self):
+    def fasta_string(self) -> str:
         if self._fasta_string is None:
             if self.do_clustering:
                 sequences = self.clusters.centroids
@@ -306,7 +302,7 @@ class Phylogeny:
         self._tree_string = None
 
     @property
-    def aln_string(self):
+    def aln_string(self) -> str:
         """
         Multiple sequence alignment, as a FASTA-formatted string.
         """
@@ -321,7 +317,7 @@ class Phylogeny:
         self._tree_string = None
 
     @property
-    def tree_string(self):
+    def tree_string(self) -> str:
         """
         Newick tree file, as a string.
         """
@@ -340,7 +336,7 @@ class Phylogeny:
         self._tree_string = tree_string
 
     @property
-    def germ_db(self):
+    def germ_db(self) -> str:
         """
         Identifies the germline database used to annotate the sequences. If
         multiple databases were used, the most common one is selected.
@@ -358,7 +354,7 @@ class Phylogeny:
         self._germ_db = germ_db
 
     @property
-    def sizes(self):
+    def sizes(self) -> dict:
         """
         Returns a ``dict`` of tip sizes using clustering results. Only clusters
         with more than one sequence will be in the ``dict``.
@@ -368,7 +364,7 @@ class Phylogeny:
         return self._sizes
 
     @property
-    def clusters(self):
+    def clusters(self) -> Iterable[Cluster]:
         if self._clusters is None:
             self.cluster()
         return self._clusters
@@ -382,7 +378,7 @@ class Phylogeny:
         self._tree_string = None
 
     @property
-    def cluster_dict(self):
+    def cluster_dict(self) -> dict:
         """
         Returns a dict mapping cluster centroid IDs to a list of
         all sequence IDs in the corresponding cluster.
@@ -722,7 +718,7 @@ class Phylogeny:
         show: bool = False,
         figfile: Union[str, Path] = None,
         **kwargs,
-    ):
+    ) -> Optional[plt.Axes]:
         """
         Plot the phylogenetic tree.
 
@@ -816,28 +812,36 @@ class Phylogeny:
         """
         plt.figure(figsize=figsize)
         ax = plt.gca()
+
         # plot parameters
-        size_func = lambda k: self.get_size(
-            k.name,
-            size=size,
-            default=1,
-            min_size=min_size,
-            multiplier=size_multiplier,
-        )
-        color_func = lambda k: self.get_color(k.name, color=color, default="black")
-        branch_color_func = lambda k: self.get_branch_color(
-            k, color=color, default="black"
-        )
+        def size_func(k) -> Union[int, float]:
+            return self.get_size(
+                k.name,
+                size=size,
+                default=1,
+                min_size=min_size,
+                multiplier=size_multiplier,
+            )
+
+        def color_func(k) -> Union[str, Iterable]:
+            return self.get_color(k.name, color=color, default="black")
+
+        def branch_color_func(k) -> Union[str, Iterable]:
+            return self.get_branch_color(k, color=color, default="black")
+
         marker = align_marker(marker, halign=marker_halign, valign=marker_valign)
         if marker_edgecolor is None:
             marker_edgecolor_func = color_func
         else:
-            marker_edgecolor_func = lambda k: self.get_color(
-                k.name, color=marker_edgecolor, default="black"
+
+            def marker_edgecolor_func(k) -> Union[str, Iterable]:
+                return self.get_color(k.name, color=marker_edgecolor, default="black")
+
+        def marker_edgewidth_func(k) -> Union[int, float]:
+            return self.get_marker_edgewidth(
+                k.name, edgewidth=marker_edgewidth, default=0
             )
-        marker_edgewidth_func = lambda k: self.get_marker_edgewidth(
-            k.name, edgewidth=marker_edgewidth, default=0
-        )
+
         # make the plot
         if radial:
             # circular phlogenetic tree
@@ -925,7 +929,7 @@ class Phylogeny:
         try:
             germ = get_imgt_germlines(self.germ_db, "V", gene=top_v)
             return Sequence(germ.ungapped_nt_sequence, id=top_v)
-        except:
+        except Exception:
             return
 
 
