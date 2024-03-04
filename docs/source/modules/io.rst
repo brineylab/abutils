@@ -4,7 +4,7 @@ sequence io
 ====================
 
 
-read
+read sequences
 --------------------
 
 .. autofunction:: abutils.core.sequence.read_fasta
@@ -14,7 +14,7 @@ read
 
 | 
 
-write
+write sequences
 --------------------
 
 .. autofunction:: abutils.core.sequence.to_fasta
@@ -24,7 +24,7 @@ write
 
 .. toctree::
     :hidden:
-    
+
     read <read_sequences>
     write <write_sequences>
 
