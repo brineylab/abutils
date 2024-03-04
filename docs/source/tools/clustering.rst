@@ -47,8 +47,31 @@ descending order, so the first cluster is the largest.
         threshold=0.9
     )
     largest_cluster = clusters[0]
+  
+**calculate the consensus sequence of the largest cluster, using MMSeqs2**
+  
+``Cluster`` objects have a ``consensus`` property that returns a ``Sequence`` object
+representing the consensus sequence of the cluster. The ``consensus`` property is lazy, 
+meaning it is not calculated until it is accessed, and once calculated, it is cached. 
+Under the hood, the consensus sequence is calculated using the ``make_consensus()`` 
+method, which can also be called directly to provides more control over the consensus 
+sequence generation process. Calling ``make_consensus()`` automatically saves the consensus 
+sequence to the ``consensus`` property (and overwrites any cached consensus sequence).
 
+.. code-block:: python
 
+    import abutils
+
+    clusters = abutils.tl.cluster(
+        sequences='path/to/sequences.fasta', 
+        algo='mmseqs2', 
+        threshold=0.9
+    )
+    largest_cluster = clusters[0]
+    consensus = largest_cluster.consensus
+
+    # to overwrite the cached consensus sequence
+    largest_cluster.make_consensus()
 
 
 
