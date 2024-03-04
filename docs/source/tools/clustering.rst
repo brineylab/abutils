@@ -29,6 +29,7 @@ is the sequence identity threshold for clustering.
         threshold=0.9
     )
 
+<br>
 
 **get the largest cluster from VSEARCH clustering of a list of ``Sequence`` objects**
   
