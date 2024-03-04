@@ -54,10 +54,10 @@ __all__ = [
     "semiglobal_alignment",
     "dot_alignment",
     "make_consensus",
-    # "MultipleSequenceAlignment",
-    # "LocalAlignment",
-    # "GlobalAlignment",
-    # "SemiGlobalAlignment",
+    "MultipleSequenceAlignment",
+    "LocalAlignment",
+    "GlobalAlignment",
+    "SemiGlobalAlignment",
 ]
 
 
