@@ -78,6 +78,9 @@ argument. Both accept a path to the binary as a string.
 
 | 
 
+api
+-------
+
 
 .. autofunction:: abutils.tl.mafft
 .. autofunction:: abutils.tl.muscle
@@ -85,8 +88,6 @@ argument. Both accept a path to the binary as a string.
 | 
 
 .. autoclass:: abutils.tl.MultipleSequenceAlignment
-
-
 
 
 
