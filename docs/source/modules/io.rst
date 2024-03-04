@@ -1,4 +1,4 @@
-
+.. _io:
 
 sequence io
 ====================
@@ -24,6 +24,7 @@ write
 
 .. toctree::
     :hidden:
+    
     read <read_sequences>
     write <write_sequences>
 
