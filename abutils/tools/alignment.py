@@ -69,7 +69,28 @@ __all__ = [
 
 
 class MultipleSequenceAlignment:
-    def __init__(self, input_alignment, fmt="fasta"):
+    def __init__(
+        self,
+        input_alignment: Union[str, Iterable, MultipleSeqAlignment],
+        fmt: str = "fasta",
+    ):
+        """
+        Class for working with multiple sequence alignments.
+
+        Parameters
+        ----------
+        input_alignment : (str, iterable, MultipleSeqAlignment)
+            Can be one of several things:
+                1. path to an alignment file
+                2. an alignment string (for example, the result of calling ``read()`` on an alignment file)
+                3. a BioPython ``MultipleSeqAlignment`` object
+                4. a list of aligned BioPython ``SeqRecord`` objects
+                5. a list of aligned ``abutils.Sequence`` objects
+
+        fmt : str, default='fasta'
+            Format of the input alignment. Choices are 'fasta', 'phylip', and 'clustal'.
+
+        """
         self._sequences = None
 
         self.input = input_alignment
@@ -232,17 +253,29 @@ class MultipleSequenceAlignment:
                 ]
             )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Sequence]:
+        """
+        Iterate over the aligned sequences in the alignment.
+        """
         for s in self.sequences:
             yield s
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """
+        Return the number of sequences in the alignment.
+        """
         return len(self.aln)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the alignment.
+        """
         return str(self.aln)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Return a string representation of the alignment.
+        """
         return self.aln_string
 
     def _process_alignment(self, input_alignment):
