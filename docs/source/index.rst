@@ -38,7 +38,7 @@ appropriate for each level of granularity.
 
 | 
 
-tools (abutils.tl)
+tools (``abutils.tl``)
 --------------------
 
 In addition to the core models, abutils provides a number of commonly used functions. 
@@ -57,7 +57,7 @@ All of the tool functions are accessible via ``abutils.tl``.
 
 | 
 
-plots (abutils.pl)
+plots (``abutils.pl``)
 --------------------
 
 ``abutils`` provides a number of plotting functions for visualizing antibody repertoire data.
