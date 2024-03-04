@@ -85,12 +85,12 @@ sequence to the ``consensus`` property (and overwrites any cached consensus sequ
 
 .. _clusters-class:
 .. autoclass:: abutils.tools.cluster.Clusters
-
+    :members:
 | 
 
 .. _cluster-class:
 .. autoclass:: abutils.tools.cluster.Cluster
-
+    :members:
 
 .. _CD-HIT: http://weizhongli-lab.org/cd-hit/
 .. _VSEARCH: https://github.com/torognes/vsearch
