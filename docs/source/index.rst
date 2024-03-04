@@ -14,8 +14,10 @@ The components in abutils were designed to be flexible: equally at home when use
 (in a Jupyter Notebook, for example) or when integrated into more complex programs and/or pipelines 
 (such as abstar_, which is capable of annotating billions of antibody sequences).
 
+| 
+
 core models
------------
+----------------------
 
 To represent antibody repertoire data at varying levels of granularity, ``abutils`` provides three core models:  
 
@@ -34,10 +36,10 @@ These models are heirarchical -- a ``Lineage`` is composed of one
 or more ``Pair`` objects, a ``Pair`` is composed of one or more ``Sequence`` objects -- and contain methods 
 appropriate for each level of granularity.
 
+| 
 
-
-tools
-------
+tools (abutils.tl)
+--------------------
 
 In addition to the core models, abutils provides a number of commonly used functions. 
 These functions are widely used throughput the ab[x] toolkit and can be easily integrated
@@ -49,12 +51,14 @@ into custom pipelines or for use when performing interactive analyses:
 
   * :ref:`clustering <clustering>`: identity-based sequence clustering with VSEARCH_, CDHIT_, or MMseqs2_
 
-  * :ref:`phylogeny <phylogeny>`: computing lineage phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
+  * :ref:`phylogeny <phylogeny>`: computing phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
 
+All of the tool functions are accessible via ``abutils.tl``.
 
+| 
 
-plots
-------
+plots (abutils.pl)
+--------------------
 
 ``abutils`` provides a number of plotting functions for visualizing antibody repertoire data.
 These functions are built on top of matplotlib and seaborn and are designed to be easily
@@ -70,7 +74,7 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
 
   .. * :ref:`donut <donut-plot>`: plot categorical data (such as lineages or germline genes) as a donut plot
 
-
+All of the plotting functions are accessible via ``abutils.pl``
 
 
 
