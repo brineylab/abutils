@@ -22,29 +22,26 @@
 #
 
 
-from abc import ABC, abstractmethod
-from copy import copy, deepcopy
-from io import StringIO
-from itertools import groupby
 import os
 import platform
 import subprocess as sp
 import sys
 import tempfile
-from typing import Union, Iterable, Optional, Callable
 import uuid
+from abc import ABC, abstractmethod
+from copy import copy, deepcopy
+from io import StringIO
+from itertools import groupby
+from typing import Callable, Iterable, Optional, Union
 
 import parasail
-
 from Bio import AlignIO
-from Bio.Align import MultipleSeqAlignment, AlignInfo
+from Bio.Align import AlignInfo, MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
-
-from .decorators import lazy_property
 
 from ..core.sequence import Sequence
 from ..io import to_fasta
-
+from .decorators import lazy_property
 
 __all__ = [
     "mafft",
@@ -945,7 +942,7 @@ def local_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
@@ -975,6 +972,9 @@ def local_alignment(
 
     .. _local alignment function
         https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
+
+    .. _built-in substitution matrix
+        https://github.com/jeffdaily/parasail-python#substitution-matrices
     """
     # input processing
     query = Sequence(query)
@@ -1048,7 +1048,7 @@ def global_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
@@ -1078,6 +1078,9 @@ def global_alignment(
 
     .. _global alignment function
         https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
+
+    .. _built-in substitution matrix
+        https://github.com/jeffdaily/parasail-python#substitution-matrices
     """
     # input processing
     query = Sequence(query)
@@ -1151,7 +1154,7 @@ def semiglobal_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
@@ -1181,6 +1184,9 @@ def semiglobal_alignment(
 
     .. _semi-global alignment function
         https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
+
+    .. _built-in substitution matrix
+        https://github.com/jeffdaily/parasail-python#substitution-matrices
     """
     # input processing
     query = Sequence(query)
@@ -2124,37 +2130,46 @@ def dot_alignment(
     Creates a dot alignment (dots indicate identity, mismatches are represented by the mismatched
     residue) for a list of sequences.
 
-    Args:
+    Parameters
+    -----------
+    sequences : Iterable
+        A list of Sequence objects to be aligned.
 
-        sequence (list(Sequence)): A list of Sequence objects to be aligned.
+    seq_field : str
+        Name of the sequence field key. Default is ``vdj_nt``.
 
-        seq_field (str): Name of the sequence field key. Default is ``vdj_nt``.
+    name_field : str
+        Name of the name field key. Default is ``seq_id``.
 
-        name_field (str): Name of the name field key. Default is ``seq_id``.
+    root : str, Sequence
+        The sequence used to 'root' the alignment. This sequence will be at the top of the alignment
+        and is the sequence against which dots (identity) will be evaluated. Can be provided either
+        as a string corresponding to the name of one of the sequences in ``sequences`` or as a
+        Sequence object. If not provided, ``sequences`` will be clustered at ``cluster_threshold``
+        and the centroid of the largest cluster will be used.
 
-        root (str, Sequence): The sequence used to 'root' the alignment. This sequence will be at the
-            top of the alignment and is the sequence against which dots (identity) will be evaluated.
-            Can be provided either as a string corresponding to the name of one of the sequences in
-            ``sequences`` or as a Sequence object. If not provided, ``sequences`` will be clustered
-            at ``cluster_threshold`` and the centroid of the largest cluster will be used.
+    root_name : str
+        Name of the root sequence. If not provided, the existing name of the root sequence
+        (``name_field``) will be used. If ``root`` is not provided, the default ``root_name`` is
+        ``'centroid'``.
 
-        root_name (str): Name of the root sequence. If not provided, the existing name of the root
-            sequence (``name_field``) will be used. If ``root`` is not provided, the default ``root_name``
-            is ``'centroid'``.
+    cluster_threshold : float
+        Threshold with which to cluster sequences if ``root`` is not provided. Default is ``0.75``.
 
-        cluster_threshold (float): Threshold with which to cluster sequences if ``root`` is not provided.
-            Default is ``0.75``.
+    as_fasta : bool
+        If ``True``, returns the dot alignment as a FASTA-formatted string, rather than a string
+        formatted for human readability
 
-        as_fasta (bool): If ``True``, returns the dot alignment as a FASTA-formatted string, rather than
-            a string formatted for human readability.
+    just_alignment : bool
+        If ``True``, returns just the dot-aligned sequences as a list.
 
-        just_alignment (bool): If ``True``, returns just the dot-aligned sequences as a list.
+    Returns
+    --------
+    If ``just_alignment`` is ``True``, a list of dot-aligned sequences (without sequence names) will
+    be returned. If ``as_fasta`` is ``True``, a string containing the dot-aligned sequences in FASTA
+    format will be returned. Otherwise, a formatted string containing the aligned sequences (with
+    sequence names) will be returned.
 
-    Returns:
-
-        If ``just_alignment`` is ``True``, a list of dot-aligned sequences (without sequence names) will be returned.
-        If ``as_fasta`` is ``True``, a string containing the dot-aligned sequences in FASTA format will be returned.
-        Otherwise, a formatted string containing the aligned sequences (with sequence names) will be returned.
     """
     import abstar
 
