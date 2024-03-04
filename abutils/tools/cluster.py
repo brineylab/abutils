@@ -44,7 +44,28 @@ __all__ = ["cluster", "cluster_vsearch", "cluster_mmseqs", "cluster_cdhit"]
 
 class Cluster:
     """
-    Docstring for Cluster.
+    Class for a sequence cluster.
+
+    Attributes
+    ----------
+    name : str
+        Name of the cluster.
+
+    sequences : list
+        List of sequences in the cluster.
+
+    size : int
+        Number of sequences in the cluster.
+
+    seq_ids : list
+        List of sequence IDs in the cluster.
+
+    centroid : ``Sequence``
+        Centroid sequence of the cluster.
+
+    consensus : ``Sequence``
+        Consensus sequence of the cluster.
+
     """
 
     def __init__(self, name, sequences, centroid=None):
@@ -58,15 +79,15 @@ class Cluster:
             yield s
 
     @property
-    def size(self):
+    def size(self) -> int:
         return len(self.sequences)
 
     @property
-    def seq_ids(self):
+    def seq_ids(self) -> Iterable[str]:
         return [s.id for s in self.sequences]
 
     @property
-    def consensus(self):
+    def consensus(self) -> Sequence:
         if self._consensus is None:
             self._consensus = self.make_consensus()
         return self._consensus()
@@ -122,7 +143,24 @@ class Cluster:
 
 class Clusters:
     """
-    Docstring for Clusters.
+    Class for a collection of clusters.
+
+    Attributes
+    ----------
+    clusters : list
+        List of clusters. Clusters are sorted in descending order by size,
+        with the largest cluster first.
+
+    centroids : list
+        List of cluster centroids.
+
+    largest_cluster : ``Cluster``
+        The largest cluster in the collection.
+
+    count : int
+        Number of clusters in the collection.
+
+
     """
 
     def __init__(self, clusters=None):
