@@ -23,8 +23,6 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import csv
 import json
 import operator
@@ -43,10 +41,7 @@ from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
 
-if sys.version_info[0] > 2:
-    STR_TYPES = [str]
-else:
-    STR_TYPES = [str, unicode]
+STR_TYPES = [str]
 
 
 class Sequence(object):
@@ -77,7 +72,9 @@ class Sequence(object):
 
     If ``seq`` is a dictionary, typically the result of a MongoDB query, the dictionary
     can be accessed directly from the ``Sequence`` instance (via the ``annotations`` property). To retrive the value
-    for ``'junc_aa'`` in the instantiating dictionary, you would simply::
+    for ``'junc_aa'`` in the instantiating dictionary, you would simply:
+
+    .. code-block:: python
 
         s = Sequence(dict)
         junc = s['junc_aa']
@@ -91,7 +88,9 @@ class Sequence(object):
     ``Sequence.id`` or ``Sequence.sequence`` attributes will be ``None``.
 
     Alternately, the ``__getitem__()`` interface can be used to obtain a slice from the
-    ``sequence`` attribute. An example of the distinction::
+    ``sequence`` attribute. An example of the distinction:
+
+    .. code-block:: python
 
         d = {'name': 'MySequence', 'sequence': 'ATGC'}
         seq = Sequence(d, id_key='name', seq_key='sequence')
@@ -102,7 +101,9 @@ class Sequence(object):
     If the ``Sequence`` is instantiated with a dictionary, calls to ``__contains__()`` will
     return ``True`` if the supplied item is a key in the dictionary. In non-dict instantiations,
     ``__contains__()`` will look in the ``Sequence.sequence`` field directly (essentially a
-    motif search). For example::
+    motif search). For example:
+
+    .. code-block:: python
 
         dict_seq = Sequence({'seq_id': 'seq1', 'vdj_nt': 'ACGT'})
         'seq_id' in dict_seq  # TRUE
