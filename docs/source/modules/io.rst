@@ -21,5 +21,5 @@ sequence IO
 .. toctree::
     :hidden:
     
-    read <:ref:`read_sequences``>
+    read <:ref:`read_sequences`>
     write <write_sequences>
