@@ -1380,14 +1380,13 @@ def local_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in sbustitution matrix`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
 
     alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `local alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_
-        to be used for alignment.
+        ``parasail`` `local alignment function`_ to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1408,6 +1407,11 @@ def local_alignment(
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``LocalAlignment`` objects will be returned.
 
+
+    .. _local alignment function
+        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
+    .. _built-in substitution matrix
+        https://github.com/jeffdaily/parasail-python#substitution-matrices
     """
     # input processing
     query = Sequence(query)
@@ -1481,14 +1485,13 @@ def global_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
 
     alignment_function : Callable, default=parasail.nw_trace_striped_16
-        ``parasail`` `global alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_
-        to be used for alignment.
+        ``parasail`` `global alignment function`_ to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1508,6 +1511,11 @@ def global_alignment(
         If a single target sequence is provided (via ``target``), a single ``GlobalAlignment``
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``GlobalAlignment`` objects will be returned.
+
+    .. _global alignment function
+        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
+    .. _built-in substitution matrix
+        https://github.com/jeffdaily/parasail-python#substitution-matrices
 
     """
     # input processing
@@ -1582,7 +1590,7 @@ def semiglobal_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
@@ -1612,6 +1620,9 @@ def semiglobal_alignment(
 
     .. _semi-global alignment function
         https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
+
+    .. _built-in substitution matrix
+        https://github.com/jeffdaily/parasail-python#substitution-matrices
     """
     # input processing
     query = Sequence(query)
