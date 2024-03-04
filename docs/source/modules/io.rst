@@ -3,7 +3,7 @@
 sequence IO
 ====================
 
-.. _read-sequences:
+.. _read_sequences:
 
 .. autofunction:: abutils.core.sequence.read_fasta
 .. autofunction:: abutils.core.sequence.read_airr
@@ -12,7 +12,7 @@ sequence IO
 
 | 
 
-.. _write-sequences:
+.. _write_sequences:
 
 .. autofunction:: abutils.core.sequence.to_fasta
 .. autofunction:: abutils.core.sequence.to_fastq
@@ -21,5 +21,5 @@ sequence IO
 .. toctree::
     :hidden:
     
-    read <read-sequences>
-    write <write-sequences>
+    read <:ref: read_sequences>
+    write <write_sequences>
