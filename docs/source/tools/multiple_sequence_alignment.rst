@@ -17,7 +17,7 @@ examples
 
 
 
-.. autofunction:: abutils.tools.alignment.mafft
+.. autofunction:: abutils.tl.mafft
 .. autofunction:: abutils.tools.alignment.muscle
 
 .. autoclass:: abutils.tools.alignment.MultipleSequenceAlignment
