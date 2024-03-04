@@ -4,7 +4,7 @@ multiple sequence alignment
 ===========================
 
 ``abutils`` can perform multiple sequence alignments using either MAFFT_ or MUSCLE_. 
-All alignment functions return a :class:`abutils.tools.alignment.MultipleSequenceAlignment` object, which builds on 
+All alignment functions return a :class:`abutils.tl.MultipleSequenceAlignment` object, which builds on 
 the :class:`Bio.Align.MultipleSeqAlignment` class from Biopython. This object provides a number of
 convenient methods for working with the alignment, including writing to file, trimming, and calculating
 consensus sequences. Additionally, because the same object is returned regardless of the alignment method used,
@@ -18,9 +18,9 @@ examples
 
 
 .. autofunction:: abutils.tl.mafft
-.. autofunction:: abutils.tools.alignment.muscle
+.. autofunction:: abutils.tl.muscle
 
-.. autoclass:: abutils.tools.alignment.MultipleSequenceAlignment
+.. autoclass:: abutils.tl.MultipleSequenceAlignment
 
 
 
