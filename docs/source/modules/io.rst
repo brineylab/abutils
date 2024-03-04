@@ -3,7 +3,8 @@
 sequence IO
 ====================
 
-.. _read-sequences:
+read
+--------
 
 .. autofunction:: abutils.core.sequence.read_fasta
 .. autofunction:: abutils.core.sequence.read_airr
@@ -12,7 +13,8 @@ sequence IO
 
 | 
 
-.. _write-sequences:
+write
+--------
 
 .. autofunction:: abutils.core.sequence.to_fasta
 .. autofunction:: abutils.core.sequence.to_fastq

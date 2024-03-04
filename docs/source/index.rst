@@ -128,12 +128,11 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
    modules/donut
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
    :caption: io
 
-   read <read-sequences>
-   write <write-sequences>
+   modules/io
 
 .. toctree::
    :maxdepth: 1
