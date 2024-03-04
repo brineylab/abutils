@@ -88,6 +88,7 @@ api
 | 
 
 .. autoclass:: abutils.tl.MultipleSequenceAlignment
+    :members:
 
 
 
