@@ -24,6 +24,6 @@ write
 
 .. toctree::
     :hidden:
-    io#read
-    io#write
+    read <read_sequences>
+    write <write_sequences>
 
