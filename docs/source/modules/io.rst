@@ -21,3 +21,9 @@ write
 .. autofunction:: abutils.core.sequence.to_fastq
 
 
+
+.. toctree::
+    :hidden:
+    io#read
+    io#write
+
