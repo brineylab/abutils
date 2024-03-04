@@ -48,19 +48,23 @@ def initialize(log_file, project_dir=None, debug=False):
     creating the project directory, and logging both the project directory
     and the log location.
 
-    Args:
+    Parameters
+    ----------
+    log_file : str
+        Path to the log file. Required.
 
-        log_file (str): Path to the log file. Required.
+    project_dir : str
+        Path to the project directory. If not provided,
+        the project directory won't be created and the location won't be logged.
 
-        project_dir (str): Path to the project directory. If not provided,
-            the project directory won't be created and the location won't be logged.
+    debug : bool
+        If ``True``, the logging level will be set to ``logging.DEBUG``.
 
-        debug (bool): If ``True``, the logging level will be set to ``logging.DEBUG``.
-            Default is ``FALSE``, which logs at ``logging.INFO``.
+    Returns
+    -------
+    logger
+        A logger instance.
 
-    Returns:
-
-        logger
     """
     print_splash()
     log.setup_logging(log_file, print_log_location=False, debug=debug)
@@ -78,7 +82,7 @@ def make_dir(directory: str) -> None:
     """
     Makes a directory, if it doesn't already exist.
 
-    Parameters:
+    Parameters
     ----------
     directory : str
         Path to a directory.
@@ -92,7 +96,7 @@ def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]
     """
     Lists files in a given directory.
 
-    Parameters:
+    Parameters
     ----------
     directory : str
         Path to a directory.
@@ -101,7 +105,7 @@ def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]
         If supplied, only files that contain the specificied extension will be returned.
         Default is ``None``, which returns all files in the directory, regardless of extension.
 
-    Returns:
+    Returns
     -------
     Iterable[str]
 
