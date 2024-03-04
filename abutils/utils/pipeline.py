@@ -23,11 +23,12 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+# from __future__ import absolute_import, division, print_function, unicode_literals
 
 import glob
 import os
 import sys
+from typing import Iterable, Optional
 
 from . import log
 
@@ -73,40 +74,44 @@ def initialize(log_file, project_dir=None, debug=False):
     return logger
 
 
-def make_dir(d):
+def make_dir(directory: str) -> None:
     """
-    Makes a directory, if it doesn't already exist. 
+    Makes a directory, if it doesn't already exist.
 
-    Args:
+    Parameters:
+    ----------
+    directory : str
+        Path to a directory.
 
-        d (str): Path to a directory.
     """
-    if not os.path.exists(d):
-        os.makedirs(os.path.abspath(d))
+    if not os.path.exists(directory):
+        os.makedirs(os.path.abspath(directory))
 
 
-def list_files(d, extension=None):
+def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]:
     """
     Lists files in a given directory.
 
-    Args:
+    Parameters:
+    ----------
+    directory : str
+        Path to a directory.
 
-        d (str): Path to a directory.
-
-        extension (str): If supplied, only files that contain the
-            specificied extension will be returned. Default is ``False``,
-            which returns all files in ``d``.
+    extension : str
+        If supplied, only files that contain the specificied extension will be returned.
+        Default is ``None``, which returns all files in the directory, regardless of extension.
 
     Returns:
+    -------
+    Iterable[str]
 
-        list: A sorted list of file paths.
     """
     if os.path.isdir(d):
-        expanded_dir = os.path.expanduser(d)
+        expanded_dir = os.path.expanduser(directory)
         files = sorted(glob.glob(expanded_dir + "/*"))
     else:
         files = [
-            d,
+            directory,
         ]
     if extension is not None:
         if type(extension) in STR_TYPES:
