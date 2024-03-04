@@ -621,8 +621,11 @@ def read_json(
         A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
         the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is no ``'IGH'``:
-            ``{'locus': 'IGH'}
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
 
     fields : list, default=None
         A ``list`` of fields to be retained in the output ``Sequence``
@@ -691,8 +694,11 @@ def read_csv(
         A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
         the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is no ``'IGH'``:
-            ``{'locus': 'IGH'}
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
 
     fields : list, default=None
         A ``list`` of fields to be retained in the output ``Sequence``
@@ -749,8 +755,11 @@ def read_airr(
         A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
         the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is no ``'IGH'``:
-            ``{'locus': 'IGH'}
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
 
     fields : list, default=None
         A ``list`` of fields to be retained in the output ``Sequence``
