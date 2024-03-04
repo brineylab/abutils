@@ -133,6 +133,8 @@ plotting adaptive immune receptor features like CDR3 length distributions and ge
    :caption: io
 
    modules/io
+   modules/io/read
+   modules/io/write
    modules/io_utils
 
 .. toctree::
