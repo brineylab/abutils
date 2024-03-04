@@ -1,9 +1,11 @@
 
 
-sequence IO
+sequence io
 ====================
 
-.. _read_sequences:
+
+read
+--------------------
 
 .. autofunction:: abutils.core.sequence.read_fasta
 .. autofunction:: abutils.core.sequence.read_airr
@@ -12,14 +14,9 @@ sequence IO
 
 | 
 
-.. _write_sequences:
+write
+--------------------
 
 .. autofunction:: abutils.core.sequence.to_fasta
 .. autofunction:: abutils.core.sequence.to_fastq
 
-
-.. toctree::
-    :hidden:
-    
-    read <:ref:`read_sequences`>
-    write <write_sequences>
