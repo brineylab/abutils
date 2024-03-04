@@ -913,9 +913,11 @@ class PairwiseAlignment(ABC):
 
     .. note::
 
-        All comparisons between ``PairwiseAlignment``s are done on the
+        All comparisons between ``PairwiseAlignment`` objects are performed using the
         ``score`` attribute. This was done so that sorting alignments
-        like so::
+        like so:
+
+        .. code-block:: python
 
             list_of_alignments.sort(reverse=True)
 
