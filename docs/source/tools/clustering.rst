@@ -29,7 +29,7 @@ is the sequence identity threshold for clustering.
         threshold=0.9
     )
 
-<br>
+| 
 
 **get the largest cluster from VSEARCH clustering of a list of ``Sequence`` objects**
   
@@ -49,6 +49,8 @@ descending order, so the first cluster is the largest.
     )
     largest_cluster = clusters[0]
   
+| 
+
 **calculate the consensus sequence of the largest cluster, using MMSeqs2**
   
 ``Cluster`` objects have a ``consensus`` property that returns a ``Sequence`` object
@@ -74,7 +76,7 @@ sequence to the ``consensus`` property (and overwrites any cached consensus sequ
     # to overwrite the cached consensus sequence
     largest_cluster.make_consensus()
 
-
+| 
 
 .. _cluster-function:
 .. autofunction:: abutils.tools.cluster.cluster
