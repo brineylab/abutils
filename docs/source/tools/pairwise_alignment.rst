@@ -95,17 +95,18 @@ alignments (which, by default, sorts by alignment score), and selects the top sc
 api
 -----------
 
-.. autofunction:: abutils.tools.alignment.global_alignment
-.. autofunction:: abutils.tools.alignment.local_alignment
+.. autofunction:: abutils.tl.local_alignment
+.. autofunction:: abutils.tl.global_alignment
+.. autofunction:: abutils.tl.semiglobal_alignment
 
 | 
 
-.. autoclass:: abutils.tools.alignment.PairwiseAlignment
+.. autoclass:: abutils.tl.PairwiseAlignment
     :members:
     :special-members: __init__
 
 | 
 
-.. autoclass:: abutils.tools.alignment.LocalAlignment
-.. autoclass:: abutils.tools.alignment.GlobalAlignment
-.. autoclass:: abutils.tools.alignment.SemiGlobalAlignment
+.. autoclass:: abutils.tl.LocalAlignment
+.. autoclass:: abutils.tl.GlobalAlignment
+.. autoclass:: abutils.tl.SemiGlobalAlignment
