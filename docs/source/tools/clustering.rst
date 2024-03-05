@@ -3,7 +3,7 @@
 clustering
 =====================
 
-The primary clustering function is :function:`abutils.tl.cluster`, which can cluster sequences
+The primary clustering function is `abutils.tl.cluster`, which can cluster sequences
 using CD-HIT_, VSEARCH_, or MMseqs2_. The function returns a :class:`abutils.tl.Clusters` 
 object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
 
