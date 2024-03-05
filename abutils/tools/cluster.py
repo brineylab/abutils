@@ -39,7 +39,14 @@ from ..utils.decorators import lazy_property
 from ..utils.pipeline import make_dir
 from .alignment import make_consensus
 
-__all__ = ["cluster", "cluster_vsearch", "cluster_mmseqs", "cluster_cdhit"]
+__all__ = [
+    "cluster",
+    "cluster_vsearch",
+    "cluster_mmseqs",
+    "cluster_cdhit",
+    "Clusters",
+    "Cluster",
+]
 
 
 class Cluster:
