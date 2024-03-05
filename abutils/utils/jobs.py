@@ -23,18 +23,40 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from contextlib import contextmanager
 import multiprocessing as mp
 import time
+from contextlib import contextmanager
+from typing import Iterable
+
+import celery
 
 from . import progbar
 
 
 def monitor_mp_jobs(
-    results, start_time=None, completion_string="\n", print_progress=True
+    results: Iterable[mp.AsyncResult],
+    start_time: time.time = None,
+    completion_string: str = "\n",
+    print_progress: bool = True,
 ):
+    """
+    Monitors the progress of a set of multiprocessing jobs.
+
+    Parameters
+    ----------
+    results : Iterable[mp.AsyncResult]
+        A list of AsyncResult objects from multiprocessing jobs.
+
+    start_time : time.time
+        The time at which the jobs started. If not provided, elapsed time will not be shown.
+
+    completion_string : str
+        A string to print when the jobs are complete. Default is a newline.
+
+    print_progress : bool
+        Whether or not to print a progress bar. Default is ``True``.
+
+    """
     finished = 0
     jobs = len(results)
     while finished < jobs:
@@ -54,8 +76,29 @@ def monitor_mp_jobs(
 
 
 def monitor_celery_jobs(
-    results, start_time=None, completion_string="\n", print_progress=True
+    results: Iterable[celery.result.AsyncResult],
+    start_time: time.time = None,
+    completion_string: str = "\n",
+    print_progress: bool = True,
 ):
+    """
+    Monitors the progress of a set of Celery jobs.
+
+    Parameters
+    ----------
+    results : Iterable[celery.result.AsyncResult]
+        A list of AsyncResult objects from Celery jobs.
+
+    start_time : time.time
+        The time at which the jobs started. If not provided, elapsed time will not be shown.
+
+    completion_string : str
+        A string to print when the jobs are complete. Default is a newline.
+
+    print_progress : bool
+        Whether or not to print a progress bar. Default is ``True``.
+
+    """
     finished = 0
     jobs = len(results)
     while finished < jobs:

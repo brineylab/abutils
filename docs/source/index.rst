@@ -78,6 +78,21 @@ All of the plotting functions are accessible via ``abutils.pl``
 
 
 
+utilities
+--------------
+``abutils`` also provides a number of utility functions that are generally useful 
+when working with antibody repertoire data. These include funcions for monitoring 
+multiprocessing jobs, creating and modifying color palettes, and others.
+
+  * :ref:`jobs <jobs>`: functions for monitoring multiprocessing jobs
+
+  * :ref:`colors <colors>`: functions for working with colors and color palettes
+
+  * :ref:`path <path>`: functions for working with file paths
+
+All of the utility funtionss are accessible directly via ``abutils``
+
+
 .. _abstar: https://github.com/briney/abstar
 .. _scab: https://github.com/briney/scab
 .. _parasail: https://github.com/jeffdaily/parasail-python
