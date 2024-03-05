@@ -3,9 +3,9 @@
 clustering
 =====================
 
-The primary clustering function is :ref:`abutils.tl.cluster <cluster-function>`, which can cluster sequences
-using CD-HIT_, VSEARCH_, or MMseqs2_. The function returns a :ref:`abutils.tl.Clusters <clusters-class>` 
-object, which contains the clustering results as one or more :ref:`abutils.tl.Cluster <cluster-class>` objects.
+The primary clustering function is :function:`abutils.tl.cluster`, which can cluster sequences
+using CD-HIT_, VSEARCH_, or MMseqs2_. The function returns a :class:`abutils.tl.Clusters` 
+object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
 
 examples
 -----------
@@ -13,8 +13,8 @@ examples
 **clustering with CD-HIT at 90% identity, using a FASTA file as input**  
   
 The ``sequences`` argument can be a path to a FASTA file, a FASTA-formatted string,
-a list of ``Sequence`` objects, or a list of :ref:`anything accepted by <sequence-class>` 
-``Sequence``. The ``algo`` argument can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
+a list of ``Sequence`` objects, or a list of anything accepted by 
+:class:`abutils.Sequence`. The ``algo`` argument can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
 If ``algo`` is not provided, ``cluster()`` will use CD-HIT for inputs with fewer than 1000 
 sequences or MMseqs2 for inputs with 1000 or more sequences. The ``threshold`` argument 
 is the sequence identity threshold for clustering.
@@ -33,8 +33,8 @@ is the sequence identity threshold for clustering.
 
 **get the largest cluster from VSEARCH clustering of a list of ``Sequence`` objects**
   
-Iterating over a ``Clusters`` object iterates over all of the clusters it contains, 
-which are themselves ``Cluster`` objects. By default, they are sorted by size in 
+Iterating over a :class:`abutils.tl.Clusters` object iterates over all of the clusters it contains, 
+which are themselves :class:`abutils.tl.Cluster` objects. By default, they are sorted by size in 
 descending order, so the first cluster is the largest. 
   
 .. code-block:: python
@@ -53,7 +53,7 @@ descending order, so the first cluster is the largest.
 
 **calculate the consensus sequence of the largest cluster, using MMSeqs2**
   
-``Cluster`` objects have a ``consensus`` property that returns a ``Sequence`` object
+:class:`abutils.tl.Cluster` objects have a ``consensus`` property that returns an :class:`abutils.Sequence` object
 representing the consensus sequence of the cluster. The ``consensus`` property is lazy, 
 meaning it is not calculated until it is accessed, and once calculated, it is cached. 
 Under the hood, the consensus sequence is calculated using the ``make_consensus()`` 
