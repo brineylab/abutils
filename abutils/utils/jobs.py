@@ -36,7 +36,7 @@ __all__ = ["monitor_mp_jobs", "monitor_celery_jobs"]
 
 
 def monitor_mp_jobs(
-    results: Iterable[mp.AsyncResult],
+    results: Iterable[mp.pool.AsyncResult],
     start_time: time.time = None,
     completion_string: str = "\n",
     print_progress: bool = True,
@@ -46,7 +46,7 @@ def monitor_mp_jobs(
 
     Parameters
     ----------
-    results : Iterable[mp.AsyncResult]
+    results : Iterable[mp.pool.AsyncResult]
         A list of AsyncResult objects from multiprocessing jobs.
 
     start_time : time.time
