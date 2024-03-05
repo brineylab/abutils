@@ -10,7 +10,7 @@ sphinx_design
 autodocsumm
 # baltic
 biopython
-# celery
+celery
 # ete3
 # fastcluster
 # matplotlib
