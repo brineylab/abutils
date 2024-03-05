@@ -21,14 +21,14 @@ core models
 
 To represent antibody repertoire data at varying levels of granularity, ``abutils`` provides three core models:  
 
-  * ``Sequence``: model for representing a single antibody sequnce (either heavy or light chain).
+  * :ref:`Sequence <sequence-class>`: model for representing a single antibody sequnce (either heavy or light chain).
     Provides a means to store and access abstar annotations. Includes common methods of sequence
     manipulation, including slicing, reverse-complement, and conversion to FASTA format. The ``Sequence``
     object is used extensively throughout the ab[x] toolkit.
-  * ``Pair``: model for representing paired (heavy and light) antibody sequences. Comprised of one 
+  * :ref:`Pair <pair-class>`: model for representing paired (heavy and light) antibody sequences. Comprised of one 
     or more ``Sequence`` objects. Heavily used in scab_, which is our toolkit for analyzing adaptive immune 
     single cell datasets.
-  * ``Lineage``: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
+  * :ref:`Lineage <lineage-class>`: model for representing an antibody clonal lineage. Comprised of one or more ``Pair``
     objects. Includes methods for lineage manipulation, including generating dot alignments and UCA calculation.
 
  
