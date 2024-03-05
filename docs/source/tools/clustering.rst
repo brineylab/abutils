@@ -79,16 +79,19 @@ sequence to the ``consensus`` property (and overwrites any cached consensus sequ
 | 
 
 .. _cluster-function:
+  
 .. autofunction:: abutils.tl.cluster
 
 | 
 
 .. _clusters-class:
+  
 .. autoclass:: abutils.tl.Clusters
     :members:
 | 
 
 .. _cluster-class:
+  
 .. autoclass:: abutils.tl.Cluster
     :members:
 

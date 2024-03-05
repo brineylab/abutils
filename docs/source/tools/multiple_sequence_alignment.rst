@@ -17,7 +17,7 @@ examples
 **multiple sequence alignment with MAFFT**
 
 Each of the multiple seqeunce alignment functions can accept a path to a FASTA file, a FASTA-formatted string,
-a list of :class:`abutils.Sequence`` objects, or a list of anything accepted by :class:`abutils.Sequence`. By default,
+a list of :class:`abutils.Sequence` objects, or a list of anything accepted by :class:`abutils.Sequence`. By default,
 calling the alignment function with a list of sequences will return a :class:`abutils.tl.MultipleSequenceAlignment`.
 
 
