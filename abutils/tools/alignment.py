@@ -58,6 +58,7 @@ __all__ = [
     "LocalAlignment",
     "GlobalAlignment",
     "SemiGlobalAlignment",
+    "CIGAR",
 ]
 
 
@@ -1087,7 +1088,15 @@ class PairwiseAlignment(ABC):
         return self.align()
 
     @property
-    def cigar(self):
+    def cigar(self) -> "CIGAR":
+        """
+        Alignment CIGAR, as a ``CIGAR`` object.
+
+        Returns
+        -------
+        CIGAR
+            CIGAR object representing the alignment.
+        """
         cigar_string = self.alignment.cigar.decode.decode("utf-8")
         return CIGAR(cigar_string=cigar_string)
 
@@ -1096,23 +1105,43 @@ class PairwiseAlignment(ABC):
         return self.alignment.traceback
 
     @lazy_property
-    def score(self):
+    def score(self) -> int:
+        """
+        Alignment score.
+
+        Returns
+        -------
+        int
+            Alignment score.
+        """
         return self.alignment.score
 
     @lazy_property
-    def aligned_query(self):
+    def aligned_query(self) -> str:
+        """
+        Aligned query sequence.
+        """
         return self.traceback.query
 
     @lazy_property
-    def aligned_target(self):
+    def aligned_target(self) -> str:
+        """
+        Aligned target sequence.
+        """
         return self.traceback.ref
 
     @lazy_property
-    def alignment_midline(self):
+    def alignment_midline(self) -> str:
+        """
+        Alignment midline. Pipe characters (|) indicate matches, and spaces indicate mismatches.
+        """
         return self.traceback.comp.replace(".", " ")
 
     @lazy_property
-    def query_begin(self):
+    def query_begin(self) -> int:
+        """
+        Start position of the query sequence in the alignment.
+        """
         # return self.alignment.cigar.beg_query
         query_begin = self.alignment.cigar.beg_query
         if self.cigar[0].element == "I":
@@ -1120,11 +1149,17 @@ class PairwiseAlignment(ABC):
         return query_begin
 
     @lazy_property
-    def query_end(self):
+    def query_end(self) -> int:
+        """
+        End position of the query sequence in the alignment.
+        """
         return self.alignment.end_query
 
     @lazy_property
-    def target_begin(self):
+    def target_begin(self) -> int:
+        """
+        Start position of the target sequence in the alignment.
+        """
         # return self.alignment.cigar.beg_ref
         target_begin = self.alignment.cigar.beg_ref
         if self.cigar[0].element == "D":
@@ -1132,17 +1167,20 @@ class PairwiseAlignment(ABC):
         return target_begin
 
     @lazy_property
-    def target_end(self):
+    def target_end(self) -> int:
+        """
+        End position of the target sequence in the alignment.
+        """
         return self.alignment.end_ref
 
     @property
-    def target_id(self):
+    def target_id(self) -> str:
+        """
+        Sequence ID of the target sequence.
+        """
         return self.target.id
 
     def align(self):
-        """
-        docstring for align
-        """
         aln = self.alignment_function(
             self.query.sequence,
             self.target.sequence,
