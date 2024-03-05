@@ -12,7 +12,7 @@ properties, so the user can easily switch between alignment methods with minimal
 examples
 -------------
 
-**Local sequence alignment**  
+**local sequence alignment**  
   
 The ``query`` and ``target`` sequences for all ``abutils`` pairwise alignment functions can be an :class:`abutils.Sequence`` 
 object, or anything accepted by :class:`abutils.Sequence`. The following example uses sequence strings, 
@@ -37,7 +37,7 @@ performs local alignment, and prints the alignment to the console.
 
 | 
 
-**Global sequence alignment with custom scoring parameters**  
+**global sequence alignment with custom scoring parameters**  
 
 All ``abutils`` pairwise alignment functions accept custom scoring parameters. These parameters are:
 
@@ -66,7 +66,7 @@ to the ``matrix`` argument. The following example uses the ``blosum62`` matrix:
 
 | 
 
-**Semi-global alignment against multiple targets and selecting the best match**  
+**semi-global alignment against multiple targets and selecting the best match**  
 
 All ``abutils`` pairwise alignment functions can align the same ``query`` sequence against multiple ``target`` sequences
 using the ``targets`` argument. This provides a moderate speed increase and avoids the need to loop through the targets. 
@@ -101,6 +101,8 @@ api
 | 
 
 .. autoclass:: abutils.tools.alignment.PairwiseAlignment
+    :members:
+    :special-members: __init__
 
 | 
 

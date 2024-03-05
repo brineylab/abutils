@@ -14,12 +14,10 @@ the user can easily switch between alignment methods with minimal changes to the
 examples
 ---------
 
-| 
-
-**Multiple sequence alignment with MAFFT**
+**multiple sequence alignment with MAFFT**
 
 Each of the multiple seqeunce alignment functions can accept a path to a FASTA file, a FASTA-formatted string,
-a list of :class:`abutils.Sequence`` objects, or a list of :ref:`anything accepted by <sequence-class>`. By default,
+a list of :class:`abutils.Sequence`` objects, or a list of anything accepted by :class:`abutils.Sequence`. By default,
 calling the alignment function with a list of sequences will return a :class:`abutils.tl.MultipleSequenceAlignment`.
 
 
@@ -31,7 +29,7 @@ calling the alignment function with a list of sequences will return a :class:`ab
 
 | 
 
-**Multiple sequence alignment with MUSCLE, with the results written to file**
+**multiple sequence alignment with MUSCLE, with the results written to file**
 
 Rather than returning a :class:`abutils.tl.MultipleSequenceAlignment` object, the user can specify a path to which
 the alignment file should be written. This is done by passing a file path to the ``alignment_file`` argument.
@@ -52,7 +50,7 @@ the alignment file should be written. This is done by passing a file path to the
 
 | 
 
-**Using a custom binary for multiple sequence alignment**
+**using a custom binary for multiple sequence alignment**
 
 ``abutils`` packages binaries for both MAFFT and MUSCLE, meaning these packages don't need to be separately installed
 by the user. However, both :function:`abutils.tl.mafft` and :function:`abutils.tl.muscle` allow the user to specify the path to a 
