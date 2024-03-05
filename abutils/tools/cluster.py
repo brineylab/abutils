@@ -250,7 +250,8 @@ def cluster(
             6. list of strings, with each string being a separate sequence.
         Required.
 
-    .. Note::
+    .. note::
+
         If ``sequences`` is a list of ``str`` objects, they will be assigned random IDs.
 
     threshold : float, default=0.975
