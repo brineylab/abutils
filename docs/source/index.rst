@@ -90,7 +90,6 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 
   * :ref:`path <path>`: functions for working with file paths
 
-All of the utility funtionss are accessible directly via ``abutils``
 
 
 .. _abstar: https://github.com/briney/abstar
@@ -153,6 +152,15 @@ All of the utility funtionss are accessible directly via ``abutils``
 
    modules/io
    modules/io_utils
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+    :caption: utilities
+  
+    modules/jobs
+    modules/colors
+    modules/path
 
 .. toctree::
    :maxdepth: 1
