@@ -30,6 +30,7 @@ from .utils import pipeline as path
 # from .utils.alignment import SSWAlignment, NWAlignment
 from .utils.alignment import GlobalAlignment, LocalAlignment, SemiGlobalAlignment
 from .utils.jobs import *
+from .utils.progbar import progress_bar
 from .version import __version__
 
 BINARY_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "bin"))

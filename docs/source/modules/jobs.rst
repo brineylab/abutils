@@ -1,5 +1,21 @@
+.. _jobs:
+
 jobs
 ===================
 
-.. automodule:: abutils.utils.jobs
-    :no-undoc-members:
+
+
+examples
+-------------------
+
+
+
+
+
+
+api
+-------------------
+
+.. autofunction:: abutils.progress_bar
+.. autofunction:: abutils.monitor_mp_jobs
+.. autofunction:: abutils.monitor_celery_jobs
