@@ -28,15 +28,13 @@ import time
 from contextlib import contextmanager
 from typing import Iterable
 
-import celery
-
 from . import progbar
 
 __all__ = ["monitor_mp_jobs", "monitor_celery_jobs"]
 
 
 def monitor_mp_jobs(
-    results: Iterable[mp.pool.AsyncResult],
+    results: Iterable,
     start_time: time.time = None,
     completion_string: str = "\n",
     print_progress: bool = True,
@@ -78,7 +76,7 @@ def monitor_mp_jobs(
 
 
 def monitor_celery_jobs(
-    results: Iterable[celery.result.AsyncResult],
+    results: Iterable,
     start_time: time.time = None,
     completion_string: str = "\n",
     print_progress: bool = True,
