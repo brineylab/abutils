@@ -146,18 +146,11 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    modules/donut
 
 .. toctree::
-   :maxdepth: 2
-   :hidden:
-   :caption: io
-
-   modules/io
-   modules/io_utils
-
-.. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :hidden:
     :caption: utilities
   
+    modules/io
     modules/jobs
     modules/colors
     modules/path
