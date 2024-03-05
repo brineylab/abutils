@@ -31,7 +31,7 @@ is the sequence identity threshold for clustering.
 
 | 
 
-**get the largest cluster from VSEARCH clustering of a list of ``Sequence`` objects**
+**get the largest cluster from VSEARCH clustering of a list of Sequence objects**
   
 Iterating over a :class:`abutils.tl.Clusters` object iterates over all of the clusters it contains, 
 which are themselves :class:`abutils.tl.Cluster` objects. By default, they are sorted by size in 
