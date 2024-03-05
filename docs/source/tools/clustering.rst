@@ -79,17 +79,17 @@ sequence to the ``consensus`` property (and overwrites any cached consensus sequ
 | 
 
 .. _cluster-function:
-.. autofunction:: abutils.tools.cluster.cluster
+.. autofunction:: abutils.tl.cluster
 
 | 
 
 .. _clusters-class:
-.. autoclass:: abutils.tools.cluster.Clusters
+.. autoclass:: abutils.tl.Clusters
     :members:
 | 
 
 .. _cluster-class:
-.. autoclass:: abutils.tools.cluster.Cluster
+.. autoclass:: abutils.tl.Cluster
     :members:
 
 .. _CD-HIT: http://weizhongli-lab.org/cd-hit/
