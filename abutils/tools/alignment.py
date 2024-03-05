@@ -55,6 +55,7 @@ __all__ = [
     "dot_alignment",
     "make_consensus",
     "MultipleSequenceAlignment",
+    "PairwiseAlignment",
     "LocalAlignment",
     "GlobalAlignment",
     "SemiGlobalAlignment",
