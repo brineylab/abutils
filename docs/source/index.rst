@@ -161,7 +161,6 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :caption: about
 
    license
-   news
 
 
 .. toctree::
@@ -170,7 +169,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :caption: related projects
 
    abstar <https://github.com/briney/abstar>
-   abcloud <https://github.com/briney/abcloud>
+   scab <https://github.com/briney/scab>
    clonify <https://github.com/briney/clonify-python>
 
 
