@@ -150,7 +150,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
     :hidden:
     :caption: utilities
   
-    modules/io
+    io <modules/io>
     modules/jobs
     modules/colors
     modules/path
