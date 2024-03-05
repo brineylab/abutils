@@ -12,7 +12,8 @@ properties, so the user can easily switch between alignment methods with minimal
 examples
 -------------
 
-**Local sequence alignment**
+**Local sequence alignment**  
+  
 The ``query`` and ``target`` sequences for all ``abutils`` pairwise alignment functions can be an :class:`abutils.Sequence`` 
 object, or anything accepted by :class:`abutils.Sequence`. The following example uses sequence strings, 
 performs local alignment, and prints the alignment to the console.
@@ -26,47 +27,67 @@ performs local alignment, and prints the alignment to the console.
 
     import abutils
     
-    # input sequences, as a FASTA-formatted string
-    fasta_string = '>seq1\nATGCATGCATGC\n>seq2\nATGCATGCATGC'
+    # input sequences, as strings
+    seq1 = 'ATGCATGCATGC'
+    seq2 = 'ATGCATGCATGC'
     
     # calculate and print the alignment
-    aln = abutils.tl.local_alignment(fasta_string)
+    aln = abutils.tl.local_alignment(seq1, seq2)
     print(aln)
 
 | 
 
-**Global sequence alignment with custom scoring parameters**
-All ``abutils`` alignment functions accept custom scoring parameters. These parameters are:
+**Global sequence alignment with custom scoring parameters**  
+
+All ``abutils`` pairwise alignment functions accept custom scoring parameters. These parameters are:
 
   - ``match``: the score for a match (default is ``3``)
   - ``mismatch``: the score for a mismatch (default is ``-2``)
   - ``gap_open``: the penalty for opening a gap (default is ``5``)
   - ``gap_extend``: the penalty for extending a gap (default is ``2``)
 
-To perform a simple identity alignment, set ``match`` to ``1`` and ``mismatch`` to ``0``, like so:
+Alignment functions can also accept any ``parasail`` similarity matrix, passed 
+to the ``matrix`` argument. The following example uses the ``blosum62`` matrix:
 
 .. code-block:: python
 
     import abutils
     
-    # input sequences, as a FASTA-formatted string
-    fasta_string = '>seq1\nATGCATGCATGC\n>seq2\nATGCATGCATGC'
+    # input sequences, as strings
+    seq1 = 'ATGCATGCATGC'
+    seq2 = 'ATGCATGCATGC'
     
     # calculate and print the alignment
-    aln = abutils.tl.global_alignment(fasta_string, match=1, mismatch=0)
+    aln = abutils.tl.global_alignment(
+        seq1, 
+        seq2, 
+        matrix='blosum62',
+    )
 
 | 
 
-**Semi-global alignment using a pre-defined similarity matrix**
-All ``abutils`` alignment functions can accept any ``parasail`` similarity matrix. The following example uses the ``blosum62`` matrix:
+**Semi-global alignment against multiple targets and selecting the best match**  
+
+All ``abutils`` pairwise alignment functions can align the same ``query`` sequence against multiple ``target`` sequences
+using the ``targets`` argument. This provides a moderate speed increase and avoids the need to loop through the targets. 
+The following example aligns a single query sequence against multiple target sequences, sorts the resulting list of 
+alignments (which, by default, sorts by alignment score), and selects the top scoring alignment.
 
 .. code-block:: python
 
     import abutils
-     
-    aln = abutils.tl.semi_global_alignment("path/to/sequences.fasta", matrix='blosum62')
+    
+    # query and target sequences
+    query = 'ATGCATGCATGC'
+    targets = abutils.io.read_fasta('path/to/targets.fasta')
 
+    alns = abutils.tl.semi_global_alignment(
+        query,
+        targets=targets
+    )
 
+    # get the highest scoring alignment
+    best_aln = alns.sort(reverse=True)[0]
 
 
 | 
