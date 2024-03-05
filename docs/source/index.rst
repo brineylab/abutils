@@ -168,8 +168,8 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :hidden:
    :caption: related projects
 
-   abstar <https://github.com/briney/abstar>
-   scab <https://github.com/briney/scab>
+   abstar <https://github.com/brineylab/abstar>
+   scab <https://github.com/brineylab/scab>
    clonify <https://github.com/briney/clonify-python>
 
 
