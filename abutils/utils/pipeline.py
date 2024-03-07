@@ -36,8 +36,8 @@ if sys.version_info[0] > 2:
     STR_TYPES = [
         str,
     ]
-else:
-    STR_TYPES = [str, unicode]
+# else:
+#     STR_TYPES = [str, unicode]
 
 
 def initialize(log_file, project_dir=None, debug=False):
@@ -110,7 +110,7 @@ def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]
     Iterable[str]
 
     """
-    if os.path.isdir(d):
+    if os.path.isdir(directory):
         expanded_dir = os.path.expanduser(directory)
         files = sorted(glob.glob(expanded_dir + "/*"))
     else:
