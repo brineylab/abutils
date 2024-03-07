@@ -22,3 +22,4 @@ scikit-learn
 scipy
 seaborn >= 0.11
 smart_open
+tqdm
