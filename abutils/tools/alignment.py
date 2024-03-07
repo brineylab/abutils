@@ -1011,7 +1011,8 @@ def muscle_v3(
 
 
 def make_consensus(
-    sequences: Iterable[Sequence],
+    sequences: Optional[Iterable[Sequence]] = None,
+    alignment: Union[str, MultipleSeqAlignment, MultipleSequenceAlignment, None] = None,
     algo: str = "mafft",
     name: Optional[str] = None,
     downsample_to: Optional[int] = None,
@@ -1025,11 +1026,19 @@ def make_consensus(
 
     Parameters
     ----------
-    sequences : iterable
-        List of sequences from which to make a consensus.
+    sequences : iterable, optional
+        List of sequences from which to make a consensus. Sequences should not already
+        be aligned (if they are, use ``alignment`` instead). One of ``sequences``
+        or ``alignment`` must be provided.
+
+    alignment : str or ``MultipleSeqAlignment``, optional
+        A FASTA-formatted alignment string, a path to a FASTA-formatted alignment file,
+        a BioPython ``MultipleSeqAlignment`` object, or a ``MultipleSequenceAlignment`` object.
+        One of ``sequences`` or ``alignment`` must be provided.
 
     algo : str, default='mafft'
-        Algorithm to use for multiple sequence alignment. Choices are 'mafft' and 'muscle'.
+        Algorithm to use for multiple sequence alignment. Choices are 'mafft',
+        'famsa', or 'muscle'.
 
     name : str, optional
         Name for the consensus sequence. If not provided, a random UUID will be used.
@@ -1048,19 +1057,29 @@ def make_consensus(
         Consensus sequence.
 
     """
-    # downsampling
-    if downsample_to is not None and len(sequences) > downsample_to:
-        if seed is not None:
-            random.seed(seed)
-        sequences = random.sample(sequences, downsample_to)
-    # alignment
-    if algo.lower() == "mafft":
-        aln = mafft(sequences, as_file=False)
-    elif algo.lower() == "muscle":
-        aln = muscle(sequences, as_file=False)
+    if sequences is None and alignment is None:
+        raise ValueError("Must provide either <sequences> or <alignment>.")
+    elif sequences is not None:
+        # downsampling
+        if downsample_to is not None and len(sequences) > downsample_to:
+            if seed is not None:
+                random.seed(seed)
+            sequences = random.sample(sequences, downsample_to)
+        # alignment
+        if algo.lower() == "mafft":
+            aln = mafft(sequences, as_file=False)
+        elif algo.lower() == "muscle":
+            aln = muscle(sequences, as_file=False)
+        elif algo.lower() == "famsa":
+            aln = famsa(sequences, as_file=False)
+        else:
+            err = f"Invalid algorithm: {algo}. Must be 'mafft', 'famsa', or 'muscle'."
+            raise ValueError(err)
     else:
-        err = f"Invalid algorithm: {algo}. Must be 'mafft' or 'muscle'."
-        raise ValueError(err)
+        if isinstance(alignment, MultipleSequenceAlignment):
+            aln = alignment
+        else:
+            aln = MultipleSequenceAlignment(alignment)
     # consensus
     return aln.make_consensus(
         name=name, threshold=threshold, ambiguous=ambiguous, as_string=as_string
