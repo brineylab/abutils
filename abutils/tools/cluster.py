@@ -115,7 +115,7 @@ class Cluster:
 
         algo : str, default="mafft"
             Algorithm to be used for generating the consensus sequence. Options are
-            ``"mafft"`` and ``"muscle"``.
+            ``"mafft"``, ``"famsa"``, or ``"muscle"``.
 
         ambiguous : str, default=None
             Character to use for ambiguous bases. If not provided, the default
