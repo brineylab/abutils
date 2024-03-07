@@ -773,14 +773,14 @@ def read_airr(
     return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
 
 
-def read_fasta(fasta_file: str) -> Iterable[Sequence]:
+def read_fasta(fasta: str) -> Iterable[Sequence]:
     """
-    Reads a FASTA-formatted  file and returns ``Sequence`` objects.
+    Reads FASTA-formatted sequence data and returns ``Sequence`` objects.
 
     Parameters
     ----------
-    fasta_file : str
-        Path to the input FASTA file. Required.
+    fasta : str
+        Either a FASTA-formatted string or the path to a FASTA file. Required.
 
 
     Returns
@@ -788,20 +788,26 @@ def read_fasta(fasta_file: str) -> Iterable[Sequence]:
     sequences : list of ``Sequences``
 
     """
-    with open(fasta_file) as f:
+    if os.path.isfile(fasta):
+        with open(fasta) as f:
+            sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    else:
+        from io import StringIO
+
+        f = StringIO(fasta)
         sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
     return sequences
 
 
-def read_fastq(fastq_file):
+def read_fastq(fastq: str) -> Iterable[Sequence]:
     """
-    Reads a FASTQ-formatted  file and returns ``Sequence`` objects.
+    Reads FASTQ-formatted sequence data and returns ``Sequence`` objects.
     Gzipped files are supported.
 
     Parameters
     ----------
-    fastq_file : str
-        Path to the input FASTQ file. Required.
+    fastq : str
+        Either a FASTQ-formatted string or the path to a FASTQ file. Required.
 
 
     Returns
@@ -809,13 +815,19 @@ def read_fastq(fastq_file):
     sequences : list of ``Sequences``
 
     """
-    if fastq_file.endswith(".gz"):
-        import gzip
+    if os.path.isfile(fastq):
+        if fastq.endswith(".gz"):
+            import gzip
 
-        open_func = gzip.open
+            open_func = gzip.open
+        else:
+            open_func = open
+        with open_func(fastq, "rt") as f:
+            sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
     else:
-        open_func = open
-    with open_func(fastq_file, "rt") as f:
+        from io import StringIO
+
+        f = StringIO(fastq)
         sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
     return sequences
 
