@@ -17,6 +17,7 @@ from ..tools.alignment import (
     PairwiseAlignment,
     SemiGlobalAlignment,
     # consensus,
+    famsa,
     global_alignment,
     local_alignment,
     mafft,
@@ -254,6 +255,64 @@ def test_muscle_alignment_seq_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = muscle(sequences, seq_key="seq", debug=True)
+    assert isinstance(alignment, MultipleSequenceAlignment)
+    assert len(alignment) == 3
+    assert alignment[0].id in ["seq1", "seq2", "seq3"]
+    assert alignment[1].id in ["seq1", "seq2", "seq3"]
+    assert alignment[2].id in ["seq1", "seq2", "seq3"]
+
+
+# ---------------------------
+#          FAMSA
+# ---------------------------
+
+
+def test_famsa_alignment(sequences):
+    alignment = famsa(sequences)
+    assert isinstance(alignment, MultipleSequenceAlignment)
+    assert len(alignment) == 3
+    assert alignment[0].id == "seq1"
+    assert alignment[1].id == "seq2"
+    assert alignment[2].id == "seq3"
+
+
+def test_famsa_alignment_id_key():
+    seq1 = {
+        "name": "seq1",
+        "sequence": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq2 = {
+        "name": "seq2",
+        "sequence": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq3 = {
+        "name": "seq3",
+        "sequence": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    sequences = [seq1, seq2, seq3]
+    alignment = famsa(sequences, id_key="name")
+    assert isinstance(alignment, MultipleSequenceAlignment)
+    assert len(alignment) == 3
+    assert alignment[0].id in ["seq1", "seq2", "seq3"]
+    assert alignment[1].id in ["seq1", "seq2", "seq3"]
+    assert alignment[2].id in ["seq1", "seq2", "seq3"]
+
+
+def test_famsa_alignment_seq_key():
+    seq1 = {
+        "sequence_id": "seq1",
+        "seq": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq2 = {
+        "sequence_id": "seq2",
+        "seq": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq3 = {
+        "sequence_id": "seq3",
+        "seq": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    sequences = [seq1, seq2, seq3]
+    alignment = famsa(sequences, seq_key="seq")
     assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
