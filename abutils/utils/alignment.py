@@ -43,6 +43,8 @@ from ..core.sequence import Sequence
 from ..io import to_fasta
 from .decorators import lazy_property
 
+STR_TYPES = [str]
+
 __all__ = [
     "mafft",
     "muscle",
