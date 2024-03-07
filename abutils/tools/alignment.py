@@ -1014,6 +1014,7 @@ def make_consensus(
     sequences: Optional[Iterable[Sequence]] = None,
     alignment: Union[str, MultipleSeqAlignment, MultipleSequenceAlignment, None] = None,
     algo: str = "mafft",
+    alignment_kwargs: Optional[dict] = None,
     name: Optional[str] = None,
     downsample_to: Optional[int] = None,
     threshold: float = 0.51,
@@ -1039,6 +1040,9 @@ def make_consensus(
     algo : str, default='mafft'
         Algorithm to use for multiple sequence alignment. Choices are 'mafft',
         'famsa', or 'muscle'.
+
+    alignment_kwargs : dict, optional
+        Additional keyword arguments to pass to the alignment function.
 
     name : str, optional
         Name for the consensus sequence. If not provided, a random UUID will be used.
@@ -1066,12 +1070,15 @@ def make_consensus(
                 random.seed(seed)
             sequences = random.sample(sequences, downsample_to)
         # alignment
+        if alignment_kwargs is None:
+            alignment_kwargs = {}
+        alignment_kwargs["as_file"] = False
         if algo.lower() == "mafft":
-            aln = mafft(sequences, as_file=False)
+            aln = mafft(sequences, **alignment_kwargs)
         elif algo.lower() == "muscle":
-            aln = muscle(sequences, as_file=False)
+            aln = muscle(sequences, **alignment_kwargs)
         elif algo.lower() == "famsa":
-            aln = famsa(sequences, as_file=False)
+            aln = famsa(sequences, **alignment_kwargs)
         else:
             err = f"Invalid algorithm: {algo}. Must be 'mafft', 'famsa', or 'muscle'."
             raise ValueError(err)
