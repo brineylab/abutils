@@ -36,12 +36,13 @@ from itertools import groupby
 from typing import Callable, Iterable, Optional, Union
 
 import parasail
+import pyfamsa
 from Bio import AlignIO
 from Bio.Align import AlignInfo, MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence
+from ..core.sequence import Sequence, read_fasta
 from ..io import to_fasta
 from ..utils.decorators import lazy_property
 
@@ -681,6 +682,145 @@ def muscle(
         aln = MultipleSequenceAlignment(alignment_file, "fasta")
     os.unlink(alignment_file)
     return aln
+
+
+def famsa(
+    sequences: Union[str, Iterable],
+    alignment_file: Optional[str] = None,
+    fmt: str = "fasta",
+    as_file: bool = False,
+    as_string: bool = False,
+    threads: int = 0,
+    guide_tree: str = "sl",
+    tree_heuristic: Optional[str] = None,
+    medoid_threshold: int = 0,
+    n_refinements: int = 100,
+    keep_duplicates: bool = False,
+    refine: Optional[bool] = None,
+    id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
+    debug: bool = False,
+    fasta: Optional[str] = None,
+) -> Union[MultipleSeqAlignment, str]:
+    """
+    Performs multiple sequence alignment with `FAMSA`_ using the `pyfamsa`_ package.
+
+    Parameters
+    ----------
+    sequences : (str, iterable)
+        Can be one of several things:
+            1. path to a FASTA-formatted file
+            2. a FASTA-formatted string
+            3. a list of BioPython ``SeqRecord`` objects
+            4. a list of abutils ``Sequence`` objects
+            5. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+
+    alignment_file : str, optional
+        Path for the output alignment file. Required if ``as_file`` is ``True``.
+
+    fmt : str, default='fasta'
+        Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'.
+
+    as_file: bool, default=False
+        If ``True``, returns the path to the alignment file. If ``False``,
+        returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
+        output as a ``str``, depending on `as_string`. If `alignment_file` is not
+        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``.
+        Note that this temporary file is created in ``"/tmp"`` and may be removed
+        by the operating system without notice.
+
+    as_string: bool, default=False
+        If ``True``, returns a the alignment output as a string. If ``False``,
+        returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
+        ``Bio.AlignIO.read()`` on the alignment file).
+
+    threads : int, default=0
+        Number of threads for FAMSA to use. Default is ``0``, which uses all
+        available CPUs.
+
+    guide_tree : str, default='sl'
+        Method for building the guide tree. Choices are 'sl', 'slink', 'nj', and 'upgma'.
+
+    tree_heuristic : str, default=None
+        The heuristic to use for constructing the tree. Supported values are:
+        'medoid', 'part', or ``None`` to disable heuristics.
+
+    medoid_threshold : int, default=0
+        Minimum number of sequences a set must contain for medoid trees to be used,
+        if enabled with ``tree_heuristic``. Default is ``0``.
+
+    n_refinements : int, default=100
+        Number of refinement iterations to perform. Default is ``100``.
+
+    keep_duplicates : bool, default=False
+        If ``True``, duplicate sequences are kept in the alignment. Default is ``False``.
+
+    refine : bool, default=None
+        If ``True``, the alignment is refined. If ``False``, the alignment is not refined.
+        If ``None``, the alignment is refined if the number of sequences is less than 1000.
+
+    id_key : str, default=None
+        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
+
+    sequence_key : str, default=None
+        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
+
+    debug : bool, default=False
+        If ``True``, prints MAFFT's standard output and standard error.
+        Default is ``False``.
+
+    fasta : str, optional
+        Path to a FASTA-formatted input file. Depricated (use `sequences`
+        for all types if input), but retained for backwards compatibility.
+
+
+    Returns
+    -------
+    alignment : str or ``MultipleSeqAlignment``
+        If ``as_file`` is ``True``, returns a path to the output alignment file,
+        Otherwise, returns a BioPython ``MultipleSeqAlignment`` object.
+
+
+    .. _FAMSA:
+        https://github.com/refresh-bio/FAMSA
+    .. _pyfamsa:
+        https://github.com/althonos/pyfamsa
+    """
+    # process input
+    if fasta is not None:
+        sequences = fasta
+    if isinstance(sequences, str):
+        seqs = read_fasta(sequences)
+    else:
+        seqs = []
+        for s in sequences:
+            _seq = s.sequence if seq_key is None else s[seq_key]
+            _id = s.id if id_key is None else s[id_key]
+            seqs.append(Sequence(_seq, id=_id))
+    pyfamsa_seqs = [pyfamsa.Sequence(s.id.encode(), s.sequence.encode()) for s in seqs]
+    # do the alignment
+    aligner = pyfamsa.Aligner(
+        threads=threads,
+        guide_tree=guide_tree,
+        tree_heuristic=tree_heuristic,
+        medoid_threshold=medoid_threshold,
+        n_refinements=n_refinements,
+        keep_duplicates=keep_duplicates,
+        refine=refine,
+    )
+    aln = aligner.align(pyfamsa_seqs)
+    aligned_seqs = [Sequence(s.sequence.decode(), id=s.id.decode()) for s in aln]
+    msa = MultipleSequenceAlignment(aligned_seqs)
+    # build output
+    if as_file:
+        if alignment_file is None:
+            alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+        with open(alignment_file, "w") as f:
+            f.write(msa.format(fmt))
+        return alignment_file
+    elif as_string:
+        return msa.format(fmt)
+    return msa
 
 
 def muscle_v3(

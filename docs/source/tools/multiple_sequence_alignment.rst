@@ -3,7 +3,7 @@
 multiple sequence alignment
 ===========================
 
-``abutils`` can perform multiple sequence alignments using either MAFFT_ or MUSCLE_. 
+``abutils`` can perform multiple sequence alignments using either MAFFT_, MUSCLE_, or FAMSA_ (using the pyfamsa_ package). 
 All multiple sequence alignment functions return a :class:`abutils.tl.MultipleSequenceAlignment` object, which builds on 
 the :class:`Bio.Align.MultipleSeqAlignment` class from Biopython. This object provides a number of
 convenient methods for working with the alignment, including writing to file, trimming, and calculating
@@ -82,6 +82,7 @@ api
 
 .. autofunction:: abutils.tl.mafft
 .. autofunction:: abutils.tl.muscle
+.. autofunction:: abutils.tl.famsa
 
 | 
 
@@ -92,3 +93,5 @@ api
 
 .. _MAFFT: https://mafft.cbrc.jp/alignment/software/
 .. _MUSCLE: https://www.drive5.com/muscle/
+.. _FAMSA: https://github.com/refresh-bio/FAMSA
+.. _pyfamsa: https://github.com/althonos/pyfamsa
