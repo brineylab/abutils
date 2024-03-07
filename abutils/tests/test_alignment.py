@@ -276,6 +276,20 @@ def test_famsa_alignment(sequences):
     assert alignment[2].id == "seq3"
 
 
+def test_famsa_alignment_file(sequences):
+    alignment_file = tempfile.NamedTemporaryFile(delete=False)
+    alignment = famsa(sequences, alignment_file=alignment_file.name, as_file=True)
+    assert alignment == alignment_file.name
+
+
+def test_famsa_alignment_string(sequences):
+    alignment_string = famsa(sequences, as_string=True)
+    assert isinstance(alignment_string, str)
+    assert "seq1" in alignment_string
+    assert "seq2" in alignment_string
+    assert "seq3" in alignment_string
+
+
 def test_famsa_alignment_id_key():
     seq1 = {
         "name": "seq1",
