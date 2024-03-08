@@ -84,11 +84,11 @@ utilities
 when working with antibody repertoire data. These include funcions for monitoring 
 multiprocessing jobs, creating and modifying color palettes, and others.
 
+  * :ref:`io <io>`: functions for reading and writing sequence data
+
   * :ref:`jobs <jobs>`: functions for monitoring multiprocessing jobs
 
   * :ref:`colors <colors>`: functions for working with colors and color palettes
-
-  * :ref:`path <path>`: functions for working with file paths
 
 
 
