@@ -1033,6 +1033,8 @@ def to_csv(
     header: bool = True,
     columns: Optional[Iterable] = None,
     index: bool = False,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a CSV file.
@@ -1058,12 +1060,28 @@ def to_csv(
     index : bool, default=False
         If ``True``, the CSV file will contain an index column. Default is ``False``.
 
+    properties : list, default=None
+        A list of properties to be included in the CSV file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
     """
-    d = []
+    data = []
     for s in sequences:
         if not s.annotations:
-            d.append({"sequence_id": s.id, "sequence": s.sequence})
+            d = {"sequence_id": s.id, "sequence": s.sequence}
         else:
-            d.append(s.annotations)
-    df = pd.DataFrame(d)
+            d = s.annotations
+        if properties is not None:
+            for prop in properties:
+                try:
+                    d[prop] = getattr(s, prop)
+                except AttributeError:
+                    continue
+        data.append(d)
+    df = pd.DataFrame(data)
+    if drop_na_columns:
+        df.dropna(axis=1, how="all", inplace=True)
     df.to_csv(csv_file, sep=sep, index=index, columns=columns, header=header)
