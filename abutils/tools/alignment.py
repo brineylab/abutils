@@ -792,11 +792,11 @@ def famsa(
     if isinstance(sequences, str):
         seqs = read_fasta(sequences)
     else:
-        seqs = []
-        for s in sequences:
-            _seq = s.sequence if seq_key is None else s[seq_key]
-            _id = s.id if id_key is None else s[id_key]
-            seqs.append(Sequence(_seq, id=_id))
+        seqs = [Sequence(s, id_key=id_key, seq_key=seq_key) for s in sequences]
+        # for s in sequences:
+        #     _seq = s.sequence if seq_key is None else s[seq_key]
+        #     _id = s.id if id_key is None else s[id_key]
+        #     seqs.append(Sequence(_seq, id=_id))
     pyfamsa_seqs = [pyfamsa.Sequence(s.id.encode(), s.sequence.encode()) for s in seqs]
     # do the alignment
     aligner = pyfamsa.Aligner(
