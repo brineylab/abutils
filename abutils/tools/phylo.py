@@ -35,7 +35,8 @@ from typing import Callable, Iterable, List, Optional, Union
 
 import baltic as bt
 import matplotlib.pyplot as plt
-from abstar.core.germline import get_imgt_germlines
+
+# from abstar.core.germline import get_imgt_germlines
 from Bio import Phylo
 from matplotlib import markers
 from matplotlib.path import Path
@@ -256,7 +257,7 @@ class Phylogeny:
             ).most_common()[0][0]
             if top_v is None:
                 return
-            germ = get_imgt_germlines(self.germ_db, "V", gene=top_v)
+            # germ = get_imgt_germlines(self.germ_db, "V", gene=top_v)
             self._root = self._get_top_germline_v()
         elif isinstance(self._root, str):
             root = [s for s in self.sequences if s.id == self._root]
@@ -922,6 +923,8 @@ class Phylogeny:
         If the germline V-gene can't be found, the germline database can't be found/inferred,
         or the sequences don't have AIRR-compatible annotations, returns ``None``.
         """
+        from abstar.core.germline import get_imgt_germlines
+
         v_counts = Counter([s.get("v_call", None) for s in self.sequences])
         top_v = v_counts.most_common()[0][0]
         if top_v is None:
