@@ -1035,6 +1035,9 @@ def to_csv(
     index: bool = False,
     properties: Optional[Iterable[str]] = None,
     drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a CSV file.
@@ -1067,6 +1070,17 @@ def to_csv(
         If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
         Default is ``True``.
 
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
     """
     data = []
     for s in sequences:
@@ -1082,6 +1096,24 @@ def to_csv(
                     continue
         data.append(d)
     df = pd.DataFrame(data)
+    # drop NaN
     if drop_na_columns:
         df.dropna(axis=1, how="all", inplace=True)
+    # excluded columns
+    if exclude is not None:
+        if isinstance(exclude, str):
+            exclude = []
+        cols = [c for c in df.columns.values if c not in exclude]
+        df = df[cols]
+    # reorder
+    if order is not None:
+        cols = [o for o in order if o in df.columns.values]
+        df = df[cols]
+    if leading is not None:
+        if isinstance(leading, str):
+            leading = [leading]
+        leading = [l for l in leading if l in df.columns.values]
+        cols = leading + [c for c in df.columns.values if c not in leading]
+        df = df[cols]
+
     df.to_csv(csv_file, sep=sep, index=index, columns=columns, header=header)
