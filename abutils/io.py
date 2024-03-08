@@ -25,16 +25,16 @@
 import sys
 
 from .core.sequence import (
-    read_csv,
+    from_mongodb,
     read_airr,
+    read_csv,
     read_fasta,
     read_fastq,
     read_json,
-    from_mongodb,
+    to_csv,
     to_fasta,
     to_fastq,
 )
-
 from .utils.convert import abi_to_fasta
 from .utils.pipeline import list_files, make_dir
 
@@ -63,7 +63,7 @@ def read_sequences(
         ``'fastq'``, ``'json'`` and ``'mongodb'``. Default is ``'airr'``.
 
     sep (str): character used to separate fields in ``'tabular'`` input files. This option is
-        only used when ``format`` is ``'tabular'``. Default is ``'\t'``, which conforms with the 
+        only used when ``format`` is ``'tabular'``. Default is ``'\t'``, which conforms with the
         default format for AIRR-compatible sequence annotation.
 
     id_key (str): name of the field containing the sequence ID. Default is ``'sequence_id'``.
@@ -74,9 +74,9 @@ def read_sequences(
 
     collection (str): mongodb collection to query for sequence information. Required if ``format`` is ``'mongodb'``.
 
-    mongodb_kwargs (dict): dictionary containing additional keyword arguments that will be passed to 
+    mongodb_kwargs (dict): dictionary containing additional keyword arguments that will be passed to
         ``abutils.io.from_mongodb``.
-    
+
 
     Returns:
     --------
@@ -112,4 +112,3 @@ def read_sequences(
         error = f'Format type "{format}"" is not supported. '
         error += 'Supported file types are "airr", "fasta", "json", and "tabular".'
         raise ValueError(error)
-

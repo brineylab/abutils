@@ -1024,3 +1024,46 @@ def to_fastq(
     with open(fastq_file, "w") as f:
         f.write(fastq_string)
     return fastq_file
+
+
+def to_csv(
+    sequences: Iterable[Sequence],
+    csv_file: str,
+    sep: str = ",",
+    header: bool = True,
+    columns: Optional[Iterable] = None,
+    index: bool = False,
+) -> None:
+    """
+    Saves a list of ``Sequence`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. Required.
+
+    sep : str, default=","
+        Column delimiter. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    index : bool, default=False
+        If ``True``, the CSV file will contain an index column. Default is ``False``.
+
+    """
+    d = []
+    for s in sequences:
+        if not s.annotations:
+            d.append({"sequence_id": s.id, "sequence": s.sequence})
+        else:
+            d.append(s.annotations)
+    df = pd.DataFrame(d)
+    df.to_csv(csv_file, sep=sep, index=index, columns=columns, header=header)
