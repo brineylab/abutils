@@ -37,47 +37,106 @@ from Bio.Align import AlignInfo
 from ..core.sequence import Sequence, read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 from ..utils.pipeline import make_dir
-from .alignment import mafft, make_consensus
+from .alignment import make_consensus
 
-__all__ = ["cluster", "cluster_vsearch", "cluster_mmseqs", "cluster_cdhit"]
+__all__ = [
+    "cluster",
+    "cluster_vsearch",
+    "cluster_mmseqs",
+    "cluster_cdhit",
+    "Clusters",
+    "Cluster",
+]
 
 
 class Cluster:
     """
-    Docstring for Cluster.
+    Class for a sequence cluster.
+
+    Attributes
+    ----------
+    name : str
+        Name of the cluster.
+
+    sequences : list
+        List of sequences in the cluster.
+
+    size : int
+        Number of sequences in the cluster.
+
+    seq_ids : list
+        List of sequence IDs in the cluster.
+
+    centroid : ``Sequence``
+        Centroid sequence of the cluster.
+
+    consensus : ``Sequence``
+        Consensus sequence of the cluster.
+
     """
 
     def __init__(self, name, sequences, centroid=None):
         self.name = name
         self.sequences = sequences
         self.centroid = centroid
+        self._consensus = None
 
     def __iter__(self):
         for s in self.sequences:
             yield s
 
     @property
-    def size(self):
+    def size(self) -> int:
         return len(self.sequences)
 
     @property
-    def seq_ids(self):
+    def seq_ids(self) -> Iterable[str]:
         return [s.id for s in self.sequences]
 
-    @lazy_property
-    def consensus(self):
-        return self._make_consensus()
+    @property
+    def consensus(self) -> Sequence:
+        if self._consensus is None:
+            self._consensus = self.make_consensus()
+        return self._consensus()
 
-    def _make_consensus(self):
+    def make_consensus(
+        self,
+        threshold: float = 0.51,
+        algo: str = "mafft",
+        ambiguous: Optional[str] = None,
+    ) -> Sequence:
+        """
+        Makes a consensus sequence from the cluster's sequences.
+
+        Parameters
+        ----------
+        threshold : float, default=0.51
+            Threshold for calling a consensus base. Must be between 0 and 1.
+
+        algo : str, default="mafft"
+            Algorithm to be used for generating the consensus sequence. Options are
+            ``"mafft"``, ``"famsa"``, or ``"muscle"``.
+
+        ambiguous : str, default=None
+            Character to use for ambiguous bases. If not provided, the default
+            ambiguous base for the sequence type will be used.
+
+        Returns
+        -------
+        consensus : ``Sequence``
+
+        """
         if len(self.sequences) == 1:
             return self.sequences[0]
         consensus = make_consensus(
             self.sequences,
-            threshold=0.51,
-            algo="mafft",
-            ambiguous="n",
+            threshold=threshold,
+            algo=algo,
+            ambiguous=ambiguous,
         )
+        self._consensus = consensus
         return consensus
+        # return consensus
         # aln = mafft(self.sequences)
         # if aln is None:
         #     print("ERROR: Failed to generate an alignmnet for a consensus sequence.")
@@ -91,7 +150,24 @@ class Cluster:
 
 class Clusters:
     """
-    Docstring for Clusters.
+    Class for a collection of clusters.
+
+    Attributes
+    ----------
+    clusters : list
+        List of clusters. Clusters are sorted in descending order by size,
+        with the largest cluster first.
+
+    centroids : list
+        List of cluster centroids.
+
+    largest_cluster : ``Cluster``
+        The largest cluster in the collection.
+
+    count : int
+        Number of clusters in the collection.
+
+
     """
 
     def __init__(self, clusters=None):
@@ -174,7 +250,8 @@ def cluster(
             6. list of strings, with each string being a separate sequence.
         Required.
 
-    .. Note::
+    .. note::
+
         If ``sequences`` is a list of ``str`` objects, they will be assigned random IDs.
 
     threshold : float, default=0.975
@@ -244,7 +321,6 @@ def cluster(
 
     .. _VSEARCH
         https://github.com/torognes/vsearch
-        x
     .. _MMseqs2
         https://github.com/soedinglab/MMseqs2
     .. _CD-HIT
@@ -302,10 +378,9 @@ def cluster(
             debug=debug,
         )
     else:
-        err = f"\nERROR: Invalid algo option: {algo}."
-        err += " Valid choices are: 'vsearch', 'mmseqs', or 'auto'.\n"
-        print(err)
-        sys.exit()
+        err = f"Invalid algo option: {algo}."
+        err += " Valid choices are: 'vsearch', 'mmseqs', or 'auto'."
+        raise (ValueError, err)
     cluster_info = {}
     for cname, cdata in cluster_dict.items():
         cluster_info[cname] = {
@@ -328,7 +403,7 @@ def cluster_vsearch(
     debug: bool = False,
 ) -> Union[dict, Clusters]:
     """
-    Clusters sequences using `VSEARCH`_.
+    Clusters sequences using `VSEARCH <https://github.com/torognes/vsearch>`_.
 
     Parameters
     ----------
@@ -384,10 +459,6 @@ def cluster_vsearch(
     -------
     clusters : Path to the UC output file from ``vsearch`` or a ``dict`` of cluster info.
 
-
-    .. _VSEARCH
-        https://github.com/torognes/vsearch
-
     """
     # output files
     centroid_file = tempfile.NamedTemporaryFile(
@@ -403,11 +474,11 @@ def cluster_vsearch(
     # do clustering
     vsearch_cmd = f"{vsearch_bin} --cluster_fast {fasta_file}"
     vsearch_cmd += f" --centroids {centroid_file}"
-    vsearch_cmd += f" --clusterout_id"
+    vsearch_cmd += " --clusterout_id"
     vsearch_cmd += f" --uc {uc_file}"
     vsearch_cmd += f" --id {threshold}"
     vsearch_cmd += f" --iddef {iddef}"
-    vsearch_cmd += f" --sizeout"
+    vsearch_cmd += " --sizeout"
     vsearch_cmd += f" --strand {strand}"
     p = sp.Popen(vsearch_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = p.communicate()
@@ -453,7 +524,7 @@ def cluster_mmseqs(
     debug: bool = False,
 ):
     """
-    Clusters sequences using `MMseqs2`_.
+    Clusters sequences using `MMseqs2 <https://github.com/soedinglab/MMseqs2>`_.
 
     Parameters
     ----------
@@ -494,10 +565,6 @@ def cluster_mmseqs(
     Returns
     -------
     clusters : Path to the TSV output file from ``mmseqs`` or a ``dict`` of cluster info.
-
-
-    .. _MMseqs2
-        https://github.com/soedinglab/MMseqs2
 
     """
     # output files

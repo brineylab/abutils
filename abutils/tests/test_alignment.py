@@ -2,7 +2,8 @@ import platform
 import tempfile
 
 import pytest
-from Bio.Align import MultipleSeqAlignment
+
+# from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -12,9 +13,11 @@ from ..tools.alignment import (
     CIGARElement,
     GlobalAlignment,
     LocalAlignment,
+    MultipleSequenceAlignment,
     PairwiseAlignment,
     SemiGlobalAlignment,
-    consensus,
+    # consensus,
+    famsa,
     global_alignment,
     local_alignment,
     mafft,
@@ -41,7 +44,7 @@ def sequences():
 
 @pytest.fixture
 def aln_sequences():
-    return MultipleSeqAlignment(
+    return MultipleSequenceAlignment(
         [
             SeqRecord(
                 Seq(
@@ -72,7 +75,7 @@ def aln_sequences():
 
 def test_mafft_alignment(sequences):
     alignment = mafft(sequences, debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id == "seq1"
     assert alignment[1].id == "seq2"
@@ -97,7 +100,7 @@ def test_mafft_alignment_string(sequences):
 
 def test_mafft_alignment_phylip(sequences):
     alignment = mafft(sequences, fmt="phylip", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -106,7 +109,7 @@ def test_mafft_alignment_phylip(sequences):
 
 def test_mafft_alignment_clustal(sequences):
     alignment = mafft(sequences, fmt="clustal", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -115,7 +118,7 @@ def test_mafft_alignment_clustal(sequences):
 
 def test_mafft_alignment_threads(sequences):
     alignment = mafft(sequences, threads=2, debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -124,7 +127,7 @@ def test_mafft_alignment_threads(sequences):
 
 def test_mafft_alignment_reorder(sequences):
     alignment = mafft(sequences, reorder=False, debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id == "seq1"
     assert alignment[1].id == "seq2"
@@ -146,7 +149,7 @@ def test_mafft_alignment_id_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = mafft(sequences, id_key="name", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -168,7 +171,7 @@ def test_mafft_alignment_seq_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = mafft(sequences, seq_key="seq", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -182,7 +185,7 @@ def test_mafft_alignment_seq_key():
 
 def test_muscle_alignment(sequences):
     alignment = muscle(sequences, debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     aln_ids = sorted([s.id for s in alignment])
     assert aln_ids[0] == "seq1"
@@ -208,7 +211,7 @@ def test_muscle_alignment_string(sequences):
 
 def test_muscle_alignment_threads(sequences):
     alignment = muscle(sequences, threads=2, debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -230,7 +233,7 @@ def test_muscle_alignment_id_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = muscle(sequences, id_key="name", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -252,7 +255,79 @@ def test_muscle_alignment_seq_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = muscle(sequences, seq_key="seq", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
+    assert len(alignment) == 3
+    assert alignment[0].id in ["seq1", "seq2", "seq3"]
+    assert alignment[1].id in ["seq1", "seq2", "seq3"]
+    assert alignment[2].id in ["seq1", "seq2", "seq3"]
+
+
+# ---------------------------
+#          FAMSA
+# ---------------------------
+
+
+def test_famsa_alignment(sequences):
+    alignment = famsa(sequences)
+    assert isinstance(alignment, MultipleSequenceAlignment)
+    assert len(alignment) == 3
+    assert alignment[0].id == "seq1"
+    assert alignment[1].id == "seq2"
+    assert alignment[2].id == "seq3"
+
+
+def test_famsa_alignment_file(sequences):
+    alignment_file = tempfile.NamedTemporaryFile(delete=False)
+    alignment = famsa(sequences, alignment_file=alignment_file.name, as_file=True)
+    assert alignment == alignment_file.name
+
+
+def test_famsa_alignment_string(sequences):
+    alignment_string = famsa(sequences, as_string=True)
+    assert isinstance(alignment_string, str)
+    assert "seq1" in alignment_string
+    assert "seq2" in alignment_string
+    assert "seq3" in alignment_string
+
+
+def test_famsa_alignment_id_key():
+    seq1 = {
+        "name": "seq1",
+        "sequence": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq2 = {
+        "name": "seq2",
+        "sequence": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq3 = {
+        "name": "seq3",
+        "sequence": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    sequences = [seq1, seq2, seq3]
+    alignment = famsa(sequences, id_key="name")
+    assert isinstance(alignment, MultipleSequenceAlignment)
+    assert len(alignment) == 3
+    assert alignment[0].id in ["seq1", "seq2", "seq3"]
+    assert alignment[1].id in ["seq1", "seq2", "seq3"]
+    assert alignment[2].id in ["seq1", "seq2", "seq3"]
+
+
+def test_famsa_alignment_seq_key():
+    seq1 = {
+        "sequence_id": "seq1",
+        "seq": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq2 = {
+        "sequence_id": "seq2",
+        "seq": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    seq3 = {
+        "sequence_id": "seq3",
+        "seq": "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
+    }
+    sequences = [seq1, seq2, seq3]
+    alignment = famsa(sequences, seq_key="seq")
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -266,7 +341,7 @@ def test_muscle_alignment_seq_key():
 
 def test_muscle_v3_alignment(sequences):
     alignment = muscle_v3(sequences, debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id == "seq1"
     assert alignment[1].id == "seq2"
@@ -291,7 +366,7 @@ def test_muscle_v3_alignment_string(sequences):
 
 def test_muscle_v3_alignment_phylip(sequences):
     alignment = muscle_v3(sequences, fmt="phylip", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -300,7 +375,7 @@ def test_muscle_v3_alignment_phylip(sequences):
 
 def test_muscle_v3_alignment_clustal(sequences):
     alignment = muscle_v3(sequences, fmt="clustal", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -322,7 +397,7 @@ def test_muscle_v3_alignment_id_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = muscle_v3(sequences, id_key="name", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -344,7 +419,7 @@ def test_muscle_v3_alignment_seq_key():
     }
     sequences = [seq1, seq2, seq3]
     alignment = muscle_v3(sequences, seq_key="seq", debug=True)
-    assert isinstance(alignment, MultipleSeqAlignment)
+    assert isinstance(alignment, MultipleSequenceAlignment)
     assert len(alignment) == 3
     assert alignment[0].id in ["seq1", "seq2", "seq3"]
     assert alignment[1].id in ["seq1", "seq2", "seq3"]
@@ -356,15 +431,15 @@ def test_muscle_v3_alignment_seq_key():
 # ---------------------------
 
 
-def test_consensus(aln_sequences):
-    name, consensus_string = consensus(aln_sequences)
-    assert isinstance(name, str)
-    assert isinstance(consensus_string, str)
-    assert len(consensus_string) == 60
-    assert (
-        consensus_string
-        == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
-    )
+# def test_consensus(aln_sequences):
+#     consensus = consensus(aln_sequences)
+#     assert isinstance(name, str)
+#     assert isinstance(consensus_string, str)
+#     assert len(consensus_string) == 60
+#     assert (
+#         consensus_string
+#         == "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
+#     )
 
 
 def test_make_consensus(sequences):

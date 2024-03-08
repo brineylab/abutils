@@ -36,12 +36,13 @@ from itertools import groupby
 from typing import Callable, Iterable, Optional, Union
 
 import parasail
+import pyfamsa
 from Bio import AlignIO
 from Bio.Align import AlignInfo, MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence
+from ..core.sequence import Sequence, read_fasta
 from ..io import to_fasta
 from ..utils.decorators import lazy_property
 
@@ -54,9 +55,12 @@ __all__ = [
     "semiglobal_alignment",
     "dot_alignment",
     "make_consensus",
-    # "LocalAlignment",
-    # "GlobalAlignment",
-    # "SemiGlobalAlignment",
+    "MultipleSequenceAlignment",
+    "PairwiseAlignment",
+    "LocalAlignment",
+    "GlobalAlignment",
+    "SemiGlobalAlignment",
+    "CIGAR",
 ]
 
 
@@ -68,7 +72,28 @@ __all__ = [
 
 
 class MultipleSequenceAlignment:
-    def __init__(self, input_alignment, fmt="fasta"):
+    def __init__(
+        self,
+        input_alignment: Union[str, Iterable, MultipleSeqAlignment],
+        fmt: str = "fasta",
+    ):
+        """
+        Class for working with multiple sequence alignments.
+
+        Parameters
+        ----------
+        input_alignment : (str, iterable, MultipleSeqAlignment)
+            Can be one of several things:
+                1. path to an alignment file
+                2. an alignment string (for example, the result of calling ``read()`` on an alignment file)
+                3. a BioPython ``MultipleSeqAlignment`` object
+                4. a list of aligned BioPython ``SeqRecord`` objects
+                5. a list of aligned ``abutils.Sequence`` objects
+
+        fmt : str, default='fasta'
+            Format of the input alignment. Choices are 'fasta', 'phylip', and 'clustal'.
+
+        """
         self._sequences = None
 
         self.input = input_alignment
@@ -231,21 +256,35 @@ class MultipleSequenceAlignment:
                 ]
             )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Sequence]:
+        """
+        Iterate over the aligned sequences in the alignment.
+        """
         for s in self.sequences:
             yield s
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """
+        Return the number of sequences in the alignment.
+        """
         return len(self.aln)
 
-    def __repr__(self):
-        print(self.aln)
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the alignment.
+        """
+        return str(self.aln)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Return a string representation of the alignment.
+        """
         return self.aln_string
 
     def _process_alignment(self, input_alignment):
-        if isinstance(input_alignment, str):
+        if isinstance(input_alignment, MultipleSeqAlignment):
+            return input_alignment
+        elif isinstance(input_alignment, str):
             if os.path.isfile(input_alignment):
                 return self._read_alignment_file(input_alignment, self.fmt)
             else:
@@ -258,7 +297,8 @@ class MultipleSequenceAlignment:
             return aln
         else:
             raise ValueError(
-                "Invalid input. Must be a path to an alignment file, an alignment string, or a list of aligned Sequences."
+                "Invalid input. Must be a path to an alignment file, a biopython \
+                    ``MultipleSeqAlignment`` object, an alignment string, or a list of aligned Sequences."
             )
 
     def _read_alignment_file(self, aln_file, fmt):
@@ -270,25 +310,89 @@ class MultipleSequenceAlignment:
         return AlignIO.read(StringIO(aln_file), fmt)
 
     @property
-    def aln_string(self):
+    def aln_string(self) -> str:
+        """
+        Returns the alignment as a string.
+
+        """
         return str(self.aln)
 
     @property
-    def sequences(self):
+    def sequences(self) -> Iterable[Sequence]:
+        """
+        Sequences in the alignment. Note that this is a list of ``Sequence``
+        objects, not BioPython ``SeqRecord`` objects, and that the sequences
+        are aligned, meaning they are all the same length and may have gaps.
+
+        Returns
+        -------
+        list of ``Sequence`` objects
+
+        """
         if self._sequences is None:
             self._sequences = [Sequence(s) for s in self.aln]
         return self._sequences
 
-    def format(self, format):
+    def format(self, format) -> str:
+        """
+        Format the alignment as a string.
+
+        Parameters
+        ----------
+        format : str
+            Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'.
+
+        """
         return self.aln.format(format)
 
     def make_consensus(
         self,
         name: Optional[str] = None,
         threshold: float = 0.51,
-        ambiguous: str = "N",
+        ambiguous: Optional[str] = None,
         as_string: bool = False,
-    ):
+    ) -> Union[str, Sequence]:
+        """
+        Make a consensus sequence from the multiple sequence alignment.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name of the consensus sequence. If not provided, a random UUID
+            will be used.
+
+        threshold : float, default=0.51
+            Threshold for calling a consensus base. Default is 0.51, meaning
+            that a base will be called if it is present in at least 51% of
+            the sequences.
+
+        ambiguous : str, optional
+            Character to use for ambiguous bases. If not provided, the
+            default is "N" if the sequences contain only standard nucleotides
+            (A, T, G, C), and "X" otherwise.
+
+        as_string : bool, default=False
+            If ``True``, returns the consensus sequence as a string. If
+            ``False``, returns a ``Sequence`` object.
+
+        Returns
+        -------
+        consensus : str or ``Sequence``
+            If ``as_string`` is ``True``, returns the consensus sequence as
+            a string. If ``False``, returns a ``Sequence`` object.
+
+        """
+        if ambiguous is None:
+            if all(
+                [
+                    nt in ["A", "T", "G", "C", "N", "-"]
+                    for s in self.sequences
+                    for nt in s.sequence
+                ]
+            ):
+                ambiguous = "N"
+            else:
+                ambiguous = "X"
         summary_align = AlignInfo.SummaryInfo(self.aln)
         consensus = summary_align.gap_consensus(
             threshold=threshold, ambiguous=ambiguous
@@ -435,12 +539,13 @@ def mafft(
         return None
     if as_file:
         return alignment_file
-    with open(alignment_file, "r") as f:
-        if as_string:
+
+    if as_string:
+        with open(alignment_file, "r") as f:
             aln = f.read()
-        else:
-            aln = AlignIO.read(f, fmt)
-            # aln = MultipleSequenceAlignment(alignment_file, fmt)
+    else:
+        # aln = AlignIO.read(f, fmt)
+        aln = MultipleSequenceAlignment(alignment_file, fmt.lower())
     os.unlink(alignment_file)
     return aln
 
@@ -569,13 +674,153 @@ def muscle(
         return None
     if as_file:
         return alignment_file
-    with open(alignment_file, "r") as f:
-        if as_string:
+    if as_string:
+        with open(alignment_file, "r") as f:
             aln = f.read()
-        else:
-            aln = AlignIO.read(f, "fasta")
+    else:
+        # aln = AlignIO.read(f, "fasta")
+        aln = MultipleSequenceAlignment(alignment_file, "fasta")
     os.unlink(alignment_file)
     return aln
+
+
+def famsa(
+    sequences: Union[str, Iterable],
+    alignment_file: Optional[str] = None,
+    fmt: str = "fasta",
+    as_file: bool = False,
+    as_string: bool = False,
+    threads: int = 0,
+    guide_tree: str = "sl",
+    tree_heuristic: Optional[str] = None,
+    medoid_threshold: int = 0,
+    n_refinements: int = 100,
+    keep_duplicates: bool = False,
+    refine: Optional[bool] = None,
+    id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
+    debug: bool = False,
+    fasta: Optional[str] = None,
+) -> Union[MultipleSeqAlignment, str]:
+    """
+    Performs multiple sequence alignment with `FAMSA`_ using the `pyfamsa`_ package.
+
+    Parameters
+    ----------
+    sequences : (str, iterable)
+        Can be one of several things:
+            1. path to a FASTA-formatted file
+            2. a FASTA-formatted string
+            3. a list of BioPython ``SeqRecord`` objects
+            4. a list of abutils ``Sequence`` objects
+            5. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+
+    alignment_file : str, optional
+        Path for the output alignment file. Required if ``as_file`` is ``True``.
+
+    fmt : str, default='fasta'
+        Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'.
+
+    as_file: bool, default=False
+        If ``True``, returns the path to the alignment file. If ``False``,
+        returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
+        output as a ``str``, depending on `as_string`. If `alignment_file` is not
+        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``.
+        Note that this temporary file is created in ``"/tmp"`` and may be removed
+        by the operating system without notice.
+
+    as_string: bool, default=False
+        If ``True``, returns a the alignment output as a string. If ``False``,
+        returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
+        ``Bio.AlignIO.read()`` on the alignment file).
+
+    threads : int, default=0
+        Number of threads for FAMSA to use. Default is ``0``, which uses all
+        available CPUs.
+
+    guide_tree : str, default='sl'
+        Method for building the guide tree. Choices are 'sl', 'slink', 'nj', and 'upgma'.
+
+    tree_heuristic : str, default=None
+        The heuristic to use for constructing the tree. Supported values are:
+        'medoid', 'part', or ``None`` to disable heuristics.
+
+    medoid_threshold : int, default=0
+        Minimum number of sequences a set must contain for medoid trees to be used,
+        if enabled with ``tree_heuristic``. Default is ``0``.
+
+    n_refinements : int, default=100
+        Number of refinement iterations to perform. Default is ``100``.
+
+    keep_duplicates : bool, default=False
+        If ``True``, duplicate sequences are kept in the alignment. Default is ``False``.
+
+    refine : bool, default=None
+        If ``True``, the alignment is refined. If ``False``, the alignment is not refined.
+        If ``None``, the alignment is refined if the number of sequences is less than 1000.
+
+    id_key : str, default=None
+        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
+
+    sequence_key : str, default=None
+        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
+
+    debug : bool, default=False
+        If ``True``, prints MAFFT's standard output and standard error.
+        Default is ``False``.
+
+    fasta : str, optional
+        Path to a FASTA-formatted input file. Depricated (use `sequences`
+        for all types if input), but retained for backwards compatibility.
+
+
+    Returns
+    -------
+    alignment : str or ``MultipleSeqAlignment``
+        If ``as_file`` is ``True``, returns a path to the output alignment file,
+        Otherwise, returns a BioPython ``MultipleSeqAlignment`` object.
+
+
+    .. _FAMSA:
+        https://github.com/refresh-bio/FAMSA
+    .. _pyfamsa:
+        https://github.com/althonos/pyfamsa
+    """
+    # process input
+    if fasta is not None:
+        sequences = fasta
+    if isinstance(sequences, str):
+        seqs = read_fasta(sequences)
+    else:
+        seqs = [Sequence(s, id_key=id_key, seq_key=seq_key) for s in sequences]
+        # for s in sequences:
+        #     _seq = s.sequence if seq_key is None else s[seq_key]
+        #     _id = s.id if id_key is None else s[id_key]
+        #     seqs.append(Sequence(_seq, id=_id))
+    pyfamsa_seqs = [pyfamsa.Sequence(s.id.encode(), s.sequence.encode()) for s in seqs]
+    # do the alignment
+    aligner = pyfamsa.Aligner(
+        threads=threads,
+        guide_tree=guide_tree,
+        tree_heuristic=tree_heuristic,
+        medoid_threshold=medoid_threshold,
+        n_refinements=n_refinements,
+        keep_duplicates=keep_duplicates,
+        refine=refine,
+    )
+    aln = aligner.align(pyfamsa_seqs)
+    aligned_seqs = [Sequence(s.sequence.decode(), id=s.id.decode()) for s in aln]
+    msa = MultipleSequenceAlignment(aligned_seqs)
+    # build output
+    if as_file:
+        if alignment_file is None:
+            alignment_file = tempfile.NamedTemporaryFile(delete=False).name
+        with open(alignment_file, "w") as f:
+            f.write(msa.format(fmt))
+        return alignment_file
+    elif as_string:
+        return msa.format(fmt)
+    return msa
 
 
 def muscle_v3(
@@ -737,11 +982,12 @@ def muscle_v3(
         return None
     if as_file:
         return alignment_file
-    with open(alignment_file, "r") as f:
-        if as_string:
+    if as_string:
+        with open(alignment_file, "r") as f:
             aln = f.read()
-        else:
-            aln = AlignIO.read(f, fmt)
+    else:
+        # aln = AlignIO.read(f, fmt)
+        aln = MultipleSequenceAlignment(alignment_file, fmt.lower())
     os.unlink(alignment_file)
     return aln
 
@@ -755,22 +1001,24 @@ def muscle_v3(
     #     return AlignIO.read(StringIO(alignment), fmt)
 
 
-def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
-    summary_align = AlignInfo.SummaryInfo(aln)
-    consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
-    if name is None:
-        name = str(uuid.uuid4())
-    consensus_string = str(consensus).replace("-", "")
-    return (name, consensus_string.upper())
+# def consensus(aln, name=None, threshold=0.51, ambiguous="N"):
+#     summary_align = AlignInfo.SummaryInfo(aln)
+#     consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
+#     if name is None:
+#         name = str(uuid.uuid4())
+#     consensus_string = str(consensus).replace("-", "")
+#     return (name, consensus_string.upper())
 
 
 def make_consensus(
-    sequences: Iterable[Sequence],
+    sequences: Optional[Iterable[Sequence]] = None,
+    alignment: Union[str, MultipleSeqAlignment, MultipleSequenceAlignment, None] = None,
     algo: str = "mafft",
+    alignment_kwargs: Optional[dict] = None,
     name: Optional[str] = None,
     downsample_to: Optional[int] = None,
     threshold: float = 0.51,
-    ambiguous: str = "N",
+    ambiguous: Optional[str] = None,
     seed: Optional[int] = None,
     as_string: bool = False,
 ) -> Sequence:
@@ -779,11 +1027,22 @@ def make_consensus(
 
     Parameters
     ----------
-    sequences : iterable
-        List of sequences from which to make a consensus.
+    sequences : iterable, optional
+        List of sequences from which to make a consensus. Sequences should not already
+        be aligned (if they are, use ``alignment`` instead). One of ``sequences``
+        or ``alignment`` must be provided.
+
+    alignment : str or ``MultipleSeqAlignment``, optional
+        A FASTA-formatted alignment string, a path to a FASTA-formatted alignment file,
+        a BioPython ``MultipleSeqAlignment`` object, or a ``MultipleSequenceAlignment`` object.
+        One of ``sequences`` or ``alignment`` must be provided.
 
     algo : str, default='mafft'
-        Algorithm to use for multiple sequence alignment. Choices are 'mafft' and 'muscle'.
+        Algorithm to use for multiple sequence alignment. Choices are 'mafft',
+        'famsa', or 'muscle'.
+
+    alignment_kwargs : dict, optional
+        Additional keyword arguments to pass to the alignment function.
 
     name : str, optional
         Name for the consensus sequence. If not provided, a random UUID will be used.
@@ -802,28 +1061,44 @@ def make_consensus(
         Consensus sequence.
 
     """
-    # downsampling
-    if downsample_to is not None and len(sequences) > downsample_to:
-        if seed is not None:
-            random.seed(seed)
-        sequences = random.sample(sequences, downsample_to)
-    # alignment
-    if algo.lower() == "mafft":
-        aln = mafft(sequences, as_file=False)
-    elif algo.lower() == "muscle":
-        aln = muscle(sequences, as_file=False)
+    if sequences is None and alignment is None:
+        raise ValueError("Must provide either <sequences> or <alignment>.")
+    elif sequences is not None:
+        # downsampling
+        if downsample_to is not None and len(sequences) > downsample_to:
+            if seed is not None:
+                random.seed(seed)
+            sequences = random.sample(sequences, downsample_to)
+        # alignment
+        if alignment_kwargs is None:
+            alignment_kwargs = {}
+        alignment_kwargs["as_file"] = False
+        if algo.lower() == "mafft":
+            aln = mafft(sequences, **alignment_kwargs)
+        elif algo.lower() == "muscle":
+            aln = muscle(sequences, **alignment_kwargs)
+        elif algo.lower() == "famsa":
+            aln = famsa(sequences, **alignment_kwargs)
+        else:
+            err = f"Invalid algorithm: {algo}. Must be 'mafft', 'famsa', or 'muscle'."
+            raise ValueError(err)
     else:
-        err = f"Invalid algorithm: {algo}. Must be 'mafft' or 'muscle'."
-        raise ValueError(err)
+        if isinstance(alignment, MultipleSequenceAlignment):
+            aln = alignment
+        else:
+            aln = MultipleSequenceAlignment(alignment)
     # consensus
-    summary_align = AlignInfo.SummaryInfo(aln)
-    consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
-    consensus_string = str(consensus).replace("-", "").upper()
-    if as_string:
-        return consensus_string
-    return Sequence(
-        consensus_string, id=name if name is not None else str(uuid.uuid4())
+    return aln.make_consensus(
+        name=name, threshold=threshold, ambiguous=ambiguous, as_string=as_string
     )
+    # summary_align = AlignInfo.SummaryInfo(aln)
+    # consensus = summary_align.gap_consensus(threshold=threshold, ambiguous=ambiguous)
+    # consensus_string = str(consensus).replace("-", "").upper()
+    # if as_string:
+    #     return consensus_string
+    # return Sequence(
+    #     consensus_string, id=name if name is not None else str(uuid.uuid4())
+    # )
 
 
 # ----------------------------
@@ -839,9 +1114,11 @@ class PairwiseAlignment(ABC):
 
     .. note::
 
-        All comparisons between ``PairwiseAlignment``s are done on the
+        All comparisons between ``PairwiseAlignment`` objects are performed using the
         ``score`` attribute. This was done so that sorting alignments
-        like so::
+        like so:
+
+        .. code-block:: python
 
             list_of_alignments.sort(reverse=True)
 
@@ -978,7 +1255,15 @@ class PairwiseAlignment(ABC):
         return self.align()
 
     @property
-    def cigar(self):
+    def cigar(self) -> "CIGAR":
+        """
+        Alignment CIGAR, as a ``CIGAR`` object.
+
+        Returns
+        -------
+        CIGAR
+            CIGAR object representing the alignment.
+        """
         cigar_string = self.alignment.cigar.decode.decode("utf-8")
         return CIGAR(cigar_string=cigar_string)
 
@@ -987,23 +1272,43 @@ class PairwiseAlignment(ABC):
         return self.alignment.traceback
 
     @lazy_property
-    def score(self):
+    def score(self) -> int:
+        """
+        Alignment score.
+
+        Returns
+        -------
+        int
+            Alignment score.
+        """
         return self.alignment.score
 
     @lazy_property
-    def aligned_query(self):
+    def aligned_query(self) -> str:
+        """
+        Aligned query sequence.
+        """
         return self.traceback.query
 
     @lazy_property
-    def aligned_target(self):
+    def aligned_target(self) -> str:
+        """
+        Aligned target sequence.
+        """
         return self.traceback.ref
 
     @lazy_property
-    def alignment_midline(self):
+    def alignment_midline(self) -> str:
+        """
+        Alignment midline. Pipe characters (|) indicate matches, and spaces indicate mismatches.
+        """
         return self.traceback.comp.replace(".", " ")
 
     @lazy_property
-    def query_begin(self):
+    def query_begin(self) -> int:
+        """
+        Start position of the query sequence in the alignment.
+        """
         # return self.alignment.cigar.beg_query
         query_begin = self.alignment.cigar.beg_query
         if self.cigar[0].element == "I":
@@ -1011,11 +1316,17 @@ class PairwiseAlignment(ABC):
         return query_begin
 
     @lazy_property
-    def query_end(self):
+    def query_end(self) -> int:
+        """
+        End position of the query sequence in the alignment.
+        """
         return self.alignment.end_query
 
     @lazy_property
-    def target_begin(self):
+    def target_begin(self) -> int:
+        """
+        Start position of the target sequence in the alignment.
+        """
         # return self.alignment.cigar.beg_ref
         target_begin = self.alignment.cigar.beg_ref
         if self.cigar[0].element == "D":
@@ -1023,17 +1334,20 @@ class PairwiseAlignment(ABC):
         return target_begin
 
     @lazy_property
-    def target_end(self):
+    def target_end(self) -> int:
+        """
+        End position of the target sequence in the alignment.
+        """
         return self.alignment.end_ref
 
     @property
-    def target_id(self):
+    def target_id(self) -> str:
+        """
+        Sequence ID of the target sequence.
+        """
         return self.target.id
 
     def align(self):
-        """
-        docstring for align
-        """
         aln = self.alignment_function(
             self.query.sequence,
             self.target.sequence,
@@ -1306,13 +1620,13 @@ def local_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in sbustitution matrix <https://github.com/jeffdaily/parasail-python#substitution-matrices>`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
 
     alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `local alignment function`_ to be used for alignment.
+        ``parasail`` `local alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_ to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1333,9 +1647,6 @@ def local_alignment(
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``LocalAlignment`` objects will be returned.
 
-
-    .. _local alignment function
-        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
     """
     # input processing
     query = Sequence(query)
@@ -1409,13 +1720,13 @@ def global_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix <https://github.com/jeffdaily/parasail-python#substitution-matrices>`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
 
-    alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `global alignment function`_ to be used for alignment.
+    alignment_function : Callable, default=parasail.nw_trace_striped_16
+        ``parasail`` `global alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_ to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1436,9 +1747,6 @@ def global_alignment(
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``GlobalAlignment`` objects will be returned.
 
-
-    .. _global alignment function
-        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
     """
     # input processing
     query = Sequence(query)
@@ -1512,13 +1820,13 @@ def semiglobal_alignment(
 
     matrix : str, dict or parasail.Matrix, default=None
         Scoring matrix. Can be either:
-            - the name of a ``parasail`` built-in matrix.
+            - the name of a ``parasail`` `built-in substitution matrix <https://github.com/jeffdaily/parasail-python#substitution-matrices>`_.
             - path to a matrix file (in a format accepted by ``parasail``).
             - a ``parasail.Matrix`` object
         If not provided, a matrix will be created using `match` and `mismatch`.
 
     alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `semi-global alignment function`_ to be used for alignment.
+        ``parasail`` `semi-global alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_ to be used for alignment.
 
     aa : bool, default=False
         Not used. Retained for backwards compatibility.
@@ -1539,9 +1847,6 @@ def semiglobal_alignment(
         object will be returned. If multiple target sequences are supplied (via ``targets``),
         a list of ``SemiGlobalAlignment`` objects will be returned.
 
-
-    .. _semi-global alignment function
-        https://github.com/jeffdaily/parasail-python#standard-function-naming-convention
     """
     # input processing
     query = Sequence(query)

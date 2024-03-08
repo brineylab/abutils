@@ -19,8 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import sphinx_rtd_theme
-from sphinx.application import Sphinx
+# import sphinx_rtd_theme
+# from sphinx.application import Sphinx
 
 HERE = Path(__file__).parent
 
@@ -69,7 +69,7 @@ if os.environ.get("READTHEDOCS", None) == "True":
         "python-Levenshtein",
         "Levenshtein",
         "paramiko",
-        "parasail",
+        # "parasail",
         "pymongo",
         "pyyaml",
         "sample-sheet",

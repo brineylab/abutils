@@ -1,3 +1,5 @@
+.. _lineage-class:
+
 lineage
 ===================
 

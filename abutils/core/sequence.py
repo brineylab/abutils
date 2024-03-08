@@ -23,8 +23,6 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import csv
 import json
 import operator
@@ -43,10 +41,7 @@ from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
 
-if sys.version_info[0] > 2:
-    STR_TYPES = [str]
-else:
-    STR_TYPES = [str, unicode]
+STR_TYPES = [str]
 
 
 class Sequence(object):
@@ -77,7 +72,9 @@ class Sequence(object):
 
     If ``seq`` is a dictionary, typically the result of a MongoDB query, the dictionary
     can be accessed directly from the ``Sequence`` instance (via the ``annotations`` property). To retrive the value
-    for ``'junc_aa'`` in the instantiating dictionary, you would simply::
+    for ``'junc_aa'`` in the instantiating dictionary, you would simply:
+
+    .. code-block:: python
 
         s = Sequence(dict)
         junc = s['junc_aa']
@@ -91,7 +88,9 @@ class Sequence(object):
     ``Sequence.id`` or ``Sequence.sequence`` attributes will be ``None``.
 
     Alternately, the ``__getitem__()`` interface can be used to obtain a slice from the
-    ``sequence`` attribute. An example of the distinction::
+    ``sequence`` attribute. An example of the distinction:
+
+    .. code-block:: python
 
         d = {'name': 'MySequence', 'sequence': 'ATGC'}
         seq = Sequence(d, id_key='name', seq_key='sequence')
@@ -102,7 +101,9 @@ class Sequence(object):
     If the ``Sequence`` is instantiated with a dictionary, calls to ``__contains__()`` will
     return ``True`` if the supplied item is a key in the dictionary. In non-dict instantiations,
     ``__contains__()`` will look in the ``Sequence.sequence`` field directly (essentially a
-    motif search). For example::
+    motif search). For example:
+
+    .. code-block:: python
 
         dict_seq = Sequence({'seq_id': 'seq1', 'vdj_nt': 'ACGT'})
         'seq_id' in dict_seq  # TRUE
@@ -147,49 +148,102 @@ class Sequence(object):
 
         self._process_input(seq, id, qual)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         int: Returns the length of the ``sequence`` attribute
         """
         return len(self.sequence)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[str]:
         """iter: Returns an iterator over the ``sequence`` attribute"""
         return iter(self.sequence)
 
-    def __reversed__(self):
+    def __reversed__(self) -> str:
         """
         str: Returns the reverse of the ``sequence`` attribute
         """
         return "".join(reversed(self.sequence))
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         """
-        bool: If the instance was initialzed with a dictonary (which means
+        Returns True if the supplied item is in the ``Sequence`` object.
+
+        Parameters
+        ----------
+
+        item : str
+            Item to be checked for membership in the ``Sequence`` object.
+
+        Returns
+        -------
+        bool
+            If the instance was initialzed with a dictonary (which means
             the ``annotations`` attribute is not empty), ``__contains__(key)``
             will return ``True`` if ``key`` is in ``annotations.keys()``. If ``annotations``
             is an empty dict, indicating instantiation without a dictionary,
             ``__contains__(motif)`` will return True if ``motif`` is in the
-            ``sequence attribute.
+            ``sequence`` attribute.
 
         """
         if self.annotations:
             return item in self.annotations.keys()
         return item in self.sequence
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Union[str, dict, None]:
+        """
+        Returns a slice of the ``Sequence`` object.
+
+        Parameters
+        ----------
+        key : Union[int, str, slice]
+            If ``Sequence`` was instantiated with a dictionary, ``key`` can be a string
+            that corresponds to a key in the dictionary. If ``Sequence`` was instantiated
+            with a string, ``key`` can be an integer or a slice.
+
+        Returns
+        -------
+        Union[str, dict, None]
+            If ``key`` is a string and the ``Sequence`` was instantiated with a dictionary,
+            the value for the key will be returned. If ``key`` is a string and the ``Sequence``
+            was instantiated with a string, ``None`` will be returned. If ``key`` is an integer
+            or a slice, the corresponding slice of the ``sequence`` attribute will be returned.
+
+        """
         if type(key) == slice:
             return self.sequence[key]
         elif key in self.annotations.keys():
             return self.annotations.get(key, None)
-        elif type(key) == int:
+        elif isinstance(key, int):
             return self.sequence[key]
         return None
 
-    def __setitem__(self, key, val):
+    def __setitem__(
+        self, key: Union[str, int, float], val: Union[str, int, float]
+    ) -> None:
+        """
+        Sets a value in the ``annotations`` property of a ``Sequence`` object.
+
+        Parameters
+        ----------
+        key : Union[str, int, float]
+            Key for the annotation to be set.
+
+        val : Union[str, int, float]
+            Value to be set for the annotation.
+
+        """
         self.annotations[key] = val
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Sequence") -> bool:
+        """
+        Returns True if the sequences and IDs of two ``Sequence`` objects are identical.
+
+        Parameters
+        ----------
+        other : Sequence
+            Another ``Sequence`` object.
+
+        """
         if all([hasattr(other, "sequence"), hasattr(other, "id")]):
             return all([self.sequence == other.sequence, self.id == other.id])
         return False
@@ -203,11 +257,19 @@ class Sequence(object):
         return s
 
     @property
-    def fasta(self):
+    def fasta(self) -> str:
         """
-        str: Returns the sequence, as a FASTA-formatted string
+        Returns the sequence, as a FASTA-formatted string.
 
-        Note: The FASTA string is built using ``Sequence.id`` and ``Sequence.sequence``.
+        .. note::
+
+                The FASTA string is built using ``Sequence.id`` and ``Sequence.sequence``.
+
+        Returns
+        -------
+        str
+            Returns the sequence, as a FASTA-formatted string.
+
         """
         if not self._fasta:
             self._fasta = ">{}\n{}".format(self.id, self.sequence)
@@ -216,10 +278,18 @@ class Sequence(object):
     @property
     def fastq(self):
         """
-        str: Returns the sequence, as a FASTQ-formatted string
+        Returns the sequence, as a FASTQ-formatted string.
 
-        If ``Sequence.qual`` is ``None``, then ``None`` will be returned instead of a
-        FASTQ string
+        .. note::
+
+            The FASTQ string is built using ``Sequence.id``, ``Sequence.sequence``, and
+            ``Sequence.qual``.
+
+        Returns
+        -------
+        str
+            Returns the sequence, as a FASTQ-formatted string
+
         """
         if self.qual is None:
             self._fastq = None
@@ -229,9 +299,16 @@ class Sequence(object):
         return self._fastq
 
     @property
-    def reverse_complement(self):
+    def reverse_complement(self) -> Union[str, "Sequence"]:
         """
-        str: Returns the reverse complement of ``Sequence.sequence``.
+        Returns the reverse complement of ``Sequence.sequence``.
+
+        Returns
+        -------
+            Returns a ``str`` if ``in_place`` is ``False``, otherwise returns an updated
+            ``Sequence`` object in which the ``sequence`` property has been replaced
+             with the reverse complement.
+
         """
         return reverse_complement(self, in_place=False)
         # if self._reverse_complement is None:
@@ -240,6 +317,13 @@ class Sequence(object):
 
     @property
     def annotations(self):
+        """
+        Annotations is a dictionary that contains any additional information
+        about the sequence. This can include sequence annotations, such as
+        VDJ annotations, or any other information that might be useful to
+        store with the sequence (like donor, group, etc).
+
+        """
         if self._annotations is None:
             self._annotations = {}
         return self._annotations
@@ -258,10 +342,49 @@ class Sequence(object):
     def strand(self, strand):
         self._strand = strand
 
-    def translate(self, sequence_key=None, frame=1):
+    def translate(self, sequence_key: Optional[str] = None, frame: int = 1) -> str:
+        """
+        Translate a nucleotide sequence.
+
+        Parameters
+        ----------
+        sequence_key : str, default=None
+            Name of the annotation field containg the sequence to be translated.
+            If not provided, ``Sequence.sequence`` is used.
+
+        frame : int, default=1
+            Reading frame to translate. Default is ``1``.
+
+        Returns
+        -------
+        str
+            Translated sequence
+
+        """
         return translate(self, sequence_key, frame)
 
-    def as_fasta(self, name_field=None, seq_field=None):
+    def as_fasta(
+        self, name_field: Optional[str] = None, seq_field: Optional[str] = None
+    ) -> str:
+        """
+        Returns the sequence, as a FASTA-formatted string.
+
+        Parameters
+        ----------
+        name_field : str, default=None
+            Name of the annotation field containing the sequence name. If not provided,
+            ``Sequence.id`` is used.
+
+        seq_field : str, default=None
+            Name of the annotation field containing the sequence. If not provided,
+            ``Sequence.sequence`` is used.
+
+        Returns
+        -------
+        str
+            Returns the sequence, as a FASTA-formatted string.
+
+        """
         name = None
         sequence = None
         if name_field is not None:
@@ -280,29 +403,56 @@ class Sequence(object):
 
         If called without kwargs, the entire sequence will be returned.
 
-        Args:
+        Parameters
+        ----------
+        start : int, default=0
+            Start position of the region to be returned. Default is 0.
 
-            start (int): Start position of the region to be returned. Default
-                is 0.
+        end : int, default=None
+            End position of the region to be returned. Negative values
 
-            end (int): End position of the region to be returned. Negative values
-                will function as they do when slicing strings.
+        Returns
+        -------
+        str
+            A region of ``Sequence.sequence``, in FASTA format
 
-        Returns:
-
-            str: A region of ``Sequence.sequence``, in FASTA format
         """
         if end is None:
             end = len(self.sequence)
         return ">{}\n{}".format(self.id, self.sequence[start:end])
 
     def keys(self):
+        """
+        Returns the keys of the ``annotations`` attribute.
+        """
         return self.annotations.keys()
 
     def values(self):
+        """
+        Returns the values of the ``annotations`` attribute.
+        """
         return self.annotations.values()
 
-    def get(self, key, default=None):
+    def get(
+        self, key: Union[str, int, float], default: Union[str, int, float, None] = None
+    ) -> Union[str, int, float, None]:
+        """
+        Returns the value of a key in the ``annotations`` attribute.
+
+        Parameters
+        ----------
+        key : Union[str, int, float]
+            Key for the annotation to be returned.
+
+        default : Union[str, int, float, None], default=None
+            Value to be returned if the key is not in the ``annotations`` attribute.
+
+        Returns
+        -------
+        Union[str, int, float, None]
+            Value of the key in the ``annotations`` attribute.
+
+        """
         return self.annotations.get(key, default)
 
     def _process_input(self, seq, id, qual):
@@ -358,17 +508,28 @@ class Sequence(object):
                     self.annotations[k] = seq[k]
 
 
-def reverse_complement(sequence, in_place=False):
+def reverse_complement(
+    sequence: Union[str, "Sequence"], in_place: bool = False
+) -> Union[str, "Sequence"]:
     """
     Returns the reverse complement of a nucleotide sequence.
 
     Parameters
     ----------
-        sequence : Union[str, Sequence]: Nucleotide sequence to be reverse complemented.
+    sequence : Union[str, Sequence]
+        Nucleotide sequence to be reverse complemented.
 
-    Returns:
+    in_place : bool, default=False
+        If ``True``, the input sequence will be reverse complemented in place.
+        If ``False``, the reverse complemented sequence will be returned as a ``str``.
 
-        str: Reverse complement of the input sequence.
+
+    Returns
+    --------
+    Union[str, Sequence]
+        If ``in_place`` is ``False``, the reverse complemented sequence will be returned as a ``str``.
+        If ``in_place`` is ``True``, the input sequence will be reverse complemented in place.
+
     """
     s = Sequence(sequence)
     rc_dict = {
@@ -417,6 +578,7 @@ def translate(
     Returns
     -------
     translated : str
+
     """
     if sequence_key is not None:
         seq = Sequence(
@@ -446,7 +608,7 @@ def read_json(
     fields: Iterable = None,
     id_key: str = "seq_id",
     sequence_key: str = "vdj_nt",
-):
+) -> Iterable[Sequence]:
     """
     Reads a JSON-formatted annotation file and returns ``Sequence`` objects.
 
@@ -459,8 +621,11 @@ def read_json(
         A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
         the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is no ``'IGH'``:
-            ``{'locus': 'IGH'}
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
 
     fields : list, default=None
         A ``list`` of fields to be retained in the output ``Sequence``
@@ -529,8 +694,11 @@ def read_csv(
         A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
         the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is no ``'IGH'``:
-            ``{'locus': 'IGH'}
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
 
     fields : list, default=None
         A ``list`` of fields to be retained in the output ``Sequence``
@@ -587,8 +755,11 @@ def read_airr(
         A ``dict`` for filtering sequences from the input file.
         Sequences must match all conditions to be returned. For example,
         the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is no ``'IGH'``:
-            ``{'locus': 'IGH'}
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
 
     fields : list, default=None
         A ``list`` of fields to be retained in the output ``Sequence``
@@ -602,14 +773,14 @@ def read_airr(
     return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
 
 
-def read_fasta(fasta_file: str) -> Iterable[Sequence]:
+def read_fasta(fasta: str) -> Iterable[Sequence]:
     """
-    Reads a FASTA-formatted  file and returns ``Sequence`` objects.
+    Reads FASTA-formatted sequence data and returns ``Sequence`` objects.
 
     Parameters
     ----------
-    fasta_file : str
-        Path to the input FASTA file. Required.
+    fasta : str
+        Either a FASTA-formatted string or the path to a FASTA file. Required.
 
 
     Returns
@@ -617,20 +788,26 @@ def read_fasta(fasta_file: str) -> Iterable[Sequence]:
     sequences : list of ``Sequences``
 
     """
-    with open(fasta_file) as f:
+    if os.path.isfile(fasta):
+        with open(fasta) as f:
+            sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    else:
+        from io import StringIO
+
+        f = StringIO(fasta)
         sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
     return sequences
 
 
-def read_fastq(fastq_file):
+def read_fastq(fastq: str) -> Iterable[Sequence]:
     """
-    Reads a FASTQ-formatted  file and returns ``Sequence`` objects.
+    Reads FASTQ-formatted sequence data and returns ``Sequence`` objects.
     Gzipped files are supported.
 
     Parameters
     ----------
-    fastq_file : str
-        Path to the input FASTQ file. Required.
+    fastq : str
+        Either a FASTQ-formatted string or the path to a FASTQ file. Required.
 
 
     Returns
@@ -638,13 +815,19 @@ def read_fastq(fastq_file):
     sequences : list of ``Sequences``
 
     """
-    if fastq_file.endswith(".gz"):
-        import gzip
+    if os.path.isfile(fastq):
+        if fastq.endswith(".gz"):
+            import gzip
 
-        open_func = gzip.open
+            open_func = gzip.open
+        else:
+            open_func = open
+        with open_func(fastq, "rt") as f:
+            sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
     else:
-        open_func = open
-    with open_func(fastq_file, "rt") as f:
+        from io import StringIO
+
+        f = StringIO(fastq)
         sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
     return sequences
 

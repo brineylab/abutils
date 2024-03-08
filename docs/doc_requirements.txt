@@ -10,7 +10,7 @@ sphinx_design
 autodocsumm
 # baltic
 biopython
-# celery
+celery
 # ete3
 # fastcluster
 # matplotlib
@@ -19,7 +19,7 @@ biopython
 # numpy
 # pandas
 # paramiko
-# parasail
+parasail
 # pymongo
 # pytest
 # python-circos

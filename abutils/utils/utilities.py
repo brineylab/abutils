@@ -23,7 +23,7 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+# from __future__ import absolute_import, division, print_function, unicode_literals
 
 import math
 import operator
@@ -34,8 +34,8 @@ if sys.version_info[0] > 2:
         str,
     ]
     from functools import reduce
-else:
-    STR_TYPES = [str, unicode]
+# else:
+#     STR_TYPES = [str, unicode]
 
 
 # ================================
