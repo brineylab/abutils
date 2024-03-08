@@ -1,4 +1,4 @@
-abstar >= 0.5.9
+abstar >= 0.6.3
 baltic
 biopython >= 1.78
 celery
