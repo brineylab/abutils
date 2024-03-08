@@ -26,8 +26,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import colorsys
-from collections import Counter
-from copy import copy, deepcopy
 import itertools
 import math
 import multiprocessing as mp
@@ -39,31 +37,29 @@ import string
 import subprocess as sp
 import sys
 import tempfile
+from collections import Counter
+from copy import copy, deepcopy
 from typing import Optional
 
-import numpy as np
-import scipy
-import pandas as pd
-
-from scipy.ndimage import gaussian_filter1d
-from scipy.special import rel_entr
-
+import abstar
+import ete3
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+import numpy as np
+import pandas as pd
+import scipy
 import seaborn as sns
 
-import ete3
-
+# from abstar.core.germline import get_imgt_germlines
 from Bio import AlignIO, Phylo
-
-import abstar
-from abstar.core.germline import get_imgt_germlines
+from matplotlib.colors import ListedColormap
+from scipy.ndimage import gaussian_filter1d
+from scipy.special import rel_entr
 
 from ..core.pair import Pair
 from ..core.sequence import Sequence
 from .alignment import mafft, muscle
 from .cluster import cluster
-from .color import hex_to_rgb, get_cmap
+from .color import get_cmap, hex_to_rgb
 from .decorators import lazy_property
 from .pipeline import make_dir
 
@@ -94,12 +90,12 @@ def fasttree(
     Parameters
     ----------
     aln : str
-        Path to a multiple sequence alignment file, in FASTA format, or a 
+        Path to a multiple sequence alignment file, in FASTA format, or a
         FASTA-formatted multiple sequence alignment string. Required.
 
     tree_file : str
-        Path to the tree file which will be output by FastTree. If the parent 
-        directory does not exist, it will be created. If not provided, the output 
+        Path to the tree file which will be output by FastTree. If the parent
+        directory does not exist, it will be created. If not provided, the output
         (a Newick-formatted tree file) will be returned as a ``str``.
 
     is_aa : bool, default=False
@@ -108,7 +104,7 @@ def fasttree(
         nucleotide sequences.
 
     fasttree_bin : str, optional
-        Path to the desired FastTree binary. Default is to use the version of 
+        Path to the desired FastTree binary. Default is to use the version of
         FastTree that is bundled with ``abutils``.
 
     debug : bool, default=False
@@ -117,7 +113,7 @@ def fasttree(
     quiet : bool, default=True
         Depricated, but retained for backwards compatibility. Use `debug` instead.
 
-    
+
     Returns
     -------
     tree_file: str
@@ -205,12 +201,17 @@ def lsd(
     return output_file
 
 
-def igphyml(input_file: str = None, tree_file: str = None, root: str = None, verbose: bool = False) -> str:
+def igphyml(
+    input_file: str = None,
+    tree_file: str = None,
+    root: str = None,
+    verbose: bool = False,
+) -> str:
     """
     Computes a phylogenetic tree using IgPhyML.
 
     .. note::
-        
+
         IgPhyML must be installed. It can be downloaded from https://github.com/kbhoehn/IgPhyML.
 
     Args:
@@ -221,7 +222,7 @@ def igphyml(input_file: str = None, tree_file: str = None, root: str = None, ver
 
         root (str): Name of the root sequence. Required.
 
-        verbose (bool): If `True`, prints the standard output and standard error for each IgPhyML run. 
+        verbose (bool): If `True`, prints the standard output and standard error for each IgPhyML run.
             Default is `False`.
     """
 
@@ -382,6 +383,8 @@ def phylogeny(
         figname_suffix: by default, figures will be named <lineage_id>.pdf. If suffix='_suffix' and
             the lineage ID is 'ABC123', the figure file will be named 'ABC123_suffix.pdf'.
     """
+
+    from abstar.core.germline import get_imgt_germlines
 
     if project_dir is None:
         print("\nERROR: project_dir is required\n")
