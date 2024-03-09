@@ -222,11 +222,17 @@ def cluster(
     algo: str = "auto",
     temp_dir: str = "/tmp",
     iddef: int = 0,
+    cluster_mode: str = "2",
+    cov_mode: str = "0",
+    coverage: float = 0.8,
+    alignment_mode: str = "3",
+    seq_id_mode: str = "1",
     vsearch_bin: str = None,
     mmseqs_bin: str = None,
     cdhit_bin: str = None,
     id_key: Optional[str] = None,
     seq_key: Optional[str] = None,
+    threads: Optional[int] = None,
     strand: str = "plus",
     as_dict: bool = False,
     debug: bool = False,
@@ -278,6 +284,36 @@ def cluster(
                - [(mismatches + gap openings)/(longest sequence length)]
             4. BLAST definition, equivalent to --iddef 1 in a context of global pairwise
                alignment.
+
+    cluster_mode : str, default="2"
+        Clustering mode, as implemented by MMseqs2. Options are:
+            1. greedy set cover
+            2. connected component
+            3. greedy incremental (CD-HIT-like)
+
+    cov_mode : str, default="0"
+        Coverage mode, as implemented by MMseqs2. Options are:
+            0. bidirectional
+            1. target coverage
+            2. query coverage
+            3. target-in-query length coverage
+
+    coverage : float, default=0.8
+        Coverage threshold for clustering with MMseqs2. Must be between 0 and 1.
+
+    alignment_mode : str, default="3"
+        Alignment mode, as implemented by MMseqs2. Options are:
+            0. automatic
+            1. only score and end_pos
+            2. also start_pos and cov
+            3. also seq.id
+            4. only ungapped alignment
+
+    seq_id_mode : str, default="1"
+        Sequence ID mode, as implemented by MMseqs2. Options are:
+            0. alignment length
+            1. shorter sequence length
+            2. longer sequence length
 
     vsearch_bin : str, optional
         Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled
@@ -352,6 +388,12 @@ def cluster(
         cluster_dict = cluster_mmseqs(
             fasta_file=fasta_file,
             threshold=threshold,
+            cluster_mode=cluster_mode,
+            cov_mode=cov_mode,
+            coverage=coverage,
+            alignment_mode=alignment_mode,
+            seq_id_mode=seq_id_mode,
+            threads=threads,
             temp_dir=temp_dir,
             mmseqs_bin=mmseqs_bin,
             as_dict=True,
@@ -363,6 +405,7 @@ def cluster(
             threshold=threshold,
             temp_dir=temp_dir,
             cdhit_bin=cdhit_bin,
+            threads=0 if threads is None else threads,
             as_dict=True,
             debug=debug,
         )
@@ -374,6 +417,7 @@ def cluster(
             iddef=iddef,
             vsearch_bin=vsearch_bin,
             strand=strand,
+            threads=threads,
             as_dict=True,
             debug=debug,
         )
@@ -399,6 +443,7 @@ def cluster_vsearch(
     iddef: int = 0,
     vsearch_bin: str = None,
     strand: str = "plus",
+    threads: Optional[int] = None,
     as_dict: bool = False,
     debug: bool = False,
 ) -> Union[dict, Clusters]:
@@ -480,6 +525,8 @@ def cluster_vsearch(
     vsearch_cmd += f" --iddef {iddef}"
     vsearch_cmd += " --sizeout"
     vsearch_cmd += f" --strand {strand}"
+    if threads is not None:
+        vsearch_cmd += f" --threads {threads}"
     p = sp.Popen(vsearch_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = p.communicate()
     if debug:
@@ -518,6 +565,12 @@ def cluster_vsearch(
 def cluster_mmseqs(
     fasta_file: str,
     threshold: float = 0.975,
+    cluster_mode: str = "2",
+    cov_mode: str = "0",
+    coverage: float = 0.8,
+    alignment_mode: str = "3",
+    seq_id_mode: str = "1",
+    threads: Optional[int] = None,
     temp_dir: str = "/tmp",
     mmseqs_bin: str = None,
     as_dict: bool = False,
@@ -534,6 +587,46 @@ def cluster_mmseqs(
 
     threshold : float, default=0.975
         Identity threshold for clustering. Must be between 0 and 1.
+
+    cluster_mode : str, default="2"
+        Clustering mode. Options are ``"1"``, ``"2"``, or ``"3"``.
+          - ``"1"``: greedy set cover
+          - ``"2"``: connected component
+          - ``"3"``: greedy incremental (CD-HIT-like)
+        See the `MMseqs2 documentation <https://mmseqs.com/latest/userguide.html#clustering>`_
+        for more information.
+
+    cov_mode : str, default="0"
+        Coverage mode. Options are ``"0"``, ``"1"``, ``"2"``, or ``"3"``.
+            - ``"0"``: bidirectional
+            - ``"1"``: target coverage
+            - ``"2"``: query coverage
+            - ``"3"``: target-in-query length coverage
+        See the `MMseqs2 documentation <https://mmseqs.com/latest/userguide.html#clustering>`_
+        for more information.
+
+    coverage : float, default=0.8
+        Coverage threshold for clustering. Must be between 0 and 1.
+
+    alignment_mode : str, default="3"
+        Alignment mode. Options are ``"0"``, ``"1"``, ``"2"``, ``"3"``, or ``"4"``.
+            - ``"0"``: automatic
+            - ``"1"``: only score and end_pos
+            - ``"2"``: also start_pos and cov
+            - ``"3"``: also seq.id
+            - ``"4"``: only ungapped alignment
+        See the `MMseqs2 documentation <https://mmseqs.com/latest/userguide.html#clustering>`_
+        for more information.
+
+    seq_id_mode : str, default="1"
+        Sequence ID mode. Options are ``"0"``, ``"1"``, or ``"2"``.
+            - ``"0"``: alignment length
+            - ``"1"``: shorter sequence length
+            - ``"2"``: longer sequence length
+
+    threads : int, default=None
+        Number of threads to use for clustering. If not provided, the number of threads
+        will be determined by MMseqs2.
 
     temp_dir : str, default="/tmp"
         Path to a directory for temporary storage of clustering files.
@@ -593,6 +686,13 @@ def cluster_mmseqs(
     cluster_cmd = f"{mmseqs_bin} cluster"
     cluster_cmd += f" {db_file} {clu_file} {temp_dir}"
     cluster_cmd += f" --min-seq-id {threshold}"
+    cluster_cmd += f" --cluster-mode {cluster_mode}"
+    cluster_cmd += f" --cov-mode {cov_mode}"
+    cluster_cmd += f" -c {coverage}"
+    cluster_cmd += f" --alignment-mode {alignment_mode}"
+    cluster_cmd += f" --seq-id-mode {seq_id_mode}"
+    if threads is not None:
+        cluster_cmd += f" --threads {threads}"
     p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = p.communicate()
     if debug:
@@ -640,6 +740,7 @@ def cluster_cdhit(
     threshold: float = 0.975,
     temp_dir: str = "/tmp",
     cdhit_bin: str = None,
+    threads: int = 0,
     as_dict: bool = False,
     debug: bool = False,
 ):
@@ -661,6 +762,10 @@ def cluster_cdhit(
     cdhit_bin : str, optional
         Path to a CD-HIT executable. If not provided, the CD-HIT binary bundled
         with ``abutils`` will be used.
+
+    threads : int, default=0
+        Number of threads to use for clustering. If not provided, all available CPU cores
+        will be used.
 
     id_key : str, default=None
         Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
@@ -709,8 +814,8 @@ def cluster_cdhit(
     #   - M: max memory (in MB), default 800 (0 uses all available memory)
     wordsize = _get_cdhit_wordsize(threshold)
     cluster_cmd = f"{cdhit_bin} -i {fasta_file} -o {output_file}"
-    cluster_cmd += f" -c {threshold} -n {wordsize}"
-    cluster_cmd += " -d 0 -l 4 -T 0 -M 0"
+    cluster_cmd += f" -c {threshold} -n {wordsize} -T {threads}"
+    cluster_cmd += " -d 0 -l 4 -M 0"
     p = sp.Popen(cluster_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     stdout, stderr = p.communicate()
     if debug:
