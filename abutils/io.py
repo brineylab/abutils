@@ -22,7 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-import sys  # change
+import glob
+import os
+import sys
+from typing import Iterable, Union
 
 from .core.sequence import (
     from_mongodb,
