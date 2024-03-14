@@ -28,7 +28,7 @@
 import glob
 import os
 import sys
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from . import log
 
@@ -92,7 +92,9 @@ def make_dir(directory: str) -> None:
         os.makedirs(os.path.abspath(directory))
 
 
-def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]:
+def list_files(
+    directory: str, extension: Union[str, Iterable, None] = None
+) -> Iterable[str]:
     """
     Lists files in a given directory.
 
@@ -102,8 +104,10 @@ def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]
         Path to a directory.
 
     extension : str
-        If supplied, only files that contain the specificied extension will be returned.
-        Default is ``None``, which returns all files in the directory, regardless of extension.
+        If supplied, only files that end with the specificied extension(s) will be returned. Can be either
+        a string or a list of strings. Extension evaluation is case-insensitive and can match complex
+        extensions (e.g. '.fastq.gz'). Default is ``None``, which returns all files in the directory,
+        regardless of extension.
 
     Returns
     -------
@@ -118,7 +122,7 @@ def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]
             directory,
         ]
     if extension is not None:
-        if type(extension) in STR_TYPES:
+        if isinstance(extension, str):
             extension = [
                 extension,
             ]
@@ -127,9 +131,9 @@ def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]
             for f in files
             if any(
                 [
-                    f.split(".")[-1] in extension,
-                    f.split(".")[-1].upper() in extension,
-                    f.split(".")[-1].lower() in extension,
+                    any([f.lower().endswith(e.lower()) for e in extension]),
+                    any([f.endswith(e.upper()) for e in extension]),
+                    any([f.endswith(e.lower()) for e in extension]),
                 ]
             )
         ]
