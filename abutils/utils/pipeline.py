@@ -34,12 +34,15 @@ from . import log
 
 
 # for backward compatibility
-def list_files(**args, **kwargs):
+def list_files(*args, **kwargs):
     from ..io import list_files
+
     return list_files(**args, **kwargs)
 
-def make_dir(**args, **kwargs):
+
+def make_dir(*args, **kwargs):
     from ..io import make_dir
+
     return make_dir(**args, **kwargs)
 
 
