@@ -142,7 +142,8 @@ def get_path(binary: str) -> str:
     ]
     if binary not in available:
         raise ValueError(
-            f"Binary '{binary}' not available. Available binaries: {'\n'.join(available)}"
+            f"Binary '{binary}' not available. Available binaries: \n"
+            + "\n".join(available)
         )
     if binary in ["fastp", "muscle3", "blastn", "makeblastdb"]:
         bin_name = f"{binary}_{SYSTEM}"
