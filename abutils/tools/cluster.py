@@ -34,6 +34,7 @@ from typing import Iterable, Optional, Union
 
 from Bio.Align import AlignInfo
 
+from ..bin import get_path as get_binary_path
 from ..core.sequence import Sequence, read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 from ..utils.pipeline import make_dir
@@ -512,10 +513,11 @@ def cluster_vsearch(
     uc_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="uc_").name
     # get the vsearch binary
     if vsearch_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        system = platform.system().lower()
-        machine = platform.machine().lower().replace("x86_64", "amd64")
-        vsearch_bin = os.path.join(mod_dir, f"bin/vsearch_{system}_{machine}")
+        vsearch_bin = get_binary_path("vsearch")
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # system = platform.system().lower()
+        # machine = platform.machine().lower().replace("x86_64", "amd64")
+        # vsearch_bin = os.path.join(mod_dir, f"bin/vsearch_{system}_{machine}")
     # do clustering
     vsearch_cmd = f"{vsearch_bin} --cluster_fast {fasta_file}"
     vsearch_cmd += f" --centroids {centroid_file}"
@@ -670,10 +672,11 @@ def cluster_mmseqs(
     ).name
     # get the mmseqs binary
     if mmseqs_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        system = platform.system().lower()
-        machine = platform.machine().lower().replace("x86_64", "amd64")
-        mmseqs_bin = os.path.join(mod_dir, f"bin/mmseqs_{system}_{machine}")
+        mmseqs_bin = get_binary_path("mmseqs")
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # system = platform.system().lower()
+        # machine = platform.machine().lower().replace("x86_64", "amd64")
+        # mmseqs_bin = os.path.join(mod_dir, f"bin/mmseqs_{system}_{machine}")
     # build the mmseqs DB
     db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_file}"
     p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
@@ -801,10 +804,11 @@ def cluster_cdhit(
     clusters_file = output_file + ".clstr"
     # get the CD-HIT binary
     if cdhit_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        system = platform.system().lower()
-        machine = platform.machine().lower().replace("x86_64", "amd64")
-        cdhit_bin = os.path.join(mod_dir, f"bin/cdhit_{system}_{machine}")
+        cdhit_bin = get_binary_path("cdhit")
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # system = platform.system().lower()
+        # machine = platform.machine().lower().replace("x86_64", "amd64")
+        # cdhit_bin = os.path.join(mod_dir, f"bin/cdhit_{system}_{machine}")
     # run CD-HIT
     # clustering options are as follows:
     #   - d: length at which to truncate sequence names in the output file,

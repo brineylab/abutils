@@ -29,7 +29,7 @@ from typing import Iterable, Optional, Union
 from natsort import natsorted
 from tqdm.auto import tqdm
 
-from ..bin import vsearch as packaged_vsearch
+from ..bin import get_path as get_binary_path
 from ..io import concatenate_files, delete_files, list_files, make_dir, rename_file
 
 
@@ -299,7 +299,7 @@ def merge_fastqs_vsearch(
     make_dir(out_dir)
     # get the vsearch binary
     if binary_path is None:
-        binary_path = packaged_vsearch
+        binary_path = get_binary_path("vsearch")
     # compile the vsearch command
     cmd = f"{binary_path} --fastq_mergepairs {forward} --reverse {reverse}"
     if output_format.lower() == "fasta":
