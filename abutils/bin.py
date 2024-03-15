@@ -119,17 +119,20 @@ def get_path(binary: str) -> str:
         Path to the binary.
 
     """
+    #  format (and maybe fix) binary name
     binary = binary.lower()
     if binary == "mmseqs2":
         binary = "mmseqs"
     if binary == "muscle_v3":
         binary = "muscle3"
+    if binary == "cd-hit":
+        binary = "cdhit"
     available = [
         # blast
         "blastn",
         "makeblastdb",
         # clustering/alignment
-        "cd-hit",
+        "cdhit",
         "mafft",
         "mmseqs",
         "muscle",
@@ -145,6 +148,7 @@ def get_path(binary: str) -> str:
             f"Binary '{binary}' not available. Available binaries: \n"
             + "\n".join(available)
         )
+    # get binary path
     if binary in ["fastp", "muscle3", "blastn", "makeblastdb"]:
         bin_name = f"{binary}_{SYSTEM}"
         bin_path = os.path.join(BIN_DIR, bin_name)
@@ -154,6 +158,7 @@ def get_path(binary: str) -> str:
     else:
         bin_name = f"{binary}_{SYSTEM}_{MACHINE}"
         bin_path = os.path.join(BIN_DIR, bin_name)
+    # download binary if missing
     if not os.path.exists(bin_path):
         print(
             f"Downloading missing binary: {binary}. This will only occur once on intial use of the binary."
