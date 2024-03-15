@@ -30,9 +30,8 @@ from typing import Iterable, Optional, Union
 import numpy as np
 import pandas as pd
 
-from ..core.sequence import Sequence
 from ..core.pair import Pair
-
+from ..core.sequence import Sequence
 
 __all__ = [
     "RepertoireSimilarity",
@@ -265,15 +264,28 @@ def repertoire_similarity(
     ----------
     repertoires : list
         A list of repertoires. Each repertoire can be a list of ``abutils.Sequence``
-        objects or ``abutils.Pair`` objects. Individual repertoires cannot mix ``Sequence``
-        and ``Pair`` objects, but the list of repertoires can contain both.
+        objects or a list of ``abutils.Pair`` objects.
+
+        .. note::
+            Individual repertoires cannot mix ``Sequence`` and ``Pair`` objects,
+            but the list of repertoires can contain both. For example, comparing a
+            repetoire of ``Sequence`` objects to a repertoire of ``Pair`` objects is
+            allowed.
 
     names : list, optional
         A list of names for the repertoires. If ``None``, names will be generated as
         ``"repertoire1"``, ``"repertoire2"``, etc.
 
     method : str, optional
-        The similarity method to use. Default is ``"morisita-horn"``.
+        The similarity method to use. Options are:
+            - ``"morisita-horn"``
+            - ``"kullback-leibler"``
+            - ``"jensen-shannon"``
+            - ``"jaccard"``
+            - ``"bray-curtis"``
+            - ``"renkonen"``
+            - ``"cosine"``
+        Default is ``"morisita-horn"``.
 
     features : str, list, optional
         The features to use for similarity calculation. Default is ``["v_gene", "j_gene", "cdr3_length"]``.
@@ -289,10 +301,16 @@ def repertoire_similarity(
         Whether to subsample with replacement. Default is ``False``.
 
     pairs_only : bool, optional
-        Whether to use only paired sequences. Default is ``False``.
+        Whether to use only paired sequences. Requires that all repertoires contain ``Pair`` objects,
+        rather than ``Sequence`` objects. Default is ``False``.
 
     chain : str, optional
         The chain to use for similarity calculation. Default is ``None``, which will use all chains.
+
+        .. note::
+            This applies to both ``Sequence`` and ``Pair`` objects. If a repertoire contains
+            ``Sequence`` objects from multiple chains, only sequences of the specified chain will
+            be used for similarity calculation, and the rest will be ignored.
 
     force_self_comparisons : bool, optional
         Whether to force self-comparisons. Only used if exactly two repertoires are provided.
