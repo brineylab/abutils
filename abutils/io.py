@@ -105,6 +105,61 @@ def list_files(
     return files
 
 
+def rename_file(file: str, new_name: str) -> None:
+    """
+    Renames a file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the file to be renamed.
+
+    new_name : str
+        New name for the file.
+
+    """
+    os.rename(file, new_name)
+
+
+def delete_files(files: Union[str, Iterable]) -> None:
+    """
+    Deletes files.
+
+    Parameters
+    ----------
+    files : Union[str, Iterable]
+        Path to a file or an iterable of file paths.
+
+    """
+    if isinstance(files, str):
+        files = [
+            files,
+        ]
+    for f in files:
+        if os.path.exists(f):
+            os.remove(f)
+
+
+def concatenate_files(files: Iterable[str], output_file: str) -> None:
+    """
+    Concatenates multiple files into a single file.
+
+    Parameters
+    ----------
+    files : Iterable[str]
+        Iterable of file paths.
+
+    output_file : str
+        Path to the output file.
+
+    """
+    with open(output_file, "w") as outfile:
+        for fname in files:
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+
+
 def read_sequences(
     file=None,
     format="airr",
