@@ -30,15 +30,17 @@ import os
 import sys
 from typing import Iterable, Optional, Union
 
-from ..io import list_files, make_dir
 from . import log
 
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-# else:
-#     STR_TYPES = [str, unicode]
+
+# for backward compatibility
+def list_files(**args, **kwargs):
+    from ..io import list_files
+    return list_files(**args, **kwargs)
+
+def make_dir(**args, **kwargs):
+    from ..io import make_dir
+    return make_dir(**args, **kwargs)
 
 
 def initialize(log_file, project_dir=None, debug=False):
