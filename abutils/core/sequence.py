@@ -588,7 +588,10 @@ def translate(
         seq = Sequence(sequence)
     if seq is None:
         return None
-    start = (frame % 3) - 1
+    # start = (frame % 3 or 3) - 1  # too clever by half
+    if frame not in range(1, 4):
+        raise ValueError(f"Invalid frame: {frame}. Must be 1, 2 or 3.")
+    start = frame - 1
     end = len(seq) - (len(seq[start:]) % 3)
     seq = seq[start:end]
     translated = ""
