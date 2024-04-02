@@ -28,6 +28,8 @@ from tqdm.auto import tqdm
 
 from ..core.sequence import Sequence, codon_optimize
 
+__all__ = ["build_synthesis_constructs"]
+
 
 def build_synthesis_constructs(
     sequences: Union[Sequence, Iterable[Sequence], str],

@@ -27,6 +27,7 @@ from .core.pair import assign_pairs
 from .core.sequence import reverse_complement, translate
 from .tools.alignment import *
 from .tools.clonify import clonify
+from .tools.cloning import *
 from .tools.cluster import *
 from .tools.phylo import *
 from .tools.similarity import repertoire_similarity
