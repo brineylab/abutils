@@ -632,6 +632,7 @@ def translate(
     Returns
     -------
     translated : str
+        Translated sequence.
 
     """
     if sequence_key is not None:
@@ -702,7 +703,7 @@ def codon_optimize(
     -------
     Union[str, Sequence]
         If ``in_place`` is ``True``, the input ``Sequence`` object will be returned with the optimized sequence populating
-        the ``sequence.codon_optimized`` property.
+        the ``Sequence.sequence`` property.
         If ``as_string`` is ``True``, the optimized sequence will be returned as a ``str``.
         If ``as_string`` is ``False``, the optimized sequence will be returned as a new ``Sequence`` object.
 
@@ -750,7 +751,7 @@ def codon_optimize(
     if as_string:
         return str(problem.sequence)
     if in_place:
-        sequence.codon_optimized = str(problem.sequence)
+        sequence.sequence = str(problem.sequence)
         return sequence
     return Sequence(problem.sequence, id=name)
 
