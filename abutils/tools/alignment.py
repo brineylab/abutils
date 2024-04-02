@@ -42,6 +42,7 @@ from Bio.Align import AlignInfo, MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
+from ..bin import get_path as get_binary_path
 from ..core.sequence import Sequence, read_fasta
 from ..io import to_fasta
 from ..utils.decorators import lazy_property
@@ -504,17 +505,18 @@ def mafft(
     if reorder:
         aln_format += "--reorder "
     if mafft_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        # mafft_bin = os.path.join(
-        #     mod_dir, "bin/mafft_{}".format(platform.system().lower())
-        # )
-        system = platform.system().lower()
-        machine = platform.machine().lower().replace("x86_64", "amd64")
-        mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
-        # if system == "darwin":
-        #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
-        # else:
-        #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}")
+        mafft_bin = get_binary_path("mafft")
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # # mafft_bin = os.path.join(
+        # #     mod_dir, "bin/mafft_{}".format(platform.system().lower())
+        # # )
+        # system = platform.system().lower()
+        # machine = platform.machine().lower().replace("x86_64", "amd64")
+        # mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
+        # # if system == "darwin":
+        # #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}/mafft.bat")
+        # # else:
+        # #     mafft_bin = os.path.join(mod_dir, f"bin/mafft_{system}_{machine}")
     mafft_cline = "{} --thread {} {}{} > {}".format(
         mafft_bin, threads, aln_format, ffile, alignment_file
     )
@@ -651,10 +653,11 @@ def muscle(
         alignment_file = os.path.abspath(alignment_file)
     # muscle binary
     if muscle_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        system = platform.system().lower()
-        machine = platform.machine().lower().replace("x86_64", "amd64")
-        muscle_bin = os.path.join(mod_dir, f"bin/muscle_{system}_{machine}")
+        muscle_bin = get_binary_path("muscle")
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # system = platform.system().lower()
+        # machine = platform.machine().lower().replace("x86_64", "amd64")
+        # muscle_bin = os.path.join(mod_dir, f"bin/muscle_{system}_{machine}")
     # do the alignment
     muscle_cline = f"{muscle_bin} -align {ffile} -output {alignment_file}"
     if threads is not None:
@@ -939,9 +942,10 @@ def muscle_v3(
 
     # muscle binary
     if muscle_bin is None:
-        mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        system = platform.system().lower()
-        muscle_bin = os.path.join(mod_dir, f"bin/muscle3_{system}")
+        muscle_bin = get_binary_path("muscle3")
+        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # system = platform.system().lower()
+        # muscle_bin = os.path.join(mod_dir, f"bin/muscle3_{system}")
     # do the alignment
     aln_lookup = {
         "fasta": "-fastaout",

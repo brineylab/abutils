@@ -28,16 +28,22 @@
 import glob
 import os
 import sys
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from . import log
 
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-# else:
-#     STR_TYPES = [str, unicode]
+
+# for backward compatibility
+def list_files(*args, **kwargs):
+    from ..io import list_files
+
+    return list_files(*args, **kwargs)
+
+
+def make_dir(*args, **kwargs):
+    from ..io import make_dir
+
+    return make_dir(*args, **kwargs)
 
 
 def initialize(log_file, project_dir=None, debug=False):
@@ -78,62 +84,66 @@ def initialize(log_file, project_dir=None, debug=False):
     return logger
 
 
-def make_dir(directory: str) -> None:
-    """
-    Makes a directory, if it doesn't already exist.
+# def make_dir(directory: str) -> None:
+#     """
+#     Makes a directory, if it doesn't already exist.
 
-    Parameters
-    ----------
-    directory : str
-        Path to a directory.
+#     Parameters
+#     ----------
+#     directory : str
+#         Path to a directory.
 
-    """
-    if not os.path.exists(directory):
-        os.makedirs(os.path.abspath(directory))
+#     """
+#     if not os.path.exists(directory):
+#         os.makedirs(os.path.abspath(directory))
 
 
-def list_files(directory: str, extension: Optional[str] = None) -> Iterable[str]:
-    """
-    Lists files in a given directory.
+# def list_files(
+#     directory: str, extension: Union[str, Iterable, None] = None
+# ) -> Iterable[str]:
+#     """
+#     Lists files in a given directory.
 
-    Parameters
-    ----------
-    directory : str
-        Path to a directory.
+#     Parameters
+#     ----------
+#     directory : str
+#         Path to a directory.
 
-    extension : str
-        If supplied, only files that contain the specificied extension will be returned.
-        Default is ``None``, which returns all files in the directory, regardless of extension.
+#     extension : str
+#         If supplied, only files that end with the specificied extension(s) will be returned. Can be either
+#         a string or a list of strings. Extension evaluation is case-insensitive and can match complex
+#         extensions (e.g. '.fastq.gz'). Default is ``None``, which returns all files in the directory,
+#         regardless of extension.
 
-    Returns
-    -------
-    Iterable[str]
+#     Returns
+#     -------
+#     Iterable[str]
 
-    """
-    if os.path.isdir(directory):
-        expanded_dir = os.path.expanduser(directory)
-        files = sorted(glob.glob(expanded_dir + "/*"))
-    else:
-        files = [
-            directory,
-        ]
-    if extension is not None:
-        if type(extension) in STR_TYPES:
-            extension = [
-                extension,
-            ]
-        files = [
-            f
-            for f in files
-            if any(
-                [
-                    f.split(".")[-1] in extension,
-                    f.split(".")[-1].upper() in extension,
-                    f.split(".")[-1].lower() in extension,
-                ]
-            )
-        ]
-    return files
+#     """
+#     if os.path.isdir(directory):
+#         expanded_dir = os.path.expanduser(directory)
+#         files = sorted(glob.glob(expanded_dir + "/*"))
+#     else:
+#         files = [
+#             directory,
+#         ]
+#     if extension is not None:
+#         if isinstance(extension, str):
+#             extension = [
+#                 extension,
+#             ]
+#         files = [
+#             f
+#             for f in files
+#             if any(
+#                 [
+#                     any([f.lower().endswith(e.lower()) for e in extension]),
+#                     any([f.endswith(e.upper()) for e in extension]),
+#                     any([f.endswith(e.lower()) for e in extension]),
+#                 ]
+#             )
+#         ]
+#     return files
 
 
 def print_splash():

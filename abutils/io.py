@@ -22,7 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+import glob
+import os
 import sys
+from typing import Iterable, Union
 
 from .core.sequence import (
     from_mongodb,
@@ -36,7 +39,125 @@ from .core.sequence import (
     to_fastq,
 )
 from .utils.convert import abi_to_fasta
-from .utils.pipeline import list_files, make_dir
+
+# from .utils.pipeline import list_files, make_dir
+
+
+def make_dir(directory: str) -> None:
+    """
+    Makes a directory, if it doesn't already exist.
+
+    Parameters
+    ----------
+    directory : str
+        Path to a directory.
+
+    """
+    if not os.path.exists(directory):
+        os.makedirs(os.path.abspath(directory))
+
+
+def list_files(
+    directory: str, extension: Union[str, Iterable, None] = None
+) -> Iterable[str]:
+    """
+    Lists files in a given directory.
+
+    Parameters
+    ----------
+    directory : str
+        Path to a directory.
+
+    extension : str
+        If supplied, only files that end with the specificied extension(s) will be returned. Can be either
+        a string or a list of strings. Extension evaluation is case-insensitive and can match complex
+        extensions (e.g. '.fastq.gz'). Default is ``None``, which returns all files in the directory,
+        regardless of extension.
+
+    Returns
+    -------
+    Iterable[str]
+
+    """
+    if os.path.isdir(directory):
+        expanded_dir = os.path.expanduser(directory)
+        files = sorted(glob.glob(expanded_dir + "/*"))
+    else:
+        files = [
+            directory,
+        ]
+    if extension is not None:
+        if isinstance(extension, str):
+            extension = [
+                extension,
+            ]
+        files = [
+            f
+            for f in files
+            if any(
+                [
+                    any([f.lower().endswith(e.lower()) for e in extension]),
+                    any([f.endswith(e.upper()) for e in extension]),
+                    any([f.endswith(e.lower()) for e in extension]),
+                ]
+            )
+        ]
+    return files
+
+
+def rename_file(file: str, new_name: str) -> None:
+    """
+    Renames a file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the file to be renamed.
+
+    new_name : str
+        New name for the file.
+
+    """
+    os.rename(file, new_name)
+
+
+def delete_files(files: Union[str, Iterable]) -> None:
+    """
+    Deletes files.
+
+    Parameters
+    ----------
+    files : Union[str, Iterable]
+        Path to a file or an iterable of file paths.
+
+    """
+    if isinstance(files, str):
+        files = [
+            files,
+        ]
+    for f in files:
+        if os.path.exists(f):
+            os.remove(f)
+
+
+def concatenate_files(files: Iterable[str], output_file: str) -> None:
+    """
+    Concatenates multiple files into a single file.
+
+    Parameters
+    ----------
+    files : Iterable[str]
+        Iterable of file paths.
+
+    output_file : str
+        Path to the output file.
+
+    """
+    with open(output_file, "w") as outfile:
+        for fname in files:
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
 
 
 def read_sequences(

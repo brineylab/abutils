@@ -2,12 +2,12 @@
 # filename: test_sequences.py
 
 import os
-import pytest
 import tempfile
 
+import pytest
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence, read_fasta, read_airr, to_fasta
+from ..core.sequence import Sequence, read_airr, read_fasta, to_fasta
 
 
 @pytest.fixture
@@ -271,3 +271,29 @@ def test_to_fasta_with_fasta_string_output(sequences):
     fasta = to_fasta(sequences, as_string=True)
     assert isinstance(fasta, str)
     assert ">seq1\nATCG\n>seq2\nGCTA\n>seq3\nTTTT" in fasta
+
+
+# -------------------------------------------
+#          codon optimization
+# -------------------------------------------
+
+
+def test_codon_optimize_returns_string():
+    seq = Sequence("RINEYLA")
+    optimized_seq = seq.codon_optimize(as_string=True)
+    assert isinstance(optimized_seq, str)
+    assert len(optimized_seq) == len(seq) * 3
+
+
+def test_codon_optimize_returns_sequence_object():
+    seq = Sequence("RINEYLA")
+    optimized_seq = seq.codon_optimize(as_string=False)
+    assert isinstance(optimized_seq, Sequence)
+    assert len(optimized_seq.sequence) == len(seq) * 3
+    assert optimized_seq.translate() == seq.sequence
+
+
+def test_codon_optimize_with_frame():
+    seq = Sequence("ATGCATGCATGCATGC")
+    with pytest.raises(ValueError):
+        seq.codon_optimize(frame=4)

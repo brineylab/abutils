@@ -2,6 +2,7 @@ abstar >= 0.6.3
 baltic
 biopython >= 1.78
 celery
+dnachisel
 ete3
 fastcluster
 matplotlib

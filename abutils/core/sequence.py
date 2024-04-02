@@ -33,6 +33,7 @@ import uuid
 from collections import OrderedDict
 from typing import Iterable, Optional, Union
 
+import dnachisel as dc
 import pandas as pd
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -141,6 +142,7 @@ class Sequence(object):
         self._fasta = None
         self._fastq = None
         self._reverse_complement = None
+        self._codon_optimized = None
         self._strand = None
         self.id_key = id_key
         self.seq_key = seq_key
@@ -316,6 +318,16 @@ class Sequence(object):
         # return self._reverse_complement
 
     @property
+    def codon_optimized(self):
+        if self._codon_optimized is None:
+            self._codon_optimized = self.codon_optimize(as_string=True)
+        return self._codon_optimized
+
+    @codon_optimized.setter
+    def codon_optimized(self, val):
+        self._codon_optimized = val
+
+    @property
     def annotations(self):
         """
         Annotations is a dictionary that contains any additional information
@@ -362,6 +374,48 @@ class Sequence(object):
 
         """
         return translate(self, sequence_key, frame)
+
+    def codon_optimize(
+        self,
+        sequence_key: str = "sequence_aa",
+        id_key: str = "sequence_id",
+        frame: Optional[int] = None,
+        as_string: bool = True,
+    ) -> Union[str, "Sequence"]:
+        """
+        Codon optimize a sequence.
+
+        Parameters
+        ----------
+        sequence_key : str, default="sequence_aa"
+            Name of the annotation field containg the sequence to be translated.
+            If not provided, ``Sequence.sequence`` is used.
+
+        id_key : str, default="sequence_id"
+            Name of the annotation field containg the sequence id.
+            If not provided, ``Sequence.id`` is used.
+
+        frame : int, default=1
+            Reading frame to translate. Default is ``1``.
+
+        as_string : bool, default=True
+            If ``True``, the optimized sequence will be returned as a ``str``.
+            If ``False``, the optimized sequence will be returned as a ``Sequence`` object.
+
+        Returns
+        -------
+        Union[str, Sequence]
+            Translated sequence as a ``str`` (if ``as_string`` is ``True``) or
+            ``Sequence`` object (if ``as_string`` is ``False``).
+
+        """
+        return codon_optimize(
+            sequence=self,
+            sequence_key=sequence_key,
+            id_key=id_key,
+            frame=frame,
+            as_string=as_string,
+        )
 
     def as_fasta(
         self, name_field: Optional[str] = None, seq_field: Optional[str] = None
@@ -458,7 +512,7 @@ class Sequence(object):
     def _process_input(self, seq, id, qual):
         if type(seq) in STR_TYPES:
             if id is None:
-                id = uuid.uuid4()
+                id = str(uuid.uuid4())
             self.sequence = str(seq).upper()
             self.id = id
             self.qual = qual
@@ -588,7 +642,10 @@ def translate(
         seq = Sequence(sequence)
     if seq is None:
         return None
-    start = (frame % 3) - 1
+    # start = (frame % 3 or 3) - 1  # too clever by half
+    if frame not in range(1, 4):
+        raise ValueError(f"Invalid frame: {frame}. Must be 1, 2 or 3.")
+    start = frame - 1
     end = len(seq) - (len(seq[start:]) % 3)
     seq = seq[start:end]
     translated = ""
@@ -600,6 +657,102 @@ def translate(
             aa = codon_lookup.get(codon, "X")
         translated += aa
     return translated
+
+
+def codon_optimize(
+    sequence,
+    sequence_key: Optional[str] = None,
+    id_key: Optional[str] = None,
+    frame: Optional[int] = None,
+    as_string: bool = False,
+    in_place: bool = False,
+) -> Union[str, "Sequence"]:
+    """
+    Optimizes the codons of a nucleotide or amino acid sequence.
+
+    Parameters
+    ----------
+    sequence : Union[str, Sequence]
+        Nucleotide or amino acid sequence to be optimized.
+
+    sequence_key : str, default=None
+        Name of the annotation field containg the sequence to be optimized.
+        If not provided, ``sequence.sequence`` is used.
+
+    id_key : str, default=None
+        Name of the annotation field containg the sequence ID.
+        If not provided, ``sequence.id`` is used.
+
+    frame : int, default=1
+        Reading frame to translate. Default is ``1``.
+
+        .. note::
+            ``frame`` is ignored if the input sequence is an amino acid sequence.
+
+    as_string : bool, default=False
+        If ``True``, the optimized sequence will be returned as a ``str``.
+        If ``False``, the optimized sequence will be returned as a ``Sequence`` object.
+
+    in_place : bool, default=False
+        If ``True``, the input ``Sequence`` object will be returned with the optimized sequence populating
+        the ``sequence.codon_optimized`` property. If ``False``, the optimized sequence will be returned
+        as a ``str`` (if ``as_string`` is ``True``) or a ``Sequence`` object (if ``as_string`` is ``False``).
+
+    Returns
+    -------
+    Union[str, Sequence]
+        If ``in_place`` is ``True``, the input ``Sequence`` object will be returned with the optimized sequence populating
+        the ``sequence.codon_optimized`` property.
+        If ``as_string`` is ``True``, the optimized sequence will be returned as a ``str``.
+        If ``as_string`` is ``False``, the optimized sequence will be returned as a new ``Sequence`` object.
+
+    """
+    # process input
+    if not isinstance(sequence, Sequence):
+        sequence = Sequence(sequence)
+    if sequence_key is not None:
+        seq = (
+            sequence[sequence_key]
+            if sequence[sequence_key] is not None
+            else sequence.sequence
+        )
+    else:
+        seq = sequence.sequence
+    if id_key is not None:
+        name = sequence[id_key] if id_key is not None else sequence.id
+    else:
+        name = sequence.id
+
+    # get DNA sequence
+    if not all([res.upper() in ["A", "C", "G", "T", "N", "-"] for res in sequence]):
+        dna_seq = dc.reverse_translate(seq)
+    else:
+        frame = frame if frame is not None else 1
+        if frame not in range(1, 4):
+            raise ValueError(f"Invalid frame: {frame}. Must be 1, 2 or 3.")
+        start = frame - 1
+        dna_seq = seq[start:]
+
+    # optimize codons
+    problem = dc.DnaOptimizationProblem(
+        sequence=dna_seq,
+        constraints=[
+            dc.EnforceTranslation(),
+            dc.EnforceGCContent(maxi=0.56),
+            dc.EnforceGCContent(maxi=0.64, window=100),
+            dc.UniquifyAllKmers(10),
+        ],
+        objectives=[dc.CodonOptimize(species="h_sapiens")],
+        logger=None,
+    )
+    problem.resolve_constraints(final_check=True)
+    problem.optimize()
+    if as_string:
+        return str(problem.sequence)
+    if in_place:
+        sequence.codon_optimized = str(problem.sequence)
+        return sequence
+    return Sequence(problem.sequence, id=name)
 
 
 def read_json(
@@ -1033,6 +1186,11 @@ def to_csv(
     header: bool = True,
     columns: Optional[Iterable] = None,
     index: bool = False,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a CSV file.
@@ -1058,12 +1216,57 @@ def to_csv(
     index : bool, default=False
         If ``True``, the CSV file will contain an index column. Default is ``False``.
 
+    properties : list, default=None
+        A list of properties to be included in the CSV file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
     """
-    d = []
+    data = []
     for s in sequences:
         if not s.annotations:
-            d.append({"sequence_id": s.id, "sequence": s.sequence})
+            d = {"sequence_id": s.id, "sequence": s.sequence}
         else:
-            d.append(s.annotations)
-    df = pd.DataFrame(d)
+            d = s.annotations
+        if properties is not None:
+            for prop in properties:
+                try:
+                    d[prop] = getattr(s, prop)
+                except AttributeError:
+                    continue
+        data.append(d)
+    df = pd.DataFrame(data)
+    # drop NaN
+    if drop_na_columns:
+        df.dropna(axis=1, how="all", inplace=True)
+    # excluded columns
+    if exclude is not None:
+        if isinstance(exclude, str):
+            exclude = []
+        cols = [c for c in df.columns.values if c not in exclude]
+        df = df[cols]
+    # reorder
+    if order is not None:
+        cols = [o for o in order if o in df.columns.values]
+        df = df[cols]
+    if leading is not None:
+        if isinstance(leading, str):
+            leading = [leading]
+        leading = [l for l in leading if l in df.columns.values]
+        cols = leading + [c for c in df.columns.values if c not in leading]
+        df = df[cols]
+
     df.to_csv(csv_file, sep=sep, index=index, columns=columns, header=header)

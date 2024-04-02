@@ -30,9 +30,8 @@ from typing import Iterable, Optional, Union
 import numpy as np
 import pandas as pd
 
-from ..core.sequence import Sequence
 from ..core.pair import Pair
-
+from ..core.sequence import Sequence
 
 __all__ = [
     "RepertoireSimilarity",
@@ -149,6 +148,32 @@ class RepertoireSimilarities:
         self.df_needs_update = True
         self._df = None
 
+    def __iter__(self):
+        for s in self.similarities:
+            yield s
+
+    def __len__(self):
+        return len(self.similarities)
+
+    def __repr__(self):
+        return "<RepertoireSimilarities: {} comparisons>".format(len(self))
+
+    def __str__(self):
+        return "<RepertoireSimilarities: {} comparisons>".format(len(self))
+
+    def __add__(self, other):
+        if isinstance(other, RepertoireSimilarity):
+            self.add(other)
+            return self
+        elif isinstance(other, RepertoireSimilarities):
+            for s in other:
+                self.add(s)
+            return self
+        else:
+            raise TypeError(
+                "RepertoireSimilarities can only be added to RepertoireSimilarity or RepertoireSimilarities objects."
+            )
+
     @property
     def df(self):
         """
@@ -161,48 +186,52 @@ class RepertoireSimilarities:
         return self._df
 
     @property
-    def means(self):
+    def means(self) -> np.array:
         """
         Returns an array of mean similarity values, one for each pairwise comparison.
         """
         return np.array([s.mean for s in self.similarities])
 
     @property
-    def medians(self):
+    def medians(self) -> np.array:
         """
         Returns an array of median similarity values, one for each pairwise comparison.
         """
         return np.array([s.median for s in self.similarities])
 
     @property
-    def mins(self):
+    def mins(self) -> np.array:
         """
         Returns an array of minimum similarity values, one for each pairwise comparison.
         """
         return np.array([s.min for s in self.similarities])
 
     @property
-    def maxs(self):
+    def maxs(self) -> np.array:
         """
         Returns an array of maximum similarity values, one for each pairwise comparison.
         """
         return np.array([s.max for s in self.similarities])
 
     @property
-    def stds(self):
+    def stds(self) -> np.array:
         """
         Returns an array of standard deviations, one for each pairwise comparison.
         """
         return np.array([s.std for s in self.similarities])
 
     @property
-    def sems(self):
+    def sems(self) -> np.array:
         """
         Returns an array of standard errors of the mean, one for each pairwise comparison.
         """
         return np.array([s.sem for s in self.similarities])
 
-    def squareform(self, method=None, agg=np.mean):
+    def squareform(
+        self,
+        # method=None,
+        agg=np.mean,
+    ) -> pd.DataFrame:
         """
         Returns a squareform representation of the similarity data.
 
@@ -221,8 +250,8 @@ class RepertoireSimilarities:
         for s1 in self.df["sample1"].unique():
             for s2 in self.df["sample2"].unique():
                 _df = self.df[(self.df["sample1"] == s1) & (self.df["sample2"] == s2)]
-                if method is not None:
-                    _df = _df[_df["method"] == method]
+                # if method is not None:
+                #     _df = _df[_df["method"] == method]
                 if _df.shape[0] == 0:
                     continue
                 similarity = agg(_df["similarity"])
@@ -265,15 +294,28 @@ def repertoire_similarity(
     ----------
     repertoires : list
         A list of repertoires. Each repertoire can be a list of ``abutils.Sequence``
-        objects or ``abutils.Pair`` objects. Individual repertoires cannot mix ``Sequence``
-        and ``Pair`` objects, but the list of repertoires can contain both.
+        objects or a list of ``abutils.Pair`` objects.
+
+        .. note::
+            Individual repertoires cannot mix ``Sequence`` and ``Pair`` objects,
+            but the list of repertoires can contain both. For example, comparing a
+            repetoire of ``Sequence`` objects to a repertoire of ``Pair`` objects is
+            allowed.
 
     names : list, optional
         A list of names for the repertoires. If ``None``, names will be generated as
         ``"repertoire1"``, ``"repertoire2"``, etc.
 
     method : str, optional
-        The similarity method to use. Default is ``"morisita-horn"``.
+        The similarity method to use. Options are:
+            - ``"morisita-horn"``
+            - ``"kullback-leibler"``
+            - ``"jensen-shannon"``
+            - ``"jaccard"``
+            - ``"bray-curtis"``
+            - ``"renkonen"``
+            - ``"cosine"``
+        Default is ``"morisita-horn"``.
 
     features : str, list, optional
         The features to use for similarity calculation. Default is ``["v_gene", "j_gene", "cdr3_length"]``.
@@ -289,10 +331,16 @@ def repertoire_similarity(
         Whether to subsample with replacement. Default is ``False``.
 
     pairs_only : bool, optional
-        Whether to use only paired sequences. Default is ``False``.
+        Whether to use only paired sequences. Requires that all repertoires contain ``Pair`` objects,
+        rather than ``Sequence`` objects. Default is ``False``.
 
     chain : str, optional
         The chain to use for similarity calculation. Default is ``None``, which will use all chains.
+
+        .. note::
+            This applies to both ``Sequence`` and ``Pair`` objects. If a repertoire contains
+            ``Sequence`` objects from multiple chains, only sequences of the specified chain will
+            be used for similarity calculation, and the rest will be ignored.
 
     force_self_comparisons : bool, optional
         Whether to force self-comparisons. Only used if exactly two repertoires are provided.
@@ -338,7 +386,7 @@ def repertoire_similarity(
     if names is None:
         names = [f"repertoire{i}" for i, _ in enumerate(repertoires, 1)]
     elif len(names) != len(repertoires):
-        err = f"\nThe number of names must match the number of repertoires.\n"
+        err = "\nThe number of names must match the number of repertoires.\n"
         err += f"You provided {len(names)} names and {len(repertoires)} repertoires.\n"
         raise RuntimeError(err)
     # process repertoires

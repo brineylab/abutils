@@ -3,7 +3,7 @@
 
 import os
 
-from . import cl, io, pl, tl
+# from . import bin, cl, io, pl, tl
 from . import cl as color
 from .core import lineage, pair, sequence
 from .core.lineage import Lineage
