@@ -41,7 +41,7 @@ __all__ = ["get_path", "get_binary_directory"]
 # ]
 
 
-BIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin")
+BIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "binaries")
 SYSTEM = platform.system().lower()
 MACHINE = platform.machine().lower().replace("x86_64", "amd64")
 
