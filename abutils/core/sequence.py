@@ -24,6 +24,7 @@
 
 
 import csv
+import gzip
 import json
 import operator
 import os
@@ -971,12 +972,14 @@ def read_fastq(fastq: str) -> Iterable[Sequence]:
     """
     if os.path.isfile(fastq):
         if fastq.endswith(".gz"):
-            import gzip
-
             open_func = gzip.open
+            mode = "rt"
+            encoding = "utf-8"
         else:
             open_func = open
-        with open_func(fastq, "rt") as f:
+            mode = "r"
+            encoding = None
+        with open_func(fastq, mode=mode, encoding=encoding) as f:
             sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
     else:
         from io import StringIO
