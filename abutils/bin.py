@@ -111,6 +111,7 @@ def get_path(binary: str) -> str:
             - mmseqs
             - muscle
             - muscle_v3
+            - sickle
             - vsearch
 
     Returns
@@ -138,8 +139,9 @@ def get_path(binary: str) -> str:
         "muscle",
         "muscle3",
         "vsearch",
-        # qc
+        # qc/preprocessing
         "fastp",
+        "sickle",
         # phylogeny
         "fasttree",
     ]
