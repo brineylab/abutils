@@ -390,10 +390,7 @@ def group_fastq_pairs(
         if f.name not in group_dict:
             group_dict[f.name] = []
         group_dict[f.name].append(f)
-    groups = [
-        MergeGroup(name, group_files, verbose=verbose)
-        for name, group_files in group_dict.items()
-    ]
+    groups = [MergeGroup(name, group_files) for name, group_files in group_dict.items()]
     return natsorted(groups, key=lambda x: x.name)
 
 
