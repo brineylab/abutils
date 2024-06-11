@@ -208,7 +208,6 @@ class MergeGroup:
                 adapter_file=adapter_file,
                 binary_path=binary_path,
                 additional_args=merge_args,
-                output_format=format,
                 debug=debug,
             )
             merged_files.append(merged_file)
