@@ -50,6 +50,7 @@ class FASTQFile:
         self.path = os.path.abspath(file)
         self.basename = os.path.basename(self.path)
         self.dir = os.path.dirname(self.path)
+        self.filename = self.basename.rstrip(".gz").rstrip(".fastq").rstrip(".fq")
 
     def __eq__(self, other):
         return self.name == other.name
@@ -73,23 +74,59 @@ class IlluminaFile(FASTQFile):
 
     @property
     def name(self):
-        return "_".join(self.basename.split("_")[:-4])
+        return "_".join(self.filename.split("_")[:-4])
 
     @property
     def number(self):
-        return self.basename.split(".")[0].split("_")[-1]
+        return self.filename.split(".")[0].split("_")[-1]
 
     @property
     def read(self):
-        return self.basename.split("_")[-2]
+        return self.filename.split("_")[-2]
 
     @property
     def lane(self):
-        return self.basename.split("_")[-3]
+        return self.filename.split("_")[-3]
 
     @property
     def sample(self):
-        return self.basename.split("_")[-4]
+        return self.filename.split("_")[-4]
+
+
+class ElementFile(FASTQFile):
+    """
+    Class for processing Element-formatted FASTQ filenames.
+
+    Parameters
+    ----------
+    file : str
+        Path to a FASTQ file.
+
+    """
+
+    def __init__(self, file: str):
+        super().__init__(file)
+        self.schema = "element"
+
+    @property
+    def name(self):
+        return "_".join(self.filename.split("_")[:-1])
+
+    @property
+    def number(self):
+        return ""
+
+    @property
+    def read(self):
+        return self.filename.split("_")[-1]
+
+    @property
+    def lane(self):
+        return ""
+
+    @property
+    def sample(self):
+        return ""
 
 
 class MergeGroup:
@@ -116,7 +153,7 @@ class MergeGroup:
         merged_directory: str,
         log_directory: Optional[str] = None,
         format: str = "fastq",
-        algo: str = "vsearch",
+        algo: str = "fastp",
         binary_path: Optional[str] = None,
         minimum_overlap: int = 30,
         allowed_mismatches: int = 5,
@@ -127,6 +164,7 @@ class MergeGroup:
         window_size: int = 4,
         quality_cutoff: int = 20,
         merge_args: Optional[str] = None,
+        compress_output: bool = False,
         verbose: bool = False,
         debug: bool = False,
     ) -> str:
@@ -137,20 +175,28 @@ class MergeGroup:
             print("-" * len(self.name))
             if n_groups > 1:
                 groups = tqdm(groups, desc="  - merging lanes")
+
         # merge function
         if algo.lower() == "fastp":
             merge_func = merge_fastqs_fastp
         else:
             raise ValueError(f"Invalid merge algorithm: {algo}. Must be 'fastp'.")
+
         # merge files
         merged_files = []
         for group in groups:
             r1, r2 = natsorted(group, key=lambda x: x.read)
+            # add name and compression suffix, if necessary
+            name = self.name if len(groups) == 1 else f"{self.name}_{r1.lane}"
+            compress_suffix = ".gz" if compress_output else ""
+            # merge
             merged_file = merge_func(
                 r1.path,
                 r2.path,
-                os.path.join(merged_directory, f"{self.name}.{format.lower}"),
-                name=self.name,
+                os.path.join(
+                    merged_directory, f"{name}.{format.lower()}{compress_suffix}"
+                ),
+                name=name,
                 log_directory=log_directory,
                 trim_adapters=trim_adapters,
                 quality_trim=quality_trim,
@@ -167,13 +213,15 @@ class MergeGroup:
             )
             merged_files.append(merged_file)
         self.merged_file = os.path.join(merged_directory, f"{self.name}.{format.lower}")
+
+        # concatenate merged files if dataset has multiple lanes
         if len(merged_files) > 1:
             if verbose:
                 print("  - concatenating merged files")
             concatenate_files(merged_files, self.merged_file)
             delete_files(merged_files)
         else:
-            rename_file(merged_files, self.merged_file)
+            rename_file(merged_files[0], self.merged_file)
         return self.merged_file
 
     def _group_by_lane(self):
@@ -188,8 +236,8 @@ class MergeGroup:
 def merge_fastqs(
     files: Union[str, Iterable],
     output_directory: str,
-    log_directory: Optional[str] = None,
     output_format: str = "fastq",
+    log_directory: Optional[str] = None,
     schema: str = "illumina",
     algo: str = "fastp",
     binary_path: Optional[str] = None,
@@ -202,6 +250,7 @@ def merge_fastqs(
     quality_trim: bool = True,
     window_size: int = 4,
     quality_cutoff: int = 20,
+    compress_output: bool = False,
     debug: bool = False,
     verbose: bool = False,
 ) -> Iterable[str]:
@@ -219,8 +268,12 @@ def merge_fastqs(
     output_format : str, optional
         Output format. Must be 'fastq' or 'fasta'. Default is 'fastq'.
 
+    log_directory : str, optional
+        Path to the directory in which to save the fastp reports.
+        If not provided, fastp reports will not be saved.
+
     schema : str, optional
-        Schema of the file names. Must be 'illumina'. Default is 'illumina'.
+        Schema of the file names. Can be 'illumina' or 'element'. Default is 'illumina'.
 
     algo : str, optional
         Algorithm to use for merging. Must be 'fastp'. Default is 'fastp'.
@@ -230,6 +283,34 @@ def merge_fastqs(
 
     merge_args : str, optional
         Additional arguments (as a string) to pass to the merge function.
+
+    minimum_overlap : int, optional
+        Minimum overlap between reads. Default is 30.
+
+    allowed_mismatches : int, optional
+        Allowed mismatches between reads. Default is 5.
+
+    allowed_mismatch_percent : float, optional
+        Allowed mismatch percentage between reads. Default is 20.0.
+
+    trim_adapters : bool, optional
+        If True, trim adapters. Default is True.
+
+    adapter_file : str, optional
+        Path to a FASTA file containing adapter sequences. If not provided, the default
+        adapter sequences (Illumina TruSeq) will be used.
+
+    quality_trim : bool, optional
+        If True, trim low-quality bases. Default is True.
+
+    window_size : int, optional
+        Sliding window size for quality trimming. Default is 4.
+
+    quality_cutoff : int, optional
+        Mean quality cutoff for quality trimming. Default is 20.
+
+    compress_output : bool, optional
+        If True, compress the output file using gzip. Default is False.
 
     debug : bool, optional
         If True, print debug output. Default is False.
@@ -251,8 +332,10 @@ def merge_fastqs(
         files = list_files(files, extension=[".fastq", ".fq", ".fastq.gz", ".fq.gz"])
     if schema.lower() == "illumina":
         files = [IlluminaFile(f) for f in files]
+    elif schema.lower() == "element":
+        files = [ElementFile(f) for f in files]
     else:
-        raise ValueError(f"Invalid schema: {schema}. Must be 'illumina'.")
+        raise ValueError(f"Invalid schema: {schema}. Must be 'illumina' or 'element'.")
     # group files by sample
     file_pairs = group_fastq_pairs(files, verbose=verbose)
     # merge files
@@ -274,6 +357,7 @@ def merge_fastqs(
             window_size=window_size,
             quality_cutoff=quality_cutoff,
             merge_args=merge_args,
+            compress_output=compress_output,
             debug=debug,
             verbose=verbose,
         )
@@ -396,11 +480,12 @@ def merge_fastqs_vsearch(
 def merge_fastqs_fastp(
     forward: str,
     reverse: str,
-    merged_file: str,
+    merged: str,
     binary_path: Optional[str] = None,
     minimum_overlap: int = 30,
     allowed_mismatches: int = 5,
-    allowed_mismatch_percent: float = 20.0,
+    allowed_mismatch_percent: int = 20,
+    correct_overlap_region: bool = False,
     trim_adapters: bool = True,
     adapter_file: Optional[str] = None,
     quality_trim: bool = True,
@@ -410,7 +495,6 @@ def merge_fastqs_fastp(
     log_directory: Optional[str] = None,
     additional_args: Optional[str] = None,
     debug: bool = False,
-    **kwargs,
 ) -> str:
     """
     Merge paired-end reads using vsearch.
@@ -423,8 +507,9 @@ def merge_fastqs_fastp(
     reverse : str
         Path to the reverse read file.
 
-    merged_file : str
-        Path to the merged read file.
+    merged : str
+        Path to the merged read file. If the merged file ends in ".gz", the merged file
+        will be gzip compressed.
 
     binary_path : str, optional
         Path to a fastp binary. If not provided, the fastp binary packaged with abutils will be used.
@@ -437,6 +522,9 @@ def merge_fastqs_fastp(
 
     allowed_mismatch_percent : float, optional
         Allowed mismatch percentage between reads. Default is 20.0.
+
+    correct_overlap_region : bool, optional
+        If True, correct the overlap region. Default is False.
 
     trim_adapters : bool, optional
         If True, trim adapters. Default is True.
@@ -482,7 +570,8 @@ def merge_fastqs_fastp(
         raise ValueError(err)
 
     # make output directory
-    out_dir = os.path.dirname(merged_file)
+    merged = os.path.abspath(merged)
+    out_dir = os.path.dirname(merged)
     make_dir(out_dir)
 
     # get the vsearch binary
@@ -490,10 +579,12 @@ def merge_fastqs_fastp(
         binary_path = get_binary_path("fastp")
 
     # compile the vsearch command
-    cmd = f"{binary_path} -i '{forward}' -I '{reverse}' --merge --merged_out '{merged_file}'"
-    cmd += f" --overlap_length_require {minimum_overlap}"
-    cmd += f" --overlap_diff_limit {allowed_mismatches}"
-    cmd += f" --overlap_diff_percent_limit {allowed_mismatch_percent}"
+    cmd = f"{binary_path} -i '{forward}' -I '{reverse}' --merge --merged_out '{merged}'"
+    cmd += f" --overlap_len_require {int(minimum_overlap)}"
+    cmd += f" --overlap_diff_limit {int(allowed_mismatches)}"
+    cmd += f" --overlap_diff_percent_limit {int(allowed_mismatch_percent)}"
+    if correct_overlap_region:
+        cmd += " --correction"
 
     # adapters
     if trim_adapters:
@@ -508,16 +599,20 @@ def merge_fastqs_fastp(
     # quality
     if quality_trim:
         cmd += " --cut_tail"
-        cmd += f" --cut_tail_window_size {window_size}"
-        cmd += f" --cut_tail_mean_quality {quality_cutoff}"
+        cmd += f" --cut_tail_window_size {int(window_size)}"
+        cmd += f" --cut_tail_mean_quality {int(quality_cutoff)}"
     else:
         cmd += " --disable_quality_filtering"
 
     # log
     if log_directory is None:
         log_directory = tempfile.mkdtemp()
+    make_dir(log_directory)
     if name is None:
-        name = ".".join(os.path.basename(merged_file).split(".")[:-1])
+        if merged.endswith(".gz"):
+            name = ".".join(os.path.basename(merged).split(".")[:-2])
+        else:
+            name = ".".join(os.path.basename(merged).split(".")[:-1])
     cmd += f" --html '{os.path.join(log_directory, name)}_fastp-report.html'"
     cmd += f" --json '{os.path.join(log_directory, name)}_fastp-report.json'"
 
@@ -534,4 +629,4 @@ def merge_fastqs_fastp(
     if p.returncode != 0:
         err = f"Error merging reads with fastp: {stderr.decode()}"
         raise ValueError(err)
-    return merged_file
+    return merged
