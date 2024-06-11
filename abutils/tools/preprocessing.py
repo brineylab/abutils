@@ -230,7 +230,9 @@ class MergeGroup:
             if f.lane not in lane_dict:
                 lane_dict[f.lane] = []
             lane_dict[f.lane].append(f)
-        return [l[0] for l in natsorted(lane_dict.items(), key=lambda x: x[0])]
+        return [
+            group for lane, group in natsorted(lane_dict.items(), key=lambda x: x[0])
+        ]
 
 
 def merge_fastqs(
