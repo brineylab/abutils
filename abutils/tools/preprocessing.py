@@ -172,9 +172,17 @@ class MergeGroup:
         n_groups = len(groups)
         if verbose:
             print(f"{self.name}")
-            print("-" * len(self.name))
+            # print("-" * len(self.name))
             if n_groups > 1:
-                groups = tqdm(groups, desc="  - merging lanes")
+                groups = tqdm(
+                    groups,
+                    desc="  - merging lanes",
+                    total=n_groups,
+                    unit="lane",
+                    leave=False,
+                )
+            else:
+                print("  - merging paired FASTQs")
 
         # merge function
         if algo.lower() == "fastp":
@@ -184,18 +192,22 @@ class MergeGroup:
 
         # merge files
         merged_files = []
+        compress_suffix = ".gz" if compress_output else ""
+        self.merged_file = os.path.join(
+            merged_directory, f"{self.name}.{format.lower()}{compress_suffix}"
+        )
         for group in groups:
             r1, r2 = natsorted(group, key=lambda x: x.read)
             # add name and compression suffix, if necessary
-            name = self.name if len(groups) == 1 else f"{self.name}_{r1.lane}"
-            compress_suffix = ".gz" if compress_output else ""
+            name = self.name if n_groups == 1 else f"{self.name}_{r1.lane}"
+            merged_path = os.path.join(
+                merged_directory, f"{name}.{format.lower()}{compress_suffix}"
+            )
             # merge
-            merged_file = merge_func(
+            merge_func(
                 r1.path,
                 r2.path,
-                os.path.join(
-                    merged_directory, f"{name}.{format.lower()}{compress_suffix}"
-                ),
+                merged_path,
                 name=name,
                 log_directory=log_directory,
                 trim_adapters=trim_adapters,
@@ -210,8 +222,7 @@ class MergeGroup:
                 additional_args=merge_args,
                 debug=debug,
             )
-            merged_files.append(merged_file)
-        self.merged_file = os.path.join(merged_directory, f"{self.name}.{format.lower}")
+            merged_files.append(merged_path)
 
         # concatenate merged files if dataset has multiple lanes
         if len(merged_files) > 1:
@@ -221,6 +232,8 @@ class MergeGroup:
             delete_files(merged_files)
         else:
             rename_file(merged_files[0], self.merged_file)
+        if verbose:
+            print("")
         return self.merged_file
 
     def _group_by_lane(self):
