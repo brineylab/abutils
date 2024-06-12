@@ -171,7 +171,7 @@ class MergeGroup:
         groups = self._group_by_lane()
         n_groups = len(groups)
         if verbose:
-            print(f"{self.name}")
+            print(f"\n{self.name}")
             # print("-" * len(self.name))
             if n_groups > 1:
                 groups = tqdm(
@@ -232,8 +232,6 @@ class MergeGroup:
             delete_files(merged_files)
         else:
             rename_file(merged_files[0], self.merged_file)
-        if verbose:
-            print("")
         return self.merged_file
 
     def _group_by_lane(self):
