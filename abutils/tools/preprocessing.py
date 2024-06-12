@@ -352,6 +352,11 @@ def merge_fastqs(
         raise ValueError(f"Invalid schema: {schema}. Must be 'illumina' or 'element'.")
     # group files by sample
     file_pairs = group_fastq_pairs(files, verbose=verbose)
+    if verbose:
+        print("--------------------")
+        print("    MERGE FASTQs    ")
+        print("--------------------")
+        file_pairs = tqdm(file_pairs, leave=True)
     # merge files
     make_dir(output_directory)
     merged_files = []
