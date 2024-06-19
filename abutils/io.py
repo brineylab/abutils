@@ -23,9 +23,11 @@
 
 
 import glob
+import gzip
 import os
-import sys
 from typing import Iterable, Union
+
+from natsort import natsorted
 
 from .core.sequence import (
     from_mongodb,
@@ -66,7 +68,8 @@ def list_files(
     Parameters
     ----------
     directory : str
-        Path to a directory.
+        Path to a directory. If a file path is passed instead, the returned list of files will contain
+        only that file path.
 
     extension : str
         If supplied, only files that end with the specificied extension(s) will be returned. Can be either
@@ -79,13 +82,14 @@ def list_files(
     Iterable[str]
 
     """
-    if os.path.isdir(directory):
-        expanded_dir = os.path.expanduser(directory)
-        files = sorted(glob.glob(expanded_dir + "/*"))
+    directory = os.path.abspath(directory)
+    if os.path.exists(directory):
+        if os.path.isdir(directory):
+            files = natsorted(glob.glob(directory + "/*"))
+        else:
+            files = [directory]
     else:
-        files = [
-            directory,
-        ]
+        raise ValueError(f"Directory {directory} does not exist.")
     if extension is not None:
         if isinstance(extension, str):
             extension = [
@@ -158,6 +162,39 @@ def concatenate_files(files: Iterable[str], output_file: str) -> None:
             with open(fname) as infile:
                 for line in infile:
                     outfile.write(line)
+
+
+def determine_fastx_format(fastx_file: str) -> str:
+    """
+    Get the format of a FASTA or FASTQ file.
+
+    Parameters
+    ----------
+    fastx_file : str
+        The path to the FASTA or FASTQ file. Can be gzip-compressed.
+
+    Returns
+    -------
+    str
+        The file format -- either "fasta" or "fastq". If the initial non-whitespace
+        character in the input file isn't ">" or "@", ``None`` is returned.
+    """
+    fmt = None
+    if fastx_file.endswith(".gz"):
+        open_fn = gzip.open
+        mode = "rt"
+    else:
+        open_fn = open
+        mode = "r"
+    with open_fn(fastx_file, mode) as f:
+        line = f.readline()
+        while not line.strip():
+            line = f.readline()
+        if line.lstrip().startswith(">"):
+            fmt = "fasta"
+        elif line.lstrip().startswith("@"):
+            fmt = "fastq"
+    return fmt
 
 
 def read_sequences(
