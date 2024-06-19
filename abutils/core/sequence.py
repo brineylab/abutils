@@ -36,6 +36,7 @@ from typing import Iterable, Optional, Union
 
 import dnachisel as dc
 import pandas as pd
+import polars as pl
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
@@ -881,9 +882,11 @@ def read_csv(
         if sequence_key not in fields:
             fields.append(sequence_key)
     sequences = []
-    df = pd.read_csv(csv_file, delimiter=delimiter)
-    for _, r in df.iterrows():
-        r = r.to_dict()
+    # df = pd.read_csv(csv_file, delimiter=delimiter)
+    df = pl.read_csv(csv_file, delimiter=delimiter)
+    # for _, r in df.iterrows():
+    for r in df.iter_rows(named=True):
+        # r = r.to_dict()
         try:
             if all([r[k] == v for k, v in match.items()]):
                 if fields is not None:

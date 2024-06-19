@@ -12,6 +12,7 @@ numpy
 pandas
 paramiko
 parasail
+polars
 pyfamsa
 pymongo
 pytest
