@@ -37,9 +37,11 @@ from typing import Iterable, Optional, Union
 import dnachisel as dc
 import pandas as pd
 import polars as pl
+import pyfastx
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+from ..io import delete_files
 from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
@@ -934,11 +936,13 @@ def read_airr(
 def read_fasta(fasta: str) -> Iterable[Sequence]:
     """
     Reads FASTA-formatted sequence data and returns ``Sequence`` objects.
+    Gzipped files are supported.
 
     Parameters
     ----------
     fasta : str
-        Either a FASTA-formatted string or the path to a FASTA file. Required.
+        Either a FASTA-formatted string or the path to a FASTA file.
+        FASTA files can be gzip-compressed. Required.
 
 
     Returns
@@ -946,15 +950,53 @@ def read_fasta(fasta: str) -> Iterable[Sequence]:
     sequences : list of ``Sequences``
 
     """
+    # if input is a FASTA-formatted string, write to a temp file
+    # because pyfastx only accepts file paths, not file-like objects,
+    # which means we can't use StringIO to do it all in-memory
     if os.path.isfile(fasta):
-        with open(fasta) as f:
-            sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+        tmp = None
     else:
-        from io import StringIO
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        tmp.write(fasta)
+        fasta = tmp.name
+    sequences = []
+    for name, sequence in pyfastx.Fasta(fasta, build_index=False):
+        sequences.append(Sequence(sequence, id=name))
 
-        f = StringIO(fasta)
-        sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    # cleanup
+    if tmp is not None:
+        delete_files(tmp.name)
     return sequences
+
+    # if os.path.isfile(fasta):
+    #     with open(fasta) as f:
+    #         sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    # else:
+    #     from io import StringIO
+
+    #     f = StringIO(fasta)
+    #     sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    # return sequences
+
+
+def parse_fasta(fasta: str) -> Sequence:
+    """
+    Parses FASTA-formatted sequence data and returns ``Sequence`` objects. This
+    differs from ``read_fasta`` in that it yields sequences one at a time
+    rather than reading all into memory and returning a list. This method is
+    safe for extremely large files that are potentially too large to fit into memory.
+
+    Parameters
+    ----------
+    fasta : str
+        Path to a FASTA-formatted file, optionally gzip-compressed. Required.
+
+    Yields
+    -------
+    sequences : ``Sequence``
+    """
+    for name, sequence in pyfastx.Fasta(fasta, build_index=False):
+        yield Sequence(sequence, id=name)
 
 
 def read_fastq(fastq: str) -> Iterable[Sequence]:
@@ -965,7 +1007,8 @@ def read_fastq(fastq: str) -> Iterable[Sequence]:
     Parameters
     ----------
     fastq : str
-        Either a FASTQ-formatted string or the path to a FASTQ file. Required.
+        Either a FASTQ-formatted string or the path to a FASTQ file.
+        FASTQ files can be gzip-compressed. Required.
 
 
     Returns
@@ -973,23 +1016,61 @@ def read_fastq(fastq: str) -> Iterable[Sequence]:
     sequences : list of ``Sequences``
 
     """
+    # if input is a FASTA-formatted string, write to a temp file
+    # because pyfastx only accepts file paths, not file-like objects,
+    # which means we can't use StringIO to do it all in-memory
     if os.path.isfile(fastq):
-        if fastq.endswith(".gz"):
-            open_func = gzip.open
-            mode = "rt"
-            encoding = "utf-8"
-        else:
-            open_func = open
-            mode = "r"
-            encoding = None
-        with open_func(fastq, mode=mode, encoding=encoding) as f:
-            sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+        tmp = None
     else:
-        from io import StringIO
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        tmp.write(fastq)
+        fastq = tmp.name
+    sequences = []
+    for name, sequence, qual in pyfastx.Fastq(fastq, build_index=False):
+        sequences.append(Sequence(sequence, id=name, qual=qual))
 
-        f = StringIO(fastq)
-        sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    # cleanup
+    if tmp is not None:
+        delete_files(tmp.name)
     return sequences
+
+    # if os.path.isfile(fastq):
+    #     if fastq.endswith(".gz"):
+    #         open_func = gzip.open
+    #         mode = "rt"
+    #         encoding = "utf-8"
+    #     else:
+    #         open_func = open
+    #         mode = "r"
+    #         encoding = None
+    #     with open_func(fastq, mode=mode, encoding=encoding) as f:
+    #         sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    # else:
+    #     from io import StringIO
+
+    #     f = StringIO(fastq)
+    #     sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    # return sequences
+
+
+def parse_fastq(fastq: str) -> Sequence:
+    """
+    Parses FASTQ-formatted sequence data and returns ``Sequence`` objects. This
+    differs from ``read_fasta`` in that it yields sequences one at a time
+    rather than reading all into memory and returning a list. This method is
+    safe for extremely large files that are potentially too large to fit into memory.
+
+    Parameters
+    ----------
+    fastq : str
+        Path to a FASTQ-formatted file, optionally gzip-compressed. Required.
+
+    Yields
+    -------
+    sequences : ``Sequence``
+    """
+    for name, sequence, qual in pyfastx.Fastq(fastq, build_index=False):
+        yield Sequence(sequence, id=name, qual=qual)
 
 
 def from_mongodb(db, collection, match=None, project=None, limit=None):
