@@ -30,11 +30,16 @@ from typing import Iterable, Union
 from natsort import natsorted
 
 from .core.sequence import (
+    determine_fastx_format,
     from_mongodb,
+    parse_fasta,
+    parse_fastq,
+    parse_fastx,
     read_airr,
     read_csv,
     read_fasta,
     read_fastq,
+    read_fastx,
     read_json,
     to_csv,
     to_fasta,
@@ -162,39 +167,6 @@ def concatenate_files(files: Iterable[str], output_file: str) -> None:
             with open(fname) as infile:
                 for line in infile:
                     outfile.write(line)
-
-
-def determine_fastx_format(fastx_file: str) -> str:
-    """
-    Get the format of a FASTA or FASTQ file.
-
-    Parameters
-    ----------
-    fastx_file : str
-        The path to the FASTA or FASTQ file. Can be gzip-compressed.
-
-    Returns
-    -------
-    str
-        The file format -- either "fasta" or "fastq". If the initial non-whitespace
-        character in the input file isn't ">" or "@", ``None`` is returned.
-    """
-    fmt = None
-    if fastx_file.endswith(".gz"):
-        open_fn = gzip.open
-        mode = "rt"
-    else:
-        open_fn = open
-        mode = "r"
-    with open_fn(fastx_file, mode) as f:
-        line = f.readline()
-        while not line.strip():
-            line = f.readline()
-        if line.lstrip().startswith(">"):
-            fmt = "fasta"
-        elif line.lstrip().startswith("@"):
-            fmt = "fastq"
-    return fmt
 
 
 def read_sequences(

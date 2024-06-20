@@ -945,6 +945,39 @@ def read_airr(
     return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
 
 
+def determine_fastx_format(fastx_file: str) -> str:
+    """
+    Get the format of a FASTA or FASTQ file.
+
+    Parameters
+    ----------
+    fastx_file : str
+        The path to the FASTA or FASTQ file. Can be gzip-compressed.
+
+    Returns
+    -------
+    str
+        The file format -- either "fasta" or "fastq". If the initial non-whitespace
+        character in the input file isn't ">" or "@", ``None`` is returned.
+    """
+    fmt = None
+    if fastx_file.endswith(".gz"):
+        open_fn = gzip.open
+        mode = "rt"
+    else:
+        open_fn = open
+        mode = "r"
+    with open_fn(fastx_file, mode) as f:
+        line = f.readline()
+        while not line.strip():
+            line = f.readline()
+        if line.lstrip().startswith(">"):
+            fmt = "fasta"
+        elif line.lstrip().startswith("@"):
+            fmt = "fastq"
+    return fmt
+
+
 def read_fastx(fastx: str) -> Iterable[Sequence]:
     """
     Reads FASTA or FASTQ-formatted sequence data and returns ``Sequence`` objects.
@@ -968,8 +1001,16 @@ def read_fastx(fastx: str) -> Iterable[Sequence]:
         tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
         tmp.write(fastx)
         fastx = tmp.name
+
+    # get the appropriate reader class
+    fmt = determine_fastx_format(fastx)
+    if fmt is None:
+        raise ValueError(f"Unsupported file format for {fastx}")
+    reader = pyfastx.Fasta if fmt == "fasta" else pyfastx.Fastq
+
+    # read sequences
     sequences = []
-    for seq_tuple in pyfastx.Fastx(fastx, build_index=False):
+    for seq_tuple in reader(fastx, build_index=False):
         sequences.append(Sequence(seq_tuple))
 
     # cleanup
@@ -994,7 +1035,14 @@ def parse_fastx(fastx: str) -> Sequence:
     -------
     sequences : ``Sequence``
     """
-    for seq_tuple in pyfastx.Fastx(fastx, build_index=False):
+    # get the appropriate reader class
+    fmt = determine_fastx_format(fastx)
+    if fmt is None:
+        raise ValueError(f"Unsupported file format for {fastx}")
+    reader = pyfastx.Fasta if fmt == "fasta" else pyfastx.Fastq
+
+    # parse sequences
+    for seq_tuple in reader(fastx, build_index=False):
         yield Sequence(seq_tuple)
 
 
