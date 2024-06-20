@@ -945,6 +945,59 @@ def read_airr(
     return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
 
 
+def read_fastx(fastx: str) -> Iterable[Sequence]:
+    """
+    Reads FASTA or FASTQ-formatted sequence data and returns ``Sequence`` objects.
+    Gzipped files are supported.
+
+    Parameters
+    ----------
+    fastx : str
+        Path to a FASTA or FASTQ-formatted file, optionally gzip-compressed. Required.
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+    """
+    # if input is a FASTA-formatted string, write to a temp file
+    # because pyfastx only accepts file paths, not file-like objects,
+    # which means we can't use StringIO to do it all in-memory
+    if os.path.isfile(fastx):
+        tmp = None
+    else:
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        tmp.write(fastx)
+        fastx = tmp.name
+    sequences = []
+    for seq_tuple in pyfastx.Fastx(fastx, build_index=False):
+        sequences.append(Sequence(seq_tuple))
+
+    # cleanup
+    if tmp is not None:
+        delete_files(tmp.name)
+    return sequences
+
+
+def parse_fastx(fastx: str) -> Sequence:
+    """
+    Parses FASTA or FASTQ-formatted sequence data and returns ``Sequence`` objects.
+    This differs from ``read_fastx`` in that it yields sequences one at a time
+    rather than reading all into memory and returning a list. This method is
+    safe for extremely large files that are potentially too large to fit into memory.
+
+    Parameters
+    ----------
+    fastx : str
+        Path to a FASTA or FASTQ-formatted file, optionally gzip-compressed. Required.
+
+    Yields
+    -------
+    sequences : ``Sequence``
+    """
+    for seq_tuple in pyfastx.Fastx(fastx, build_index=False):
+        yield Sequence(seq_tuple)
+
+
 def read_fasta(fasta: str) -> Iterable[Sequence]:
     """
     Reads FASTA-formatted sequence data and returns ``Sequence`` objects.
