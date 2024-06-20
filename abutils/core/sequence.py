@@ -514,6 +514,7 @@ class Sequence(object):
         return self.annotations.get(key, default)
 
     def _process_input(self, seq, id, qual):
+        # sequence was passed as a string
         if type(seq) in STR_TYPES:
             if id is None:
                 id = str(uuid.uuid4())
@@ -521,6 +522,8 @@ class Sequence(object):
             self.id = id
             self.qual = qual
             self._input_sequence = self.sequence
+
+        # sequence is already a Sequence object
         elif type(seq) == Sequence:
             self.id = id if id is not None else seq.id
             self.sequence = seq.sequence
@@ -528,11 +531,18 @@ class Sequence(object):
             self.qual = seq.qual
             self._input_sequence = self.sequence
             self._annotations = seq._annotations
+
+        # sequence is an iterable of (id, sequence, [qual])
         elif type(seq) in [list, tuple]:
             self.id = str(seq[0])
             self.sequence = str(seq[1]).upper()
-            self.qual = qual
+            if len(seq) == 3 and qual is None:
+                self.qual = seq[2]
+            else:
+                self.qual = qual
             self._input_sequence = self.sequence
+
+        # sequence is a biopython SeqRecord
         elif type(seq) == SeqRecord:
             if qual is None:
                 if "phred_quality" in seq.letter_annotations:
@@ -548,6 +558,8 @@ class Sequence(object):
             self.sequence = str(seq.seq).upper()
             self.qual = qual
             self._input_sequence = self.sequence
+
+        # sequence is an annotation dict
         elif type(seq) in [dict, OrderedDict]:
             if self.id_key is None:
                 id_options = ["seq_id", "sequence_id"]
