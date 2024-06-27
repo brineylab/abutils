@@ -25,8 +25,10 @@
 import glob
 import gzip
 import os
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 from natsort import natsorted
 
 from .core.sequence import (
@@ -47,7 +49,9 @@ from .core.sequence import (
 )
 from .utils.convert import abi_to_fasta
 
-# from .utils.pipeline import list_files, make_dir
+# -----------------------
+#   General file I/O
+# -----------------------
 
 
 def make_dir(directory: str) -> None:
@@ -167,6 +171,70 @@ def concatenate_files(files: Iterable[str], output_file: str) -> None:
             with open(fname) as infile:
                 for line in infile:
                     outfile.write(line)
+
+
+def split_parquet(
+    parquet_file: str,
+    output_directory: str,
+    num_rows: int = 500,
+    num_splits: Optional[int] = None,
+    split_prefix: str = "chunk_",
+    start_numbering_at: int = 0,
+) -> Iterable[str]:
+    """
+    Splits a parquet file into multiple files.
+
+    Parameters
+    ----------
+    parquet_file : str
+        Path to the parquet file to be split.
+
+    output_directory : str
+        Path to the directory where the split files will be saved. If the directory does not exist, it will be created.
+
+    num_rows : int, optional
+        Number of rows per split file. Default is 500. If ``num_splits`` is supplied, this argument is ignored.
+
+    num_splits : int, optional
+        Number of split files to create. If not supplied, ``num_rows`` is used to determine the number of split files.
+
+    split_prefix : str, optional
+        Prefix for the split files, which is followed directly by the file number. Default is "chunk_".
+
+    start_numbering_at : int, optional
+        Start numbering the split files at this number. Default is 0.
+
+    Returns
+    -------
+    Iterable[str]
+        Iterable of file paths for the split files.
+
+    """
+    # outputs
+    output_files = []
+    output_directory = os.path.abspath(output_directory)
+    make_dir(output_directory)
+    # read parquet file
+    pqfile = pq.ParquetFile(parquet_file)
+    # number of rows per split file
+    if num_splits is not None:
+        total_rows = pqfile.metadata.num_rows
+        num_rows = total_rows // num_splits
+        if total_rows % num_splits != 0:
+            num_rows += 1
+    # split into batches and process
+    batches = pqfile.iter_batches(batch_size=num_rows)
+    for i, batch in enumerate(batches, start=start_numbering_at):
+        table = pa.Table.from_batches([batch])
+        output_file = os.path.join(output_directory, f"{split_prefix}{i}.parquet")
+        pq.write_table(table, output_file)
+        output_files.append(output_file)
+    return output_files
+
+
+# -----------------------
+#     Sequence I/O
+# -----------------------
 
 
 def read_sequences(
