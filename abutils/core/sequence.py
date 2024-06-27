@@ -41,7 +41,7 @@ import pyfastx
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
-from ..io import delete_files
+# from ..io import delete_files
 from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
@@ -627,7 +627,10 @@ def reverse_complement(
 
 
 def translate(
-    sequence: Sequence, sequence_key: Optional[str] = None, frame: int = 1
+    sequence: Sequence,
+    sequence_key: Optional[str] = None,
+    frame: int = 1,
+    allow_dots: bool = False,
 ) -> str:
     """
     Translates a nucleotide sequence.
@@ -644,6 +647,10 @@ def translate(
     frame : int, default=1
         Reading frame to translate. Default is ``1``.
 
+    allow_dots : bool, default=False
+        If ``True``, an all-dot codon ("...") will be translated as a single dot (".").
+        Useful when translating IMGT-gapped sequences.Default is ``False``.
+
 
     Returns
     -------
@@ -652,14 +659,11 @@ def translate(
 
     """
     if sequence_key is not None:
-        seq = Sequence(
-            nested_dict_lookup(sequence.annotations, sequence_key.split("."))
-        )
+        seq = Sequence(sequence[sequence_key])
     else:
         seq = Sequence(sequence)
     if seq is None:
         return None
-    # start = (frame % 3 or 3) - 1  # too clever by half
     if frame not in range(1, 4):
         raise ValueError(f"Invalid frame: {frame}. Must be 1, 2 or 3.")
     start = frame - 1
@@ -668,8 +672,12 @@ def translate(
     translated = ""
     for i in range(0, len(seq), 3):
         codon = seq[i : i + 3]
-        if all([c == "-" for c in codon]):
+        if len(codon) != 3:
+            continue
+        if codon == "---":
             aa = "-"
+        elif allow_dots and codon == "...":
+            aa = "."
         else:
             aa = codon_lookup.get(codon, "X")
         translated += aa
@@ -1015,6 +1023,8 @@ def read_fastx(fastx: str) -> Iterable[Sequence]:
 
     # cleanup
     if tmp is not None:
+        from ..io import delete_files
+
         delete_files(tmp.name)
     return sequences
 
@@ -1073,11 +1083,13 @@ def read_fasta(fasta: str) -> Iterable[Sequence]:
         tmp.write(fasta)
         fasta = tmp.name
     sequences = []
-    for name, sequence in pyfastx.Fasta(fasta, build_index=False):
+    for name, sequence in pyfastx.Fasta(fasta, build_index=False, full_name=True):
         sequences.append(Sequence(sequence, id=name))
 
     # cleanup
     if tmp is not None:
+        from ..io import delete_files
+
         delete_files(tmp.name)
     return sequences
 
@@ -1108,7 +1120,7 @@ def parse_fasta(fasta: str) -> Sequence:
     -------
     sequences : ``Sequence``
     """
-    for name, sequence in pyfastx.Fasta(fasta, build_index=False):
+    for name, sequence in pyfastx.Fasta(fasta, build_index=False, full_name=True):
         yield Sequence(sequence, id=name)
 
 
@@ -1144,6 +1156,8 @@ def read_fastq(fastq: str) -> Iterable[Sequence]:
 
     # cleanup
     if tmp is not None:
+        from ..io import delete_files
+
         delete_files(tmp.name)
     return sequences
 
