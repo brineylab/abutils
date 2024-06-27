@@ -13,6 +13,7 @@ pandas
 paramiko
 parasail
 polars
+pyarrow
 pyfamsa
 pyfastx
 pymongo
