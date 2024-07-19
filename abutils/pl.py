@@ -22,11 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-from .plots.models.data import PlotData
-
 from .plots.bar import bar
 from .plots.donut import donut
 from .plots.heatmap import heatmap
 from .plots.kde import kde
+from .plots.models.data import PlotData
 from .plots.ridge import ridge
 from .plots.scatter import scatter
