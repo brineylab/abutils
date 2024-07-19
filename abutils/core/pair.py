@@ -22,28 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import copy
 import csv
 import sys
-import traceback
+from typing import Iterable, Optional, Union
 
-from Bio.Seq import Seq
+import polars as pl
 
-from .sequence import Sequence
-from ..utils import germlines
-from ..utils.alignment import global_alignment
 from ..utils.utilities import nested_dict_lookup
-
-
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-else:
-    STR_TYPES = [str, unicode]
 
 
 class Pair(object):
@@ -611,17 +596,17 @@ def get_pairs(
     if subject is not None:
         if type(subject) in (list, tuple):
             match["subject"] = {"$in": subject}
-        elif type(subject) in STR_TYPES:
+        elif isinstance(subject, str):
             match["subject"] = subject
     if group is not None:
         if type(group) in (list, tuple):
             match["group"] = {"$in": group}
-        elif type(group) in STR_TYPES:
+        elif isinstance(group, str):
             match["group"] = group
     if experiment is not None:
         if type(experiment) in (list, tuple):
             match["experiment"] = {"$in": experiment}
-        elif type(experiment) in STR_TYPES:
+        elif isinstance(experiment, str):
             match["experiment"] = experiment
     seqs = list(db[collection].find(match))
     return assign_pairs(
@@ -696,6 +681,144 @@ def assign_pairs(
     if pairs_only:
         pairs = [p for p in pairs if p.is_pair]
     return pairs
+
+
+def pairs_to_csv(
+    pairs: Iterable[Pair],
+    csv_file: Optional[str] = None,
+    sep: str = ",",
+    header: bool = True,
+    columns: Optional[Iterable] = None,
+    index: bool = False,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> Optional[pl.DataFrame]:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. If not provided, a ``polars.DataFrame``
+        containing the CSV data will be returned.
+
+    sep : str, default=","
+        Column delimiter. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    index : bool, default=False
+        If ``True``, the CSV file will contain an index column. Default is ``False``.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    data = []
+    # read Pair data
+    for p in pairs:
+        d = {"name": p.name}
+        # heavy chain
+        if p.heavy is not None:
+            if not p.heavy.annotations:
+                d.update({"sequence_id:0": p.heavy.id, "sequence:0": p.heavy.sequence})
+            else:
+                d.update({f"{k}:0": v for k, v in p.heavy.annotations.items()})
+            if sequence_properties is not None:
+                for prop in sequence_properties:
+                    try:
+                        d[f"{prop}:0"] = getattr(p.heavy, prop)
+                    except AttributeError:
+                        pass
+        # light chain
+        if p.light is not None:
+            if not p.light.annotations:
+                d.update({"sequence_id:1": p.light.id, "sequence:1": p.light.sequence})
+            else:
+                d.update({f"{k}:1": v for k, v in p.light.annotations.items()})
+            if sequence_properties is not None:
+                for prop in sequence_properties:
+                    try:
+                        d[f"{prop}:1"] = getattr(p.light, prop)
+                    except AttributeError:
+                        pass
+        # properties
+        if properties is not None:
+            for prop in properties:
+                try:
+                    d[prop] = getattr(p, prop)
+                except AttributeError:
+                    continue
+        data.append(d)
+
+    # build dataframe
+    df = pl.DataFrame(data, infer_schema_length=len(data))
+
+    # drop NaN
+    if drop_na_columns:
+        df = df[[s.name for s in df if not (s.null_count() == df.height)]]
+
+    # excluded columns
+    if exclude is not None:
+        if isinstance(exclude, str):
+            exclude = []
+        cols = [c for c in df.columns if c not in exclude]
+        df = df.select(cols)
+
+    # reorder
+    if order is not None:
+        cols = [o for o in order if o in df.columns]
+        df = df.select(cols)
+
+    # leading columns
+    if leading is not None:
+        if isinstance(leading, str):
+            leading = [leading]
+        leading = [l for l in leading if l in df.columns]
+        cols = leading + [c for c in df.columns if c not in leading]
+        df = df.select(cols)
+
+    if columns is not None:
+        cols = [c for c in columns if c in df.columns]
+        df = df.select(cols)
+
+    if csv_file is not None:
+        df.write_csv(csv_file, separator=sep, index=index, include_header=header)
+    else:
+        return df
 
 
 # def deduplicate(pairs, aa=False, ignore_primer_regions=False):

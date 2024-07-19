@@ -905,7 +905,7 @@ def read_csv(
             fields.append(sequence_key)
     sequences = []
     # df = pd.read_csv(csv_file, delimiter=delimiter)
-    df = pl.read_csv(csv_file, delimiter=delimiter)
+    df = pl.read_csv(csv_file, separator=delimiter)
     # for _, r in df.iterrows():
     for r in df.iter_rows(named=True):
         # r = r.to_dict()
@@ -951,6 +951,70 @@ def read_airr(
     sequences : list of ``Sequences``
     """
     return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
+
+
+def read_parquet(
+    parquet_file: str,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
+    """
+    Reads a Parquet file and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    parquet_file : str
+        Path to the input Parquet file. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
+    df = pl.read_parquet(parquet_file)
+    for r in df.iter_rows(named=True):
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
+    return sequences
 
 
 def determine_fastx_format(fastx_file: str) -> str:
@@ -1394,7 +1458,7 @@ def to_fastq(
     return fastq_file
 
 
-def to_csv(
+def sequences_to_csv(
     sequences: Iterable[Sequence],
     csv_file: str,
     sep: str = ",",
@@ -1406,7 +1470,7 @@ def to_csv(
     order: Optional[Iterable[str]] = None,
     exclude: Optional[Union[str, Iterable[str]]] = None,
     leading: Optional[Union[str, Iterable[str]]] = None,
-) -> None:
+) -> Optional[pl.DataFrame]:
     """
     Saves a list of ``Sequence`` objects to a CSV file.
 
@@ -1449,8 +1513,14 @@ def to_csv(
         if both are provided, fields in ``leading`` will appear first in the CSV file and
         remaining fields will appear in the order provided in ``order``.
 
+    Returns
+    -------
+    Optional[pl.DataFrame]
+        A ``polars.DataFrame`` object is returned if ``csv_file`` is not provided.
+
     """
     data = []
+    # read Sequence data
     for s in sequences:
         if not s.annotations:
             d = {"sequence_id": s.id, "sequence": s.sequence}
@@ -1463,25 +1533,39 @@ def to_csv(
                 except AttributeError:
                     continue
         data.append(d)
-    df = pd.DataFrame(data)
+
+    # populate DataFrame
+    df = pl.DataFrame(data, infer_schema_length=len(data))
+
     # drop NaN
     if drop_na_columns:
-        df.dropna(axis=1, how="all", inplace=True)
+        df = df[[s.name for s in df if not (s.null_count() == df.height)]]
+
     # excluded columns
     if exclude is not None:
         if isinstance(exclude, str):
             exclude = []
-        cols = [c for c in df.columns.values if c not in exclude]
-        df = df[cols]
+        cols = [c for c in df.columns if c not in exclude]
+        df = df.select(cols)
+
     # reorder
     if order is not None:
-        cols = [o for o in order if o in df.columns.values]
-        df = df[cols]
+        cols = [o for o in order if o in df.columns]
+        df = df.select(cols)
+
+    # leading columns
     if leading is not None:
         if isinstance(leading, str):
             leading = [leading]
-        leading = [l for l in leading if l in df.columns.values]
-        cols = leading + [c for c in df.columns.values if c not in leading]
-        df = df[cols]
+        leading = [l for l in leading if l in df.columns]
+        cols = leading + [c for c in df.columns if c not in leading]
+        df = df.select(cols)
 
-    df.to_csv(csv_file, sep=sep, index=index, columns=columns, header=header)
+    if columns is not None:
+        cols = [c for c in columns if c in df.columns]
+        df = df.select(cols)
+
+    if csv_file is not None:
+        df.write_csv(csv_file, separator=sep, index=index, include_header=header)
+    else:
+        return df

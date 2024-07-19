@@ -27,11 +27,14 @@ import gzip
 import os
 from typing import Iterable, Optional, Union
 
+import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 from natsort import natsorted
 
+from .core.pair import Pair, pairs_to_csv
 from .core.sequence import (
+    Sequence,
     determine_fastx_format,
     from_mongodb,
     parse_fasta,
@@ -43,7 +46,7 @@ from .core.sequence import (
     read_fastq,
     read_fastx,
     read_json,
-    to_csv,
+    sequences_to_csv,
     to_fasta,
     to_fastq,
 )
@@ -69,7 +72,9 @@ def make_dir(directory: str) -> None:
 
 
 def list_files(
-    directory: str, extension: Union[str, Iterable, None] = None
+    directory: str,
+    extension: Union[str, Iterable, None] = None,
+    recursive: bool = False,
 ) -> Iterable[str]:
     """
     Lists files in a given directory.
@@ -94,7 +99,14 @@ def list_files(
     directory = os.path.abspath(directory)
     if os.path.exists(directory):
         if os.path.isdir(directory):
-            files = natsorted(glob.glob(directory + "/*"))
+            if recursive:
+                files = []
+                for root, dirs, _files in os.walk(directory):
+                    for f in _files:
+                        file_path = os.path.join(root, f)
+                        files.append(file_path)
+            else:
+                files = natsorted(glob.glob(directory + "/*"))
         else:
             files = [directory]
     else:
@@ -235,6 +247,110 @@ def split_parquet(
 # -----------------------
 #     Sequence I/O
 # -----------------------
+
+
+def to_csv(
+    sequences: Iterable[Union[Sequence, Pair]],
+    csv_file: Optional[str] = None,
+    sep: str = ",",
+    header: bool = True,
+    columns: Optional[Iterable] = None,
+    index: bool = False,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> Optional[pl.DataFrame]:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence, Pair]
+        List of ``Sequence`` or ``Pair`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. If ``None``, the CSV will not be saved to a file and the
+        function will return a ``polars.DataFrame`` object.
+
+    sep : str, default=","
+        Column delimiter. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    index : bool, default=False
+        If ``True``, the CSV file will contain an index column. Default is ``False``.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    Optional[pl.DataFrame]
+        A ``polars.DataFrame`` object if ``csv_file`` is ``None``.
+
+    """
+    if all([isinstance(s, Sequence) for s in sequences]):
+        return sequences_to_csv(
+            sequences,
+            csv_file=csv_file,
+            sep=sep,
+            header=header,
+            columns=columns,
+            index=index,
+            properties=properties,
+            drop_na_columns=drop_na_columns,
+            order=order,
+            exclude=exclude,
+            leading=leading,
+        )
+    elif all([isinstance(s, Pair) for s in sequences]):
+        return pairs_to_csv(
+            sequences,
+            csv_file=csv_file,
+            sep=sep,
+            header=header,
+            columns=columns,
+            index=index,
+            properties=properties,
+            sequence_properties=sequence_properties,
+            drop_na_columns=drop_na_columns,
+            order=order,
+            exclude=exclude,
+            leading=leading,
+        )
+    else:
+        raise ValueError(
+            "All elements in the input list must be of the same type (either Sequence or Pair)."
+        )
 
 
 def read_sequences(
