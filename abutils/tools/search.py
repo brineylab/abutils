@@ -49,6 +49,7 @@ def mmseqs_search(
     threads: Optional[int] = None,
     additional_cli_args: Optional[str] = None,
     mmseqs_bin: Optional[str] = None,
+    log_to: Optional[str] = None,
     debug: bool = False,
 ) -> str:
     """
@@ -89,7 +90,7 @@ def mmseqs_search(
         Maximum number of matches to return for each query sequence. If not provided, the default is 300.
 
     max_evalue : float
-        Only return matches below this E-value. If not providedm the default is 1.0e-3.
+        Only return matches below this E-value. If not provided, the default is 1.0e-3.
 
     sensitivity : float
         Sensitivity. 1.0 is fastest but least sensitive, 7.5 is slowest but most sensitive.
@@ -210,4 +211,12 @@ def mmseqs_search(
     if debug:
         print("STDOUT:\n", stdout.decode("utf-8"))
         print("\nSTDERR:\n", stderr.decode("utf-8"))
+    if log_to is not None:
+        log_to = os.path.abspath(log_to)
+        make_dir(os.path.dirname(log_to))
+        with open(log_to, "w") as f:
+            f.write("STDOUT:\n-----\n")
+            f.write(stdout.decode("utf-8"))
+            f.write("\n\nSTDERR:\n-----\n")
+            f.write(stderr.decode("utf-8"))
     return output_path
