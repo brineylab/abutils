@@ -1566,6 +1566,6 @@ def sequences_to_csv(
         df = df.select(cols)
 
     if csv_file is not None:
-        df.write_csv(csv_file, separator=sep, index=index, include_header=header)
+        df.write_csv(csv_file, separator=sep, include_header=header)
     else:
         return df
