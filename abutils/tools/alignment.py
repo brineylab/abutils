@@ -1352,6 +1352,20 @@ class PairwiseAlignment(ABC):
         return self.target.id
 
     def align(self):
+        # parasail throws an error if query or target sequences are of length 0
+        # but -- annoyingly -- it also prints a warning to stdout
+        # the stdout printing can mess with downstream code like abstar
+        # to fix, we'll catch the problem before alignment and raise an error
+        if len(self.query.sequence) == 0:
+            raise ValueError(
+                f"{self.alignment_type.upper()} ALIGNMENT ERROR: query sequence is empty."
+            )
+        if len(self.target.sequence) == 0:
+            raise ValueError(
+                f"{self.alignment_type.upper()} ALIGNMENT ERROR: target sequence is empty."
+            )
+
+        # do the alignment
         aln = self.alignment_function(
             self.query.sequence,
             self.target.sequence,
