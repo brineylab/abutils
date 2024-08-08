@@ -25,6 +25,7 @@
 
 # from __future__ import absolute_import, division, print_function, unicode_literals
 
+import io
 import math
 import operator
 import sys
@@ -81,3 +82,18 @@ def chunker(iterable, chunksize):
         start = i * chunksize
         end = (i + 1) * chunksize
         yield iterable[start:end]
+
+
+def redirect_stdout(func, *args, **kwargs):
+    """
+    Suppress stdout for a function by redirecting it to a StringIO object.
+    """
+    # Redirect stdout to a StringIO object
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        result = func(*args, **kwargs)
+    finally:
+        # Restore the original stdout
+        sys.stdout = old_stdout
+    return result
