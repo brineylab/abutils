@@ -9,6 +9,7 @@ from .core import lineage, pair, sequence
 from .core.lineage import Lineage
 from .core.pair import Pair
 from .core.sequence import Sequence
+from .tools import log
 from .tools.phylo import Phylogeny
 from .utils import (
     alignment,
@@ -16,7 +17,7 @@ from .utils import (
     # color,
     decorators,
     jobs,
-    log,
+    # log,
     phylogeny,
     pipeline,
     progbar,
