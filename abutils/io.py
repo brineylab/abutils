@@ -46,6 +46,7 @@ from .core.sequence import (
     read_fastq,
     read_fastx,
     read_json,
+    read_parquet,
     sequences_to_csv,
     to_fasta,
     to_fastq,
@@ -75,6 +76,7 @@ def list_files(
     directory: str,
     extension: Union[str, Iterable, None] = None,
     recursive: bool = False,
+    ignore_dot_files: bool = True,
 ) -> Iterable[str]:
     """
     Lists files in a given directory.
@@ -127,6 +129,8 @@ def list_files(
                 ]
             )
         ]
+    if ignore_dot_files:
+        files = [f for f in files if not os.path.basename(f).startswith(".")]
     return files
 
 
