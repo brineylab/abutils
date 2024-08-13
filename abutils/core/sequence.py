@@ -135,11 +135,12 @@ class Sequence(object):
         id_key: Optional[str] = None,
         seq_key: Optional[str] = None,
     ):
-        super(Sequence, self).__init__()
+        super().__init__()
         self._input_sequence = None
         self._input_id = id
         self._input_qual = qual
         self._annotations = annotations
+        self._clobbered_annotations = {}
         self.id = None
         self.sequence = None
         self.qual = None
@@ -253,6 +254,51 @@ class Sequence(object):
         if all([hasattr(other, "sequence"), hasattr(other, "id")]):
             return all([self.sequence == other.sequence, self.id == other.id])
         return False
+
+    def __getattr__(self, name):
+        """
+        Allows attribute access to the ``annotations`` dictionary.
+
+        Parameters
+        ----------
+        name : str
+            Name of the attribute to be accessed.
+
+        Returns
+        -------
+        Any
+            The value of the attribute, if present in the ``annotations`` dictionary.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not in the ``annotations`` dictionary.
+        """
+        if name in self.annotations:
+            return self.annotations[name]
+        raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+
+    # def __setattr__(self, name, value):
+    #     """
+    #     Allows attribute assignment to the ``annotations`` dictionary.
+
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         Name of the attribute to be set.
+
+    #     value : Any
+    #         Value to be set for the attribute.
+    #     """
+    #     # start with the built-in attributes
+    #     if name in self.__dict__:
+    #         super().__setattr__(name, value)
+    #     # then try the annotations
+    #     elif name in self._annotations:
+    #         self.annotations[name] = value
+    #     # otherwise, set the attribute normally (make a new attribute)
+    #     else:
+    #         super().__setattr__(name, value)
 
     @classmethod
     def from_json(cls, data):
