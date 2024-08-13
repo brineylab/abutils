@@ -7,6 +7,8 @@ import logging
 import os
 from typing import Optional
 
+from ..io import make_dir
+
 _all__ = [
     "LoggingMixin",
     "SingleLineHandler",
@@ -217,6 +219,8 @@ class SimpleLogger:
             )
         # logs
         self.checkpoint()
+        # make sure the logfile's directory exists
+        make_dir(os.path.dirname(log_file))
         # write to file
         with open(log_file, "w") as f:
             f.write(self.formatted)
