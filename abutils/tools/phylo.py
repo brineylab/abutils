@@ -24,12 +24,11 @@
 
 
 import os
-import platform
 import subprocess as sp
 import tempfile
 import uuid
 from collections import Counter
-from copy import copy, deepcopy
+from copy import deepcopy
 from io import StringIO
 from typing import Callable, Iterable, List, Optional, Union
 
@@ -451,7 +450,7 @@ class Phylogeny:
         sequences : list of Sequence objects
             Processed sequences.
         """
-        sequences = deepcopy(sequences)
+        # sequences = deepcopy(sequences)
         sequences = [
             Sequence(
                 s[self.seq_key] if self.seq_key is not None else s.sequence,
