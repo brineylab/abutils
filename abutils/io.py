@@ -37,6 +37,8 @@ from .core.sequence import (
     Sequence,
     determine_fastx_format,
     from_mongodb,
+    from_pandas,
+    from_polars,
     parse_fasta,
     parse_fastq,
     parse_fastx,

@@ -1063,6 +1063,134 @@ def read_parquet(
     return sequences
 
 
+def from_polars(
+    df: Union[pl.DataFrame, pl.LazyFrame],
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
+    """
+    Reads a Polars DataFrame and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    df : Union[pl.DataFrame, pl.LazyFrame]
+        The input Polars DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
+    if isinstance(df, pl.LazyFrame):
+        df = df.collect()
+    for r in df.iter_rows(named=True):
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
+    return sequences
+
+
+def from_pandas(
+    df: pd.DataFrame,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
+    """
+    Reads a pandas DataFrame and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input pandas DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
+    for _, r in df.iterrows():
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
+    return sequences
+
+
 def determine_fastx_format(fastx_file: str) -> str:
     """
     Get the format of a FASTA or FASTQ file.
