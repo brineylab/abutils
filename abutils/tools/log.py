@@ -13,6 +13,7 @@ _all__ = [
     "LoggingMixin",
     "SingleLineHandler",
     "NotebookLogger",
+    "SimpleLogger",
     "setup_logging",
     "null_logger",
     "get_logger",
@@ -217,6 +218,7 @@ class SimpleLogger:
             raise ValueError(
                 "log_file must be provided, either at initialization or to the write() method"
             )
+        log_file = log_file or self.log_file
         # logs
         self.checkpoint()
         # make sure the logfile's directory exists
