@@ -97,6 +97,7 @@ class Cluster:
 
     @property
     def seq_ids(self) -> Iterable[str]:
+        # retained for backwards compatibility, use sequence_ids instead
         return [s.id for s in self.sequences]
 
     @property
