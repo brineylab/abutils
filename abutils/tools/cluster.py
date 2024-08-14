@@ -103,7 +103,7 @@ class Cluster:
     @property
     def consensus(self) -> Sequence:
         if self._consensus is None:
-            self._consensus = self.make_consensus()
+            self.make_consensus()
         return self._consensus()
 
     def make_consensus(
@@ -134,15 +134,16 @@ class Cluster:
 
         """
         if len(self.sequences) == 1:
-            return self.sequences[0]
-        consensus = make_consensus(
-            self.sequences,
-            threshold=threshold,
-            algo=algo,
-            ambiguous=ambiguous,
-        )
-        self._consensus = consensus
-        return consensus
+            self._consensus = self.sequences[0]
+        else:
+            consensus = make_consensus(
+                self.sequences,
+                threshold=threshold,
+                algo=algo,
+                ambiguous=ambiguous,
+            )
+            self._consensus = consensus
+        return self._consensus
         # return consensus
         # aln = mafft(self.sequences)
         # if aln is None:
