@@ -30,11 +30,12 @@ import string
 import subprocess as sp
 import sys
 import tempfile
-from typing import Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 from Bio.Align import AlignInfo
 
 from ..bin import get_path as get_binary_path
+from ..core.pair import Pair
 from ..core.sequence import Sequence, read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 from ..utils.pipeline import make_dir
@@ -89,6 +90,10 @@ class Cluster:
     @property
     def size(self) -> int:
         return len(self.sequences)
+
+    @property
+    def sequence_ids(self) -> Iterable[str]:
+        return [s.id for s in self.sequences]
 
     @property
     def seq_ids(self) -> Iterable[str]:
@@ -872,6 +877,69 @@ def _get_cdhit_wordsize(threshold):
     elif threshold > 0.5:
         return 3
     return 2
+
+
+def linclust(
+    seqs: Union[str, Iterable[Sequence]],
+    threshold: float = 0.975,
+    cov_mode: Union[str, int] = 0,
+    out_file=None,
+    temp_dir=None,
+    make_db=True,
+    linclust_kwargs: str = None,
+    quiet=False,
+    threads=0,
+    debug=False,
+):
+    """
+    Perform clustering of sequences using ``mmseqs easy-linclust``.
+    """
+    pass
+
+
+def nested_linclust(
+    sequences: Union[str, Iterable[Union[Sequence, Pair]]],
+    thresholds: Iterable[float],
+    project_directory: str,
+    linclust_kwargs: Optional[Union[str, dict]] = None,
+    parquet: bool = False,
+    verbose: bool = True,
+    debug: bool = False,
+) -> None:
+    """
+    Perform nested clustering of sequences using ``mmseqs easy-linclust``.
+
+    Parameters
+    ----------
+    sequences : Union[str, Iterable[Union[Sequence, Pair]]
+        If a ``str`` is provided, it is assumed to be the path to a AIRR-formatted file (or a
+        directory of AIRR-formatted files) containing the sequences to be clustered. This file
+        should be tab-delimited unless `parquet` is ``True``, in which case it should be
+        a ``parquet`` file. If an iterable is provided, it can contain ``Sequence`` objects,
+        ``Pair`` objects, or a mixture of both. If pairs are provided, the heavy/light chains
+        will be concatenated prior to clustering.
+
+    thresholds : Iterable[float]
+        An iterable of thresholds for clustering. Each should be between 0 and 1.
+        Thresholds will be sorted in descending order. The first threshold will be used
+        for the initial clustering, the results will be clustered at the second threshold,
+        and so on.
+
+    project_directory : str
+        The path to the project directory. The necessary directory structure will be
+        created automatically based on the provided thresholds.
+
+    linclust_kwargs : Optional[str], optional
+        Keyword arguments to pass to ``mmseqs easy-linclust``. Should be a string of the form
+        ``"--arg1 value1 --flag1, --arg2 value2..."``, or can be a dictionary mapping
+        threshold values to their corresponding arguments. If a ``dict`` is passed and some
+        thresholds are missing, the missing thresholds will not pass any additional kwargs
+        to ``mmseqs easy-linclust``.
+    """
+
+    # linclust kwargs
+    if isinstance(linclust_kwargs, str):
+        linclust_kwargs = {t: linclust_kwargs for t in thresholds}
 
 
 # def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True, method='cdhit',
