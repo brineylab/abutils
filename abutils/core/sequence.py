@@ -255,50 +255,50 @@ class Sequence(object):
             return all([self.sequence == other.sequence, self.id == other.id])
         return False
 
-    def __getattr__(self, name):
-        """
-        Allows attribute access to the ``annotations`` dictionary.
-
-        Parameters
-        ----------
-        name : str
-            Name of the attribute to be accessed.
-
-        Returns
-        -------
-        Any
-            The value of the attribute, if present in the ``annotations`` dictionary.
-
-        Raises
-        ------
-        AttributeError
-            If the attribute is not in the ``annotations`` dictionary.
-        """
-        if name in self.annotations:
-            return self.annotations[name]
-        raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
-
-    # def __setattr__(self, name, value):
+    # def __getattr__(self, name):
     #     """
-    #     Allows attribute assignment to the ``annotations`` dictionary.
+    #     Allows attribute access to the ``annotations`` dictionary.
 
     #     Parameters
     #     ----------
     #     name : str
-    #         Name of the attribute to be set.
+    #         Name of the attribute to be accessed.
 
-    #     value : Any
-    #         Value to be set for the attribute.
+    #     Returns
+    #     -------
+    #     Any
+    #         The value of the attribute, if present in the ``annotations`` dictionary.
+
+    #     Raises
+    #     ------
+    #     AttributeError
+    #         If the attribute is not in the ``annotations`` dictionary.
     #     """
-    #     # start with the built-in attributes
-    #     if name in self.__dict__:
-    #         super().__setattr__(name, value)
-    #     # then try the annotations
-    #     elif name in self._annotations:
-    #         self.annotations[name] = value
-    #     # otherwise, set the attribute normally (make a new attribute)
-    #     else:
-    #         super().__setattr__(name, value)
+    #     if name in self.annotations:
+    #         return self.annotations[name]
+    #     raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+
+    # # def __setattr__(self, name, value):
+    # #     """
+    # #     Allows attribute assignment to the ``annotations`` dictionary.
+
+    # #     Parameters
+    # #     ----------
+    # #     name : str
+    # #         Name of the attribute to be set.
+
+    # #     value : Any
+    # #         Value to be set for the attribute.
+    # #     """
+    # #     # start with the built-in attributes
+    # #     if name in self.__dict__:
+    # #         super().__setattr__(name, value)
+    # #     # then try the annotations
+    # #     elif name in self._annotations:
+    # #         self.annotations[name] = value
+    # #     # otherwise, set the attribute normally (make a new attribute)
+    # #     else:
+    # #         super().__setattr__(name, value)
 
     @classmethod
     def from_json(cls, data):
