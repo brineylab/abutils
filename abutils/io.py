@@ -171,6 +171,11 @@ def delete_files(files: Union[str, Iterable]) -> None:
             os.remove(f)
 
 
+# --------------------------------------------
+#      File splitting and concatenation
+# --------------------------------------------
+
+
 def concatenate_files(files: Iterable[str], output_file: str) -> None:
     """
     Concatenates multiple files into a single file.
@@ -232,14 +237,17 @@ def split_parquet(
     output_files = []
     output_directory = os.path.abspath(output_directory)
     make_dir(output_directory)
+
     # read parquet file
     pqfile = pq.ParquetFile(parquet_file)
+
     # number of rows per split file
     if num_splits is not None:
         total_rows = pqfile.metadata.num_rows
         num_rows = total_rows // num_splits
         if total_rows % num_splits != 0:
             num_rows += 1
+
     # split into batches and process
     batches = pqfile.iter_batches(batch_size=num_rows)
     for i, batch in enumerate(batches, start=start_numbering_at):
@@ -248,6 +256,154 @@ def split_parquet(
         pq.write_table(table, output_file)
         output_files.append(output_file)
     return output_files
+
+
+def split_fastx(
+    fastx_file: str,
+    output_directory: str,
+    chunksize: int = 500,
+    start_numbering_at: int = 0,
+    fmt: Optional[str] = None,
+) -> Iterable[str]:
+    """
+    Splits a FASTA or FASTQ file into multiple files, each containing a specified number of sequences.
+
+    Parameters
+    ----------
+    fastx_file : str
+        Path to the FASTA or FASTQ file to be split.
+
+    output_directory : str
+        Path to the directory where the split files will be saved. If the directory does not exist, it will be created.
+
+    chunksize : int, optional
+        Number of sequences per split file. Default is 500. The last file may contain fewer sequences than this number.
+
+    start_numbering_at : int, optional
+        Start numbering the split files at this number. Default is 0.
+
+    fmt : str, optional
+        Format of the input file. If not supplied, the format will be determined automatically.
+
+    Returns
+    -------
+    Iterable[str]
+        Iterable of file paths for the split files.
+
+    """
+    # outputs
+    output_files = []
+    output_directory = os.path.abspath(output_directory)
+    make_dir(output_directory)
+    output_basename = ".".join(
+        os.path.basename(fastx_file).rstrip(".gz").split(".")[:-1]
+    )
+
+    # get input file format
+    if fmt is None:
+        fmt = determine_fastx_format(fastx_file)
+
+    # split sequences into chunks, write the chunks to files
+    file_num = start_numbering_at
+    chunk = []
+    for s in read_fastx(fastx_file):
+        chunk.append(s.fastq if fmt == "fastq" else s.fasta)
+        if len(chunk) == chunksize:
+            output_file = os.path.join(
+                output_directory, f"{output_basename}_{file_num}.{fmt}"
+            )
+            with open(output_file, "w") as f:
+                f.write("\n".join(chunk))
+            chunk = []
+            file_num += 1
+            output_files.append(output_file)
+
+    # write the last chunk to a file
+    if chunk:
+        output_file = os.path.join(
+            output_directory, f"{output_basename}_{file_num}.{fmt}"
+        )
+        with open(output_file, "w") as f:
+            f.write("\n".join(chunk))
+        output_files.append(output_file)
+
+    return output_files
+
+
+def split_fasta(
+    fasta_file: str,
+    output_directory: str,
+    chunksize: int = 500,
+    start_numbering_at: int = 0,
+) -> Iterable[str]:
+    """
+    Splits a FASTA or FASTQ file into multiple files, each containing a specified number of sequences.
+
+    Parameters
+    ----------
+    fasta_file : str
+        Path to the FASTA file to be split.
+
+    output_directory : str
+        Path to the directory where the split files will be saved. If the directory does not exist, it will be created.
+
+    chunksize : int, optional
+        Number of sequences per split file. Default is 500. The last file may contain fewer sequences than this number.
+
+    start_numbering_at : int, optional
+        Start numbering the split files at this number. Default is 0.
+
+    Returns
+    -------
+    Iterable[str]
+        Iterable of file paths for the split files.
+
+    """
+    return split_fastx(
+        fastx_file=fasta_file,
+        output_directory=output_directory,
+        chunksize=chunksize,
+        start_numbering_at=start_numbering_at,
+        fmt="fasta",
+    )
+
+
+def split_fastq(
+    fastq_file: str,
+    output_directory: str,
+    chunksize: int = 500,
+    start_numbering_at: int = 0,
+) -> Iterable[str]:
+    """
+    Splits a FASTA or FASTQ file into multiple files, each containing a specified number of sequences.
+
+    Parameters
+    ----------
+    fastq_file : str
+        Path to the FASTQ file to be split.
+
+    output_directory : str
+        Path to the directory where the split files will be saved. If the directory does not exist, it will be created.
+
+    chunksize : int, optional
+        Number of sequences per split file. Default is 500. The last file may contain fewer sequences than this number.
+
+    start_numbering_at : int, optional
+        Start numbering the split files at this number. Default is 0.
+
+    Returns
+    -------
+    Iterable[str]
+        Iterable of file paths for the split files.
+
+    """
+    return split_fastx(
+        fastx_file=fastq_file,
+        output_directory=output_directory,
+        chunksize=chunksize,
+        start_numbering_at=start_numbering_at,
+        fmt="fastq",
+    )
 
 
 # -----------------------
