@@ -238,6 +238,7 @@ class SimpleLogger:
             self.formatted += "\n".join(self.logs)
             self.logs = []
         if self.exceptions:
+            self.formatted += "\n\nEXCEPTIONS\n"
             self.formatted += "\n".join(self.exceptions)
             self.exceptions = []
 
