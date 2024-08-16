@@ -306,7 +306,7 @@ def split_fastx(
     # split sequences into chunks, write the chunks to files
     file_num = start_numbering_at
     chunk = []
-    for s in read_fastx(fastx_file):
+    for s in parse_fastx(fastx_file):
         chunk.append(s.fastq if fmt == "fastq" else s.fasta)
         if len(chunk) == chunksize:
             output_file = os.path.join(
