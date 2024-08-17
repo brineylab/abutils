@@ -201,7 +201,9 @@ class SimpleLogger:
         exception_str = separator.join([str(a) for a in args])
         self.exceptions.append(exception_str)
 
-    def write(self, log_file: Optional[str] = None, sep: str = "\n"):
+    def write(
+        self, log_file: Optional[str] = None, sep: str = "\n", append: bool = False
+    ):
         """
         Writes the log and exceptions to a file.
 
@@ -209,6 +211,9 @@ class SimpleLogger:
         -----------
         log_file : str
             The path to the log file.
+
+        append : bool, default: False
+            If ``True``, the log will be appended to the file.
 
         sep : str, default: "\n"
             The separator to join the log messages.
@@ -224,7 +229,10 @@ class SimpleLogger:
         # make sure the logfile's directory exists
         make_dir(os.path.dirname(log_file))
         # write to file
-        with open(log_file, "w") as f:
+        mode = "a" if append else "w"
+        with open(log_file, mode) as f:
+            if append:
+                f.write("\n")
             f.write(self.formatted)
 
     def checkpoint(self):
