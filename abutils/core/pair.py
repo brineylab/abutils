@@ -182,57 +182,101 @@ class Pair(object):
     @property
     def heavies(self):
         if self._heavies is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._heavies = [s for s in self._seqs if s["chain"] == "heavy"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._heavies = [s for s in self._seqs if s["locus"] == "IGH"]
+            self._heavies = [
+                s for s in self._seqs if self._is_locus_type(s, ["IGH", "heavy"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._heavies = [s for s in self._seqs if s["chain"] == "heavy"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._heavies = [s for s in self._seqs if s["locus"] == "IGH"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._heavies = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "IGH"
+            #     ]
         return self._heavies
 
     @property
     def lights(self):
         if self._lights is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._lights = [
-                    s for s in self._seqs if s["chain"] in ["kappa", "lambda"]
-                ]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._lights = [s for s in self._seqs if s["locus"] in ["IGK", "IGL"]]
+            self._lights = [
+                s
+                for s in self._seqs
+                if self._is_locus_type(s, ["IGK", "IGL", "kappa", "lambda"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._lights = [
+            #         s for s in self._seqs if s["chain"] in ["kappa", "lambda"]
+            #     ]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._lights = [s for s in self._seqs if s["locus"] in ["IGK", "IGL"]]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._lights = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() in ["IGK", "IGL"]
+            #     ]
         return self._lights
 
     @property
     def alphas(self):
         if self._alphas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._alphas = [s for s in self._seqs if s["chain"] == "alpha"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._alphas = [s for s in self._seqs if s["locus"] == "TRA"]
+            self._alphas = [
+                s for s in self._seqs if self._is_locus_type(s, ["TRA", "alpha"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._alphas = [s for s in self._seqs if s["chain"] == "alpha"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._alphas = [s for s in self._seqs if s["locus"] == "TRA"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._alphas = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRA"
+            #     ]
         return self._alphas
 
     @property
     def betas(self):
         if self._betas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._betas = [s for s in self._seqs if s["chain"] == "beta"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._betas = [s for s in self._seqs if s["locus"] == "TRB"]
+            self._betas = [
+                s for s in self._seqs if self._is_locus_type(s, ["TRB", "beta"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._betas = [s for s in self._seqs if s["chain"] == "beta"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._betas = [s for s in self._seqs if s["locus"] == "TRB"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._betas = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRB"
+            #     ]
         return self._betas
 
     @property
     def deltas(self):
         if self._deltas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._deltas = [s for s in self._seqs if s["chain"] == "delta"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._deltas = [s for s in self._seqs if s["locus"] == "TRD"]
+            self._deltas = [
+                s for s in self._seqs if self._is_locus_type(s, ["TRD", "delta"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._deltas = [s for s in self._seqs if s["chain"] == "delta"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._deltas = [s for s in self._seqs if s["locus"] == "TRD"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._deltas = [
+            #       s for s in self._seqs if s["v_gene"][:3].upper() == "TRD"
+            #     ]
         return self._deltas
 
     @property
     def gammas(self):
         if self._gammas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._gammas = [s for s in self._seqs if s["chain"] == "gamma"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._gammas = [s for s in self._seqs if s["locus"] == "TRG"]
+            self._gammas = [
+                s for s in self._seqs if self._is_locus_type(s, ["TRG", "gamma"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._gammas = [s for s in self._seqs if s["chain"] == "gamma"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._gammas = [s for s in self._seqs if s["locus"] == "TRG"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._gammas = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRG"
+            #     ]
         return self._gammas
 
     @property
@@ -314,6 +358,15 @@ class Pair(object):
     @name.setter
     def name(self, name):
         self._name = name
+
+    def _is_locus_type(self, seq, locus_names):
+        if seq["locus"] in locus_names:
+            return True
+        elif seq["chain"] in locus_names:
+            return True
+        elif seq["v_call"][:3] in locus_names:
+            return True
+        return False
 
     # @property
     # def sample(self):
