@@ -23,23 +23,20 @@
 #
 
 
+import math
 from collections import Counter
-from typing import Union, Iterable, Optional
+from typing import Iterable, Optional, Union
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
 import seaborn as sns
-
 from natsort import natsorted
 
-from .data import process_input_data
 from ..core.sequence import Sequence
 from ..utils.color import get_cmap
-
+from .data import process_input_data
 
 __all__ = ["bar"]
 
@@ -222,13 +219,19 @@ def bar(
 
     # figure size
     if figsize is None:
-        if orientation == "horizontal":
-            figsize = [4, 6]
-        else:
-            figsize = [6, 4]
+        figsize = [4, 6] if orientation.lower() == "horizontal" else [6, 4]
+        # if orientation == "horizontal":
+        #     figsize = [4, 6]
+        # else:
+        #     figsize = [6, 4]
 
     if order is None:
-        x_vals = natsorted(data[x].unique())
+        if all([isinstance(i, (int, float)) for i in data[x]]):
+            x_vals = range(
+                math.floor(data[x].min()), math.ceil(data[x].max()) + 1
+            )  # +1 to include the last value
+        else:
+            x_vals = natsorted(data[x].unique())
     else:
         x_vals = order
 
@@ -346,10 +349,10 @@ def bar(
     for s in ["left", "right", "top"]:
         ax.spines[s].set_visible(False)
 
-    if orientation == "horizontal":
-        ax.set_ylim([-0.75, len(x_vals) - 0.25])
-    else:
-        ax.set_xlim([-0.75, len(x_vals) - 0.25])
+    # if orientation == "horizontal":
+    #     ax.set_ylim([-0.75, len(x_vals) - 0.25])
+    # else:
+    #     ax.set_xlim([-0.75, len(x_vals) - 0.25])
 
     # legend
     if len(hue_batches) > 1 and not hide_legend:
@@ -360,9 +363,9 @@ def bar(
             leg_kwargs = legend_kwargs
         ax.legend(**leg_kwargs)
     if hide_legend or palette is None:
-        l = ax.get_legend()
-        if l is not None:
-            l.remove()
+        leg = ax.get_legend()
+        if leg is not None:
+            leg.remove()
 
     # save, show or return the ax
     if figfile is not None:
