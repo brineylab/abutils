@@ -108,6 +108,7 @@ def get_path(binary: str) -> str:
             - fasttree
             - makeblastdb
             - mafft
+            - minimap2
             - mmseqs
             - muscle
             - muscle_v3
@@ -128,6 +129,8 @@ def get_path(binary: str) -> str:
         binary = "muscle3"
     if binary == "cd-hit":
         binary = "cdhit"
+    if binary == "minimap":
+        binary = "minimap2"
     available = [
         # blast
         "blastn",
@@ -135,6 +138,7 @@ def get_path(binary: str) -> str:
         # clustering/alignment
         "cdhit",
         "mafft",
+        "minimap2",
         "mmseqs",
         "muscle",
         "muscle3",
