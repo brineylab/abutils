@@ -1,4 +1,4 @@
-abstar >= 0.6.3
+abstar>=0.6.3
 baltic
 biopython >= 1.78
 celery
@@ -12,7 +12,7 @@ numpy
 pandas
 paramiko
 parasail
-polars
+polars>=0.20.18
 pyarrow
 pyfamsa
 pyfastx
@@ -24,6 +24,6 @@ rapidfuzz
 sample-sheet
 scikit-learn
 scipy
-seaborn >= 0.11
+seaborn>=0.11
 smart_open
 tqdm
