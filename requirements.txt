@@ -12,7 +12,7 @@ numpy
 pandas
 paramiko
 parasail
-polars>=0.20.18
+polars>=1.6
 pyarrow
 pyfamsa
 pyfastx
