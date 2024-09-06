@@ -1218,14 +1218,17 @@ def determine_fastx_format(fastx_file: str) -> str:
         open_fn = open
         mode = "r"
     # check file contents to determine format
-    with open_fn(fastx_file, mode) as f:
-        line = f.readline()
-        while not line.strip():
-            line = f.readline()
-        if line.lstrip().startswith(">"):
-            fmt = "fasta"
-        elif line.lstrip().startswith("@"):
-            fmt = "fastq"
+    try:
+        with open_fn(fastx_file, mode) as f:
+            line = next(f)
+            while not line.strip():
+                line = next(f)
+            if line.lstrip().startswith(">"):
+                fmt = "fasta"
+            elif line.lstrip().startswith("@"):
+                fmt = "fastq"
+    except StopIteration:
+        pass
     return fmt
 
 
