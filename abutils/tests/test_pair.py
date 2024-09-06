@@ -3,10 +3,11 @@
 
 import csv
 import os
-import pytest
 import tempfile
 
-from ..core.pair import assign_pairs, Pair
+import pytest
+
+from ..core.pair import Pair, assign_pairs
 from ..core.sequence import Sequence
 
 
@@ -359,13 +360,62 @@ def test_assign_pairs_with_delimiter():
 
 def test_assign_pairs_with_pairs_only():
     seqs = [
-        Sequence({"sequence_id": "seq1", "sequence": "ATCG", "locus": "IGH"}),
-        Sequence({"sequence_id": "seq1", "sequence": "ATCG", "locus": "IGK"}),
-        Sequence({"sequence_id": "seq2", "sequence": "ATCG", "locus": "IGH"}),
-        Sequence({"sequence_id": "seq2", "sequence": "ATCG", "locus": "IGL"}),
-        Sequence({"sequence_id": "seq3", "sequence": "ATCG", "locus": "TRA"}),
-        Sequence({"sequence_id": "seq3", "sequence": "ATCG", "locus": "TRB"}),
-        Sequence({"sequence_id": "seq4", "sequence": "ATCG", "locus": "TRD"}),
+        Sequence(
+            {
+                "sequence_id": "seq1",
+                "sequence": "ATCG",
+                "locus": "IGH",
+                "v_call": "IGHV1-2*02",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq1",
+                "sequence": "ATCG",
+                "locus": "IGK",
+                "v_call": "IGHL1-3*01",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq2",
+                "sequence": "ATCG",
+                "locus": "IGH",
+                "v_call": "IGHV1-2*02",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq2",
+                "sequence": "ATCG",
+                "locus": "IGL",
+                "v_call": "IGHV1-4*01",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq3",
+                "sequence": "ATCG",
+                "locus": "TRA",
+                "v_call": "TRAV1-1*01",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq3",
+                "sequence": "ATCG",
+                "locus": "TRB",
+                "v_call": "TRBV1-1*01",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq4",
+                "sequence": "ATCG",
+                "locus": "TRD",
+                "v_call": "TRDV1-1*01",
+            }
+        ),
     ]
     pairs = assign_pairs(seqs, pairs_only=True)
     assert isinstance(pairs, list)
@@ -386,10 +436,38 @@ def test_assign_pairs_with_tenx_annot_file():
         writer.writerow(["seq2_kappa", "200"])
 
     seqs = [
-        Sequence({"sequence_id": "seq1_heavy", "sequence": "ATCG", "locus": "IGH"}),
-        Sequence({"sequence_id": "seq1_kappa", "sequence": "ATCG", "locus": "IGK"}),
-        Sequence({"sequence_id": "seq2_heavy", "sequence": "ATCG", "locus": "IGH"}),
-        Sequence({"sequence_id": "seq2_kappa", "sequence": "ATCG", "locus": "IGK"}),
+        Sequence(
+            {
+                "sequence_id": "seq1_heavy",
+                "sequence": "ATCG",
+                "locus": "IGH",
+                "v_call": "IGHV1-2*02",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq1_kappa",
+                "sequence": "ATCG",
+                "locus": "IGK",
+                "v_call": "IGKV1-3*01",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq2_heavy",
+                "sequence": "ATCG",
+                "locus": "IGH",
+                "v_call": "IGHV1-2*02",
+            }
+        ),
+        Sequence(
+            {
+                "sequence_id": "seq2_kappa",
+                "sequence": "ATCG",
+                "locus": "IGK",
+                "v_call": "IGHK1-3*01",
+            }
+        ),
     ]
     pairs = assign_pairs(
         seqs, tenx_annot_file=tenx_annot_file.name, delim="_", delim_occurance=1
