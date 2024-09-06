@@ -207,7 +207,7 @@ def clonify(
             group_by.append(vgene_key)
         if group_by_j:
             group_by.append(jgene_key)
-        group_dfs = filtered_df.group_by(by=group_by)
+        group_dfs = filtered_df.group_by(group_by)
 
     # assign lineages
     assign_dict = {}
