@@ -364,8 +364,9 @@ class Pair(object):
             return True
         elif seq["chain"] in locus_names:
             return True
-        elif seq["v_call"][:3] in locus_names:
-            return True
+        elif seq["v_call"] is not None:
+            if seq["v_call"][:3] in locus_names:
+                return True
         return False
 
     # @property
