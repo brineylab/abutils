@@ -19,8 +19,8 @@ pyfastx
 pymongo
 pytest
 python-circos
-python-Levenshtein
 pyyaml
+rapidfuzz
 sample-sheet
 scikit-learn
 scipy
