@@ -1207,12 +1207,17 @@ def determine_fastx_format(fastx_file: str) -> str:
         character in the input file isn't ">" or "@", ``None`` is returned.
     """
     fmt = None
+    # return None if the file doesn't exist
+    if not os.path.exists(fastx_file):
+        return fmt
+    # get the appropriate open function
     if fastx_file.endswith(".gz"):
         open_fn = gzip.open
         mode = "rt"
     else:
         open_fn = open
         mode = "r"
+    # check file contents to determine format
     with open_fn(fastx_file, mode) as f:
         line = f.readline()
         while not line.strip():
