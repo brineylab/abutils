@@ -26,6 +26,7 @@ from .core.lineage import group_lineages
 from .core.pair import assign_pairs
 from .core.sequence import codon_optimize, reverse_complement, translate
 from .tools.alignment import *
+from .tools.anarci import *
 from .tools.clonify import clonify
 from .tools.cloning import *
 from .tools.cluster import *
