@@ -189,7 +189,7 @@ def clonify(
             sequences = read_parquet(sequences)
         else:
             raise ValueError(f"Invalid input format: {input_fmt}")
-    df = pl.DataFrame(s.annotations for s in sequences)
+    df = pl.DataFrame((s.annotations for s in sequences), infer_schema_length=None)
 
     # filter DataFrame
     fields = ["sequence_id", vgene_key, jgene_key, cdr3_key, mutations_key]
