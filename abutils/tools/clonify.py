@@ -27,7 +27,6 @@ import os
 from collections import Counter
 from typing import Iterable, Optional, Union
 
-import abstar
 import fastcluster
 import polars as pl
 from mnemonic import Mnemonic
@@ -40,7 +39,7 @@ from ..tools.cluster import cluster
 
 
 def clonify(
-    sequences: Iterable[Sequence],
+    sequences: Union[str, Iterable[Sequence]],
     output_path: Optional[str] = None,
     distance_cutoff: float = 0.32,
     shared_mutation_bonus: float = 0.65,
@@ -182,6 +181,8 @@ def clonify(
     if isinstance(sequences, str):
         input_fmt = input_fmt.lower()
         if input_fmt in ["fasta", "fastq"]:
+            import abstar  # here to avoid circular import
+
             sequences = abstar.run(sequences)
         elif input_fmt == "airr":
             sequences = read_airr(sequences)
