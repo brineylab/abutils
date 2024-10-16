@@ -24,23 +24,19 @@
 
 
 import itertools
-from typing import Iterable, Union, Optional
+from typing import Iterable, Optional, Union
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
 import seaborn as sns
-
 from natsort import natsorted
 
-from .data import process_input_data
-from .utils import get_inset_axes_bounds
 from ..core.sequence import Sequence
 from ..utils.color import get_cmap, true_false_palette
-
+from .data import process_input_data
+from .utils import get_inset_axes_bounds
 
 __all__ = ["scatter"]
 
@@ -73,6 +69,7 @@ def scatter(
     highlight_alpha: float = 0.9,
     plot_kwargs: Optional[dict] = None,
     legend_marker_alpha: Optional[float] = None,
+    legend_marker_scale: Optional[float] = None,
     legend_on_data: bool = False,
     legend_fontsize: Union[int, float] = 12,
     legend_fontweight: str = "bold",
@@ -253,6 +250,9 @@ def scatter(
         Opacity for legend markers (or legend labels if `legend_on_data` is ``True``).
         By default, legend markers will use `alpha` and legend labels will be completely
         opaque, equivalent to `legend_marker_alpha` of ``1.0``.
+
+    legend_marker_scale : float, default=None
+        Scale for legend markers.
 
     legend_label_position_offsets : dict, default=None
         A ``dict`` mapping legend labels to ``(x,y)`` coordinates used to offset legend labels.
@@ -518,6 +518,8 @@ def scatter(
             default_legend_kwargs = {"frameon": True, "loc": "best", "fontsize": 12}
             if legend_kwargs is not None:
                 default_legend_kwargs.update(legend_kwargs)
+            if legend_marker_scale is not None:
+                default_legend_kwargs["markerscale"] = legend_marker_scale
             legend_kwargs = default_legend_kwargs
             ax.legend(**legend_kwargs)
             if legend_marker_alpha is not None:
