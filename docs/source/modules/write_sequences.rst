@@ -15,18 +15,23 @@ write sequences
    "CSV", :ref:`to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
 
 
-.. _to-fasta:
+.. _to-fasta:  
+
 .. autofunction:: abutils.core.sequence.to_fasta
 
-.. _to-fastq:
+.. _to-fastq:  
+
 .. autofunction:: abutils.core.sequence.to_fastq
 
-.. _to-airr:
+.. _to-airr:  
+
 .. autofunction:: abutils.core.sequence.to_airr
 
-.. _to-parquet:
+.. _to-parquet:  
+
 .. autofunction:: abutils.core.sequence.to_parquet
 
 .. _to-csv:
+
 .. autofunction:: abutils.core.sequence.to_csv
 
