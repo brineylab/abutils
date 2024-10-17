@@ -1640,66 +1640,49 @@ def to_fastq(
     return fastq_file
 
 
-def sequences_to_csv(
+def sequences_to_polars(
     sequences: Iterable[Sequence],
-    csv_file: str,
-    sep: str = ",",
-    header: bool = True,
     columns: Optional[Iterable] = None,
-    index: bool = False,
     properties: Optional[Iterable[str]] = None,
     drop_na_columns: bool = True,
     order: Optional[Iterable[str]] = None,
     exclude: Optional[Union[str, Iterable[str]]] = None,
     leading: Optional[Union[str, Iterable[str]]] = None,
-) -> Optional[pl.DataFrame]:
+) -> pl.DataFrame:
     """
-    Saves a list of ``Sequence`` objects to a CSV file.
+    Converts a list of ``Sequence`` objects to a ``polars.DataFrame`` object.
 
     Parameters
     ----------
     sequences : Iterable[Sequence]
-        List of ``Sequence`` objects to be saved to a CSV file. Required.
-
-    csv_file : str
-        Path to the output CSV file. Required.
-
-    sep : str, default=","
-        Column delimiter. Default is ``","``.
-
-    header : bool, default=True
-        If ``True``, the CSV file will contain a header row. Default is ``True``.
+        List of ``Sequence`` objects to be converted to a ``polars.DataFrame`` object. Required.
 
     columns : list, default=None
-        A list of fields to be retained in the output CSV file. Fields must be column
+        A list of fields to be retained in the output ``polars.DataFrame`` object. Fields must be column
         names in the input file.
 
-    index : bool, default=False
-        If ``True``, the CSV file will contain an index column. Default is ``False``.
-
     properties : list, default=None
-        A list of properties to be included in the CSV file.
+        A list of properties to be included in the ``polars.DataFrame`` object.
 
     drop_na_columns : bool, default=True
-        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        If ``True``, columns with all ``NaN`` values will be dropped from the ``polars.DataFrame`` object.
         Default is ``True``.
 
     order : list, default=None
-        A list of fields in the order they should appear in the CSV file.
+        A list of fields in the order they should appear in the ``polars.DataFrame`` object.
 
     exclude : str or list, default=None
-        Field or list of fields to be excluded from the CSV file.
+        Field or list of fields to be excluded from the ``polars.DataFrame`` object.
 
     leading : str or list, default=None
-        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
-        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        Field or list of fields to appear first in the ``polars.DataFrame`` object. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the ``polars.DataFrame`` object and
         remaining fields will appear in the order provided in ``order``.
 
     Returns
     -------
-    Optional[pl.DataFrame]
-        A ``polars.DataFrame`` object is returned if ``csv_file`` is not provided.
-
+    pl.DataFrame
+        A ``polars.DataFrame`` object.
     """
     data = []
     # read Sequence data
@@ -1717,7 +1700,7 @@ def sequences_to_csv(
         data.append(d)
 
     # populate DataFrame
-    df = pl.DataFrame(data, infer_schema_length=len(data))
+    df = pl.DataFrame(data, infer_schema_length=None)
 
     # drop NaN
     if drop_na_columns:
@@ -1742,12 +1725,193 @@ def sequences_to_csv(
         leading = [l for l in leading if l in df.columns]
         cols = leading + [c for c in df.columns if c not in leading]
         df = df.select(cols)
-
     if columns is not None:
         cols = [c for c in columns if c in df.columns]
         df = df.select(cols)
 
-    if csv_file is not None:
-        df.write_csv(csv_file, separator=sep, include_header=header)
-    else:
-        return df
+    return df
+
+
+def sequences_to_pandas(
+    sequences: Iterable[Sequence],
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> pd.DataFrame:
+    """
+    Converts a list of ``Sequence`` objects to a ``pandas.DataFrame`` object.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be converted to a ``pandas.DataFrame`` object. Required.
+
+    columns : list, default=None
+        A list of fields to be retained in the output ``pandas.DataFrame`` object. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the ``pandas.DataFrame`` object.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the ``pandas.DataFrame`` object.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the `pandas.DataFrame`` object.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the ``pandas.DataFrame`` object.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the ``pandas.DataFrame`` object. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the ``pandas.DataFrame`` object and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A ``pandas.DataFrame`` object.
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    return df.to_pandas()
+
+
+def sequences_to_csv(
+    sequences: Iterable[Sequence],
+    csv_file: str,
+    sep: str = ",",
+    header: bool = True,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Sequence`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. Required.
+
+    sep : str, default=","
+        Column delimiter. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_csv(csv_file, separator=sep, include_header=header)
+
+
+def sequences_to_parquet(
+    sequences: Iterable[Sequence],
+    parquet_file: str,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Sequence`` objects to a Parquet file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be saved to a Parquet file. Required.
+
+    parquet_file : str
+        Path to the output Parquet file. Required.
+
+    columns : list, default=None
+        A list of fields to be retained in the output Parquet file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+    properties : list, default=None
+        A list of properties to be included in the Parquet file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the Parquet file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the Parquet file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the Parquet file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the Parquet file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Parquet file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_parquet(parquet_file)

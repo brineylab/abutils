@@ -26,6 +26,7 @@ import csv
 import sys
 from typing import Iterable, Optional, Union
 
+import pandas as pd
 import polars as pl
 
 from ..utils.utilities import nested_dict_lookup
@@ -737,20 +738,16 @@ def assign_pairs(
     return pairs
 
 
-def pairs_to_csv(
+def pairs_to_polars(
     pairs: Iterable[Pair],
-    csv_file: Optional[str] = None,
-    sep: str = ",",
-    header: bool = True,
     columns: Optional[Iterable] = None,
-    index: bool = False,
     properties: Optional[Iterable[str]] = None,
     sequence_properties: Optional[Iterable[str]] = None,
     drop_na_columns: bool = True,
     order: Optional[Iterable[str]] = None,
     exclude: Optional[Union[str, Iterable[str]]] = None,
     leading: Optional[Union[str, Iterable[str]]] = None,
-) -> Optional[pl.DataFrame]:
+) -> pl.DataFrame:
     """
     Saves a list of ``Pair`` objects to a CSV file.
 
@@ -759,22 +756,9 @@ def pairs_to_csv(
     pairs : Iterable[Pair]
         List of ``Pair`` objects to be saved to a CSV file. Required.
 
-    csv_file : str
-        Path to the output CSV file. If not provided, a ``polars.DataFrame``
-        containing the CSV data will be returned.
-
-    sep : str, default=","
-        Column delimiter. Default is ``","``.
-
-    header : bool, default=True
-        If ``True``, the CSV file will contain a header row. Default is ``True``.
-
     columns : list, default=None
         A list of fields to be retained in the output CSV file. Fields must be column
         names in the input file.
-
-    index : bool, default=False
-        If ``True``, the CSV file will contain an index column. Default is ``False``.
 
     properties : list, default=None
         A list of properties to be included in the CSV file. If not provided, everything
@@ -869,10 +853,205 @@ def pairs_to_csv(
         cols = [c for c in columns if c in df.columns]
         df = df.select(cols)
 
-    if csv_file is not None:
-        df.write_csv(csv_file, separator=sep, include_header=header)
-    else:
-        return df
+    return df
+
+
+def pairs_to_pandas(
+    pairs: Iterable[Pair],
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> pd.DataFrame:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a CSV file. Required.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    df = pairs_to_polars(
+        pairs,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    return df.to_pandas()
+
+
+def pairs_to_csv(
+    pairs: Iterable[Pair],
+    csv_file: Optional[str] = None,
+    sep: str = ",",
+    header: bool = True,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. If not provided, a ``polars.DataFrame``
+        containing the CSV data will be returned.
+
+    sep : str, default=","
+        Column delimiter. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    df = pairs_to_polars(
+        pairs,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_csv(csv_file, separator=sep, include_header=header)
+
+
+def pairs_to_parquet(
+    pairs: Iterable[Pair],
+    parquet_file: Optional[str] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a Parquet file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a Parquet file. Required.
+
+    parquet_file : str
+        Path to the output Parquet file. If not provided, a ``polars.DataFrame``
+        containing the Parquet data will be returned.
+
+    columns : list, default=None
+        A list of fields to be retained in the output Parquet file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the Parquet file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the Parquet file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the Parquet file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the Parquet file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the Parquet file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Parquet file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    df = pairs_to_polars(
+        pairs,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_parquet(parquet_file)
 
 
 # def deduplicate(pairs, aa=False, ignore_primer_regions=False):
