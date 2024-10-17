@@ -20,6 +20,7 @@ celery
 # pandas
 # paramiko
 parasail
+polars
 # pymongo
 # pytest
 # python-circos
