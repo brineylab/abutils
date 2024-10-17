@@ -15,12 +15,13 @@ celery
 # fastcluster
 # matplotlib
 # mnemonic
-# natsort
+natsort
 # numpy
-# pandas
+pandas
 # paramiko
 parasail
 polars
+pyarrow
 # pymongo
 # pytest
 # python-circos
