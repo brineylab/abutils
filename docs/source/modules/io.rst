@@ -10,7 +10,7 @@ we can convert lists of ``Pair`` and ``Sequence`` objects to and from Pandas or 
 read
 ----------------------------
 
-.. csv-table:: read
+.. csv-table::
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
@@ -25,7 +25,7 @@ read
 write
 ----------------------------
 
-.. csv-table:: write
+.. csv-table::
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
@@ -39,7 +39,7 @@ write
 convert
 ----------------------------
 
-.. list-table:: convert
+.. list-table::
    :header-rows: 1
    :widths: 15 10 30
 
