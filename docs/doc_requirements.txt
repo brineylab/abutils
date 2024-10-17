@@ -22,6 +22,7 @@ pandas
 parasail
 polars
 pyarrow
+pyfamsa
 pyfastx
 # pymongo
 # pytest
@@ -33,3 +34,4 @@ pyfastx
 # scipy
 # seaborn
 # smart_open
+tqdm
