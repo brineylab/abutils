@@ -897,7 +897,7 @@ def read_json(
 
 def read_csv(
     csv_file: str,
-    delimiter: str = ",",
+    separator: str = ",",
     match: Optional[dict] = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
@@ -911,8 +911,8 @@ def read_csv(
     csv_file : str
         Path to the input CSV file. Required.
 
-    delimiter : str, default=","
-        Column delimiter. Default is ``","``.
+    separator : str, default=","
+        Column separator. Default is ``","``.
 
     match : dict, default=None
         A ``dict`` for filtering sequences from the input file.
@@ -951,7 +951,7 @@ def read_csv(
             fields.append(sequence_key)
     sequences = []
     # df = pd.read_csv(csv_file, delimiter=delimiter)
-    df = pl.read_csv(csv_file, separator=delimiter)
+    df = pl.read_csv(csv_file, separator=separator)
     # for _, r in df.iterrows():
     for r in df.iter_rows(named=True):
         # r = r.to_dict()
@@ -996,7 +996,7 @@ def read_airr(
     -------
     sequences : list of ``Sequences``
     """
-    return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
+    return read_csv(tsv_file, separator="\t", match=match, fields=fields)
 
 
 def read_parquet(
@@ -1063,7 +1063,7 @@ def read_parquet(
     return sequences
 
 
-def from_polars(
+def sequences_from_polars(
     df: Union[pl.DataFrame, pl.LazyFrame],
     match: Optional[dict] = None,
     fields: Iterable = None,
@@ -1128,7 +1128,7 @@ def from_polars(
     return sequences
 
 
-def from_pandas(
+def sequences_from_pandas(
     df: pd.DataFrame,
     match: Optional[dict] = None,
     fields: Iterable = None,
@@ -1791,7 +1791,7 @@ def sequences_to_pandas(
 def sequences_to_csv(
     sequences: Iterable[Sequence],
     csv_file: str,
-    sep: str = ",",
+    separator: str = ",",
     header: bool = True,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
@@ -1811,8 +1811,8 @@ def sequences_to_csv(
     csv_file : str
         Path to the output CSV file. Required.
 
-    sep : str, default=","
-        Column delimiter. Default is ``","``.
+    separator : str, default=","
+        Column separator. Default is ``","``.
 
     header : bool, default=True
         If ``True``, the CSV file will contain a header row. Default is ``True``.
@@ -1853,7 +1853,7 @@ def sequences_to_csv(
         exclude=exclude,
         leading=leading,
     )
-    df.write_csv(csv_file, separator=sep, include_header=header)
+    df.write_csv(csv_file, separator=separator, include_header=header)
 
 
 def sequences_to_parquet(

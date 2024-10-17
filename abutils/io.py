@@ -27,6 +27,7 @@ import gzip
 import os
 from typing import Iterable, Optional, Union
 
+import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -34,6 +35,8 @@ from natsort import natsorted
 
 from .core.pair import (
     Pair,
+    pairs_from_pandas,
+    pairs_from_polars,
     pairs_to_csv,
     pairs_to_pandas,
     pairs_to_parquet,
@@ -43,18 +46,18 @@ from .core.sequence import (
     Sequence,
     determine_fastx_format,
     from_mongodb,
-    from_pandas,
-    from_polars,
     parse_fasta,
     parse_fastq,
     parse_fastx,
     read_airr,
-    read_csv,
+    # read_csv,
     read_fasta,
     read_fastq,
     read_fastx,
     read_json,
-    read_parquet,
+    # read_parquet,
+    sequences_from_pandas,
+    sequences_from_polars,
     sequences_to_csv,
     sequences_to_pandas,
     sequences_to_parquet,
@@ -420,10 +423,65 @@ def split_fastq(
 # ------------------------------
 
 
+def read_csv(
+    csv_file: str,
+    separator: str = ",",
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the CSV file to be read.
+
+    separator : str, default=","
+        Column separator. Default is ``","``.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]]
+        A list of ``Sequence`` or ``Pair`` objects.
+
+    """
+    df = pl.read_csv(csv_file, separator=separator, infer_schema_length=None)
+    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
+        return pairs_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+    else:
+        return sequences_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+
+
 def to_csv(
     sequences: Iterable[Union[Sequence, Pair]],
     csv_file: Optional[str] = None,
-    sep: str = ",",
+    separator: str = ",",
     header: bool = True,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
@@ -445,8 +503,8 @@ def to_csv(
         Path to the output CSV file. If ``None``, the CSV will not be saved to a file and the
         function will return a ``polars.DataFrame`` object.
 
-    sep : str, default=","
-        Column delimiter. Default is ``","``.
+    separator : str, default=","
+        Column separator. Default is ``","``.
 
     header : bool, default=True
         If ``True``, the CSV file will contain a header row. Default is ``True``.
@@ -489,7 +547,7 @@ def to_csv(
         return sequences_to_csv(
             sequences,
             csv_file=csv_file,
-            sep=sep,
+            separator=separator,
             header=header,
             columns=columns,
             properties=properties,
@@ -502,7 +560,7 @@ def to_csv(
         return pairs_to_csv(
             sequences,
             csv_file=csv_file,
-            sep=sep,
+            separator=separator,
             header=header,
             columns=columns,
             properties=properties,
@@ -515,6 +573,57 @@ def to_csv(
     else:
         raise ValueError(
             "All elements in the input list must be of the same type (either Sequence or Pair)."
+        )
+
+
+def read_parquet(
+    parquet_file: str,
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a Parquet file and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    parquet_file : str
+        Path to the Parquet file to be read.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]]
+        A list of ``Sequence`` or ``Pair`` objects.
+
+    """
+    df = pl.read_parquet(parquet_file)
+    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
+        return pairs_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+    else:
+        return sequences_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
         )
 
 
@@ -604,6 +713,58 @@ def to_parquet(
         )
 
 
+def from_polars(
+    df: Union[pl.DataFrame, pl.LazyFrame],
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a Polars DataFrame and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    df : polars.DataFrame or polars.LazyFrame
+        The input Polars DataFrame or LazyFrame.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]]
+        A list of ``Sequence`` or ``Pair`` objects.
+
+    """
+    if isinstance(df, pl.LazyFrame):
+        df = df.collect()
+    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
+        return pairs_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+    else:
+        return sequences_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+
+
 def to_polars(
     sequences: Iterable[Union[Sequence, Pair]],
     columns: Optional[Iterable] = None,
@@ -680,6 +841,57 @@ def to_polars(
     else:
         raise ValueError(
             "All elements in the input list must be of the same type (either Sequence or Pair)."
+        )
+
+
+def from_pandas(
+    df: pd.DataFrame,
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a Pandas DataFrame and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input Pandas DataFrame.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]]
+        A list of ``Sequence`` or ``Pair`` objects.
+
+    """
+    df = pl.from_pandas(df)
+    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
+        return pairs_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+    else:
+        return sequences_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
         )
 
 

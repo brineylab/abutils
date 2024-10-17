@@ -29,6 +29,7 @@ from typing import Iterable, Optional, Union
 import pandas as pd
 import polars as pl
 
+from ..core.sequence import Sequence
 from ..utils.utilities import nested_dict_lookup
 
 
@@ -856,6 +857,91 @@ def pairs_to_polars(
     return df
 
 
+def pairs_from_polars(
+    df: Union[pl.DataFrame, pl.LazyFrame],
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Pair]:
+    """
+    Reads a Polars DataFrame and returns ``Pair`` objects.
+
+    Parameters
+    ----------
+    df : Union[pl.DataFrame, pl.LazyFrame]
+        The input Polars DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Pair``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    pairs : list of ``Pairs``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    pairs = []
+    if isinstance(df, pl.LazyFrame):
+        df = df.collect()
+    for r in df.iter_rows(named=True):
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                heavy = None
+                light = None
+                name = r.get("name", None)
+                # heavy chain
+                heavy_dict = {
+                    k.split(":")[0]: v for k, v in r.items() if k.split(":")[1] == "0"
+                }
+                if fields is not None:
+                    hc_fields = [f for f in fields if f in heavy_dict]
+                    heavy_dict = {f: heavy_dict[f] for f in hc_fields}
+                if any([v is not None for v in heavy_dict.values()]):
+                    heavy = Sequence(heavy_dict, id_key=id_key, seq_key=sequence_key)
+                # light chain
+                light_dict = {
+                    k.split(":")[0]: v for k, v in r.items() if k.split(":")[1] == "1"
+                }
+                if fields is not None:
+                    lc_fields = [f for f in fields if f in light_dict]
+                    light_dict = {f: light_dict[f] for f in lc_fields}
+                if any([v is not None for v in light_dict.values()]):
+                    light = Sequence(light_dict, id_key=id_key, seq_key=sequence_key)
+                # pair
+                sequences = [s for s in [heavy, light] if s is not None]
+                pairs.append(Pair(seqs=sequences, name=name))
+        except KeyError:
+            continue
+    return pairs
+
+
 def pairs_to_pandas(
     pairs: Iterable[Pair],
     columns: Optional[Iterable] = None,
@@ -916,10 +1002,63 @@ def pairs_to_pandas(
     return df.to_pandas()
 
 
+def pairs_from_pandas(
+    df: pd.DataFrame,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Pair]:
+    """
+    Reads a Polars DataFrame and returns ``Pair`` objects.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input pandas DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Pair``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    pairs : list of ``Pairs``
+
+    """
+    polars_df = pl.from_pandas(df)
+    return pairs_from_polars(
+        df=polars_df,
+        match=match,
+        fields=fields,
+        id_key=id_key,
+        sequence_key=sequence_key,
+    )
+
+
 def pairs_to_csv(
     pairs: Iterable[Pair],
     csv_file: Optional[str] = None,
-    sep: str = ",",
+    separator: str = ",",
     header: bool = True,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
@@ -941,8 +1080,8 @@ def pairs_to_csv(
         Path to the output CSV file. If not provided, a ``polars.DataFrame``
         containing the CSV data will be returned.
 
-    sep : str, default=","
-        Column delimiter. Default is ``","``.
+    separator : str, default=","
+        Column separator. Default is ``","``.
 
     header : bool, default=True
         If ``True``, the CSV file will contain a header row. Default is ``True``.
@@ -986,7 +1125,7 @@ def pairs_to_csv(
         exclude=exclude,
         leading=leading,
     )
-    df.write_csv(csv_file, separator=sep, include_header=header)
+    df.write_csv(csv_file, separator=separator, include_header=header)
 
 
 def pairs_to_parquet(
