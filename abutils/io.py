@@ -29,7 +29,8 @@ from typing import Iterable, Optional, Union
 
 import pandas as pd
 import polars as pl
-import pyarrow as pa
+
+# import pyarrow as pa
 import pyarrow.parquet as pq
 from natsort import natsorted
 
@@ -245,6 +246,8 @@ def split_parquet(
         Iterable of file paths for the split files.
 
     """
+    import pyarrow as pa  # for some reason, pyarrow breaks readthedocs if imported above
+
     # outputs
     output_files = []
     output_directory = os.path.abspath(output_directory)
