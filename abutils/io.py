@@ -246,7 +246,7 @@ def split_parquet(
         Iterable of file paths for the split files.
 
     """
-    import pyarrow as pa  # for some reason, pyarrow breaks readthedocs if imported above
+    import pyarrow as pa  # for some reason, pyarrow breaks readthedocs if imported up top
     import pyarrow.parquet as pq
 
     # outputs
