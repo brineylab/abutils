@@ -33,13 +33,13 @@ read sequences
 
 .. autofunction:: abutils.core.sequence.read_airr
 
-.. _read-csv:  
-
-.. autofunction:: abutils.core.sequence.read_csv
-
 .. _read-parquet:  
 
 .. autofunction:: abutils.core.sequence.read_parquet
+
+.. _read-csv:  
+
+.. autofunction:: abutils.core.sequence.read_csv
 
 
 

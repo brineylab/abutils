@@ -14,12 +14,12 @@ read
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA/Q", "`read_fastx() <read_sequences#read-fastx>`_", "also supports gzipped files"
-   "FASTA", "`read_fasta() <read_sequences#read-fasta>`_", "also supports gzipped files"
-   "FASTQ", "`read_fastq() <read_sequences#read-fastq>`_", "also supports gzipped files"
-   "Parquet", "`read_parquet() <read_sequences#read-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`read_csv() <read_sequences#read-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`read_airr() <read_sequences#read-airr>`_", "only supports ``Sequence`` objects"
+   "FASTA/Q", "`read_fastx() <read-fastx>`_", "also supports gzipped files"
+   "FASTA", "`read_fasta() <read-fasta>`_", "also supports gzipped files"
+   "FASTQ", "`read_fastq() <read-fastq>`_", "also supports gzipped files"
+   "Parquet", "`read_parquet() <read-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", "`read_csv() <read-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", "`read_airr() <read-airr>`_", "only supports ``Sequence`` objects"
 
 
 write
@@ -29,11 +29,11 @@ write
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA", "`to_fasta() <write_sequences#to_fasta>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "FASTQ", "`to_fastq() <write_sequences#to_fastq>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "Parquet", "`to_parquet() <write_sequences#to_parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`to_csv() <write_sequences#to_csv>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`to_airr() <write_sequences#to_airr>`_", "only supports ``Sequence`` objects"
+   "FASTA", "`to_fasta() <to-fasta>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "FASTQ", "`to_fastq() <to-fastq>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "Parquet", "`to_parquet() <to-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", "`to_csv() <to-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", "`to_airr() <to-airr>`_", "only supports ``Sequence`` objects"
 
 
 convert

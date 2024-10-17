@@ -8,25 +8,25 @@ write sequences
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA", "`to_fasta() <to_fasta>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "FASTQ", "`to_fastq() <to_fastq>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "Parquet", "`to_parquet() <to_parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`to_csv() <to_csv>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`to_airr() <to_airr>`_", "only supports ``Sequence`` objects"
+   "FASTA", "`to_fasta() <to-fasta>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "FASTQ", "`to_fastq() <to-fastq>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", "`to_airr() <to-airr>`_", "only supports ``Sequence`` objects"
+   "Parquet", "`to_parquet() <to-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", "`to_csv() <to-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
 
 
-.. _to_fasta:
+.. _to-fasta:
 .. autofunction:: abutils.core.sequence.to_fasta
 
-.. _to_fastq:
+.. _to-fastq:
 .. autofunction:: abutils.core.sequence.to_fastq
 
-.. _to_parquet:
+.. _to-airr:
+.. autofunction:: abutils.core.sequence.to_airr
+
+.. _to-parquet:
 .. autofunction:: abutils.core.sequence.to_parquet
 
-.. _to_csv:
+.. _to-csv:
 .. autofunction:: abutils.core.sequence.to_csv
-
-.. _to_airr:
-.. autofunction:: abutils.core.sequence.to_airr
 
