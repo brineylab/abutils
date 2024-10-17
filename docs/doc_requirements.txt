@@ -16,7 +16,7 @@ celery
 # matplotlib
 # mnemonic
 natsort
-# numpy
+numpy
 pandas
 # paramiko
 parasail
