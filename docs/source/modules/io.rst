@@ -14,12 +14,12 @@ read
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA/Q", "`read_fastx() <read_sequences#read_fastx>`_", "also supports gzipped files"
-   "FASTA", "`read_fasta() <read_sequences#read_fasta>`_", "also supports gzipped files"
-   "FASTQ", "`read_fastq() <read_sequences#read_fastq>`_", "also supports gzipped files"
-   "Parquet", "`read_parquet() <read_sequences#read_parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`read_csv() <read_sequences#read_csv>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`read_airr() <read_sequences#read_airr>`_", "only supports ``Sequence`` objects"
+   "FASTA/Q", "`read_fastx() <read_sequences#read-fastx>`_", "also supports gzipped files"
+   "FASTA", "`read_fasta() <read_sequences#read-fasta>`_", "also supports gzipped files"
+   "FASTQ", "`read_fastq() <read_sequences#read-fastq>`_", "also supports gzipped files"
+   "Parquet", "`read_parquet() <read_sequences#read-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", "`read_csv() <read_sequences#read-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", "`read_airr() <read_sequences#read-airr>`_", "only supports ``Sequence`` objects"
 
 
 write
