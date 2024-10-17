@@ -31,7 +31,7 @@ import pandas as pd
 import polars as pl
 
 # import pyarrow as pa
-import pyarrow.parquet as pq
+# import pyarrow.parquet as pq
 from natsort import natsorted
 
 from .core.pair import (
@@ -247,6 +247,7 @@ def split_parquet(
 
     """
     import pyarrow as pa  # for some reason, pyarrow breaks readthedocs if imported above
+    import pyarrow.parquet as pq
 
     # outputs
     output_files = []
