@@ -8,11 +8,11 @@ write sequences
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA", "`to_fasta() <to-fasta>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "FASTQ", "`to_fastq() <to-fastq>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`to_airr() <to-airr>`_", "only supports ``Sequence`` objects"
-   "Parquet", "`to_parquet() <to-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`to_csv() <to-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
+   "FASTA", :ref:`to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
+   "FASTQ", :ref:`to_fastq() <to-fastq>`, "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", :ref:`to_airr() <to-airr>`, "only supports ``Sequence`` objects"
+   "Parquet", :ref:`to_parquet() <to-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", :ref:`to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
 
 
 .. _to-fasta:

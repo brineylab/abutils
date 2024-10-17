@@ -14,12 +14,12 @@ read
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA/Q", "`read_fastx() <read-fastx>`_", "also supports gzipped files"
-   "FASTA", "`read_fasta() <read-fasta>`_", "also supports gzipped files"
-   "FASTQ", "`read_fastq() <read-fastq>`_", "also supports gzipped files"
-   "Parquet", "`read_parquet() <read-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`read_csv() <read-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`read_airr() <read-airr>`_", "only supports ``Sequence`` objects"
+   "FASTA/Q", :ref:`read_fastx() <read-fastx>`, "also supports gzipped files"
+   "FASTA", :ref:`read_fasta() <read-fasta>`, "also supports gzipped files"
+   "FASTQ", :ref:`read_fastq() <read-fastq>`, "also supports gzipped files"
+   "Parquet", :ref:`read_parquet() <read-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", :ref:`read_csv() <read-csv>`, "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", :ref:`read_airr() <read-airr>`, "only supports ``Sequence`` objects"
 
 
 write
@@ -29,11 +29,11 @@ write
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
-   "FASTA", "`to_fasta() <to-fasta>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "FASTQ", "`to_fastq() <to-fastq>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "Parquet", "`to_parquet() <to-parquet>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", "`to_csv() <to-csv>`_", "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", "`to_airr() <to-airr>`_", "only supports ``Sequence`` objects"
+   "FASTA", :ref:`to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
+   "FASTQ", :ref:`to_fastq() <to-fastq>`, "supports ``Sequence`` or ``Pair`` objects"
+   "Parquet", :ref:`to_parquet() <to-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", :ref:`to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", :ref:`to_airr() <to-airr>`, "only supports ``Sequence`` objects"
 
 
 convert
@@ -47,16 +47,16 @@ convert
      - function
      - notes
    * - Pandas
-     - `to_pandas() <convert_sequences#to_pandas>`_
+     - :ref:`to_pandas() <convert_sequences#to_pandas>`
      - supports ``Sequence`` or ``Pair`` objects
    * - 
-     - `from_pandas() <convert_sequences#from_pandas>`_
+     - :ref:`from_pandas() <convert_sequences#from_pandas>`
      - supports ``Sequence`` or ``Pair`` objects
    * - Polars
-     - `to_polars() <convert_sequences#to_polars>`_
+     - :ref:`to_polars() <convert_sequences#to_polars>`
      - supports ``Sequence`` or ``Pair`` objects
    * - 
-     - `from_polars() <convert_sequences#from_polars>`_
+     - :ref:`from_polars() <convert_sequences#from_polars>`
      - supports ``Sequence`` or ``Pair`` objects
 
 
