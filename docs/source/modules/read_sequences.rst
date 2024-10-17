@@ -17,22 +17,28 @@ read sequences
 
 
 
-.. _read-fastx:
+.. _read-fastx:  
+
 .. autofunction:: abutils.core.sequence.read_fastx
 
-.. _read-fasta:
+.. _read-fasta:  
+
 .. autofunction:: abutils.core.sequence.read_fasta
 
-.. _read-fastq:
+.. _read-fastq:  
+
 .. autofunction:: abutils.core.sequence.read_fastq
 
-.. _read-airr:
+.. _read-airr:  
+
 .. autofunction:: abutils.core.sequence.read_airr
 
-.. _read-csv:
+.. _read-csv:  
+
 .. autofunction:: abutils.core.sequence.read_csv
 
-.. _read-parquet:
+.. _read-parquet:  
+
 .. autofunction:: abutils.core.sequence.read_parquet
 
 
