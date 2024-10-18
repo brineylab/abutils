@@ -52,7 +52,8 @@ write
 
 .. csv-table::
    :header: "format", "function", "notes"
-   :widths: 12, 12, 36
+   :widths: 12, 12, 30
+   :width: auto
    :align: left
 
    "FASTA", :ref:`to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
@@ -67,8 +68,9 @@ convert
 
 .. table::
    :align: left
-   :widths: 12, 12, 30
-
+   :widths: 10, 12, 24
+   :width: 100%
+   
    +---------+--------------------------------------+----------------------------------------+
    | format  | function                             | notes                                  |
    +=========+======================================+========================================+
