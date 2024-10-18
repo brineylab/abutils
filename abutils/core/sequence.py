@@ -1915,3 +1915,63 @@ def sequences_to_parquet(
         leading=leading,
     )
     df.write_parquet(parquet_file)
+
+
+def to_airr(
+    sequences: Iterable[Sequence],
+    airr_file: str,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Sequence`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be saved to an AIRR file. Required.
+
+    airr_file : str
+        Path to the output AIRR file. Required.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_csv(airr_file, separator="\t", include_header=True)
