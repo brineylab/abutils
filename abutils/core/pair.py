@@ -87,28 +87,34 @@ class Pair(object):
     @property
     def receptor(self):
         if self._receptor is None:
-            if all([s["chain"] is not None for s in self._seqs]):
+            # check for the "locus" annotation
+            if all([s["locus"] is not None for s in self._seqs]):
                 if all(
-                    [s["chain"] in ["heavy", "kappa", "lambda"] for s in self._seqs]
+                    [s["locus"].upper() in ["IGH", "IGK", "IGL"] for s in self._seqs]
                 ):
                     self._receptor = "bcr"
                 elif all(
                     [
-                        s["chain"] in ["alpha", "beta", "delta", "gamma"]
+                        s["locus"].upper() in ["TRA", "TRB", "TRD", "TRG"]
                         for s in self._seqs
                     ]
                 ):
                     self._receptor = "tcr"
                 else:
                     self._receptor = "unknown"
-            elif all([s["locus"] is not None for s in self._seqs]):
+
+            # if locus isn't present, infer from V-gene assignment
+            elif all([s["v_call"] is not None for s in self._seqs]):
                 if all(
-                    [s["locus"].lower() in ["igh", "igk", "igl"] for s in self._seqs]
+                    [
+                        s["v_call"][:3].upper() in ["IGH", "IGK", "IGL"]
+                        for s in self._seqs
+                    ]
                 ):
                     self._receptor = "bcr"
                 elif all(
                     [
-                        s["locus"].lower() in ["tra", "trb", "trd", "trg"]
+                        s["v_call"][:3].upper() in ["TRA", "TRB", "TRD", "TRG"]
                         for s in self._seqs
                     ]
                 ):
@@ -363,8 +369,6 @@ class Pair(object):
 
     def _is_locus_type(self, seq, locus_names):
         if seq["locus"] in locus_names:
-            return True
-        elif seq["chain"] in locus_names:
             return True
         elif seq["v_call"] is not None:
             if seq["v_call"][:3] in locus_names:
