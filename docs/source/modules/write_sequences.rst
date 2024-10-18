@@ -27,8 +27,7 @@ write sequences
 
 .. _to-airr:  
 
-.. automodule:: abutils.io
-   :imported-members: to_airr
+.. autofunction:: abutils.io.to_airr
 
 .. _to-parquet:  
 
