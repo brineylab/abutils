@@ -1,12 +1,12 @@
 
 
-read sequences
+read sequence data
 ==============================
 
 
 ``abutils`` provides functions for reading/parsing sequence data from a variety of commonly 
 used file formats. This includes raw sequence data in FASTA or FASTQ format as well as 
-annotated sequence data in the standard AIRR-C_ format, CSV format, and Parquet format.
+annotated sequence data in AIRR-C_, CSV, or Parquet formats.
 
 |  
 
@@ -146,6 +146,29 @@ individual chains.
     # read Parquet file of annotated paired sequences
     pairs = abutils.io.read_parquet("pairs.parquet")
 
+|  
+
+All of the functions for reading annotated sequence data include a ``match`` parameter that 
+can be used to filter the sequences or pairs that are read from the file. This is useful 
+when only a fraction of the sequences or pairs in the file are desired:
+
+.. code-block:: python
+
+    # read an AIRR file of sequences and return only those that use IGHV1-2
+    sequences = abutils.io.read_airr(
+        "sequences.tsv", 
+        match={"v_gene": "IGHV1-2"},
+    )
+
+    # read Parquet file of paired sequences and return only those 
+    # that have a productive heavy chain and light chain
+    pairs = abutils.io.read_parquet(
+        "pairs.parquet",
+        match={
+            "productive:0": True, 
+            "productive:1": True,
+        },
+    )
 
 |  
 
