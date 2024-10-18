@@ -12,7 +12,7 @@ read
 
 .. table::
    :align: left
-   :widths: 12, 12, 30
+   :widths: 10, 12, 24
    :width: 100%
 
    +----------+--------------------------------------+----------------------------------------+
@@ -52,7 +52,8 @@ write
 
 .. csv-table::
    :header: "format", "function", "notes"
-   :widths: 12, 12, 30
+   :widths: 10, 12, 24
+   :width: 100%
    :align: left
 
    "FASTA", :ref:`to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
