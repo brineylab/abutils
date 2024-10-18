@@ -18,7 +18,7 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
    +----------+--------------------------------------+----------------------------------------+
    | format   | function                             | notes                                  |
    +==========+======================================+========================================+
-   | FASTA|Q  | :ref:`read_fastx() <read-fastx>`     | returns a list of ``Sequence`` objects |
+   | FASTA/Q  | :ref:`read_fastx() <read-fastx>`     | returns a list of ``Sequence`` objects |
    |          |                                      |                                        |
    +          +--------------------------------------+----------------------------------------+
    |          | :ref:`parse_fastx() <parse-fastx>`   | yields single ``Sequence`` objects     |
@@ -47,7 +47,7 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
    +----------+--------------------------------------+----------------------------------------+
 
 
-fasta|q files
+fasta/q files
 ------------------
 
 The primary differences between ``read`` and ``parse`` functions are:
@@ -180,13 +180,25 @@ api
 
 .. autofunction:: abutils.io.read_fastx
 
+.. _parse-fastx:  
+
+.. autofunction:: abutils.io.parse_fastx
+
 .. _read-fasta:  
 
 .. autofunction:: abutils.io.read_fasta
 
+.. _parse-fasta:  
+
+.. autofunction:: abutils.io.parse_fasta
+
 .. _read-fastq:  
 
 .. autofunction:: abutils.io.read_fastq
+
+.. _parse-fastq:  
+
+.. autofunction:: abutils.io.parse_fastq
 
 .. _read-airr:  
 
