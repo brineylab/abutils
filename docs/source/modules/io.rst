@@ -10,16 +10,39 @@ we can convert lists of ``Pair`` and ``Sequence`` objects to and from Pandas or 
 read
 ----------------------------
 
-.. csv-table::
-   :header: "format", "function", "notes"
-   :widths: 15, 10, 30
+.. table::
+   :class: centered-table
 
-   "FASTA/Q", :ref:`read_fastx() <read-fastx>`, "also supports gzipped files"
-   "FASTA", :ref:`read_fasta() <read-fasta>`, "also supports gzipped files"
-   "FASTQ", :ref:`read_fastq() <read-fastq>`, "also supports gzipped files"
-   "Parquet", :ref:`read_parquet() <read-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", :ref:`read_csv() <read-csv>`, "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", :ref:`read_airr() <read-airr>`, "only supports ``Sequence`` objects"
+   +----------+--------------------------------------+----------------------------------------+
+   | format   | function                             | notes                                  |
+   +==========+======================================+========================================+
+   | FASTA/Q  | :ref:`read_fastx() <read-fastx>`     | supports gzip-compressed files         |
+   |          |                                      |                                        |
+   +          +--------------------------------------+----------------------------------------+
+   |          | :ref:`parse_fastx() <parse-fastx>`   | supports gzip-compressed files         |
+   |          |                                      |                                        |
+   +----------+--------------------------------------+----------------------------------------+
+   | FASTA    | :ref:`read_fasta() <read-fasta>`     | supports gzip-compressed files         |
+   |          |                                      |                                        |
+   +          +--------------------------------------+----------------------------------------+
+   |          | :ref:`parse_fasta() <parse-fasta>`   | supports gzip-compressed files         |
+   |          |                                      |                                        |
+   +----------+--------------------------------------+----------------------------------------+
+   | FASTQ    | :ref:`read_fastq() <read-fastq>`     | supports gzip-compressed files         |
+   |          |                                      |                                        |
+   +          +--------------------------------------+----------------------------------------+
+   |          | :ref:`parse_fastq() <parse-fastq>`   | supports gzip-compressed files         |
+   |          |                                      |                                        |
+   +----------+--------------------------------------+----------------------------------------+
+   | AIRR     | :ref:`read_airr() <read-airr>`       | supports ``Sequence`` objects only     |
+   |          |                                      |                                        |
+   +----------+--------------------------------------+----------------------------------------+
+   | Parquet  | :ref:`read_parquet() <read-parquet>` | supports ``Sequence`` or ``Pair``      |
+   |          |                                      | objects                                |
+   +----------+--------------------------------------+----------------------------------------+
+   | CSV      | :ref:`read_csv() <read-csv>`         | supports ``Sequence`` or ``Pair``      |
+   |          |                                      | objects                                |
+   +----------+--------------------------------------+----------------------------------------+
 
 
 write
@@ -39,25 +62,25 @@ write
 convert
 ----------------------------
 
-.. list-table::
-   :header-rows: 1
-   :widths: 15 10 30
+.. table::
+   :class: centered-table
 
-   * - format
-     - function
-     - notes
-   * - Pandas
-     - :ref:`to_pandas() <convert_sequences#to_pandas>`
-     - supports ``Sequence`` or ``Pair`` objects
-   * - 
-     - :ref:`from_pandas() <convert_sequences#from_pandas>`
-     - supports ``Sequence`` or ``Pair`` objects
-   * - Polars
-     - :ref:`to_polars() <convert_sequences#to_polars>`
-     - supports ``Sequence`` or ``Pair`` objects
-   * - 
-     - :ref:`from_polars() <convert_sequences#from_polars>`
-     - supports ``Sequence`` or ``Pair`` objects
+   +---------+--------------------------------------+----------------------------------------+
+   | format  | function                             | notes                                  |
+   +=========+======================================+========================================+
+   | Pandas  | :ref:`to_pandas()                    | supports ``Sequence`` or ``Pair``      |
+   |         | <convert_sequences#to_pandas>`       | objects                                |
+   +         +--------------------------------------+----------------------------------------+
+   |         | :ref:`from_pandas()                  | supports ``Sequence`` or ``Pair``      |
+   |         | <convert_sequences#from_pandas>`     | objects                                |
+   +---------+--------------------------------------+----------------------------------------+
+   | Polars  | :ref:`to_polars()                    | supports ``Sequence`` or ``Pair``      |
+   |         | <convert_sequences#to_polars>`       | objects                                |
+   +         +--------------------------------------+----------------------------------------+
+   |         | :ref:`from_polars()                  | supports ``Sequence`` or ``Pair``      |
+   |         | <convert_sequences#from_polars>`     | objects                                |
+   +---------+--------------------------------------+----------------------------------------+
+
 
 
 .. toctree::
