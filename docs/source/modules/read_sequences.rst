@@ -100,7 +100,7 @@ All of the FASTA/Q/X ``read`` and ``parse`` functions can handle gzip-compressed
 annotated sequence files
 ---------------------------
 
-``read_airr()`` can read AIRR-C formatted sequence data from a file:
+``read_airr()`` can read AIRR-C_ formatted sequence data from a file, returing a list of ``Sequence`` objects:
 
 .. code-block:: python
 
@@ -108,38 +108,28 @@ annotated sequence files
 
 
 ``read_parquet()`` and ``read_csv()`` can read Parquet and CSV formatted annotated sequence data,
-and generally expect the annotations to be in AIRR-C format (only the file format is expected
-to deviate from the AIRR-C standard of tab-separated values). Both functions will return a list
-of ``Sequence`` objects:
-
-.. code-block:: python
-
-    # read Parquet file
-    sequences = abutils.io.read_parquet("sequences.parquet")
-
-    # read CSV file
-    sequences = abutils.io.read_csv("sequences.csv")
-
-
-``read_parquet()`` and ``read_csv()`` can also read data from ``Pair`` objects. This 
-is a custom extension of the AIRR-C format that is used to represent pairwise sequence 
-alignments. All annotation fields in the AIRR-C_ format are conserved for each chain,
-with heavy chains appending ``":0"`` to the end of each annotation field name and light chains
-appending ``":1"``. Both functions will return a list of ``Pair`` objects:
+and generally expect the annotations to be in AIRR-C_ format. Both functions also support reading
+annotations from paired sequences, which is a custom extension of the AIRR-C format. Each row in 
+the CSV or Parquet file contains annotations for both heavy and light chains.All annotation 
+fields in the AIRR-C_ format are conserved for each chain, with heavy chains appending ``":0"`` 
+to the end of each annotation field name and light chains appending ``":1"``. The row also contains
+a ``"name"`` field so that the name of he paired sequence can be distinct from the names of the 
+individual chains.
 
 .. note::
 
     ``read_parquet()`` and ``read_csv()`` will automatically detect whether the input file
-    contains ``Sequence`` or ``Pair`` objects based on the column names.
+    contains ``Sequence`` or ``Pair`` objects based on the file schema.
 
 
 .. code-block:: python
 
-    # read Parquet file
+    # read CSV file of annotated sequences
+    sequences = abutils.io.read_csv("sequences.csv")
+
+    # read Parquet file of annotated paired sequences
     pairs = abutils.io.read_parquet("pairs.parquet")
 
-    # read CSV file
-    pairs = abutils.io.read_csv("pairs.csv")
 
 
 
