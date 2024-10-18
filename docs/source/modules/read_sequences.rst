@@ -1,10 +1,10 @@
 
 
-read sequences
+read/parse sequences
 ==============================
 
 
-.. csv-table:: read
+.. csv-table:: 
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 

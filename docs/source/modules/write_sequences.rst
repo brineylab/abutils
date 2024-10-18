@@ -4,7 +4,9 @@ write sequences
 =========================
 
 
-.. csv-table:: write
+
+
+.. csv-table:: 
    :header: "format", "function", "notes"
    :widths: 15, 10, 30
 
@@ -25,7 +27,7 @@ write sequences
 
 .. _to-airr:  
 
-.. autofunction:: abutils.core.sequence.to_airr
+.. autofunction:: abutils.io.to_airr
 
 .. _to-parquet:  
 
