@@ -24,81 +24,58 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
 
 |  
 
-fasta/q files
+Pandas
 ------------------
 
-``abutils`` can write lists of ``Seuqence`` or ``Pair`` objects to FASTA or FASTQ files:
+``abutils`` can convert lists of ``Sequence`` or ``Pair`` objects to and from Pandas DataFrames:
 
 .. warning::
 
-    While ``abutils`` can write both ``Sequence`` and ``Pair`` objects to various formats, the input must contains
+    While ``abutils`` can convert between ``Sequence`` and ``Pair`` objects and Pandas DataFrames, the input must contains
     only one type of object. For example, you cannot mix ``Sequence`` and ``Pair`` objects in the 
     same list.
 
 .. code-block:: python
 
-    # write list of sequences to FASTA file
-    abutils.io.to_fasta(
+    # convert list of sequences to Pandas DataFrame
+    sequences_df = abutils.io.to_pandas(
         sequences, 
-        "my-output-file.fasta"
     )
 
-    # write list of pairs to FASTQ file
-    abutils.io.to_fastq(
+    # convert Pandas DataFrame back to list of sequences
+    sequences = abutils.io.from_pandas(sequences_df)
+
+    # convert list of pairs to Pandas DataFrame
+    pairs_df = abutils.io.to_pandas(
         pairs, 
-        "my-paired-output-file.fastq"
     )
+
+    # convert Pandas DataFrame back to list of pairs
+    pairs = abutils.io.from_pandas(pairs_df)
 
 |  
 
-annotated sequence files
+Polars
 ------------------------------
-``to_airr()`` can write ``Sequence`` objects to AIRR-C_ formatted (tab-delimited) files:
+``abutils`` can convert lists of ``Sequence`` or ``Pair`` objects to and from Pandas DataFrames:
 
 .. code-block:: python
 
-    # write list of sequences to AIRR-C file
-    abutils.io.to_airr(
+    # convert list of sequences to Polars DataFrame
+    sequences_df = abutils.io.to_polars(
         sequences, 
-        "my-airr-output-file.tsv"
     )
 
-|  
+    # convert Polars DataFrame back to list of sequences
+    sequences = abutils.io.from_polars(sequences_df)
 
-``to_parquet()`` can write ``Sequence`` or ``Pair`` objects to Parquet files:
-
-.. code-block:: python
-
-    # write list of sequences to Parquet file
-    abutils.io.to_parquet(
-        sequences, 
-        "my-parquet-output-file.parquet"
-    )
-
-    # write list of pairs to Parquet file
-    abutils.io.to_parquet(
+    # convert list of pairs to Polars DataFrame
+    pairs_df = abutils.io.to_polars(
         pairs, 
-        "my-paired-parquet-output-file.parquet"
     )
 
-
-|  
-
-``to_csv()`` can write ``Sequence`` or ``Pair`` objects to CSV files:
-
-.. code-block:: python
-
-    # write list of sequences to CSV file
-    abutils.io.to_csv(
-        sequences, 
-        "my-csv-output-file.csv"
-
-    # write list of pairs to CSV file
-    abutils.io.to_csv(
-        pairs, 
-        "my-paired-csv-output-file.csv"
-    )
-
+    # convert Polars DataFrame back to list of pairs
+    pairs = abutils.io.from_polars(pairs_df)
 
 |  
 
