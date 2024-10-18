@@ -129,8 +129,6 @@ sys.path.insert(0, os.path.abspath("../../"))
 
 autosummary_generate = True
 autodoc_member_order = "bysource"
-# autodoc_default_flags = ['members']
-autodoc_default_options = {"imported-members": True}
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
@@ -315,3 +313,4 @@ texinfo_documents = [
 autoclass_content = "both"
 autodoc_member_order = "bysource"
 autodoc_default_flags = ["members"]
+autodoc_default_options = {"imported-members": True}
