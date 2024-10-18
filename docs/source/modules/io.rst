@@ -17,25 +17,25 @@ read
    +----------+--------------------------------------+----------------------------------------+
    | format   | function                             | notes                                  |
    +==========+======================================+========================================+
-   | FASTA/Q  | :ref:`read_fastx() <read-fastx>`     | supports gzip-compressed files         |
-   |          |                                      | returns a list of ``Sequence`` objects |
+   | FASTA/Q  | :ref:`read_fastx() <read-fastx>`     | returns a list of ``Sequence`` objects |
+   |          |                                      |                                        |
    +          +--------------------------------------+----------------------------------------+
-   |          | :ref:`parse_fastx() <parse-fastx>`   | supports gzip-compressed files         |
-   |          |                                      | yields single ``Sequence`` objects     |
+   |          | :ref:`parse_fastx() <parse-fastx>`   | yields single ``Sequence`` objects     |
+   |          |                                      |                                        |
    +----------+--------------------------------------+----------------------------------------+
-   | FASTA    | :ref:`read_fasta() <read-fasta>`     | supports gzip-compressed files         |
-   |          |                                      | returns a list of ``Sequence`` objects |
+   | FASTA    | :ref:`read_fasta() <read-fasta>`     | returns a list of ``Sequence`` objects |
+   |          |                                      |                                        |
    +          +--------------------------------------+----------------------------------------+
-   |          | :ref:`parse_fasta() <parse-fasta>`   | supports gzip-compressed files         |
-   |          |                                      | yields single ``Sequence`` objects     |
+   |          | :ref:`parse_fasta() <parse-fasta>`   | yields single ``Sequence`` objects     |
+   |          |                                      |                                        |
    +----------+--------------------------------------+----------------------------------------+
-   | FASTQ    | :ref:`read_fastq() <read-fastq>`     | supports gzip-compressed files         |
-   |          |                                      | returns a list of ``Sequence`` objects |
+   | FASTQ    | :ref:`read_fastq() <read-fastq>`     | returns a list of ``Sequence`` objects |
+   |          |                                      |                                        |
    +          +--------------------------------------+----------------------------------------+
-   |          | :ref:`parse_fastq() <parse-fastq>`   | supports gzip-compressed files         |
-   |          |                                      | yields single ``Sequence`` objects     |
+   |          | :ref:`parse_fastq() <parse-fastq>`   | yields single ``Sequence`` objects     |
+   |          |                                      |                                        |
    +----------+--------------------------------------+----------------------------------------+
-   | AIRR     | :ref:`read_airr() <read-airr>`       | supports ``Sequence`` objects only     |
+   | AIRR     | :ref:`read_airr() <read-airr>`       | only supports ``Sequence`` objects     |
    |          |                                      |                                        |
    +----------+--------------------------------------+----------------------------------------+
    | Parquet  | :ref:`read_parquet() <read-parquet>` | supports ``Sequence`` or ``Pair``      |
@@ -51,7 +51,8 @@ write
 
 .. csv-table::
    :header: "format", "function", "notes"
-   :widths: 15, 10, 30
+   :widths: 15, 15, 30
+   :align: left
 
    "FASTA", :ref:`to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
    "FASTQ", :ref:`to_fastq() <to-fastq>`, "supports ``Sequence`` or ``Pair`` objects"
@@ -64,7 +65,8 @@ convert
 ----------------------------
 
 .. table::
-   :class: centered-table
+   :align: left
+   :widths: 15, 15, 30
 
    +---------+--------------------------------------+----------------------------------------+
    | format  | function                             | notes                                  |
