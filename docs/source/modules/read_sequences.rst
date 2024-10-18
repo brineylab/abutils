@@ -19,19 +19,19 @@ read/parse sequences
 
 .. _read-fastx:  
 
-.. autofunction:: abutils.core.sequence.read_fastx
+.. autofunction:: abutils.io.read_fastx
 
 .. _read-fasta:  
 
-.. autofunction:: abutils.core.sequence.read_fasta
+.. autofunction:: abutils.io.read_fasta
 
 .. _read-fastq:  
 
-.. autofunction:: abutils.core.sequence.read_fastq
+.. autofunction:: abutils.io.read_fastq
 
 .. _read-airr:  
 
-.. autofunction:: abutils.core.sequence.read_airr
+.. autofunction:: abutils.io.read_airr
 
 .. _read-parquet:  
 

@@ -19,11 +19,11 @@ write sequences
 
 .. _to-fasta:  
 
-.. autofunction:: abutils.core.sequence.to_fasta
+.. autofunction:: abutils.io.to_fasta
 
 .. _to-fastq:  
 
-.. autofunction:: abutils.core.sequence.to_fastq
+.. autofunction:: abutils.io.to_fastq
 
 .. _to-airr:  
 
