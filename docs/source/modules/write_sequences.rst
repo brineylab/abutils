@@ -22,8 +22,6 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
    "Parquet", :ref:`to_parquet() <to-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
    "CSV", :ref:`to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
 
-|  
-
 
 fasta/q files
 ------------------
@@ -32,7 +30,7 @@ fasta/q files
 
 .. warning::
 
-    While ``abutils`` can write both ``Sequence`` and ``Pair`` objects, the input must contains
+    While ``abutils`` can write both ``Sequence`` and ``Pair`` objects to various formats, the input must contains
     only one type of object. For example, you cannot mix ``Sequence`` and ``Pair`` objects in the 
     same list.
 
@@ -50,7 +48,61 @@ fasta/q files
         "my-paired-output-file.fastq"
     )
 
+
+annotated sequence files
+------------------------------
+``to_airr()`` can write ``Sequence`` objects to AIRR-C_ formatted (tab-delimited) files:
+
+.. code-block:: python
+
+    # write list of sequences to AIRR-C file
+    abutils.io.to_airr(
+        sequences, 
+        "my-airr-output-file.tsv"
+    )
+
 |  
+
+``to_parquet()`` can write ``Sequence`` or ``Pair`` objects to Parquet files:
+
+.. code-block:: python
+
+    # write list of sequences to Parquet file
+    abutils.io.to_parquet(
+        sequences, 
+        "my-parquet-output-file.parquet"
+    )
+
+    # write list of pairs to Parquet file
+    abutils.io.to_parquet(
+        pairs, 
+        "my-paired-parquet-output-file.parquet"
+    )
+
+
+|  
+
+``to_csv()`` can write ``Sequence`` or ``Pair`` objects to CSV files:
+
+.. code-block:: python
+
+    # write list of sequences to CSV file
+    abutils.io.to_csv(
+        sequences, 
+        "my-csv-output-file.csv"
+
+    # write list of pairs to CSV file
+    abutils.io.to_csv(
+        pairs, 
+        "my-paired-csv-output-file.csv"
+    )
+
+
+
+
+
+api
+------------------
 
 .. _to-fasta:  
 
