@@ -11,28 +11,29 @@ read
 ----------------------------
 
 .. table::
-   :class: centered-table
+   :align: left
+   :widths: 15, 15, 30
 
    +----------+--------------------------------------+----------------------------------------+
    | format   | function                             | notes                                  |
    +==========+======================================+========================================+
    | FASTA/Q  | :ref:`read_fastx() <read-fastx>`     | supports gzip-compressed files         |
-   |          |                                      |                                        |
+   |          |                                      | returns a list of ``Sequence`` objects |
    +          +--------------------------------------+----------------------------------------+
    |          | :ref:`parse_fastx() <parse-fastx>`   | supports gzip-compressed files         |
-   |          |                                      |                                        |
+   |          |                                      | yields single ``Sequence`` objects     |
    +----------+--------------------------------------+----------------------------------------+
    | FASTA    | :ref:`read_fasta() <read-fasta>`     | supports gzip-compressed files         |
-   |          |                                      |                                        |
+   |          |                                      | returns a list of ``Sequence`` objects |
    +          +--------------------------------------+----------------------------------------+
    |          | :ref:`parse_fasta() <parse-fasta>`   | supports gzip-compressed files         |
-   |          |                                      |                                        |
+   |          |                                      | yields single ``Sequence`` objects     |
    +----------+--------------------------------------+----------------------------------------+
    | FASTQ    | :ref:`read_fastq() <read-fastq>`     | supports gzip-compressed files         |
-   |          |                                      |                                        |
+   |          |                                      | returns a list of ``Sequence`` objects |
    +          +--------------------------------------+----------------------------------------+
    |          | :ref:`parse_fastq() <parse-fastq>`   | supports gzip-compressed files         |
-   |          |                                      |                                        |
+   |          |                                      | yields single ``Sequence`` objects     |
    +----------+--------------------------------------+----------------------------------------+
    | AIRR     | :ref:`read_airr() <read-airr>`       | supports ``Sequence`` objects only     |
    |          |                                      |                                        |
