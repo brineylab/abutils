@@ -35,11 +35,10 @@ read sequences
 
 .. _read-parquet:  
 
-.. autofunction:: abutils.core.sequence.read_parquet
+.. autofunction:: abutils.io.read_parquet
 
 .. _read-csv:  
 
-.. autofunction:: abutils.core.sequence.read_csv
-
+.. autofunction:: abutils.io.read_csv
 
 

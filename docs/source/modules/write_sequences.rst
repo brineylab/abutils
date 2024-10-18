@@ -29,9 +29,9 @@ write sequences
 
 .. _to-parquet:  
 
-.. autofunction:: abutils.core.sequence.to_parquet
+.. autofunction:: abutils.io.to_parquet
 
 .. _to-csv:
 
-.. autofunction:: abutils.core.sequence.to_csv
+.. autofunction:: abutils.io.to_csv
 
