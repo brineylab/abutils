@@ -96,12 +96,12 @@ All of the FASTA/Q/X ``read`` and ``parse`` functions can handle gzip-compressed
     for sequence in abutils.io.parse_fastx("sequences.fastq.gz"):
         print(sequence)
 
-
+|  
 
 annotated sequence files
 ---------------------------
 
-``read_airr()`` can read AIRR-C_ formatted sequence data from a tab-delimited file, 
+``read_airr()`` can read AIRR-C formatted sequence data from a tab-delimited file, 
 returing a list of ``Sequence`` objects:
 
 .. code-block:: python
@@ -111,12 +111,23 @@ returing a list of ``Sequence`` objects:
 |  
 
 ``read_parquet()`` and ``read_csv()`` can read Parquet and CSV formatted annotated sequence data,
-and generally expect the annotations to be in AIRR-C_ format. 
-  
-Both functions also support reading
-annotations from paired sequences, which is a custom extension of the AIRR-C format. Each row in 
-the CSV or Parquet file contains annotations for both heavy and light chains.All annotation 
-fields in the AIRR-C_ format are conserved for each chain, with heavy chains appending ``":0"`` 
+and expect the annotations to be in AIRR-C format -- the only difference is in the file format,
+which can be either Parquet or CSV instead of the AIRR-C tab-delimited format: 
+
+.. code-block:: python
+
+    # read CSV file of annotated sequences
+    sequences = abutils.io.read_csv("sequences.csv")
+
+    # read Parquet file of annotated paired sequences
+    pairs = abutils.io.read_parquet("pairs.parquet")
+
+|  
+
+Both ``read_csv()`` and ``read_parquet()`` support reading annotations from paired sequences, 
+which is a custom extension of the AIRR-C format. Each row in the CSV or Parquet file 
+contains annotations for both heavy and light chains. All annotation 
+fields in the AIRR-C format are conserved for each chain, with heavy chains appending ``":0"`` 
 to the end of each annotation field name and light chains appending ``":1"``. The row also contains
 a ``"name"`` field so that the name of he paired sequence can be distinct from the names of the 
 individual chains.
@@ -129,14 +140,17 @@ individual chains.
 
 .. code-block:: python
 
-    # read CSV file of annotated sequences
-    sequences = abutils.io.read_csv("sequences.csv")
+    # read CSV file of annotated paired sequences
+    pairs = abutils.io.read_csv("pairs.csv")
 
     # read Parquet file of annotated paired sequences
     pairs = abutils.io.read_parquet("pairs.parquet")
 
 
+|  
 
+api
+------------------
 
 
 .. _read-fastx:  
