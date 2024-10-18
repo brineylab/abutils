@@ -9,24 +9,44 @@ used file formats. The primary differences between ``read`` and ``parse`` functi
 - ``read`` functions read an entire file into memory and return a list of ``Sequence`` objects.
 - ``parse`` functions yield ``Sequence`` objects one at a time.
 
-Thus, ``parse`` functions are generally more memory efficient for large files, but ``read`` 
-functions may be more convenient for smaller files or quick prototyping.
-
-.. note::
-
-    ``read_fastx()`` and ``parse_fastx()`` are the most flexible and can read/parse either
-    FASTA or FASTQ files. This is particularly useful when building pipelines in which users 
-    may want to process both file types or when the source file may not be known in advance.
+``parse`` functions are generally more memory efficient for large files, but ``read`` 
+functions may be more convenient for smaller files or when sequences need to be processed
+as a group rather than one at a time:
 
 .. code-block:: python
 
     # read entire file into memory
-    sequences = abutils.io.read_fastx("sequences.fastq")
+    sequences = abutils.io.read_fasta("sequences.fasta")
 
     # parse file one record at a time
     for sequence in abutils.io.parse_fastq("sequences.fastq"):
         print(sequence)
 
+
+``read_fastx()`` and ``parse_fastx()`` are the most flexible and can read/parse either
+FASTA or FASTQ files. This is particularly useful when building pipelines in which users 
+may want to process both file types or when the source file may not be known in advance:
+
+.. code-block:: python
+
+    # FASTA file
+    sequences = abutils.io.read_fastx("sequences.fasta")
+
+    # FASTQ file
+    for sequence in abutils.io.parse_fastx("sequences.fastq"):
+        print(sequence)
+
+
+All of the FASTA/Q/X ``read`` and ``parse`` functions can handle gzip-compressed files automatically:
+
+.. code-block:: python
+
+    # FASTA file
+    sequences = abutils.io.read_fastx("sequences.fasta.gz")
+
+    # FASTQ file
+    for sequence in abutils.io.parse_fastx("sequences.fastq.gz"):
+        print(sequence)
 
 
 
