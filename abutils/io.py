@@ -63,10 +63,13 @@ from .core.sequence import (
     sequences_to_pandas,
     sequences_to_parquet,
     sequences_to_polars,
+    to_airr,
     to_fasta,
     to_fastq,
 )
 from .utils.convert import abi_to_fasta
+
+# to_airr.__module__ = "abutils.io"
 
 # -----------------------
 #   General file I/O
