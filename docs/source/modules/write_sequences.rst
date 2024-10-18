@@ -22,6 +22,7 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
    "Parquet", :ref:`to_parquet() <to-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
    "CSV", :ref:`to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
 
+|  
 
 fasta/q files
 ------------------
@@ -48,6 +49,7 @@ fasta/q files
         "my-paired-output-file.fastq"
     )
 
+|  
 
 annotated sequence files
 ------------------------------
@@ -98,8 +100,7 @@ annotated sequence files
     )
 
 
-
-
+|  
 
 api
 ------------------
