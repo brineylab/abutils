@@ -101,15 +101,19 @@ All of the FASTA/Q/X ``read`` and ``parse`` functions can handle gzip-compressed
 annotated sequence files
 ---------------------------
 
-``read_airr()`` can read AIRR-C_ formatted sequence data from a file, returing a list of ``Sequence`` objects:
+``read_airr()`` can read AIRR-C_ formatted sequence data from a tab-delimited file, 
+returing a list of ``Sequence`` objects:
 
 .. code-block:: python
 
     sequences = abutils.io.read_airr("sequences.tsv")
 
+|  
 
 ``read_parquet()`` and ``read_csv()`` can read Parquet and CSV formatted annotated sequence data,
-and generally expect the annotations to be in AIRR-C_ format. Both functions also support reading
+and generally expect the annotations to be in AIRR-C_ format. 
+  
+Both functions also support reading
 annotations from paired sequences, which is a custom extension of the AIRR-C format. Each row in 
 the CSV or Parquet file contains annotations for both heavy and light chains.All annotation 
 fields in the AIRR-C_ format are conserved for each chain, with heavy chains appending ``":0"`` 
