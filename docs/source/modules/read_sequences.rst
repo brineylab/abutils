@@ -8,8 +8,7 @@ read sequences
 used file formats. This includes raw sequence data in FASTA or FASTQ format as well as 
 annotated sequence data in the standard AIRR-C_ format, CSV format, and Parquet format.
 
-.. _AIRR-C: https://docs.airr-community.org/en/stable/datarep/rearrangements.html
-
+|  
 
 .. table::
    :align: left
@@ -69,6 +68,7 @@ as a group rather than one at a time:
     for sequence in abutils.io.parse_fastq("sequences.fastq"):
         print(sequence)
 
+|  
 
 ``read_fastx()`` and ``parse_fastx()`` are the most flexible and can read/parse either
 FASTA or FASTQ files. This is particularly useful when building pipelines in which users 
@@ -83,6 +83,7 @@ may want to process both file types or when the source file may not be known in 
     for sequence in abutils.io.parse_fastx("sequences.fastq"):
         print(sequence)
 
+|  
 
 All of the FASTA/Q/X ``read`` and ``parse`` functions can handle gzip-compressed files automatically:
 
@@ -159,3 +160,7 @@ individual chains.
 .. autofunction:: abutils.io.read_csv
 
 
+
+
+
+.. _AIRR-C: https://docs.airr-community.org/en/stable/datarep/rearrangements.html
