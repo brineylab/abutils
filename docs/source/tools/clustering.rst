@@ -4,8 +4,7 @@ clustering
 =====================
 
 The primary clustering function is ``abutils.tl.cluster``, which can cluster sequences
-using CD-HIT_, VSEARCH_, or MMseqs2_. The function returns a :class:`abutils.tl.Clusters` 
-object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
+using CD-HIT_, VSEARCH_, or MMseqs2_. 
 
 ``abutils.tl.cluster`` can accept a variety of inputs, including:
 
@@ -24,6 +23,9 @@ a different version of one of the built-in binaries), you can specify the path t
 - ``cdhit_bin``
 - ``vsearch_bin``
 - ``mmseqs_bin``
+
+``abutils.tl.cluster`` returns a :class:`abutils.tl.Clusters` object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
+By default, the ``abutils.tl.Clusters`` object is sorted by cluster size in descending order, so the first cluster is the largest.
 
 |  
 
