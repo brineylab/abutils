@@ -17,15 +17,19 @@ The ``threshold`` argument is the sequence identity threshold for clustering, an
 
 The ``algo`` argument selects the clustering algorithm to use. It can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
 If ``algo`` is not provided, ``abutils.tl.cluster`` will use CD-HIT for inputs with fewer than 1000 sequences or MMseqs2 for inputs with 1000 or more sequences.
-Binaries for each of the available clustering algorithms are packaged with ``abutils``, however, if you would like to use an alternate binary (for example, to use 
-a different version of one of the built-in binaries), you can specify the path to the desiredbinary using the following optional arguments:
-
-- ``cdhit_bin``
-- ``vsearch_bin``
-- ``mmseqs_bin``
 
 ``abutils.tl.cluster`` returns a :class:`abutils.tl.Clusters` object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
-By default, the ``abutils.tl.Clusters`` object is sorted by cluster size in descending order, so the first cluster is the largest.
+By default, the ``abutils.tl.Clusters`` object is sorted by cluster size in descending order, so the first cluster is the largest. :class:`abutils.tl.Cluster` 
+objects have a number of properties and methods for accessing clustering information:
+
+- ``name``: cluster name
+- ``size``: number of sequences in the cluster
+- ``sequence_ids``: list of sequence IDs in the cluster
+- ``sequences``: list of :class:`abutils.Sequence` objects in the cluster
+- ``centroid``: :class:`abutils.Sequence` object representing the centroid of the cluster
+- ``consensus``: :class:`abutils.Sequence` object representing the consensus sequence of the cluster
+
+The ``consensus`` property is lazy, meaning it is not calculated until it is accessed, and once calculated, it is cached.
 
 |  
 
