@@ -92,6 +92,7 @@ annotated sequence files
     abutils.io.to_csv(
         sequences, 
         "my-csv-output-file.csv"
+    )
 
     # write list of pairs to CSV file
     abutils.io.to_csv(
