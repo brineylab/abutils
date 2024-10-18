@@ -7,8 +7,30 @@ The primary clustering function is ``abutils.tl.cluster``, which can cluster seq
 using CD-HIT_, VSEARCH_, or MMseqs2_. The function returns a :class:`abutils.tl.Clusters` 
 object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
 
+``abutils.tl.cluster`` can accept a variety of inputs, including:
+
+- a path to a FASTA file
+- a FASTA-formatted string
+- a list of ``abutils.Sequence`` objects
+- a list of anything accepted by :class:`abutils.Sequence`
+
+The ``threshold`` argument is the sequence identity threshold for clustering, and should be between 0.0 and 1.0.
+
+The ``algo`` argument selects the clustering algorithm to use. It can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
+If ``algo`` is not provided, ``abutils.tl.cluster`` will use CD-HIT for inputs with fewer than 1000 sequences or MMseqs2 for inputs with 1000 or more sequences.
+Binaries for each of the available clustering algorithms are packaged with ``abutils``, however, if you would like to use an alternate binary (for example, to use 
+a different version of one of the built-in binaries), you can specify the path to the desiredbinary using the following optional arguments:
+
+- ``cdhit_bin``
+- ``vsearch_bin``
+- ``mmseqs_bin``
+
+|  
+
 examples
 -----------
+
+|  
 
 **clustering with CD-HIT at 90% identity, using a FASTA file as input**  
   
@@ -77,6 +99,9 @@ sequence to the ``consensus`` property (and overwrites any cached consensus sequ
     largest_cluster.make_consensus()
 
 | 
+
+api
+-----------
 
 .. _cluster-function:
   
