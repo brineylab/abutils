@@ -8,6 +8,24 @@ All pairwise alignment functions return a subclass of the :class:`abutils.tl.Pai
 classes for each pairwise alignment type are identical, with the exception of the ``alignment_function`` and ``alignment_type``
 properties, so the user can easily switch between alignment methods with minimal changes to their code.
 
+|  
+
+.. table::
+   :align: left
+   :widths: 10, 14, 24
+   :width: 100%
+
+   +----------+-------------------------------------------------+------------------------------------------------+
+   |  function                                                  | returns                                        |
+   +==========+=================================================+================================================+
+   |  :ref:`abutils.tl.local_alignment() <local-aln>`           | :class:`abutils.tl.LocalAlignment`             |
+   +----------+-------------------------------------------------+------------------------------------------------+
+   |  :ref:`abutils.tl.global_alignment() <global-aln>`         | :class:`abutils.tl.GlobalAlignment`            |
+   +----------+-------------------------------------------------+------------------------------------------------+
+   |  :ref:`abutils.tl.semiglobal_alignment() <semiglobal-aln>` | :class:`abutils.tl.SemiGlobalAlignment`        |
+   +----------+-------------------------------------------------+------------------------------------------------+
+
+|  
 
 examples
 -------------
@@ -95,8 +113,17 @@ alignments (which, by default, sorts by alignment score), and selects the top sc
 api
 -----------
 
+
+.. _local-aln:
+
 .. autofunction:: abutils.tl.local_alignment
+
+.. _global-aln:
+
 .. autofunction:: abutils.tl.global_alignment
+
+.. _semiglobal-aln:
+
 .. autofunction:: abutils.tl.semiglobal_alignment
 
 | 
