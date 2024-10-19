@@ -3,9 +3,9 @@
 path
 ====================
 
-The :mod:`path` module contains functions for working with file and directory paths. These are
-primarily convenience functions to facilitate common tasks like creating a directory, deleting 
-a file, or splitting/concatenating files.
+The :ref:`abutils.io` module contains functions for working with file and directory paths. These are
+mainly convenience functions to facilitate common tasks like creating directories, deleting files,
+renaming files, and splitting/concatenating files.
 
 |  
 

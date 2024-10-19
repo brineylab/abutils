@@ -151,7 +151,6 @@ multiprocessing jobs, creating and modifying color palettes, and others.
   
     io <modules/io>
     modules/color
-    modules/path
 
 .. toctree::
    :maxdepth: 1
