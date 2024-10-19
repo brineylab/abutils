@@ -12,6 +12,8 @@ properties, so the user can easily switch between alignment methods with minimal
 examples
 -------------
 
+|  
+
 **local sequence alignment**  
   
 The ``query`` and ``target`` sequences for all ``abutils`` pairwise alignment functions can be an :class:`abutils.Sequence`` 
@@ -87,7 +89,7 @@ alignments (which, by default, sorts by alignment score), and selects the top sc
     )
 
     # get the highest scoring alignment
-    best_aln = alns.sort(reverse=True)[0]
+    best_aln = sorted(alns, reverse=True)[0]
 
 
 | 
