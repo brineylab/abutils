@@ -126,7 +126,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    modules/pair
 
 
-.. toggle:: sequence IO
+.. toggle::
    :maxdepth: 1
    :caption: IO
 
