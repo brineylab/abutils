@@ -59,7 +59,7 @@ including additoinal annotations beyond just the sequence and ID:
             "sequence_id": "my_sequence",
             "sequence": "ATCG",
             "productive": True,
-            "v_call": "IGHV3-30*01",
+            "v_call": "IGHV1-2*02",
             "d_call": "IGHD3-3*01",
             "j_call": "IGHJ6*02",
         }
@@ -67,6 +67,7 @@ including additoinal annotations beyond just the sequence and ID:
 
     # all annotations can be accessed using dictionary-style indexing
     sequence["v_call"]
+    >>> IGHV1-2*02
 
 .. note::
 
