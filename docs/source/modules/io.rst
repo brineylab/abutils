@@ -134,4 +134,3 @@ convert
     read <read_sequences>
     write <write_sequences>
     convert <convert_sequences>
-    path <path>

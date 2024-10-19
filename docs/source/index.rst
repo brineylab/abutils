@@ -38,7 +38,7 @@ appropriate for each level of granularity.
 
 | 
 
-input/output (``abutils.io``)
+data (``abutils.io``)
 --------------------------------
 
 To simplify data manipulation and facilitate the integration of ``abutils`` into 
@@ -149,14 +149,12 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
-   :caption: IO
+   :caption: data
 
-   read <modules/read_sequences>
-   write <modules/write_sequences>
-   convert <modules/convert_sequences>
-   paths <modules/path>
+   data/io
+   data/paths
 
 .. toctree::
    :maxdepth: 2
