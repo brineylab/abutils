@@ -12,39 +12,39 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
 
 .. table::
    :align: left
-   :widths: 10, 12, 24
+   :widths: 10, 14, 24
    :width: 100%
 
-   +----------+--------------------------------------+----------------------------------------+
-   | format   | function                             | notes                                  |
-   +==========+======================================+========================================+
-   | FASTA/Q  | :ref:`read_fastx() <read-fastx>`     | returns a list of ``Sequence`` objects |
-   |          |                                      |                                        |
-   +          +--------------------------------------+----------------------------------------+
-   |          | :ref:`parse_fastx() <parse-fastx>`   | yields single ``Sequence`` objects     |
-   |          |                                      |                                        |
-   +----------+--------------------------------------+----------------------------------------+
-   | FASTA    | :ref:`read_fasta() <read-fasta>`     | returns a list of ``Sequence`` objects |
-   |          |                                      |                                        |
-   +          +--------------------------------------+----------------------------------------+
-   |          | :ref:`parse_fasta() <parse-fasta>`   | yields single ``Sequence`` objects     |
-   |          |                                      |                                        |
-   +----------+--------------------------------------+----------------------------------------+
-   | FASTQ    | :ref:`read_fastq() <read-fastq>`     | returns a list of ``Sequence`` objects |
-   |          |                                      |                                        |
-   +          +--------------------------------------+----------------------------------------+
-   |          | :ref:`parse_fastq() <parse-fastq>`   | yields single ``Sequence`` objects     |
-   |          |                                      |                                        |
-   +----------+--------------------------------------+----------------------------------------+
-   | AIRR     | :ref:`read_airr() <read-airr>`       | only supports ``Sequence`` objects     |
-   |          |                                      |                                        |
-   +----------+--------------------------------------+----------------------------------------+
-   | Parquet  | :ref:`read_parquet() <read-parquet>` | supports ``Sequence`` or ``Pair``      |
-   |          |                                      | objects                                |
-   +----------+--------------------------------------+----------------------------------------+
-   | CSV      | :ref:`read_csv() <read-csv>`         | supports ``Sequence`` or ``Pair``      |
-   |          |                                      | objects                                |
-   +----------+--------------------------------------+----------------------------------------+
+   +----------+-------------------------------------------------+----------------------------------------+
+   | format   | function                                        | notes                                  |
+   +==========+=================================================+========================================+
+   | FASTA/Q  | :ref:`abutils.io.read_fastx() <read-fastx>`     | returns a list of ``Sequence`` objects |
+   |          |                                                 |                                        |
+   +          +-------------------------------------------------+----------------------------------------+
+   |          | :ref:`abutils.io.parse_fastx() <parse-fastx>`   | yields single ``Sequence`` objects     |
+   |          |                                                 |                                        |
+   +----------+-------------------------------------------------+----------------------------------------+
+   | FASTA    | :ref:`abutils.io.read_fasta() <read-fasta>`     | returns a list of ``Sequence`` objects |
+   |          |                                                 |                                        |
+   +          +-------------------------------------------------+----------------------------------------+
+   |          | :ref:`abutils.io.parse_fasta() <parse-fasta>`   | yields single ``Sequence`` objects     |
+   |          |                                                 |                                        |
+   +----------+-------------------------------------------------+----------------------------------------+
+   | FASTQ    | :ref:`abutils.io.read_fastq() <read-fastq>`     | returns a list of ``Sequence`` objects |
+   |          |                                                 |                                        |
+   +          +-------------------------------------------------+----------------------------------------+
+   |          | :ref:`abutils.io.parse_fastq() <parse-fastq>`   | yields single ``Sequence`` objects     |
+   |          |                                                 |                                        |
+   +----------+-------------------------------------------------+----------------------------------------+
+   | AIRR     | :ref:`abutils.io.read_airr() <read-airr>`       | only supports ``Sequence`` objects     |
+   |          |                                                 |                                        |
+   +----------+-------------------------------------------------+----------------------------------------+
+   | Parquet  | :ref:`abutils.io.read_parquet() <read-parquet>` | supports ``Sequence`` or ``Pair``      |
+   |          |                                                 | objects                                |
+   +----------+-------------------------------------------------+----------------------------------------+
+   | CSV      | :ref:`abutils.io.read_csv() <read-csv>`         | supports ``Sequence`` or ``Pair``      |
+   |          |                                                 | objects                                |
+   +----------+-------------------------------------------------+----------------------------------------+
 
 
 fasta/q files
