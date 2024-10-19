@@ -3,8 +3,10 @@
 clustering
 =====================
 
-The primary clustering function is ``abutils.tl.cluster``, which can cluster sequences
-using CD-HIT_, VSEARCH_, or MMseqs2_. 
+The primary clustering function is ``abutils.tl.cluster()``, which can cluster sequences
+using CD-HIT_, VSEARCH_, or MMseqs2_. By default, the clustering function will use CD-HIT for inputs with fewer than 
+1000 sequences or MMseqs2 for inputs with 1000 or more sequences, but this can be overridden in cases where a different 
+clustering algorithm is desired.
 
 ``abutils.tl.cluster`` can accept a variety of inputs, including:
 
@@ -19,17 +21,7 @@ The ``algo`` argument selects the clustering algorithm to use. It can be ``'cdhi
 If ``algo`` is not provided, ``abutils.tl.cluster`` will use CD-HIT for inputs with fewer than 1000 sequences or MMseqs2 for inputs with 1000 or more sequences.
 
 ``abutils.tl.cluster`` returns a :class:`abutils.tl.Clusters` object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
-By default, the ``abutils.tl.Clusters`` object is sorted by cluster size in descending order, so the first cluster is the largest. :class:`abutils.tl.Cluster` 
-objects have a number of properties and methods for accessing clustering information:
-
-- ``name``: cluster name
-- ``size``: number of sequences in the cluster
-- ``sequence_ids``: list of sequence IDs in the cluster
-- ``sequences``: list of :class:`abutils.Sequence` objects in the cluster
-- ``centroid``: :class:`abutils.Sequence` object representing the centroid of the cluster
-- ``consensus``: :class:`abutils.Sequence` object representing the consensus sequence of the cluster
-
-The ``consensus`` property is lazy, meaning it is not calculated until it is accessed, and once calculated, it is cached.
+By default, the ``abutils.tl.Clusters`` object is sorted by cluster size in descending order, so the first cluster is the largest. 
 
 |  
 
@@ -40,9 +32,8 @@ examples
 
 **clustering with CD-HIT at 90% identity, using a FASTA file as input**  
   
-The ``sequences`` argument can be a path to a FASTA file, a FASTA-formatted string,
-a list of ``Sequence`` objects, or a list of anything accepted by 
-:class:`abutils.Sequence`. The ``algo`` argument can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
+The ``sequences`` argument can be a variety of things, but in this cases is being supplied
+as the path to a FASTA-formatted file.. The ``algo`` argument can be ``'cdhit'``, ``'vsearch'``, or ``'mmseqs2'``. 
 If ``algo`` is not provided, ``cluster()`` will use CD-HIT for inputs with fewer than 1000 
 sequences or MMseqs2 for inputs with 1000 or more sequences. The ``threshold`` argument 
 is the sequence identity threshold for clustering.
@@ -120,6 +111,7 @@ api
 .. autoclass:: abutils.tl.Clusters
     :members:
 | 
+
 
 .. _cluster-class:
   
