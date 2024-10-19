@@ -122,9 +122,9 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :hidden:
    :caption: models
 
-   :ref:`sequence <sequence-class>`
-   :ref:`pair <pair-class>`
-   :ref:`lineage <lineage-class>`
+   modules/sequence
+   modules/pair
+   modules/lineage
 
 .. toctree::
    :maxdepth: 2
