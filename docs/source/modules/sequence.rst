@@ -27,7 +27,7 @@ Individual ``Sequence`` objects can be created from a string:
     sequence = abutils.Sequence("ATCG")
 
 
- .. note::
+.. note::
 
     If provided a string, the sequence ID will be randomly generated if not specified.
     To specify the sequence ID, you can pass a ``Sequence`` object to the ``id`` argument:
