@@ -13,7 +13,7 @@ the user can easily switch between alignment methods with minimal changes to the
 |  
 
 .. csv-table:: 
-   :header: "algorithm", "function"
+   :header: "alignment method", "function"
    :widths: 10, 16
 
    "MAFFT", :ref:`abutils.tl.mafft() <mafft-aln>`
