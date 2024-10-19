@@ -12,8 +12,6 @@ properties, so the user can easily switch between alignment methods with minimal
 examples
 -------------
 
-|  
-
 **local sequence alignment**  
   
 The ``query`` and ``target`` sequences for all ``abutils`` pairwise alignment functions can be an :class:`abutils.Sequence`` 

@@ -5,8 +5,8 @@ convert sequence data
 
 
 ``abutils`` provides functions for converting annotated sequence data between ``Sequence`` and 
- ``Pair`` objects and Polars_ and Pandas_ DataFrames. All annotations are assumed to be in 
- AIRR-C_ format.
+``Pair`` objects and Polars_ and Pandas_ DataFrames. All annotations are assumed to be in 
+AIRR-C_ format.
 
 |  
 
