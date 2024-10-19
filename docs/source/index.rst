@@ -111,7 +111,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: getting started
+   :caption: getting started <installation>
    
    installation
    examples
@@ -126,15 +126,15 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    modules/pair
 
 
-.. toggle::
+.. toctree::
    :maxdepth: 1
-   :caption: IO
+   :hidden:
+   :caption: IO <modules/io>
 
-   .. toctree::
-      read <modules/read_sequences>
-      write <modules/write_sequences>
-      convert <modules/convert_sequences>
-      paths <modules/path>
+   read <modules/read_sequences>
+   write <modules/write_sequences>
+   convert <modules/convert_sequences>
+   paths <modules/path>
 
 .. toctree::
    :maxdepth: 2
@@ -178,7 +178,6 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 
    abstar <https://github.com/brineylab/abstar>
    scab <https://github.com/brineylab/scab>
-   clonify <https://github.com/briney/clonify-python>
 
 
 index
