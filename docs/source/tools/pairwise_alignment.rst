@@ -12,7 +12,6 @@ properties, so the user can easily switch between alignment methods with minimal
 
 .. csv-table:: 
    :header: "alignment type", "function"
-   :align: center
    :widths: 10, 16
 
    "local", :ref:`abutils.tl.local_alignment() <local-aln>`
