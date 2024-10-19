@@ -126,3 +126,5 @@ api
 
 .. autofunction:: abutils.io.to_csv
 
+
+.. _AIRR-C: https://docs.airr-community.org/en/stable/datarep/rearrangements.html
