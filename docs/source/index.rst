@@ -111,6 +111,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :caption: getting started
    
    installation
 
@@ -141,7 +142,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 
    tools/alignment
    tools/clustering
-   tools/phylogeny
+   tools/search
 
 .. toctree::
    :maxdepth: 1
@@ -158,7 +159,6 @@ multiprocessing jobs, creating and modifying color palettes, and others.
     :hidden:
     :caption: utilities
   
-    io <modules/io>
     modules/color
 
 .. toctree::
