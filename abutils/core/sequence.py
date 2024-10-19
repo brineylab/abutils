@@ -128,7 +128,7 @@ class Sequence(object):
 
     def __init__(
         self,
-        seq: Union[str, Iterable, dict, SeqRecord],
+        sequence: Union[str, Iterable, dict, SeqRecord],
         id: Optional[str] = None,
         qual: Optional[str] = None,
         annotations: Optional[dict] = None,
@@ -153,7 +153,7 @@ class Sequence(object):
         self.seq_key = seq_key
         self.description = None
 
-        self._process_input(seq, id, qual)
+        self._process_input(sequence, id, qual)
 
     def __len__(self) -> int:
         """
