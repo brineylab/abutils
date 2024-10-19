@@ -10,6 +10,16 @@ convenient methods for working with the alignment, including writing to file, tr
 consensus sequences. Additionally, because the same object is returned regardless of the alignment method used,
 the user can easily switch between alignment methods with minimal changes to their code.
 
+|  
+
+.. csv-table:: 
+   :header: "tool", "function"
+   :widths: 10, 16
+
+   "MAFFT", :ref:`abutils.tl.mafft() <mafft>`
+   "MUSCLE", :ref:`abutils.tl.muscle() <muscle>`
+   "FAMSA", :ref:`abutils.tl.famsa() <famsa>`
+
 
 examples
 ---------
