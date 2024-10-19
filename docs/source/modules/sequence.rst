@@ -67,7 +67,7 @@ including additoinal annotations beyond just the sequence and ID:
 
     # all annotations can be accessed using dictionary-style indexing
     sequence["v_call"]
-    >>> IGHV1-2*02
+    >>> "IGHV1-2*02"
 
 .. note::
 
