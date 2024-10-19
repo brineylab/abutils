@@ -13,14 +13,14 @@ annotated sequence data in AIRR-C_, CSV, or Parquet formats.
 .. csv-table:: 
    :header: "format", "function", "notes"
    :align: left
-   :widths: 10, 12, 24
+   :widths: 10, 14, 24
    :width: 100%
 
-   "FASTA", :ref:`to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
-   "FASTQ", :ref:`to_fastq() <to-fastq>`, "supports ``Sequence`` or ``Pair`` objects"
-   "AIRR", :ref:`to_airr() <to-airr>`, "only supports ``Sequence`` objects"
-   "Parquet", :ref:`to_parquet() <to-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
-   "CSV", :ref:`to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
+   "FASTA", :ref:`abutils.io.to_fasta() <to-fasta>`, "supports ``Sequence`` or ``Pair`` objects"
+   "FASTQ", :ref:`abutils.io.to_fastq() <to-fastq>`, "supports ``Sequence`` or ``Pair`` objects"
+   "AIRR", :ref:`abutils.io.to_airr() <to-airr>`, "only supports ``Sequence`` objects"
+   "Parquet", :ref:`abutils.io.to_parquet() <to-parquet>`, "supports ``Sequence`` or ``Pair`` objects"
+   "CSV", :ref:`abutils.io.to_csv() <to-csv>`, "supports ``Sequence`` or ``Pair`` objects"
 
 |  
 
