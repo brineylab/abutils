@@ -10,19 +10,15 @@ properties, so the user can easily switch between alignment methods with minimal
 
 |  
 
-.. table::
+.. csv-table:: 
+   :header: "alignment type", "function"
    :align: center
    :widths: 10, 16
 
-   +-----------------------------------+-------------------------------------------------------------+
-   |  alignment type                   | function                                                    |
-   +===================================+=============================================================+
-   |  local                            | :ref:`abutils.tl.local_alignment() <local-aln>`             |
-   +-----------------------------------+-------------------------------------------------------------+
-   |  global                           | :ref:`abutils.tl.global_alignment() <global-aln>`           |
-   +-----------------------------------+-------------------------------------------------------------+
-   |  semi-global                      | :ref:`abutils.tl.semiglobal_alignment() <semiglobal-aln>`   |
-   +-----------------------------------+-------------------------------------------------------------+
+   "local", :ref:`abutils.tl.local_alignment() <local-aln>`
+   "global", :ref:`abutils.tl.global_alignment() <global-aln>`
+   "semi-global", :ref:`abutils.tl.semiglobal_alignment() <semiglobal-aln>`
+
 
 examples
 -------------
