@@ -166,7 +166,7 @@ def test_sequence_with_list():
 
 
 def test_sequence_with_dict():
-    seq = Sequence({"seq_id": "seq1", "vdj_nt": "ATCG"})
+    seq = Sequence({"sequence_id": "seq1", "sequence": "ATCG"})
     assert seq.sequence == "ATCG"
     assert seq.id == "seq1"
 

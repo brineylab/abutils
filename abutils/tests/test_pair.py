@@ -45,7 +45,7 @@ def tcr_dg_seqs():
 
 def test_init(bcr_hk_seqs, bcr_hl_seqs):
     pair = Pair(bcr_hk_seqs + bcr_hl_seqs)
-    assert pair._seqs == bcr_hk_seqs + bcr_hl_seqs
+    assert pair._sequences == bcr_hk_seqs + bcr_hl_seqs
     assert pair._receptor is None
     assert pair._heavy is None
     assert pair._light is None
@@ -72,39 +72,59 @@ def test_init(bcr_hk_seqs, bcr_hl_seqs):
 
 
 def test_receptor():
-    # with "chain" annotation
+    # with "v_call" annotation
     p = Pair(
         [
-            Sequence({"chain": "heavy", "sequence": "AAAAA", "sequence_id": "seq1"}),
-            Sequence({"chain": "kappa", "sequence": "CCCCC", "sequence_id": "seq2"}),
+            Sequence(
+                {"v_call": "IGHV1-2*02", "sequence": "AAAAA", "sequence_id": "seq1"}
+            ),
+            Sequence(
+                {"v_call": "IGKV1-3*01", "sequence": "CCCCC", "sequence_id": "seq2"}
+            ),
         ]
     )
     assert p.receptor == "bcr"
     p = Pair(
         [
-            Sequence({"chain": "heavy", "sequence": "AAAAA", "sequence_id": "seq1"}),
-            Sequence({"chain": "lambda", "sequence": "CCCCC", "sequence_id": "seq2"}),
+            Sequence(
+                {"v_call": "IGHV1-2*02", "sequence": "AAAAA", "sequence_id": "seq1"}
+            ),
+            Sequence(
+                {"v_call": "IGLV1-3*01", "sequence": "CCCCC", "sequence_id": "seq2"}
+            ),
         ]
     )
     assert p.receptor == "bcr"
     p = Pair(
         [
-            Sequence({"chain": "alpha", "sequence": "AAAAA", "sequence_id": "seq1"}),
-            Sequence({"chain": "beta", "sequence": "CCCCC", "sequence_id": "seq2"}),
+            Sequence(
+                {"v_call": "TRA1-2*02", "sequence": "AAAAA", "sequence_id": "seq1"}
+            ),
+            Sequence(
+                {"v_call": "TRB1-3*01", "sequence": "CCCCC", "sequence_id": "seq2"}
+            ),
         ]
     )
     assert p.receptor == "tcr"
     p = Pair(
         [
-            Sequence({"chain": "delta", "sequence": "AAAAA", "sequence_id": "seq1"}),
-            Sequence({"chain": "gamma", "sequence": "CCCCC", "sequence_id": "seq2"}),
+            Sequence(
+                {"v_call": "TRD1-2*02", "sequence": "AAAAA", "sequence_id": "seq1"}
+            ),
+            Sequence(
+                {"v_call": "TRG1-3*01", "sequence": "CCCCC", "sequence_id": "seq2"}
+            ),
         ]
     )
     assert p.receptor == "tcr"
     p = Pair(
         [
-            Sequence({"chain": "heavy", "sequence": "AAAAA", "sequence_id": "seq1"}),
-            Sequence({"chain": "alpha", "sequence": "CCCCC", "sequence_id": "seq2"}),
+            Sequence(
+                {"v_call": "IGHV1-2*02", "sequence": "AAAAA", "sequence_id": "seq1"}
+            ),
+            Sequence(
+                {"v_call": "TRBV1-3*01", "sequence": "CCCCC", "sequence_id": "seq2"}
+            ),
         ]
     )
     assert p.receptor == "unknown"
