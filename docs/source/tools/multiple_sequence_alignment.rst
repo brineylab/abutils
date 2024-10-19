@@ -89,9 +89,16 @@ argument. Both accept a path to the binary as a string.
 api
 -------
 
+.. _mafft:
 
 .. autofunction:: abutils.tl.mafft
+
+.. _muscle:
+
 .. autofunction:: abutils.tl.muscle
+
+.. _famsa:
+
 .. autofunction:: abutils.tl.famsa
 
 | 
