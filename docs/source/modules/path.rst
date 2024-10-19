@@ -3,7 +3,7 @@
 path
 ====================
 
-The :ref:`abutils.io` module contains functions for working with file and directory paths. These are
+The ``abutils.io`` module contains functions for working with file and directory paths. These are
 mainly convenience functions to facilitate common tasks like creating directories, deleting files,
 renaming files, and splitting/concatenating files.
 

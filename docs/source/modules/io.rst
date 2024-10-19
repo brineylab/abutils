@@ -3,9 +3,48 @@
 sequence I/O
 ====================
 
-``abutils`` provides a set of functions for reading and writing sequence data to and from various file formats. Additionally,
-we can convert lists of ``Pair`` and ``Sequence`` objects to and from Pandas or Polars DataFrames.
+``abutils`` provides a set of functions for :ref:`reading <read_sequences>` and :ref:`writing <write_sequences>` 
+sequence data to and from various file formats. Additionally, we can :ref:`convert <convert_sequences>` lists of 
+``Pair`` and ``Sequence`` objects to and from Pandas or Polars DataFrames.
 
+|  
+
+sequence annotations
+-----------------------
+
+``abutils`` follows the AIRR-C standard for sequence annotations. In tabular format, such as 
+tab-delimited (the official AIRR format), CSV, or Parquet, sequence annotations appear as follows,
+with one sequence per row:
+
+.. csv-table::
+   :header: "sequence_id", "sequence", "sequence_aa", "..."
+   :widths: 20, 20, 20, 5
+   :align: left
+
+   "sequence1", "ATCG...", "EVQLVE...", "..."
+   "sequence2", "ATCG...", "QVQLVE...", "..."
+   "sequence3", "ATCG...", "EVQLVE...", "..."
+
+|  
+
+pair annotations
+--------------------
+
+``abutils`` uses a custom extentension of the AIRR-C standard for pair annotations. Each row contains 
+a heavy/light chain pair. All AIRR-C fields are supported for each chain, with heavy chain annotation fields
+appended with ``":0"`` and light chain annotation fields appended with ``":1"``. Additionally, a ``name`` field 
+is included to allow for naming the pair independently of either sequence chain:
+
+.. csv-table::
+   :header: "name", "sequence_id:0", "sequence:0", "...", "sequence_id:1", "sequence:1", "..."
+   :widths: 10, 20, 20, 5, 20, 20, 5
+   :align: left
+
+   "pair1", "sequence1_heavy", "ATGC...", "...", "sequence1_light", "ATGC...", "..."
+   "pair2", "sequence2_heavy", "ATGC...", "...", "sequence2_light", "ATGC...", "..."
+   "pair3", "sequence3_heavy", "ATGC...", "...", "sequence3_light", "ATGC...", "..."
+
+|  
 
 read
 ----------------------------
