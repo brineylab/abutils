@@ -126,15 +126,15 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    modules/pair
 
 
-.. toctree::
+.. toggle:: sequence IO
    :maxdepth: 1
-   :hidden:
-   :caption: sequence IO
+   :caption: IO
 
-   read <modules/read_sequences>
-   write <modules/write_sequences>
-   convert <modules/convert_sequences>
-   paths <modules/paths>
+   .. toctree::
+      read <modules/read_sequences>
+      write <modules/write_sequences>
+      convert <modules/convert_sequences>
+      paths <modules/path>
 
 .. toctree::
    :maxdepth: 2
