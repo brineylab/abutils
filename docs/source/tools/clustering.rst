@@ -10,10 +10,10 @@ clustering algorithm is desired.
 
 ``abutils.tl.cluster`` can accept a variety of inputs, including:
 
-- a path to a FASTA file
-- a FASTA-formatted string
-- a list of ``abutils.Sequence`` objects
-- a list of anything accepted by :class:`abutils.Sequence`
+  * a path to a FASTA file
+  * a FASTA-formatted string
+  * a list of ``abutils.Sequence`` objects
+  * a list of anything accepted by :class:`abutils.Sequence`
 
 The ``threshold`` argument is the sequence identity threshold for clustering, and should be between 0.0 and 1.0.
 

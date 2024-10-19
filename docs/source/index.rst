@@ -38,6 +38,25 @@ appropriate for each level of granularity.
 
 | 
 
+input/output (``abutils.io``)
+--------------------------------
+
+To simplify data manipulation and facilitate the integration of ``abutils`` into 
+existing pipelines, ``abutils`` provides a set of functions for reading and writing 
+sequence data:
+
+  * :ref:`read <read-sequences>`: read sequences from a variety of file formats, including FASTA, FASTQ, AIRR-C, and others.
+  
+  * :ref:`write <write-sequences>`: write sequences to a variety of file formats, including FASTA, FASTQ, AIRR-C, and others.
+  
+  * :ref:`convert <convert-sequences>`: convert between ``Sequence`` or ``Pair`` objects and Pandas_ or Polars_ DataFrames.
+
+  * :ref:`paths <path>`: functions for working with file paths and directories.
+
+All of the IO functions are accessible via ``abutils.io``.
+
+| 
+
 tools (``abutils.tl``)
 --------------------
 
@@ -47,7 +66,7 @@ into custom pipelines or for use when performing interactive analyses:
 
   * :ref:`pairwise alignment <pairwise-alignment>`: local (Smith-Waterman), global (Needleman-Wunsch) and semi-global pairwise sequence alignment using parasail_. 
   
-  * :ref:`multiple sequence alignment <multiple-sequence-alignment>` using MAFFT_ or MUSCLE_
+  * :ref:`multiple sequence alignment <multiple-sequence-alignment>` using MAFFT_, MUSCLE_, or FAMSA_
 
   * :ref:`clustering <clustering>`: identity-based sequence clustering with VSEARCH_, CDHIT_, or MMseqs2_
 
@@ -97,12 +116,15 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 .. _parasail: https://github.com/jeffdaily/parasail-python
 .. _MAFFT: https://mafft.cbrc.jp/alignment/software/
 .. _MUSCLE: https://www.drive5.com/muscle/
+.. _FAMSA: https://github.com/MikkelSchubert/FAMSA
 .. _VSEARCH: https://github.com/torognes/vsearch
 .. _CDHIT: http://weizhongli-lab.org/cd-hit/
 .. _MMseqs2: https://github.com/soedinglab/MMseqs2
 .. _FastTree: http://www.microbesonline.org/fasttree/
 .. _IgPhyML: https://github.com/kbhoehn/IgPhyML
 .. _baltic: https://github.com/evogytis/baltic
+.. _Pandas: https://pandas.pydata.org/
+.. _Polars: https://pola.rs/
 
 
 
