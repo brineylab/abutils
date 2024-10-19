@@ -124,7 +124,6 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 
    modules/sequence
    modules/pair
-   modules/lineage
 
 .. toctree::
    :maxdepth: 2
@@ -151,8 +150,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
     :caption: utilities
   
     io <modules/io>
-    modules/jobs
-    modules/colors
+    modules/color
     modules/path
 
 .. toctree::
