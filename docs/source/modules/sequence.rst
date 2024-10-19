@@ -54,14 +54,23 @@ including additoinal annotations beyond just the sequence and ID:
 .. code-block:: python
 
     # create a sequence from a dictionary
-    sequence = abutils.Sequence({"sequence_id": "my_sequence", "sequence": "ATCG", "productive": True})
+    sequence = abutils.Sequence(
+        {
+            "sequence_id": "my_sequence",
+            "sequence": "ATCG",
+            "productive": True,
+            "v_call": "IGHV3-30*01",
+            "d_call": "IGHD3-3*01",
+            "j_call": "IGHJ6*02",
+        }
+    )
 
     # all annotations can be accessed using dictionary-style indexing
-    sequence["productive"]
+    sequence["v_call"]
 
 .. note::
 
-    Dictionary keys are typically expected to follow the naming conventions of the 
+    Dictionary keys are expected to follow the naming conventions of the 
     AIRR-C_ rearrangement schema. The ``Sequence`` object will automatically populate the special 
     properties ``id`` and ``sequence`` from the provided dictionary if the correct key names (``"sequence_id"`` 
     and ``"sequence"``, respectively) are used.
