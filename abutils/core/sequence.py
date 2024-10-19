@@ -1474,8 +1474,8 @@ def to_fasta(
     sequences : Iterable[Sequence]
         An iterable of any of the following:
             1. list of abutils ``Sequence`` objects
-            2. FASTA-formatted string
-            3. path to a FASTA-formatted file
+            2. FASTA/Q-formatted string
+            3. path to a FASTA/Q-formatted file
             4. list of BioPython ``SeqRecord`` objects
             5. list of lists/tuples, of the format ``[sequence_id, sequence]``
         Required.
@@ -1508,13 +1508,23 @@ def to_fasta(
 
     """
     if isinstance(sequences, str):
-        # if sequences is already a FASTA-formatted file
+        # if sequences is already a FASTA/Q-formatted file
         if os.path.isfile(sequences):
+            fmt = determine_fastx_format(sequences)
+            if fmt == "fasta" and not as_string:
+                return sequences
+            seq_objects = read_fastx(sequences)
+            fasta_string = "\n".join([s.fasta for s in seq_objects])
             if as_string:
-                with open(sequences, "r") as f:
-                    fasta_string = f.read()
                 return fasta_string
-            return sequences
+            else:
+                if fasta_file is None:
+                    make_dir(tempfile_dir)
+                    ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
+                    fasta_file = ff.name
+                with open(fasta_file, "w") as f:
+                    f.write(fasta_string)
+                return fasta_file
         # if sequences is a FASTA-formatted string
         else:
             fasta_string = sequences
