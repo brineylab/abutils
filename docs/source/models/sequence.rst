@@ -13,8 +13,6 @@ objects. Below are some brief examples of how to create and use ``Sequence`` obj
 instantiation
 ----------------
 
-|  
-
 ``abutils`` has a number of convenience functions for batch creation of ``Sequence`` objects 
 common file formats, including FASTA, FASTQ, AIRR-C_, and Parquet. Details and examples of these 
 functions can be found in the :ref:`io` section.
@@ -69,6 +67,22 @@ including additoinal annotations beyond just the sequence and ID:
     and ``"sequence"``, respectively) are used.
 
 |  
+
+usage
+----------------
+
+``Sequence`` objects have several convenient properties for common sequence manipulations:
+
+.. code-block:: python
+
+    # reverse complement
+    rc = sequence.reverse_complement()
+
+    # translate
+    aa = sequence.translate()
+
+|  
+
 
 
 
