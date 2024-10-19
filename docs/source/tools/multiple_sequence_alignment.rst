@@ -109,6 +109,9 @@ api
 
 
 .. _MAFFT: https://mafft.cbrc.jp/alignment/software/
+
 .. _MUSCLE: https://www.drive5.com/muscle/
+
 .. _FAMSA: https://github.com/refresh-bio/FAMSA
+
 .. _pyfamsa: https://github.com/althonos/pyfamsa
