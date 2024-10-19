@@ -111,7 +111,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: :ref:`getting started <installation>`
+   :caption: :ref:`getting started <getting-started>`
    
    installation
    examples
