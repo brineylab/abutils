@@ -1,4 +1,4 @@
-
+.. _write-sequences:
 
 write sequence data
 =========================

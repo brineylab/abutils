@@ -97,8 +97,9 @@ All of the plotting functions are accessible via ``abutils.pl``
 
 
 
-utilities
---------------
+colors (``abutils.cl``)
+-------------------------
+
 ``abutils`` also provides a number of utility functions that are generally useful 
 when working with antibody repertoire data. These include funcions for monitoring 
 multiprocessing jobs, creating and modifying color palettes, and others.
@@ -179,7 +180,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 .. toctree::
     :maxdepth: 2
     :hidden:
-    :caption: utilities
+    :caption: colors
   
     modules/color
 

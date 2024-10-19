@@ -1,4 +1,4 @@
-
+.. _read-sequences:
 
 read sequence data
 ==============================
