@@ -16,9 +16,9 @@ the user can easily switch between alignment methods with minimal changes to the
    :header: "tool", "function"
    :widths: 10, 16
 
-   "MAFFT", :ref:`abutils.tl.mafft() <mafft>`
-   "MUSCLE", :ref:`abutils.tl.muscle() <muscle>`
-   "FAMSA", :ref:`abutils.tl.famsa() <famsa>`
+   "MAFFT", :ref:`abutils.tl.mafft() <mafft-aln>`
+   "MUSCLE", :ref:`abutils.tl.muscle() <muscle-aln>`
+   "FAMSA", :ref:`abutils.tl.famsa() <famsa-aln>`
 
 
 examples
@@ -63,9 +63,9 @@ the alignment file should be written. This is done by passing a file path to the
 **using a custom binary for multiple sequence alignment**
 
 ``abutils`` packages binaries for both MAFFT and MUSCLE, meaning these packages don't need to be separately installed
-by the user. However, both :function:`abutils.tl.mafft` and :function:`abutils.tl.muscle` allow the user to specify the path to a 
-custom binary if desired. For MAFFT, this is done using the ``mafft_bin`` argument, and for MUSCLE, the ``muscle_bin`` 
-argument. Both accept a path to the binary as a string.
+by the user. However, both :ref:`abutils.tl.mafft() <mafft-aln>` and :ref:`abutils.tl.muscle() <muscle-aln>` allow the 
+user to specify the path to a custom binary if desired. For MAFFT, this is done using the ``mafft_bin`` argument, and 
+for MUSCLE, the ``muscle_bin`` argument. Both accept a path to the binary as a string.
 
 .. code-block:: python
 
@@ -89,15 +89,15 @@ argument. Both accept a path to the binary as a string.
 api
 -------
 
-.. _mafft:
+.. _mafft-aln:
 
 .. autofunction:: abutils.tl.mafft
 
-.. _muscle:
+.. _muscle-aln:
 
 .. autofunction:: abutils.tl.muscle
 
-.. _famsa:
+.. _famsa-aln:
 
 .. autofunction:: abutils.tl.famsa
 
