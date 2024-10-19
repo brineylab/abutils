@@ -153,8 +153,8 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :hidden:
    :caption: data
 
-   modules/io
-   modules/path
+   io <modules/io>
+   path <modules/path>
 
 .. toctree::
    :maxdepth: 2
