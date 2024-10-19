@@ -11,9 +11,8 @@ properties, so the user can easily switch between alignment methods with minimal
 |  
 
 .. table::
-   :align: left
+   :align: center
    :widths: 10, 16
-   :width: 100%
 
    +-----------------------------------+-------------------------------------------------------------+
    |  alignment type                   | function                                                    |
