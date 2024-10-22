@@ -1027,7 +1027,9 @@ def pairs_from_polars(
                         extra_fields[k] = v
                 # pair
                 sequences = [s for s in [heavy, light] if s is not None]
-                pairs.append(Pair(seqs=sequences, name=name, properties=extra_fields))
+                pairs.append(
+                    Pair(sequences=sequences, name=name, properties=extra_fields)
+                )
         except KeyError:
             continue
     return pairs
