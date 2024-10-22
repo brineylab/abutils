@@ -54,6 +54,7 @@ def clonify(
     length_penalty_multiplier: Union[int, float] = 2,
     group_by_v: bool = True,
     group_by_j: bool = True,
+    group_by_light_chain_vj: bool = True,
     precluster: bool = False,
     preclustering_threshold: float = 0.65,
     id_key: str = "sequence_id",
@@ -130,6 +131,19 @@ def clonify(
         If ``True``, sequences are grouped by J-gene use prior to lineage assignment. This
         option is additive with ``group_by_v``. For example, if ``group_by_v == True`` and
         ``group_by_j == True``, sequences will be grouped by both V-gene and J-gene.
+
+    group_by_light_chain_vj : bool, default=True
+        If ``True``, sequences are grouped by light chain V-gene and J-gene use prior to
+        lineage assignment. This option is additive with ``group_by_v`` and ``group_by_j``.
+        For example, if ``group_by_v == True`` and ``group_by_j == True`` and
+        ``group_by_light_chain_vj == True``, sequences will be grouped by V-gene, J-gene,
+        and light chain V-gene and J-gene. If unpaired sequences are provided, this option
+        is ignored.
+
+    .. note::
+        To ensure that ``clonify`` behaves in a way that is consistent with user expectations,
+        if both ``group_by_v`` and ``group_by_j`` are manually set to ``False``, light chain
+        grouping will also be ignored.
 
     precluster : bool, default=False
         If ``True``, V/J groups are pre-clustered on the `preclustering_field` sequence,
@@ -244,13 +258,14 @@ def clonify(
         else:
             raise ValueError(f"Invalid input format: {input_fmt}")
     df = to_polars(sequences)
+    is_paired = isinstance(sequences[0], Pair)
 
     # filter DataFrame
     fields = [id_key, vgene_key, jgene_key, cdr3_key, mutations_key]
     if precluster:
         fields.append(preclustering_key)
     # handle Pair objects
-    if isinstance(sequences[0], Pair):
+    if is_paired:
         id_key = f"{id_key}:0"
         filtered_df = df.filter(pl.col("locus:0") == "IGH")
         _fields = [f"{f}:0" for f in fields]
@@ -311,6 +326,10 @@ def clonify(
         if group_by_j:
             group_by.append(jgene_key)
             group_by_list.append("J gene")
+        if is_paired and group_by_light_chain_vj:
+            group_by.append(f"{vgene_key.replace(':0', ':1')}")
+            group_by.append(f"{jgene_key.replace(':0', ':1')}")
+            group_by_list.append("Light chain V/J genes")
         if verbose:
             print(f"- grouping by {' and '.join(group_by_list)}")
         grouped = filtered_df.group_by(group_by)
