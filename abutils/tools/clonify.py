@@ -28,8 +28,6 @@ import os
 import random
 import string
 from collections import Counter
-
-# from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Iterable, Optional, Union
 
 import fastcluster
@@ -50,13 +48,14 @@ from ..utils.utilities import generate_batches
 def clonify(
     sequences: Union[str, Iterable[Sequence]],
     output_path: Optional[str] = None,
-    distance_cutoff: float = 0.32,
+    distance_cutoff: float = 0.35,
     shared_mutation_bonus: float = 0.35,
     length_penalty_multiplier: Union[int, float] = 2,
     group_by_v: bool = True,
     group_by_j: bool = True,
     precluster: bool = False,
     preclustering_threshold: float = 0.65,
+    id_key: str = "sequence_id",
     vgene_key: str = "v_gene",
     jgene_key: str = "j_gene",
     cdr3_key: str = "cdr3_aa",
@@ -72,7 +71,7 @@ def clonify(
     input_fmt: str = "airr",
     output_fmt: str = "airr",
     temp_directory: Optional[str] = None,
-    # return_assignment_dict: bool = False,
+    return_assignment_dict: bool = False,
     batch_size: int = 100000,
     n_processes: int = None,
     verbose: bool = True,
@@ -91,7 +90,7 @@ def clonify(
     sequences : Union[str, Iterable[Sequence]]
         Input sequences in any of the following formats:
 
-            1. list of abutils ``Sequence`` objects
+            1. list of abutils ``Sequence`` or ``Pair`` objects
             2. path to a FASTA/Q-formatted file (if `input_fmt` == "fasta" or "fastq")
             3. path to an TSV file of AIRR-formatted annotations (if `input_fmt` == "airr")
             4. path to an Parquet file of AIRR-formatted annotations (if `input_fmt` == "parquet")
@@ -215,6 +214,7 @@ def clonify(
 
 
     .. _clonify: https://github.com/briney/clonify
+
     """
     # set up file paths
     if output_path is not None:
@@ -228,7 +228,6 @@ def clonify(
     make_dir(temp_directory)
 
     # process input data
-    # TODO: add support for Pair objects
     if isinstance(sequences, str):
         input_fmt = input_fmt.lower()
         if input_fmt in ["fasta", "fastq"]:
@@ -246,16 +245,18 @@ def clonify(
     df = to_polars(sequences)
 
     # filter DataFrame
-    locus_column = "locus"
-    fields = ["sequence_id", vgene_key, jgene_key, cdr3_key, mutations_key]
-    if isinstance(sequences[0], Pair):
-        fields = [f"{f}:0" for f in fields]
-        locus_column = "locus:0"
+    fields = [id_key, vgene_key, jgene_key, cdr3_key, mutations_key]
     if precluster:
         fields.append(preclustering_key)
-
-    filtered_df = df.filter(pl.col(locus_column) == "IGH")  # just heavy chains
-    filtered_df = filtered_df.select(fields)
+    # handle Pair objects
+    if isinstance(sequences[0], Pair):
+        id_key = f"{id_key}:0"
+        filtered_df = df.filter(pl.col("locus:0") == "IGH")
+        _fields = [f"{f}:0" for f in fields]
+        filtered_df = filtered_df.select(_fields).rename(lambda c: c.replace(":0", ""))
+    else:
+        filtered_df = df.filter(pl.col("locus") == "IGH")
+        filtered_df = filtered_df.select(fields)
 
     # split mutations string into a list
     mutation_lists = [
@@ -365,7 +366,7 @@ def clonify(
 
     # clonify
     for seqs in sequence_groups:
-        # no need to process if only one sequence
+        # no need to process if there's only one sequence
         if len(seqs) == 1:
             if mnemonic_names:
                 assign_dict[seqs[0].id] = "_".join(
@@ -376,14 +377,14 @@ def clonify(
                     random.choices(string.ascii_letters + string.digits, k=16)
                 )
             continue
+
         # distances
         distances = []
         if use_mp:
             # multiprocessing
             async_results = []
-            indexes = list(range(len(seqs)))
-            iterator = itertools.combinations(indexes, 2)
-            for index_batch in generate_batches(iterator, batch_size):
+            index_iter = itertools.combinations(list(range(len(seqs))), 2)
+            for index_batch in generate_batches(index_iter, batch_size):
                 async_results.append(
                     pool.apply_async(
                         batch_pairwise_distance,
@@ -397,6 +398,7 @@ def clonify(
             # single processes
             for s1, s2 in itertools.combinations(seqs, 2):
                 distances.append(pairwise_distance(s1, s2, **assign_kwargs))
+
         # cluster
         linkage_matrix = fastcluster.linkage(
             distances,
@@ -408,6 +410,7 @@ def clonify(
             distance_cutoff,
             criterion="distance",
         )
+
         # rename clusters
         cluster_ids = set(cluster_list)
         if mnemonic_names:
@@ -421,9 +424,9 @@ def clonify(
                 for c in cluster_ids
             }
         renamed_clusters = [cluster_names[c] for c in cluster_list]
-        # assign sequences
         for seq, name in zip(seqs, renamed_clusters):
             assign_dict[seq.id] = name
+
     # cleanup multiprocessing (if necessary)
     if use_mp:
         pool.close()
@@ -431,7 +434,7 @@ def clonify(
 
     # add the lineage name and size to the sequence DataFrame
     lineage_size_dict = Counter(assign_dict.values())
-    lineages = [assign_dict.get(s, None) for s in df["sequence_id"]]
+    lineages = [assign_dict.get(s, None) for s in df[id_key]]
     lineage_sizes = [lineage_size_dict.get(lineage, None) for lineage in lineages]
     df = df.with_columns(
         pl.Series(name=lineage_field, values=lineages),
@@ -439,11 +442,15 @@ def clonify(
     )
 
     # output
+    if return_assignment_dict:
+        return assign_dict
     if output_path is not None:
         if output_fmt.lower() == "airr":
             pl.write_csv(df, output_path, separator="\t")
         elif output_fmt.lower() == "parquet":
             pl.write_parquet(df, output_path)
+        elif output_fmt.lower() == "csv":
+            pl.write_csv(df, output_path)
         else:
             raise ValueError
     if output_fmt.lower() == "polars":
