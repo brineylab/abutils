@@ -46,6 +46,7 @@ class Pair(object):
         sequences: Iterable[Union[dict, Sequence]],
         name: Optional[str] = None,
         chain_selection_func: Optional[Callable] = None,
+        properties: Optional[dict] = None,
     ):
         """
         Initialize a Pair object.
@@ -63,6 +64,9 @@ class Pair(object):
             the "correct" heavy and light chains in cases for which multiple heavy
             or light chains exist. If not provided, chains are prioritized in the order
             provided.
+
+        properties : Optional[dict], default=None
+            A dictionary of additional properties to add to the Pair object.
 
         """
         self._sequences = sequences
@@ -93,6 +97,9 @@ class Pair(object):
             if chain_selection_func is not None
             else self._chain_selector
         )
+        if properties is not None:
+            for k, v in properties.items():
+                setattr(self, k, v)
 
     def __eq__(self, other):
         return (self.heavy, self.light) == (other.heavy, other.light)
@@ -993,7 +1000,7 @@ def pairs_from_polars(
                 name = r.get("name", None)
                 # heavy chain
                 heavy_dict = {
-                    k.split(":")[0]: v for k, v in r.items() if k.split(":")[1] == "0"
+                    k.split(":")[0]: v for k, v in r.items() if k.endswith(":0")
                 }
                 if fields is not None:
                     hc_fields = [f for f in fields if f in heavy_dict]
@@ -1002,16 +1009,25 @@ def pairs_from_polars(
                     heavy = Sequence(heavy_dict, id_key=id_key, seq_key=sequence_key)
                 # light chain
                 light_dict = {
-                    k.split(":")[0]: v for k, v in r.items() if k.split(":")[1] == "1"
+                    k.split(":")[0]: v for k, v in r.items() if k.endswith(":1")
                 }
                 if fields is not None:
                     lc_fields = [f for f in fields if f in light_dict]
                     light_dict = {f: light_dict[f] for f in lc_fields}
                 if any([v is not None for v in light_dict.values()]):
                     light = Sequence(light_dict, id_key=id_key, seq_key=sequence_key)
+                # extra fields:
+                extra_fields = {}
+                for k, v in r.items():
+                    if (
+                        not k.endswith(":0")
+                        and not k.endswith(":1")
+                        and k.lower() != "name"
+                    ):
+                        extra_fields[k] = v
                 # pair
                 sequences = [s for s in [heavy, light] if s is not None]
-                pairs.append(Pair(seqs=sequences, name=name))
+                pairs.append(Pair(seqs=sequences, name=name, properties=extra_fields))
         except KeyError:
             continue
     return pairs
