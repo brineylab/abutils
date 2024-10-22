@@ -269,6 +269,9 @@ def clonify(
         id_key = f"{id_key}:0"
         filtered_df = df.filter(pl.col("locus:0") == "IGH")
         _fields = [f"{f}:0" for f in fields]
+        if group_by_light_chain_vj:
+            _fields.append(f"{vgene_key}:1")
+            _fields.append(f"{jgene_key}:1")
         filtered_df = filtered_df.select(_fields).rename(lambda c: c.replace(":0", ""))
     else:
         filtered_df = df.filter(pl.col("locus") == "IGH")
@@ -327,8 +330,8 @@ def clonify(
             group_by.append(jgene_key)
             group_by_list.append("J gene")
         if is_paired and group_by_light_chain_vj:
-            group_by.append(f"{vgene_key.replace(':0', ':1')}")
-            group_by.append(f"{jgene_key.replace(':0', ':1')}")
+            group_by.append(f"{vgene_key}:1")
+            group_by.append(f"{jgene_key}:1")
             group_by_list.append("Light chain V/J genes")
         if verbose:
             print(f"- grouping by {' and '.join(group_by_list)}")
