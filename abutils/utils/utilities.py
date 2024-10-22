@@ -25,7 +25,7 @@
 
 # from __future__ import absolute_import, division, print_function, unicode_literals
 
-import io
+import itertools
 import math
 import operator
 import sys
@@ -84,11 +84,22 @@ def chunker(iterable, chunksize):
         yield iterable[start:end]
 
 
+def generate_batches(iterable, batch_size):
+    while True:
+        # Use itertools.islice to take 'batch_size' elements at a time
+        batch = list(itertools.islice(iterable, batch_size))
+        if not batch:
+            break
+        yield batch
+
+
 def redirect_stdout(func, *args, **kwargs):
     """
     Suppress stdout for a function by redirecting it to a StringIO object.
     """
     # Redirect stdout to a StringIO object
+    import io
+
     old_stdout = sys.stdout
     sys.stdout = io.StringIO()
     try:
