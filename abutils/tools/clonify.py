@@ -39,7 +39,8 @@ from rapidfuzz.distance.Levenshtein import distance as levenshtein_distance
 from scipy.cluster.hierarchy import fcluster
 from tqdm.auto import tqdm
 
-from ..core.sequence import Pair, Sequence
+from ..core.pair import Pair
+from ..core.sequence import Sequence
 from ..io import from_polars, make_dir, read_airr, read_csv, read_parquet, to_polars
 from ..tools.cluster import cluster
 from ..utils.utilities import generate_batches
