@@ -336,6 +336,10 @@ class Pair(object):
                 self._lineage = self.heavy["clonify"]["id"]
         return self._lineage
 
+    @lineage.setter
+    def lineage(self, lineage):
+        self._lineage = lineage
+
     @property
     def name(self):
         if self._name is None:
