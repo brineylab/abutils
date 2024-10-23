@@ -60,9 +60,9 @@ def clonify(
     id_key: str = "sequence_id",
     vgene_key: str = "v_gene",
     jgene_key: str = "j_gene",
-    cdr3_key: str = "cdr3_aa",
+    cdr3_key: str = "cdr3",
     mutations_key: str = "v_mutations",
-    preclustering_key: str = "cdr3_nt",
+    preclustering_key: str = "cdr3",
     mutation_delimiter: str = "|",
     ignore_likely_allelic_variants: bool = False,
     allelic_variant_threshold: float = 0.35,
@@ -159,13 +159,13 @@ def clonify(
     jgene_key : str, default='j_gene'
         Annotation field containing the J-gene name.
 
-    cdr3_key : str, default='cdr3_aa'
-        Annotation field containing the CDR3 amino acid sequence.
+    cdr3_key : str, default='cdr3'
+        Annotation field containing the CDR3 sequence.
 
     mutations_key : str, default='v_mutations'
         Annotation field containing the V-gene mutations.
 
-    preclustering_key : str, default='cdr3_nt'
+    preclustering_key : str, default='cdr3'
         Annotation field on which to pre-cluster sequences.
 
     mutation_delimiter : str, default='|'
@@ -498,7 +498,7 @@ def pairwise_distance(
     length_penalty_multiplier: Union[int, float] = 2,
     vgene_field: str = "v_gene",
     jgene_field: str = "j_gene",
-    cdr3_field: str = "cdr3_aa",
+    cdr3_field: str = "cdr3",
     mutations_field: str = "mutations",
     likely_allelic_variants: Optional[Iterable] = None,
     debug: bool = False,
@@ -521,22 +521,25 @@ def pairwise_distance(
         Used to compute the penalty for differences in CDR3 length. The length
         difference is multiplied by `length_penalty_multiplier`, by default 2
 
-    vgene_field : str, optional
+    vgene_field : str, default="v_gene"
         Name of the field in `s1` and `s2` containing the V-gene name,
-        by default ``"v_gene"``
 
-    jgene_field : str, optional
-        Name of the field in `s1` and `s2` containing the J-gene name,
-        by default ``"j_gene"``
+    jgene_field : str, default="j_gene"
+        Name of the field in `s1` and `s2` containing the J-gene name
 
-    cdr3_field : str, optional
-        Name of the field in `s1` and `s2` containing the CDR3 sequence,
-        by default ``"cdr3_aa"``
+    cdr3_field : str, default="cdr3"
+        Name of the field in `s1` and `s2` containing the CDR3 sequence
 
-    mutations_field : str, optional
-        Name of the field in `s1` and `s2` containing mutation information,
-        by default ``"mutations"`` Note that this field should be a list of
-        mutation strings
+    mutations_field : str, default="mutations"
+        Name of the field in `s1` and `s2` containing mutation information
+
+    likely_allelic_variants : Optional[Iterable], default=None
+        List of mutations that are likely allelic variants. If provided, shared
+        mutations that are also in `likely_allelic_variants` will not be counted
+        towards the mutation bonus.
+
+    debug : bool, default=False
+        If ``True``, debug information will be printed.
 
     Returns
     -------
@@ -550,14 +553,18 @@ def pairwise_distance(
     if s1[jgene_field] != s2[jgene_field]:
         germline_penalty += 5
 
-    # Levenshtein distance
-    dist = levenshtein_distance(s1[cdr3_field], s2[cdr3_field])
-
     # CDR3 length
     s1_len = len(s1[cdr3_field])
     s2_len = len(s2[cdr3_field])
     length_penalty = abs(s1_len - s2_len) * length_penalty_multiplier
     length = min(s1_len, s2_len)
+
+    # Levenshtein distance
+    if s1_len == s2_len:
+        # don't allow insertions/deletions if the CDR3s are the same length
+        dist = sum([a != b for a, b in zip(s1[cdr3_field], s2[cdr3_field])])
+    else:
+        dist = levenshtein_distance(s1[cdr3_field], s2[cdr3_field])
 
     # mutations
     likely_allelic_variants = likely_allelic_variants or []
@@ -568,9 +575,6 @@ def pairwise_distance(
         )
         * shared_mutation_bonus
     )
-    # mutation_bonus = (
-    #     len(set(s1[mutations_field]) & set(s2[mutations_field])) * shared_mutation_bonus
-    # )
     score = germline_penalty + ((dist + length_penalty - mutation_bonus) / length)
     return max(score, 0.001)  # distance values can't be negative
 
