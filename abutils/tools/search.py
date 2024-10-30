@@ -47,6 +47,7 @@ def mmseqs_search(
     format_output: Optional[str] = None,
     verbosity: Optional[int] = None,
     threads: Optional[int] = None,
+    split_memory_limit: Optional[str] = None,
     additional_cli_args: Optional[str] = None,
     mmseqs_bin: Optional[str] = None,
     log_to: Optional[str] = None,
@@ -144,6 +145,10 @@ def mmseqs_search(
     threads : int
         Number of threads to use. If not provided, the default is to use all available threads.
 
+    split_memory_limit : str
+        Memory limit for split searches. Should be a string like ``"10G"`` or ``"100M"``.
+        If not provided, the limit is the default set in ``mmseqs2`` (all system memory).
+
     additional_cli_args : str
         Additional command line arguments (as a string) which will be passed directly to ``mmseqs easy-search``.
 
@@ -200,6 +205,8 @@ def mmseqs_search(
         mmseqs_cmd += f" -v {verbosity}"
     if threads is not None:
         mmseqs_cmd += f" --threads {threads}"
+    if split_memory_limit is not None:
+        mmseqs_cmd += f" --split-memory-limit {split_memory_limit}"
     if additional_cli_args is not None:
         mmseqs_cmd += f" {additional_cli_args}"
 
