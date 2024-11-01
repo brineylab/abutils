@@ -25,6 +25,7 @@
 import glob
 import gzip
 import os
+import re
 from typing import Iterable, Optional, Union
 
 import pandas as pd
@@ -94,6 +95,7 @@ def list_files(
     directory: str,
     extension: Union[str, Iterable, None] = None,
     recursive: bool = False,
+    match: Optional[str] = None,
     ignore_dot_files: bool = True,
 ) -> Iterable[str]:
     """
@@ -110,6 +112,15 @@ def list_files(
         a string or a list of strings. Extension evaluation is case-insensitive and can match complex
         extensions (e.g. '.fastq.gz'). Default is ``None``, which returns all files in the directory,
         regardless of extension.
+
+    recursive : bool, default=False
+        If ``True``, the directory will be searched recursively, and all files in all subdirectories will be returned.
+
+    match : str, optional
+        If supplied, only files that match the specified pattern will be returned. Regular expressions are supported.
+
+    ignore_dot_files : bool, default=True
+        If ``True``, dot files (hidden files) will be ignored.
 
     Returns
     -------
@@ -149,6 +160,8 @@ def list_files(
         ]
     if ignore_dot_files:
         files = [f for f in files if not os.path.basename(f).startswith(".")]
+    if match is not None:
+        files = [f for f in files if re.match(match, os.path.basename(f)) is not None]
     return files
 
 
