@@ -290,6 +290,153 @@ def split_parquet(
     return output_files
 
 
+def concatenate_parquet(parquet_files: Iterable[str], output_file: str) -> str:
+    """
+    Concatenates multiple parquet files into a single file.
+
+    Parameters
+    ----------
+    parquet_files : Iterable[str]
+        Iterable of file paths to the parquet files to be concatenated.
+
+    output_file : str
+        Path to the output file.
+
+    Returns
+    -------
+    str
+        Path to the output file.
+
+    """
+    make_dir(os.path.dirname(output_file))
+
+    # do all parquet operations lazily to save memory
+    dfs = [pl.scan_parquet(f) for f in parquet_files]
+    df = pl.concat(dfs)
+    df.sink_parquet(output_file)
+    return output_file
+
+
+def split_csv(
+    csv_file: str, output_directory: str, separator: str = ",", chunksize: int = 500
+) -> Iterable[str]:
+    """
+    Splits a CSV file into multiple files, each containing a specified number of rows, including the header in each split.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the CSV file to be split.
+
+    output_directory : str
+        Path to the directory where the split files will be saved. If the directory does not exist, it will be created.
+
+    separator : str, default=","
+        Column separator. Default is `","`.
+
+    chunksize : int, default=500
+        Number of rows per split file. Default is 500. The last file may contain fewer rows than this number.
+
+    Returns
+    -------
+    Iterable[str]
+        Iterable of file paths for the split files.
+
+    """
+    make_dir(output_directory)
+
+    output_files = []
+    output_basename = os.path.splitext(os.path.basename(csv_file))[0]
+
+    for i, chunk in enumerate(
+        pd.read_csv(csv_file, sep=separator, chunksize=chunksize)
+    ):
+        output_file = os.path.join(output_directory, f"{output_basename}_part_{i}.csv")
+        chunk.to_csv(output_file, sep=separator, index=False, mode="w", header=True)
+        output_files.append(output_file)
+
+    return output_files
+
+
+def concatenate_csv(
+    csv_files: Iterable[str], output_file: str, separator: str = ","
+) -> str:
+    """
+    Concatenates multiple CSV files into a single file.
+
+    Parameters
+    ----------
+    csv_files : Iterable[str]
+        Iterable of file paths to the CSV files to be concatenated.
+
+    output_file : str
+        Path to the output file.
+
+    separator : str, default=","
+        Column separator. Default is ``","``.
+
+    Returns
+    -------
+    str
+        Path to the output file.
+
+    """
+    make_dir(os.path.dirname(output_file))
+
+    # do all csv operations lazily to save memory
+    dfs = [pl.scan_csv(f, separator=separator) for f in csv_files]
+    df = pl.concat(dfs)
+    df.sink_csv(output_file, separator=separator)
+    return output_file
+
+
+def split_airr(
+    airr_file: str, output_directory: str, chunksize: int = 500
+) -> Iterable[str]:
+    """
+    Splits an AIRR-formatted file into multiple files.
+
+    Parameters
+    ----------
+    airr_file : str
+        Path to the AIRR-formatted file to be split.
+
+    output_directory : str
+        Path to the directory where the split files will be saved.
+
+    chunksize : int, default=500
+        Number of rows per split file. Default is 500. The last file may contain fewer rows than this number.
+
+    Returns
+    -------
+    Iterable[str]
+        Iterable of file paths for the split files.
+
+    """
+    return split_csv(airr_file, output_directory, separator="\t", chunksize=chunksize)
+
+
+def concatenate_airr(airr_files: Iterable[str], output_file: str) -> str:
+    """
+    Concatenates multiple AIRR-formatted files into a single file.
+
+    Parameters
+    ----------
+    airr_files : Iterable[str]
+        Iterable of file paths to the AIRR-formatted files to be concatenated.
+
+    output_file : str
+        Path to the output file.
+
+    Returns
+    -------
+    str
+        Path to the output file.
+
+    """
+    return concatenate_csv(airr_files, output_file, separator="\t")
+
+
 def split_fastx(
     fastx_file: str,
     output_directory: str,
