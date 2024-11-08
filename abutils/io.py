@@ -597,6 +597,7 @@ def read_csv(
     fields: Optional[Iterable] = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
+    as_dataframe: bool = False,
 ) -> Iterable[Union[Sequence, Pair]]:
     """
     Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
@@ -628,13 +629,24 @@ def read_csv(
     sequence_key : str, default="sequence"
         The name of the column that contains the sequence data. Default is ``"sequence"``.
 
+    as_dataframe : bool, default=False
+        If ``True``, the function will return a ``polars.DataFrame`` object.
+
+        .. note::
+            If ``True``, ``fields`` will be used to select columns from the input file, but
+            ``match`` will be ignored.
+
     Returns
     -------
-    Iterable[Union[Sequence, Pair]]
-        A list of ``Sequence`` or ``Pair`` objects.
+    Iterable[Union[Sequence, Pair]] or polars.DataFrame
+        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
 
     """
     df = pl.read_csv(csv_file, separator=separator, infer_schema_length=None)
+    if as_dataframe:
+        if fields is not None:
+            df = df.select(fields)
+        return df
     if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
         return pairs_from_polars(
             df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
@@ -749,6 +761,7 @@ def read_parquet(
     fields: Optional[Iterable] = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
+    as_dataframe: bool = False,
 ) -> Iterable[Union[Sequence, Pair]]:
     """
     Reads a Parquet file and returns a list of ``Sequence`` or ``Pair`` objects.
@@ -777,13 +790,24 @@ def read_parquet(
     sequence_key : str, default="sequence"
         The name of the column that contains the sequence data. Default is ``"sequence"``.
 
+    as_dataframe : bool, default=False
+        If ``True``, the function will return a ``polars.DataFrame`` object.
+
+        .. note::
+            If ``True``, ``fields`` will be used to select columns from the input file, but
+            ``match`` will be ignored.
+
     Returns
     -------
-    Iterable[Union[Sequence, Pair]]
-        A list of ``Sequence`` or ``Pair`` objects.
+    Iterable[Union[Sequence, Pair]] or polars.DataFrame
+        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
 
     """
     df = pl.read_parquet(parquet_file)
+    if as_dataframe:
+        if fields is not None:
+            df = df.select(fields)
+        return df
     if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
         return pairs_from_polars(
             df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
