@@ -37,11 +37,11 @@ from natsort import natsorted
 
 from .core.pair import (
     Pair,
-    pairs_from_pandas,
+    # pairs_from_pandas,
     pairs_from_polars,
-    pairs_to_csv,
-    pairs_to_pandas,
-    pairs_to_parquet,
+    # pairs_to_csv,
+    # pairs_to_pandas,
+    # pairs_to_parquet,
     pairs_to_polars,
 )
 from .core.sequence import (
@@ -51,30 +51,28 @@ from .core.sequence import (
     parse_fasta,
     parse_fastq,
     parse_fastx,
-    read_airr,
+    # read_airr,
     # read_csv,
     read_fasta,
     read_fastq,
     read_fastx,
     read_json,
     # read_parquet,
-    sequences_from_pandas,
+    # sequences_from_pandas,
     sequences_from_polars,
-    sequences_to_csv,
-    sequences_to_pandas,
-    sequences_to_parquet,
+    # sequences_to_csv,
+    # sequences_to_pandas,
+    # sequences_to_parquet,
     sequences_to_polars,
-    to_airr,
+    # to_airr,
     to_fasta,
     to_fastq,
 )
 from .utils.convert import abi_to_fasta
 
-# to_airr.__module__ = "abutils.io"
-
-# -----------------------
+# =======================
 #   General file I/O
-# -----------------------
+# =======================
 
 
 def make_dir(directory: str) -> None:
@@ -200,9 +198,9 @@ def delete_files(files: Union[str, Iterable]) -> None:
             os.remove(f)
 
 
-# --------------------------------------------
+# ============================================
 #      File splitting and concatenation
-# --------------------------------------------
+# ============================================
 
 
 def concatenate_files(files: Iterable[str], output_file: str) -> None:
@@ -585,323 +583,9 @@ def split_fastq(
     )
 
 
-# ------------------------------
+# ===============================
 #     Sequence and Pair I/O
-# ------------------------------
-
-
-def read_csv(
-    csv_file: str,
-    separator: str = ",",
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
-    id_key: str = "sequence_id",
-    sequence_key: str = "sequence",
-    as_dataframe: bool = False,
-) -> Iterable[Union[Sequence, Pair]]:
-    """
-    Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
-
-    Parameters
-    ----------
-    csv_file : str
-        Path to the CSV file to be read.
-
-    separator : str, default=","
-        Column separator. Default is ``","``.
-
-    match : dict, optional
-        A ``dict`` for filtering sequences from the input file.
-        Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which
-        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
-
-        .. code-block:: python
-
-            {'v_gene:0': 'IGHV1-2'}
-
-    fields : list, optional
-        A list of fields to be read from the input file. If not provided, all fields will be read.
-
-    id_key : str, default="sequence_id"
-        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
-
-    sequence_key : str, default="sequence"
-        The name of the column that contains the sequence data. Default is ``"sequence"``.
-
-    as_dataframe : bool, default=False
-        If ``True``, the function will return a ``polars.DataFrame`` object.
-
-        .. note::
-            If ``True``, ``fields`` will be used to select columns from the input file, but
-            ``match`` will be ignored.
-
-    Returns
-    -------
-    Iterable[Union[Sequence, Pair]] or polars.DataFrame
-        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
-
-    """
-    df = pl.read_csv(csv_file, separator=separator, infer_schema_length=None)
-    if as_dataframe:
-        if fields is not None:
-            df = df.select(fields)
-        return df
-    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
-        return pairs_from_polars(
-            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
-        )
-    else:
-        return sequences_from_polars(
-            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
-        )
-
-
-def to_csv(
-    sequences: Iterable[Union[Sequence, Pair]],
-    csv_file: Optional[str] = None,
-    separator: str = ",",
-    header: bool = True,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
-    drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
-) -> Optional[pl.DataFrame]:
-    """
-    Saves a list of ``Pair`` objects to a CSV file.
-
-    Parameters
-    ----------
-    sequences : Iterable[Sequence, Pair]
-        List of ``Sequence`` or ``Pair`` objects to be saved to a CSV file. Required.
-
-    csv_file : str
-        Path to the output CSV file. If ``None``, the CSV will not be saved to a file and the
-        function will return a ``polars.DataFrame`` object.
-
-    separator : str, default=","
-        Column separator. Default is ``","``.
-
-    header : bool, default=True
-        If ``True``, the CSV file will contain a header row. Default is ``True``.
-
-    columns : list, default=None
-        A list of fields to be retained in the output CSV file. Fields must be column
-        names in the input file.
-
-    properties : list, default=None
-        A list of properties to be included in the CSV file. If not provided, everything
-        in the ``annotations`` field of each heavy/light chain will be included.
-
-    sequence_properties : list, default=None
-        A list of sequence properties to be included. Differs from ``properties``, which
-        refers to properties of the ``Pair`` object. These properties are those of the
-        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
-
-    drop_na_columns : bool, default=True
-        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
-        Default is ``True``.
-
-    order : list, default=None
-        A list of fields in the order they should appear in the CSV file.
-
-    exclude : str or list, default=None
-        Field or list of fields to be excluded from the CSV file.
-
-    leading : str or list, default=None
-        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
-        if both are provided, fields in ``leading`` will appear first in the CSV file and
-        remaining fields will appear in the order provided in ``order``.
-
-    Returns
-    -------
-    Optional[pl.DataFrame]
-        A ``polars.DataFrame`` object if ``csv_file`` is ``None``.
-
-    """
-    if all([isinstance(s, Sequence) for s in sequences]):
-        return sequences_to_csv(
-            sequences,
-            csv_file=csv_file,
-            separator=separator,
-            header=header,
-            columns=columns,
-            properties=properties,
-            drop_na_columns=drop_na_columns,
-            order=order,
-            exclude=exclude,
-            leading=leading,
-        )
-    elif all([isinstance(s, Pair) for s in sequences]):
-        return pairs_to_csv(
-            sequences,
-            csv_file=csv_file,
-            separator=separator,
-            header=header,
-            columns=columns,
-            properties=properties,
-            sequence_properties=sequence_properties,
-            drop_na_columns=drop_na_columns,
-            order=order,
-            exclude=exclude,
-            leading=leading,
-        )
-    else:
-        raise ValueError(
-            "All elements in the input list must be of the same type (either Sequence or Pair)."
-        )
-
-
-def read_parquet(
-    parquet_file: str,
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
-    id_key: str = "sequence_id",
-    sequence_key: str = "sequence",
-    as_dataframe: bool = False,
-) -> Iterable[Union[Sequence, Pair]]:
-    """
-    Reads a Parquet file and returns a list of ``Sequence`` or ``Pair`` objects.
-
-    Parameters
-    ----------
-    parquet_file : str
-        Path to the Parquet file to be read.
-
-    match : dict, optional
-        A ``dict`` for filtering sequences from the input file.
-        Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which
-        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
-
-        .. code-block:: python
-
-            {'v_gene:0': 'IGHV1-2'}
-
-    fields : list, optional
-        A list of fields to be read from the input file. If not provided, all fields will be read.
-
-    id_key : str, default="sequence_id"
-        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
-
-    sequence_key : str, default="sequence"
-        The name of the column that contains the sequence data. Default is ``"sequence"``.
-
-    as_dataframe : bool, default=False
-        If ``True``, the function will return a ``polars.DataFrame`` object.
-
-        .. note::
-            If ``True``, ``fields`` will be used to select columns from the input file, but
-            ``match`` will be ignored.
-
-    Returns
-    -------
-    Iterable[Union[Sequence, Pair]] or polars.DataFrame
-        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
-
-    """
-    df = pl.read_parquet(parquet_file)
-    if as_dataframe:
-        if fields is not None:
-            df = df.select(fields)
-        return df
-    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
-        return pairs_from_polars(
-            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
-        )
-    else:
-        return sequences_from_polars(
-            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
-        )
-
-
-def to_parquet(
-    sequences: Iterable[Union[Sequence, Pair]],
-    parquet_file: Optional[str] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
-    drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
-) -> Optional[pl.DataFrame]:
-    """
-    Saves a list of ``Pair`` objects to a Parquet file.
-
-    Parameters
-    ----------
-    sequences : Iterable[Sequence, Pair]
-        List of ``Sequence`` or ``Pair`` objects to be saved to a Parquet file. Required.
-
-    parquet_file : str
-        Path to the output Parquet file. If ``None``, the Parquet file will not be saved to a file and the
-        function will return a ``polars.DataFrame`` object.
-
-    columns : list, default=None
-        A list of fields to be retained in the output Parquet file. Fields must be column
-        names in the input file.
-
-    properties : list, default=None
-        A list of properties to be included in the Parquet file. If not provided, everything
-        in the ``annotations`` field of each heavy/light chain will be included.
-
-    sequence_properties : list, default=None
-        A list of sequence properties to be included. Differs from ``properties``, which
-        refers to properties of the ``Pair`` object. These properties are those of the
-        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
-
-    drop_na_columns : bool, default=True
-        If ``True``, columns with all ``NaN`` values will be dropped from the Parquet file.
-        Default is ``True``.
-
-    order : list, default=None
-        A list of fields in the order they should appear in the Parquet file.
-
-    exclude : str or list, default=None
-        Field or list of fields to be excluded from the Parquet file.
-
-    leading : str or list, default=None
-        Field or list of fields to appear first in the Parquet file. Supercedes ``order``, so
-        if both are provided, fields in ``leading`` will appear first in the Parquet file and
-        remaining fields will appear in the order provided in ``order``.
-
-    Returns
-    -------
-    Optional[pl.DataFrame]
-        A ``polars.DataFrame`` object if ``csv_file`` is ``None``.
-
-    """
-    if all([isinstance(s, Sequence) for s in sequences]):
-        return sequences_to_parquet(
-            sequences,
-            parquet_file=parquet_file,
-            columns=columns,
-            properties=properties,
-            drop_na_columns=drop_na_columns,
-            order=order,
-            exclude=exclude,
-            leading=leading,
-        )
-    elif all([isinstance(s, Pair) for s in sequences]):
-        return pairs_to_parquet(
-            sequences,
-            parquet_file=parquet_file,
-            columns=columns,
-            properties=properties,
-            sequence_properties=sequence_properties,
-            drop_na_columns=drop_na_columns,
-            order=order,
-            exclude=exclude,
-            leading=leading,
-        )
-    else:
-        raise ValueError(
-            "All elements in the input list must be of the same type (either Sequence or Pair)."
-        )
+# ===============================
 
 
 def from_polars(
@@ -986,6 +670,7 @@ def to_polars(
         ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
         selection of heavy and light chain fields. For cases in which the same fields will
         be selected for both chains, it is recommended to use ``annotations`` instead.
+
     properties : list, default=None
         A list of properties to be included in the Polars DataFrame. If not provided, everything
         in the ``annotations`` field of each heavy/light chain will be included.
@@ -1085,14 +770,9 @@ def from_pandas(
 
     """
     df = pl.from_pandas(df)
-    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
-        return pairs_from_polars(
-            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
-        )
-    else:
-        return sequences_from_polars(
-            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
-        )
+    return from_polars(
+        df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+    )
 
 
 def to_pandas(
@@ -1157,7 +837,7 @@ def to_pandas(
 
     """
     if all([isinstance(s, Sequence) for s in sequences]):
-        return sequences_to_pandas(
+        df = sequences_to_polars(
             sequences,
             annotations=annotations,
             columns=columns,
@@ -1168,7 +848,7 @@ def to_pandas(
             leading=leading,
         )
     elif all([isinstance(s, Pair) for s in sequences]):
-        return pairs_to_pandas(
+        df = pairs_to_polars(
             sequences,
             annotations=annotations,
             columns=columns,
@@ -1183,6 +863,478 @@ def to_pandas(
         raise ValueError(
             "All elements in the input list must be of the same type (either Sequence or Pair)."
         )
+
+    return df.to_pandas()
+
+
+def read_csv(
+    csv_file: str,
+    separator: str = ",",
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+    as_dataframe: bool = False,
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the CSV file to be read.
+
+    separator : str, default=","
+        Column separator. Default is ``","``.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    as_dataframe : bool, default=False
+        If ``True``, the function will return a ``polars.DataFrame`` object.
+
+        .. note::
+            If ``True``, ``fields`` will be used to select columns from the input file, but
+            ``match`` will be ignored.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]] or polars.DataFrame
+        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
+
+    """
+    df = pl.read_csv(csv_file, separator=separator, infer_schema_length=None)
+    if as_dataframe:
+        if fields is not None:
+            df = df.select(fields)
+        return df
+    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
+        return pairs_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+    else:
+        return sequences_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+
+
+def to_csv(
+    sequences: Iterable[Union[Sequence, Pair]],
+    csv_file: str,
+    separator: str = ",",
+    header: bool = True,
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence, Pair]
+        List of ``Sequence`` or ``Pair`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. Required.
+
+    separator : str, default=","
+        Column separator. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the CSV file. For ``Sequence``
+        objects, this refers to fields in the ``annotations`` field. For ``Pair`` objects,
+        this refers to fields in the heavy and light chain annotations.
+
+    columns : list, default=None
+        Used only for ``Pair`` objects. A list of fields to be retained in the output CSV
+        file. Fields should be column names in the input file, such as ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
+        selection of heavy and light chain fields. For cases in which the same fields will
+        be selected for both chains, it is recommended to use ``annotations`` instead.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    if all([isinstance(s, Sequence) for s in sequences]):
+        df = sequences_to_polars(
+            sequences,
+            annotations=annotations,
+            columns=columns,
+            properties=properties,
+            drop_na_columns=drop_na_columns,
+            order=order,
+            exclude=exclude,
+            leading=leading,
+        )
+    elif all([isinstance(s, Pair) for s in sequences]):
+        df = pairs_to_polars(
+            sequences,
+            annotations=annotations,
+            columns=columns,
+            properties=properties,
+            sequence_properties=sequence_properties,
+            drop_na_columns=drop_na_columns,
+            order=order,
+            exclude=exclude,
+            leading=leading,
+        )
+    else:
+        raise ValueError(
+            "All elements in the input list must be of the same type (either Sequence or Pair)."
+        )
+
+    df.write_csv(csv_file, separator=separator, include_header=header)
+
+
+def read_airr(
+    airr_file: str,
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+    as_dataframe: bool = False,
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the CSV file to be read.
+
+    separator : str, default=","
+        Column separator. Default is ``","``.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    as_dataframe : bool, default=False
+        If ``True``, the function will return a ``polars.DataFrame`` object.
+
+        .. note::
+            If ``True``, ``fields`` will be used to select columns from the input file, but
+            ``match`` will be ignored.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]] or polars.DataFrame
+        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
+
+    """
+    return read_csv(
+        airr_file,
+        separator="\t",
+        match=match,
+        fields=fields,
+        id_key=id_key,
+        sequence_key=sequence_key,
+        as_dataframe=as_dataframe,
+    )
+
+
+def to_airr(
+    sequences: Iterable[Union[Sequence, Pair]],
+    airr_file: str,
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence, Pair]
+        List of ``Sequence`` or ``Pair`` objects to be saved to a CSV file. Required.
+
+    airr_file : str
+        Path to the output AIRR file. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the CSV file. For ``Sequence``
+        objects, this refers to fields in the ``annotations`` field. For ``Pair`` objects,
+        this refers to fields in the heavy and light chain annotations.
+
+    columns : list, default=None
+        Used only for ``Pair`` objects. A list of fields to be retained in the output CSV
+        file. Fields should be column names in the input file, such as ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
+        selection of heavy and light chain fields. For cases in which the same fields will
+        be selected for both chains, it is recommended to use ``annotations`` instead.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    to_csv(
+        sequences,
+        airr_file,
+        separator="\t",
+        header=True,
+        annotations=annotations,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+
+
+def read_parquet(
+    parquet_file: str,
+    match: Optional[dict] = None,
+    fields: Optional[Iterable] = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+    as_dataframe: bool = False,
+) -> Iterable[Union[Sequence, Pair]]:
+    """
+    Reads a Parquet file and returns a list of ``Sequence`` or ``Pair`` objects.
+
+    Parameters
+    ----------
+    parquet_file : str
+        Path to the Parquet file to be read.
+
+    match : dict, optional
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, optional
+        A list of fields to be read from the input file. If not provided, all fields will be read.
+
+    id_key : str, default="sequence_id"
+        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
+
+    sequence_key : str, default="sequence"
+        The name of the column that contains the sequence data. Default is ``"sequence"``.
+
+    as_dataframe : bool, default=False
+        If ``True``, the function will return a ``polars.DataFrame`` object.
+
+        .. note::
+            If ``True``, ``fields`` will be used to select columns from the input file, but
+            ``match`` will be ignored.
+
+    Returns
+    -------
+    Iterable[Union[Sequence, Pair]] or polars.DataFrame
+        A list of ``Sequence`` or ``Pair`` objects or a ``polars.DataFrame`` object.
+
+    """
+    df = pl.read_parquet(parquet_file)
+    if as_dataframe:
+        if fields is not None:
+            df = df.select(fields)
+        return df
+    if any([c in df.columns for c in ["sequence:0", "sequence_id:0"]]):
+        return pairs_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+    else:
+        return sequences_from_polars(
+            df, match=match, fields=fields, id_key=id_key, sequence_key=sequence_key
+        )
+
+
+def to_parquet(
+    sequences: Iterable[Union[Sequence, Pair]],
+    parquet_file: str,
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a Parquet file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence, Pair]
+        List of ``Sequence`` or ``Pair`` objects to be saved to a Parquet file. Required.
+
+    parquet_file : str
+        Path to the output Parquet file. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the Parquet file. For ``Sequence``
+        objects, this refers to fields in the ``annotations`` field. For ``Pair`` objects,
+        this refers to fields in the heavy and light chain annotations.
+
+    columns : list, default=None
+        Used only for ``Pair`` objects. A list of fields to be retained in the output Polars
+        DataFrame. Fields should be column names in the input file, such as ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
+        selection of heavy and light chain fields. For cases in which the same fields will
+        be selected for both chains, it is recommended to use ``annotations`` instead.
+
+    properties : list, default=None
+        A list of properties to be included in the Parquet file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the Parquet file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the Parquet file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the Parquet file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the Parquet file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Parquet file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    if all([isinstance(s, Sequence) for s in sequences]):
+        df = sequences_to_polars(
+            sequences,
+            annotations=annotations,
+            columns=columns,
+            properties=properties,
+            drop_na_columns=drop_na_columns,
+            order=order,
+            exclude=exclude,
+            leading=leading,
+        )
+    elif all([isinstance(s, Pair) for s in sequences]):
+        df = pairs_to_polars(
+            sequences,
+            annotations=annotations,
+            columns=columns,
+            properties=properties,
+            sequence_properties=sequence_properties,
+            drop_na_columns=drop_na_columns,
+            order=order,
+            exclude=exclude,
+            leading=leading,
+        )
+    else:
+        raise ValueError(
+            "All elements in the input list must be of the same type (either Sequence or Pair)."
+        )
+
+    df.write_parquet(parquet_file)
 
 
 def read_sequences(
