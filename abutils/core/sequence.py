@@ -1652,6 +1652,7 @@ def to_fastq(
 
 def sequences_to_polars(
     sequences: Iterable[Sequence],
+    annotations: Optional[Iterable[str]] = None,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
     drop_na_columns: bool = True,
@@ -1667,9 +1668,13 @@ def sequences_to_polars(
     sequences : Iterable[Sequence]
         List of ``Sequence`` objects to be converted to a ``polars.DataFrame`` object. Required.
 
+    annotations : list, default=None
+        A list of annotation fields to be included in the ``polars.DataFrame`` object.
+
     columns : list, default=None
-        A list of fields to be retained in the output ``polars.DataFrame`` object. Fields must be column
-        names in the input file.
+        Deprecated, use ``annotations`` instead. If provided and ``annotations`` is not,
+        ``annotations`` will be set to ``columns``. If both are provided, ``annotations``
+        will supercede ``columns``.
 
     properties : list, default=None
         A list of properties to be included in the ``polars.DataFrame`` object.
@@ -1735,8 +1740,11 @@ def sequences_to_polars(
         leading = [l for l in leading if l in df.columns]
         cols = leading + [c for c in df.columns if c not in leading]
         df = df.select(cols)
-    if columns is not None:
-        cols = [c for c in columns if c in df.columns]
+
+    if annotations is None and columns is not None:
+        annotations = columns
+    if annotations is not None:
+        cols = [c for c in annotations if c in df.columns]
         df = df.select(cols)
 
     return df
@@ -1744,6 +1752,7 @@ def sequences_to_polars(
 
 def sequences_to_pandas(
     sequences: Iterable[Sequence],
+    annotations: Optional[Iterable[str]] = None,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
     drop_na_columns: bool = True,
@@ -1759,9 +1768,13 @@ def sequences_to_pandas(
     sequences : Iterable[Sequence]
         List of ``Sequence`` objects to be converted to a ``pandas.DataFrame`` object. Required.
 
+    annotations : list, default=None
+        A list of annotation fields to be included in the ``pandas.DataFrame`` object.
+
     columns : list, default=None
-        A list of fields to be retained in the output ``pandas.DataFrame`` object. Fields must be column
-        names in the input file.
+        Deprecated, use ``annotations`` instead. If provided and ``annotations`` is not,
+        ``annotations`` will be set to ``columns``. If both are provided, ``annotations``
+        will supercede ``columns``.
 
     properties : list, default=None
         A list of properties to be included in the ``pandas.DataFrame`` object.
@@ -1788,6 +1801,7 @@ def sequences_to_pandas(
     """
     df = sequences_to_polars(
         sequences,
+        annotations=annotations,
         columns=columns,
         properties=properties,
         drop_na_columns=drop_na_columns,

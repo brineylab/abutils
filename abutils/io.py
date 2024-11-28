@@ -958,6 +958,7 @@ def from_polars(
 
 def to_polars(
     sequences: Iterable[Union[Sequence, Pair]],
+    annotations: Optional[Iterable[str]] = None,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
     sequence_properties: Optional[Iterable[str]] = None,
@@ -974,10 +975,17 @@ def to_polars(
     sequences : Iterable[Sequence, Pair]
         List of ``Sequence`` or ``Pair`` objects to be saved to a Polars DataFrame. Required.
 
-    columns : list, default=None
-        A list of fields to be retained in the output Polars DataFrame. Fields must be column
-        names in the input file.
+    annotations : list, default=None
+        A list of annotation fields to be included in the Polars DataFrame. For ``Sequence``
+        objects, this refers to fields in the ``annotations`` field. For ``Pair`` objects,
+        this refers to fields in the heavy and light chain annotations.
 
+    columns : list, default=None
+        Used only for ``Pair`` objects. A list of fields to be retained in the output Polars
+        DataFrame. Fields should be column names in the input file, such as ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
+        selection of heavy and light chain fields. For cases in which the same fields will
+        be selected for both chains, it is recommended to use ``annotations`` instead.
     properties : list, default=None
         A list of properties to be included in the Polars DataFrame. If not provided, everything
         in the ``annotations`` field of each heavy/light chain will be included.
@@ -1011,7 +1019,7 @@ def to_polars(
     if all([isinstance(s, Sequence) for s in sequences]):
         return sequences_to_polars(
             sequences,
-            columns=columns,
+            annotations=annotations,
             properties=properties,
             drop_na_columns=drop_na_columns,
             order=order,
@@ -1021,6 +1029,7 @@ def to_polars(
     elif all([isinstance(s, Pair) for s in sequences]):
         return pairs_to_polars(
             sequences,
+            annotations=annotations,
             columns=columns,
             properties=properties,
             sequence_properties=sequence_properties,
@@ -1088,6 +1097,7 @@ def from_pandas(
 
 def to_pandas(
     sequences: Iterable[Union[Sequence, Pair]],
+    annotations: Optional[Iterable[str]] = None,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
     sequence_properties: Optional[Iterable[str]] = None,
@@ -1104,9 +1114,17 @@ def to_pandas(
     sequences : Iterable[Sequence, Pair]
         List of ``Sequence`` or ``Pair`` objects to be saved to a Pandas DataFrame. Required.
 
+    annotations : list, default=None
+        A list of annotation fields to be included in the Pandas DataFrame. For ``Sequence``
+        objects, this refers to fields in the ``annotations`` field. For ``Pair`` objects,
+        this refers to fields in the heavy and light chain annotations.
+
     columns : list, default=None
-        A list of fields to be retained in the output Pandas DataFrame. Fields must be column
-        names in the input file.
+        Used only for ``Pair`` objects. A list of fields to be retained in the output Pandas
+        DataFrame. Fields should be column names in the input file, such as ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
+        selection of heavy and light chain fields. For cases in which the same fields will
+        be selected for both chains, it is recommended to use ``annotations`` instead.
 
     properties : list, default=None
         A list of properties to be included in the Pandas DataFrame. If not provided, everything
@@ -1141,6 +1159,7 @@ def to_pandas(
     if all([isinstance(s, Sequence) for s in sequences]):
         return sequences_to_pandas(
             sequences,
+            annotations=annotations,
             columns=columns,
             properties=properties,
             drop_na_columns=drop_na_columns,
@@ -1151,6 +1170,7 @@ def to_pandas(
     elif all([isinstance(s, Pair) for s in sequences]):
         return pairs_to_pandas(
             sequences,
+            annotations=annotations,
             columns=columns,
             properties=properties,
             sequence_properties=sequence_properties,

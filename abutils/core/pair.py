@@ -827,6 +827,7 @@ def assign_pairs(
 
 def pairs_to_polars(
     pairs: Iterable[Pair],
+    annotations: Optional[Iterable[str]] = None,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
     sequence_properties: Optional[Iterable[str]] = None,
@@ -836,19 +837,29 @@ def pairs_to_polars(
     leading: Optional[Union[str, Iterable[str]]] = None,
 ) -> pl.DataFrame:
     """
-    Saves a list of ``Pair`` objects to a CSV file.
+    Converts a list of ``Pair`` objects to a Polars DataFrame.
 
     Parameters
     ----------
     pairs : Iterable[Pair]
-        List of ``Pair`` objects to be saved to a CSV file. Required.
+        List of ``Pair`` objects to be converted to a Polars DataFrame. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the Polars DataFrame. The difference
+        between ``annotations`` and ``columns`` is that ``annotations`` refers to fields
+        in the heavy/light chain annotations (like ``"sequence"``, ``"v_gene"``, etc.),
+        while ``columns`` refers to fields in the Polars DataFrame (like ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc.).
 
     columns : list, default=None
-        A list of fields to be retained in the output CSV file. Fields must be column
-        names in the input file.
+        A list of fields to be retained in the output Polars DataFrame. Fields must be column
+        names in the input file. The difference between ``annotations`` and ``columns`` is
+        that ``annotations`` refers to fields in the heavy/light chain annotations (like
+        ``"sequence"``, ``"v_gene"``, etc.), while ``columns`` refers to fields in the
+        Polars DataFrame (like ``"sequence:0"``, ``"sequence:1"``, ``"name"``, etc.).
 
     properties : list, default=None
-        A list of properties to be included in the CSV file. If not provided, everything
+        A list of properties to be included in the Polars DataFrame. If not provided, everything
         in the ``annotations`` field of each heavy/light chain will be included.
 
     sequence_properties : list, default=None
@@ -857,18 +868,18 @@ def pairs_to_polars(
         heavy/light ``Sequence`` objects.
 
     drop_na_columns : bool, default=True
-        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        If ``True``, columns with all ``NaN`` values will be dropped from the Polars DataFrame.
         Default is ``True``.
 
     order : list, default=None
-        A list of fields in the order they should appear in the CSV file.
+        A list of fields in the order they should appear in the Polars DataFrame.
 
     exclude : str or list, default=None
-        Field or list of fields to be excluded from the CSV file.
+        Field or list of fields to be excluded from the Polars DataFrame.
 
     leading : str or list, default=None
-        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
-        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        Field or list of fields to appear first in the Polars DataFrame. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Polars DataFrame and
         remaining fields will appear in the order provided in ``order``.
 
     """
@@ -881,7 +892,11 @@ def pairs_to_polars(
             if not p.heavy.annotations:
                 d.update({"sequence_id:0": p.heavy.id, "sequence:0": p.heavy.sequence})
             else:
-                d.update({f"{k}:0": v for k, v in p.heavy.annotations.items()})
+                if annotations is not None:
+                    keys = [a for a in annotations if a in p.heavy.annotations]
+                else:
+                    keys = list(p.heavy.annotations.keys())
+                d.update({f"{k}:0": p.heavy[k] for k in keys})
             if sequence_properties is not None:
                 for prop in sequence_properties:
                     try:
@@ -893,7 +908,11 @@ def pairs_to_polars(
             if not p.light.annotations:
                 d.update({"sequence_id:1": p.light.id, "sequence:1": p.light.sequence})
             else:
-                d.update({f"{k}:1": v for k, v in p.light.annotations.items()})
+                if annotations is not None:
+                    keys = [a for a in annotations if a in p.light.annotations]
+                else:
+                    keys = list(p.light.annotations.keys())
+                d.update({f"{k}:1": p.light[k] for k in keys})
             if sequence_properties is not None:
                 for prop in sequence_properties:
                     try:
@@ -1041,6 +1060,7 @@ def pairs_from_polars(
 
 def pairs_to_pandas(
     pairs: Iterable[Pair],
+    annotations: Optional[Iterable[str]] = None,
     columns: Optional[Iterable] = None,
     properties: Optional[Iterable[str]] = None,
     sequence_properties: Optional[Iterable[str]] = None,
@@ -1057,9 +1077,19 @@ def pairs_to_pandas(
     pairs : Iterable[Pair]
         List of ``Pair`` objects to be saved to a CSV file. Required.
 
+    annotations : list, default=None
+        A list of annotation fields to be included in the Polars DataFrame. The difference
+        between ``annotations`` and ``columns`` is that ``annotations`` refers to fields
+        in the heavy/light chain annotations (like ``"sequence"``, ``"v_gene"``, etc.),
+        while ``columns`` refers to fields in the Polars DataFrame (like ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc.).
+
     columns : list, default=None
-        A list of fields to be retained in the output CSV file. Fields must be column
-        names in the input file.
+        A list of fields to be retained in the output Polars DataFrame. Fields must be column
+        names in the input file. The difference between ``annotations`` and ``columns`` is
+        that ``annotations`` refers to fields in the heavy/light chain annotations (like
+        ``"sequence"``, ``"v_gene"``, etc.), while ``columns`` refers to fields in the
+        Polars DataFrame (like ``"sequence:0"``, ``"sequence:1"``, ``"name"``, etc.).
 
     properties : list, default=None
         A list of properties to be included in the CSV file. If not provided, everything
@@ -1088,6 +1118,7 @@ def pairs_to_pandas(
     """
     df = pairs_to_polars(
         pairs,
+        annotations=annotations,
         columns=columns,
         properties=properties,
         sequence_properties=sequence_properties,
