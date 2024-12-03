@@ -23,8 +23,7 @@
 #
 
 import csv
-
-# import sys
+import os
 from typing import Callable, Iterable, Optional, Union
 
 import pandas as pd
@@ -1319,6 +1318,47 @@ def pairs_to_parquet(
         leading=leading,
     )
     df.write_parquet(parquet_file)
+
+
+# def pairs_to_fasta(
+#     pairs: Iterable[Pair],
+#     fasta_file: Optional[str] = None,
+#     id_key: str = "sequence_id",
+#     sequence_key: str = "sequence",
+#     append_chain: bool = False,
+# ) -> str:
+#     """
+#     Saves a list of ``Pair`` objects to a FASTA-formatted file.
+
+#     Parameters
+#     ----------
+#     pairs : Iterable[Pair]
+#         List of ``Pair`` objects to be saved to a FASTA-formatted file. Required.
+
+#     fasta_file : str
+#         Path to the output FASTA-formatted file. If not provided, the FASTA-formatted
+#         sequences will be returned as a string.
+
+#     Returns
+#     -------
+#     fasta_str : str
+#         FASTA-formatted sequences as a string if ``fasta_file`` is not provided. If
+#         ``fasta_file`` is provided, the path to the output file is returned.
+
+#     """
+#     fastas = [
+#         p.to_fasta(id_key=id_key, sequence_key=sequence_key, append_chain=append_chain)
+#         for p in pairs
+#     ]
+#     if fasta_file is None:
+#         return "\n".join(fastas)
+#     else:
+#         from ..io import make_dir
+
+#         make_dir(os.path.dirname(fasta_file))
+#         with open(fasta_file, "w") as f:
+#             f.write("\n".join(fastas))
+#         return fasta_file
 
 
 # def deduplicate(pairs, aa=False, ignore_primer_regions=False):

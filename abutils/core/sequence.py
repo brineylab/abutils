@@ -42,6 +42,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 # from ..io import delete_files
+from ..core.pair import Pair
 from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
@@ -1458,102 +1459,104 @@ def from_mongodb(db, collection, match=None, project=None, limit=None):
     return [Sequence(r) for r in results]
 
 
-def to_fasta(
-    sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
-    fasta_file: Optional[str] = None,
-    as_string: bool = False,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
-    tempfile_dir: str = "/tmp",
-) -> str:
-    """
-    Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
+# def to_fasta(
+#     sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
+#     fasta_file: Optional[str] = None,
+#     # as_string: bool = False,
+#     id_key: Optional[str] = None,
+#     sequence_key: Optional[str] = None,
+#     tempfile_dir: Optional[str] = None,
+#     append_chain: bool = True,
+# ) -> str:
+#     """
+#     Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
 
-    Parameters
-    ----------
-    sequences : Iterable[Sequence]
-        An iterable of any of the following:
-            1. list of abutils ``Sequence`` objects
-            2. FASTA/Q-formatted string
-            3. path to a FASTA/Q-formatted file
-            4. list of BioPython ``SeqRecord`` objects
-            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
-        Required.
+#     Parameters
+#     ----------
+#     sequences : Iterable[Sequence]
+#         Accepts any of the following:
+#             1. list of abutils ``Sequence`` and/or ``Pair`` objects
+#             2. FASTA/Q-formatted string
+#             3. path to a FASTA/Q-formatted file
+#             4. list of BioPython ``SeqRecord`` objects
+#             5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+#         Required.
 
-    fasta_file : str, default=None
-        Path to the output FASTA file. If not provided and `as_string` is ``False``,
-        a file will be created using ``tempfile.NamedTemporaryFile()``.
+#         .. note::
+#             Processing a list containing a mixture of ``Sequence`` and/or ``Pair`` objects is supported.
 
-    as_string : bool, default=False
-        Return a FASTA-formatted string rather than writing to file.
+#     fasta_file : str, default=None
+#         Path to the output FASTA file. If neither `fasta_file` nor `tempfile_dir`
+#         are provided, a FASTA-formatted string will be returned.
 
-    id_key : str, default=None
-        Name of the annotation field containing the sequence ID. If not provided,
-        ``sequence.id`` is used.
+#     id_key : str, default=None
+#         Name of the annotation field containing the sequence ID. If not provided,
+#         ``sequence.id`` is used.
 
-    sequence_key : str, default=None
-        Name of the annotation field containg the sequence. If not provided,
-        ``sequence.sequence`` is used.
+#     sequence_key : str, default=None
+#         Name of the annotation field containg the sequence. If not provided,
+#         ``sequence.sequence`` is used.
 
-    tempfile_dir : str, default="/tmp"
-        If `fasta_file` is not provided, directory into which the tempfile
-        should be created. If the directory does not exist, it will be
-        created. Default is "/tmp".
+#     tempfile_dir : str, optional
+#         If `fasta_file` is not provided, directory into which the tempfile
+#         should be created. If the directory does not exist, it will be
+#         created.
+
+#     append_chain : bool, default=True
+#         If ``True``, the chain (heavy or light) will be appended to the sequence name:
+#         ``>MySequence_heavy``.
+
+#         .. note::
+#             This option is ignored unless a list containing ``Pair`` objects is provided.
 
 
-    Returns
-    --------
-    fasta : str
-        Path to a FASTA file or a FASTA-formatted string
+#     Returns
+#     --------
+#     fasta : str
+#         Path to a FASTA file or a FASTA-formatted string
 
-    """
-    if isinstance(sequences, str):
-        # if sequences is already a FASTA/Q-formatted file
-        if os.path.isfile(sequences):
-            fmt = determine_fastx_format(sequences)
-            if fmt == "fasta" and not as_string:
-                return sequences
-            seq_objects = read_fastx(sequences)
-            fasta_string = "\n".join([s.fasta for s in seq_objects])
-            if as_string:
-                return fasta_string
-            else:
-                if fasta_file is None:
-                    make_dir(tempfile_dir)
-                    ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
-                    fasta_file = ff.name
-                with open(fasta_file, "w") as f:
-                    f.write(fasta_string)
-                return fasta_file
-        # if sequences is a FASTA-formatted string
-        else:
-            fasta_string = sequences
-    # if sequences is a list of Sequences
-    elif all([type(s) == Sequence for s in sequences]):
-        ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
-        seqs = [
-            s.get(sequence_key, s.sequence) if sequence_key is not None else s.sequence
-            for s in sequences
-        ]
-        fasta_string = "\n".join(f">{i}\n{s}" for i, s in zip(ids, seqs))
-    # anything else..
-    else:
-        fasta_string = "\n".join(
-            [Sequence(s, id_key=id_key, seq_key=sequence_key).fasta for s in sequences]
-        )
-    # output
-    if as_string:
-        return fasta_string
-    if fasta_file is None:
-        make_dir(tempfile_dir)
-        ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
-        ff.close()
-        fasta_file = ff.name
-    else:
-        make_dir(os.path.dirname(fasta_file))
-    with open(fasta_file, "w") as f:
-        f.write(fasta_string)
-    return fasta_file
+#     """
+#     if isinstance(sequences, str):
+#         # if sequences is already a FASTA/Q-formatted file
+#         if os.path.isfile(sequences):
+#             fasta_string = "\n".join([s.fasta for s in parse_fasta(sequences)])
+#         # if sequences is a FASTA-formatted string
+#         else:
+#             fasta_string = sequences
+#     # if sequences is a list of Sequences
+#     elif all([isinstance(s, (Sequence, Pair)) for s in sequences]):
+#         fasta_strings = []
+#         for s in sequences:
+#             if isinstance(s, Pair):
+#                 fasta_strings.append(
+#                     s.fasta(
+#                         name_field=id_key,
+#                         sequence_field=sequence_key,
+#                         append_chain=append_chain,
+#                     )
+#                 )
+#             else:
+#                 fasta_strings.append(
+#                     s.as_fasta(name_field=id_key, seq_field=sequence_key)
+#                 )
+#         fasta_string = "\n".join(fasta_strings)
+#     # anything else..
+#     else:
+#         fasta_string = "\n".join(
+#             [Sequence(s, id_key=id_key, seq_key=sequence_key).fasta for s in sequences]
+#         )
+#     # output
+#     if fasta_file is not None:
+#         make_dir(os.path.dirname(fasta_file))
+#         with open(fasta_file, "w") as f:
+#             f.write(fasta_string)
+#         return fasta_file
+#     elif tempfile_dir is not None:
+#         make_dir(tempfile_dir)
+#         ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
+#         ff.close()
+#         return ff.name
+#     return fasta_file
 
 
 def to_fastq(

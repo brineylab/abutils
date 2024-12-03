@@ -26,10 +26,12 @@ import glob
 import gzip
 import os
 import re
+import tempfile
 from typing import Iterable, Optional, Union
 
 import pandas as pd
 import polars as pl
+from Bio.SeqRecord import SeqRecord
 
 # import pyarrow as pa
 # import pyarrow.parquet as pq
@@ -65,7 +67,7 @@ from .core.sequence import (
     # sequences_to_parquet,
     sequences_to_polars,
     # to_airr,
-    to_fasta,
+    # to_fasta,
     to_fastq,
 )
 from .utils.convert import abi_to_fasta
@@ -586,6 +588,109 @@ def split_fastq(
 # ===============================
 #     Sequence and Pair I/O
 # ===============================
+
+
+def to_fasta(
+    sequences: Union[str, Iterable],
+    fasta_file: Optional[str] = None,
+    id_key: Optional[str] = None,
+    sequence_key: Optional[str] = None,
+    tempfile_dir: Optional[str] = None,
+    append_chain: bool = True,
+    as_string: bool = False,
+) -> str:
+    """
+    Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
+
+    Parameters
+    ----------
+    sequences : str or Iterable
+        Accepts any of the following:
+            1. list of abutils ``Sequence`` and/or ``Pair`` objects
+            2. FASTA/Q-formatted string
+            3. path to a FASTA/Q-formatted file
+            4. list of BioPython ``SeqRecord`` objects
+            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+        Required.
+
+        .. note::
+            Processing a list containing a mixture of ``Sequence`` and/or ``Pair`` objects is supported.
+
+    fasta_file : str, default=None
+        Path to the output FASTA file. If neither `fasta_file` nor `tempfile_dir`
+        are provided, a FASTA-formatted string will be returned.
+
+    id_key : str, default=None
+        Name of the annotation field containing the sequence ID. If not provided,
+        ``sequence.id`` is used.
+
+    sequence_key : str, default=None
+        Name of the annotation field containg the sequence. If not provided,
+        ``sequence.sequence`` is used.
+
+    tempfile_dir : str, optional
+        If `fasta_file` is not provided, directory into which the tempfile
+        should be created. If the directory does not exist, it will be
+        created.
+
+    append_chain : bool, default=True
+        If ``True``, the chain (heavy or light) will be appended to the sequence name:
+        ``>MySequence_heavy``.
+
+        .. note::
+            This option is ignored unless a list containing ``Pair`` objects is provided.
+
+    as_string : bool, default=False
+        Deprecated. Kept for backwards compatibility.
+
+
+    Returns
+    --------
+    fasta : str
+        Path to a FASTA file or a FASTA-formatted string
+
+    """
+    if isinstance(sequences, str):
+        # if sequences is already a FASTA/Q-formatted file
+        if os.path.isfile(sequences):
+            fasta_string = "\n".join([s.fasta for s in parse_fasta(sequences)])
+        # if sequences is a FASTA-formatted string
+        else:
+            fasta_string = sequences
+    # if sequences is a list of Sequences
+    elif all([isinstance(s, (Sequence, Pair)) for s in sequences]):
+        fasta_strings = []
+        for s in sequences:
+            if isinstance(s, Pair):
+                fasta_strings.append(
+                    s.fasta(
+                        name_field=id_key,
+                        sequence_field=sequence_key,
+                        append_chain=append_chain,
+                    )
+                )
+            else:
+                fasta_strings.append(
+                    s.as_fasta(name_field=id_key, seq_field=sequence_key)
+                )
+        fasta_string = "\n".join(fasta_strings)
+    # anything else..
+    else:
+        fasta_string = "\n".join(
+            [Sequence(s, id_key=id_key, seq_key=sequence_key).fasta for s in sequences]
+        )
+    # output
+    if fasta_file is not None:
+        make_dir(os.path.dirname(fasta_file))
+        with open(fasta_file, "w") as f:
+            f.write(fasta_string)
+        return fasta_file
+    elif tempfile_dir is not None:
+        make_dir(tempfile_dir)
+        ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
+        ff.close()
+        return ff.name
+    return fasta_file
 
 
 def from_polars(
