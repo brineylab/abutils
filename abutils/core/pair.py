@@ -402,7 +402,7 @@ class Pair(object):
     def name(self, name):
         self._name = name
 
-    def _is_locus_type(self, seq: Sequence, locus_names: list[str]) -> bool:
+    def _is_locus_type(self, seq: Sequence, locus_names: Iterable[str]) -> bool:
         """
         Check if the sequence is of the specified locus type.
 
