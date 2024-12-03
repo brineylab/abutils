@@ -42,7 +42,6 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 # from ..io import delete_files
-from ..core.pair import Pair
 from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
