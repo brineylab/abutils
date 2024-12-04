@@ -28,8 +28,8 @@ import subprocess as sp
 from typing import Iterable, Optional, Union
 
 from ..bin import get_path as get_binary_path
-from ..core.sequence import Sequence, to_fasta
-from ..io import make_dir
+from ..core.sequence import Sequence
+from ..io import make_dir, to_fasta
 
 __all__ = ["mmseqs_search"]
 

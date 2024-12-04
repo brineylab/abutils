@@ -29,7 +29,7 @@ import subprocess as sp
 import sys
 import tempfile
 import uuid
-from abc import ABC, abstractmethod
+from abc import ABC
 from copy import copy, deepcopy
 from io import StringIO
 from itertools import groupby
@@ -43,8 +43,8 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from ..bin import get_path as get_binary_path
-from ..core.sequence import Sequence, read_fasta
-from ..io import to_fasta
+from ..core.sequence import Sequence
+from ..io import read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 
 __all__ = [
