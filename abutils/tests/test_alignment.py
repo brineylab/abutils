@@ -30,14 +30,14 @@ from ..tools.alignment import (
 
 @pytest.fixture
 def sequences():
-    seq1 = SeqRecord(
-        Seq("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"), id="seq1"
+    seq1 = Sequence(
+        "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP", id="seq1"
     )
-    seq2 = SeqRecord(
-        Seq("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"), id="seq2"
+    seq2 = Sequence(
+        "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP", id="seq2"
     )
-    seq3 = SeqRecord(
-        Seq("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"), id="seq3"
+    seq3 = Sequence(
+        "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP", id="seq3"
     )
     return [seq1, seq2, seq3]
 
@@ -46,22 +46,16 @@ def sequences():
 def aln_sequences():
     return MultipleSequenceAlignment(
         [
-            SeqRecord(
-                Seq(
-                    "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
-                ),
+            Sequence(
+                "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
                 id="seq1",
             ),
-            SeqRecord(
-                Seq(
-                    "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
-                ),
+            Sequence(
+                "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
                 id="seq2",
             ),
             SeqRecord(
-                Seq(
-                    "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
-                ),
+                "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP",
                 id="seq3",
             ),
         ]
