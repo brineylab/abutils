@@ -489,7 +489,9 @@ def mafft(
     # process input
     if fasta is not None:
         sequences = fasta
-    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    ffile = to_fasta(
+        sequences, id_key=id_key, sequence_key=seq_key, tempfile_dir="/tmp"
+    )
     # configure output path
     if alignment_file is None:
         # as_file = False
@@ -644,7 +646,9 @@ def muscle(
     # process input
     if fasta is not None:
         sequences = fasta
-    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    ffile = to_fasta(
+        sequences, id_key=id_key, sequence_key=seq_key, tempfile_dir="/tmp"
+    )
     # configure output path
     if alignment_file is None:
         # as_file = False
@@ -926,7 +930,9 @@ def muscle_v3(
     # )
     if fasta is not None:
         sequences = fasta
-    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    ffile = to_fasta(
+        sequences, id_key=id_key, sequence_key=seq_key, tempfile_dir="/tmp"
+    )
     # configure output path
     if alignment_file is None:
         # as_file = False
