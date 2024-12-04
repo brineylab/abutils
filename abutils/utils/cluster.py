@@ -35,11 +35,11 @@ from typing import Iterable, Optional, Union
 
 from Bio.Align import AlignInfo
 
+from ..core.sequence import Sequence
+from ..io import read_fasta, to_fasta
 from .alignment import mafft
 from .decorators import lazy_property
 from .pipeline import make_dir
-
-from ..core.sequence import Sequence, read_fasta, to_fasta
 
 
 class Cluster:
