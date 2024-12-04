@@ -9,8 +9,8 @@ import polars as pl
 import pytest
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import (
-    Sequence,
+from ..core.sequence import Sequence
+from ..io import (
     read_airr,
     read_csv,
     read_fasta,
