@@ -690,8 +690,10 @@ def to_fasta(
         make_dir(tempfile_dir)
         ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
         ff.close()
+        with open(ff.name, "w") as f:
+            f.write(fasta_string)
         return ff.name
-    return fasta_file
+    return fasta_string
 
 
 def from_polars(
