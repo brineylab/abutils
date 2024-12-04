@@ -41,10 +41,12 @@ from matplotlib import markers
 from matplotlib.path import Path
 
 from ..bin import get_path as get_binary_path
-from ..core.sequence import Sequence, read_fasta, to_fasta
+from ..core.sequence import Sequence
+from ..io import make_dir, read_fasta, to_fasta
+from ..tools.alignment import mafft
 from ..tools.cluster import Cluster, cluster
-from ..utils.alignment import mafft
-from ..utils.pipeline import make_dir
+
+# from ..utils.pipeline import make_dir
 
 __all__ = ["fasttree", "Phylogeny", "phylogeny"]
 
