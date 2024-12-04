@@ -159,7 +159,7 @@ def get_path(binary: str) -> str:
         bin_name = f"{binary}_{SYSTEM}"
         bin_path = os.path.join(BIN_DIR, bin_name)
     elif binary == "mafft":
-        bin_name = f"{binary}_{SYSTEM}_{MACHINE}/mafftdir/bin/{binary}"
+        bin_name = f"{binary}_{SYSTEM}/mafft.bat"
         bin_path = os.path.join(BIN_DIR, bin_name)
     else:
         bin_name = f"{binary}_{SYSTEM}_{MACHINE}"
