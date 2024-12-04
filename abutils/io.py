@@ -70,7 +70,8 @@ from .core.sequence import (
     # to_fasta,
     to_fastq,
 )
-from .utils.convert import abi_to_fasta
+
+# from .utils.convert import abi_to_fasta
 
 # =======================
 #   General file I/O
