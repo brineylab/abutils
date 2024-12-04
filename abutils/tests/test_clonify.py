@@ -15,7 +15,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -26,7 +26,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -37,7 +37,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -48,7 +48,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -59,7 +59,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -70,7 +70,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -81,7 +81,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -92,7 +92,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -103,7 +103,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-69",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -114,7 +114,7 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-69",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
+                cdr3="CASSLDRYFDYW",
                 v_mutations=None,
                 locus="IGH",
             )
@@ -130,7 +130,7 @@ def pairwise_distance_seqs():
             sequence="ATCGATCGATCG",
             v_gene="IGHV1-69",
             j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            cdr3="CASSLDRYFDYW",
             mutations=["V1A", "V2G", "V3C"],
         )
     )
@@ -140,7 +140,7 @@ def pairwise_distance_seqs():
             sequence="ATCGATCGATCG",
             v_gene="IGHV1-69",
             j_gene="IGHJ4",
-            cdr3_aa="CASSLDRYFDYW",
+            cdr3="CASSLDRYFDYW",
             mutations=["V1A", "V2G", "V3C"],
         )
     )
@@ -150,7 +150,7 @@ def pairwise_distance_seqs():
             sequence="ATCGATCGATCG",
             v_gene="IGHV1-69",
             j_gene="IGHJ4",
-            cdr3_aa="CASSLDYFDYW",
+            cdr3="CASSLDYFDYW",
             mutations=["V1A", "V2G", "V3T"],
         )
     )
