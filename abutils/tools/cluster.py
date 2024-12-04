@@ -24,21 +24,24 @@
 
 
 import os
-import platform
+
+# import platform
 import random
 import string
 import subprocess as sp
-import sys
+
+# import sys
 import tempfile
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Iterable, Optional, Union
 
-from Bio.Align import AlignInfo
-
+# from Bio.Align import AlignInfo
 from ..bin import get_path as get_binary_path
 from ..core.pair import Pair
-from ..core.sequence import Sequence, read_fasta, to_fasta
-from ..utils.decorators import lazy_property
-from ..utils.pipeline import make_dir
+from ..core.sequence import Sequence
+from ..io import read_fasta, to_fasta
+
+# from ..utils.decorators import lazy_property
+# from ..utils.pipeline import make_dir
 from .alignment import make_consensus
 
 __all__ = [
