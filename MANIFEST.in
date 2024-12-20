@@ -8,7 +8,6 @@ include abutils/tenx/*
 include abutils/tools/*
 include abutils/utils/*
 include abutils/utils/matrices/*
-include abutils/binaries/*
 include abutils/binaries/mafft_darwin/*
 include abutils/binaries/mafft_darwin/mafftdir/*
 include abutils/binaries/mafft_darwin/mafftdir/bin/*
@@ -17,3 +16,4 @@ include abutils/binaries/mafft_linux/*
 include abutils/binaries/mafft_linux/mafftdir/*
 include abutils/binaries/mafft_linux/mafftdir/bin/*
 include abutils/binaries/mafft_linux/mafftdir/libexec/*
+include abutils/binaries/*
