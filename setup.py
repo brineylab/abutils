@@ -84,10 +84,10 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/briney/abutils",
-    packages=find_packages(),
-    # packages=["abutils"],
-    install_requires=requirements,
+    packages=find_packages(where="abutils"),
+    package_dir={"": "abutils"},
     include_package_data=True,
+    install_requires=requirements,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
