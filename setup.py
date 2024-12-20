@@ -84,8 +84,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/briney/abutils",
-    # packages=find_packages(),
-    packages=["abutils"],
+    packages=find_packages(),
+    # packages=["abutils"],
     install_requires=requirements,
     include_package_data=True,
     classifiers=[
