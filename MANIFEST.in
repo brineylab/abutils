@@ -8,6 +8,14 @@ include abutils/tenx/*
 include abutils/tools/*
 include abutils/utils/*
 include abutils/utils/matrices/*
+include abutils/binaries/cdhit*
+include abutils/binaries/fastp*
+include abutils/binaries/fasttree*
+include abutils/binaries/minimap2*
+include abutils/binaries/mmseqs*
+include abutils/binaries/muscle*
+include abutils/binaries/sickle*
+include abutils/binaries/vsearch*
 include abutils/binaries/mafft_darwin/*
 include abutils/binaries/mafft_darwin/mafftdir/*
 include abutils/binaries/mafft_darwin/mafftdir/bin/*
@@ -16,4 +24,4 @@ include abutils/binaries/mafft_linux/*
 include abutils/binaries/mafft_linux/mafftdir/*
 include abutils/binaries/mafft_linux/mafftdir/bin/*
 include abutils/binaries/mafft_linux/mafftdir/libexec/*
-include abutils/binaries/*
+
