@@ -28,7 +28,7 @@ import time
 import datetime
 
 import polars as pl
-from .io import list_files, make_dir, to_fasta
+from ..io import list_files, make_dir, to_fasta
 
 
 __all__ = ['deduplication', 'reduction']
