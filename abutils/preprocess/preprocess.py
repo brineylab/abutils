@@ -82,8 +82,12 @@ def deduplication(project_folder,
         print(f"Loaded {df.shape[0]:,} annotated sequences")
         total_sequences += df.shape[0]
 
-        df_unique = df.unique(subset=["sequence"]).sort("sequence")
-        # TO-DO: deduplication with UMI
+        if umi:
+            df = df.with_columns((pl.col("sequence") + pl.col("umi")).alias("concatenated"))
+            df_unique = df.unique(subset=["concatenated"]).sort("sequence")
+        else:
+            df_unique = df.unique(subset=["sequence"]).sort("sequence")
+            
         # TO-DO: count-persistent deduplication
 
         msg = f"Found {df_unique.shape[0]:,} unique sequences"
