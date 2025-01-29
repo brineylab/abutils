@@ -31,6 +31,8 @@ import polars as pl
 from .io import list_files, make_dir, to_fasta
 
 
+__all__ = ['deduplication', 'reduction']
+
 
 def deduplication(project_folder, 
                   output=None, 
@@ -41,9 +43,19 @@ def deduplication(project_folder,
                   debug=False):
     '''
     A polyvalent tool for deduplication of assigned reads. This function takes as input the AIRR-compliant 
-    tables and is specifically designed to handle extremely large files with a minimal footprint
+    tables and is specifically designed to handle extremely large files with a minimal footprint.
 
-    Returns a deduplicated fasta file
+    Parameters:
+    project_folder (str): Path to the project folder containing AIRR-compliant tables.
+    output (str, optional): Subdirectory for output files. Created if non-existent. Defaults to None.
+    pool (bool, optional): If True, pool all samples together. Defaults to True.
+    umi (bool, optional): If True, use UMI for deduplication. Defaults to False.
+    keep_read_numbers (bool, optional): If True, read numbers will be added to sequence names. Defaults to False.
+    large_files (bool, optional): If True, optimize for large files (>100Go). Defaults to False.
+    debug (bool, optional): If True, print debug information. Defaults to False.
+
+    Returns:
+    None
     '''
 
     start = time.time()
@@ -100,7 +112,9 @@ def deduplication(project_folder,
 
     end = time.time()
     duration = end - start
-    print(f"Deduplication complete. Total time: {datetime.timedelta(seconds=duration)}.")
+    print(f"Deduplication complete. Total elapsed time: {datetime.timedelta(seconds=duration)}.")
+
+    return
 
 
 
@@ -127,5 +141,12 @@ def reduction(project_folder,
 
     start = time.time()
     files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if 'airr' in f])
+
+    # TO-DO: everything!
+
+    end = time.time()
+    duration = end - start
+    print(f"Data reduction complete. Total elapsed time: {datetime.timedelta(seconds=duration)}.")
+
 
     return 
