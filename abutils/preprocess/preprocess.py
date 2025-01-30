@@ -26,9 +26,11 @@
 import os
 import time
 import datetime
+from tqdm.auto import tqdm
 
 import polars as pl
-from ..io import list_files, make_dir, to_fasta
+from ..io import list_files, make_dir, to_fasta, from_polars
+from ..tools import cluster, alignment
 
 
 __all__ = ['deduplication', 'reduction']
@@ -55,8 +57,7 @@ def deduplication(project_folder,
     large_files (bool, optional): If True, optimize for large files (>100Go). Defaults to False.
     debug (bool, optional): If True, print debug information. Defaults to False.
 
-    Returns:
-    None
+    Returns: None. A fasta file is written to disk.
     '''
 
     start = time.time()
@@ -167,19 +168,32 @@ def reduction(project_folder,
               umi=False, 
               keep_cluster_sizes=False, 
               cluster_sizes_separator='|',
-              min_cluser_size=3, 
+              min_cluster_size=3, 
               clustering_threshold=0.975, 
               consentroid='centroid', 
               large_files=False, 
               debug=False):
     """
-    This function takes as an input AIRR-compliant tables (tsv) and proceed to
-    data reduction by clustering sequences to a high identity threshold
+    This function takes as an input AIRR-compliant tables (tsv) and proceeds to
+    data reduction by clustering sequences to a high identity threshold.
 
-    This is specifically designed to handle large files with minimal footprint
-    Preclustering can be applied to increase performance over large datasets
-    
-    Returns a fasta file of consensus or centroid sequences
+    This is specifically designed to handle large files with minimal footprint.
+    Preclustering can be applied to increase performance over large datasets.
+
+    Parameters:
+    project_folder (str): Path to the project folder containing AIRR-compliant tables.
+    output (str, optional): Subdirectory for output files. Created if non-existent. Defaults to None.
+    pool (bool, optional): If True, pool all samples together. Defaults to True.
+    umi (bool, optional): If True, use UMI for clustering. Defaults to False.
+    keep_cluster_sizes (bool, optional): If True, cluster sizes will be added to sequence names. Defaults to False.
+    cluster_sizes_separator (str, optional): Separator for cluster sizes in sequence names. Defaults to '|'.
+    min_cluster_size (int, optional): Minimum cluster size to consider. Defaults to 3.
+    clustering_threshold (float, optional): Identity threshold for clustering. Defaults to 0.975.
+    consentroid (str, optional): Method to determine cluster representative ('centroid' or 'consensus'). Defaults to 'centroid'.
+    large_files (bool, optional): If True, optimize for large files (>100Go). Defaults to False.
+    debug (bool, optional): If True, print debug information. Defaults to False.
+
+    Returns: None. A fasta file is written to disk.
     """
 
     start = time.time()
@@ -191,8 +205,10 @@ def reduction(project_folder,
     files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if 'airr' in f])
 
     total_sequences = 0
-    pooled_heavies = []
-    pooled_lights = []
+
+    if pool:
+        pooled_heavies = []
+        pooled_lights = []
 
     for file in files:
         sample = os.path.basename(file).split('.')[0]
@@ -215,24 +231,124 @@ def reduction(project_folder,
         if pool:
             pooled_heavies.append(heavies)
             pooled_lights.append(lights)
-        else:
-            heavies = heavies.with_columns((pl.col("v_gene") + pl.col("j_gene")).alias("concatenated"))
-            lights = lights.with_columns((pl.col("v_gene") + pl.col("j_gene")).alias("concatenated"))
-
             
+        else:
+            sample_consentroids = []
 
+            # Process heavy chains
+            heavies = heavies.with_columns((pl.col("v_gene") + "_" + pl.col("j_gene")).alias("vj_bin"))
+            heavy_consentroids = []
 
+            for vj in tqdm(heavies['vj_bin'].unique().to_list(), desc='Heavy chains'):
+                group = heavies.filter(pl.col('vj_bin') == vj)
+                
+                if group.height < min_cluster_size:
+                    continue
 
+                group_sequences = from_polars(group)
+
+                clusters = cluster.cluster(group_sequences, threshold=clustering_threshold)
+                for c in clusters:
+                    if c.size < min_cluster_size:
+                        continue
+                    else:
+                        if consentroid == 'centroid':
+                            heavy_consentroids.append(c.centroid)
+                        elif consentroid == 'consensus':
+                            _consensus = alignment.make_consensus([s for s in c.sequences], algo='mafft', alignment_kwargs={'mafft_bin':'mafft','threads':1}, debug=debug)
+                            heavy_consentroids.append(_consensus)
+
+            sample_consentroids.extend(heavy_consentroids)
+
+            # Process light chains
+            lights = lights.with_columns((pl.col("v_gene") + "_" + pl.col("j_gene")).alias("vj_bin"))
+            light_consentroids = []
+
+            for vj in tqdm(lights['vj_bin'].unique().to_list(), desc='Light chains'):
+                group = lights.filter(pl.col('vj_bin') == vj)
+                
+                if group.height < min_cluster_size:
+                    continue
+
+                group_sequences = from_polars(group)
+
+                clusters = cluster.cluster(group_sequences, threshold=clustering_threshold)
+                for c in clusters:
+                    if c.size < min_cluster_size:
+                        continue
+                    else:
+                        if consentroid == 'centroid':
+                            light_consentroids.append(c.centroid)
+                        elif consentroid == 'consensus':
+                            _consensus = alignment.make_consensus([s for s in c.sequences], algo='mafft', alignment_kwargs={'mafft_bin':'mafft','threads':1}, debug=debug)
+                            light_consentroids.append(_consensus)
+
+            sample_consentroids.extend(light_consentroids)
+
+            fasta_file = os.path.join(project_folder, sample)+'_reduced.fasta'
+            to_fasta(sample_consentroids, fasta_file)
 
     if pool:
         heavies = pl.concat(pooled_heavies)
         lights = pl.concat(pooled_lights)
 
+        all_consentroids = []
 
+        # Process heavy chains
+        heavies = heavies.with_columns((pl.col("v_gene") + "_" + pl.col("j_gene")).alias("vj_bin"))
+        heavy_consentroids = []
+
+        for vj in tqdm(heavies['vj_bin'].unique().to_list(), desc='Heavy chains'):
+            group = heavies.filter(pl.col('vj_bin') == vj)
+            
+            if group.height < min_cluster_size:
+                continue
+
+            group_sequences = from_polars(group)
+
+            clusters = cluster.cluster(group_sequences, threshold=clustering_threshold)
+            for c in clusters:
+                if c.size < min_cluster_size:
+                    continue
+                else:
+                    if consentroid == 'centroid':
+                        heavy_consentroids.append(c.centroid)
+                    elif consentroid == 'consensus':
+                        _consensus = alignment.make_consensus([s for s in c.sequences], algo='mafft', alignment_kwargs={'mafft_bin':'mafft','threads':1}, debug=debug)
+                        heavy_consentroids.append(_consensus)
+
+        all_consentroids.extend(heavy_consentroids)
+
+        # Process light chains
+        lights = lights.with_columns((pl.col("v_gene") + "_" + pl.col("j_gene")).alias("vj_bin"))
+        light_consentroids = []
+
+        for vj in tqdm(lights['vj_bin'].unique().to_list(), desc='Light chains'):
+            group = lights.filter(pl.col('vj_bin') == vj)
+            
+            if group.height < min_cluster_size:
+                continue
+
+            group_sequences = from_polars(group)
+
+            clusters = cluster.cluster(group_sequences, threshold=clustering_threshold)
+            for c in clusters:
+                if c.size < min_cluster_size:
+                    continue
+                else:
+                    if consentroid == 'centroid':
+                        light_consentroids.append(c.centroid)
+                    elif consentroid == 'consensus':
+                        _consensus = alignment.make_consensus([s for s in c.sequences], algo='mafft', alignment_kwargs={'mafft_bin':'mafft','threads':1}, debug=debug)
+                        light_consentroids.append(_consensus)
+
+        all_consentroids.extend(light_consentroids)
+
+        fasta_file = os.path.join(project_folder, "reduced_pool.fasta")
+        to_fasta(all_consentroids, fasta_file)
 
     end = time.time()
     duration = end - start
     print(f"Data reduction complete. Total elapsed time: {datetime.timedelta(seconds=int(duration))}.")
-
 
     return 
