@@ -38,7 +38,8 @@ def deduplication(project_folder,
                   output=None, 
                   pool=True, 
                   umi=False, 
-                  keep_read_numbers=False, 
+                  keep_read_numbers=False,
+                  read_number_separator='|',
                   large_files=False, 
                   debug=False):
     '''
@@ -113,6 +114,10 @@ def deduplication(project_folder,
             pooled.append(df_unique)
         else:
             fasta_file = os.path.join(project_folder, sample)+'.fasta'
+            if keep_read_numbers:
+                # To-do: add read numbers to sequence names using read_number_separator
+
+                pass
             tuples_list = list(zip(df["sequence_id"].to_list(), df["sequence"].to_list()))
             to_fasta(tuples_list, fasta_file, )
             print(f"Output written to fasta file: {fasta_file}\n")
@@ -124,6 +129,10 @@ def deduplication(project_folder,
         print(f"\nFound {pool_unique.shape[0]:,} unique sequences in pooled data")
     
         fasta_file = os.path.join(project_folder, "deduplicated_pool.fasta")
+        if keep_read_numbers:
+            # To-do: add read numbers to sequence names using read_number_separator
+
+            pass
         tuples_list = list(zip(pool_unique["sequence_id"].to_list(), pool_unique["sequence"].to_list()))
         to_fasta(tuples_list, fasta_file, )
         print(f"Output written to fasta file: {fasta_file}\n")
@@ -140,8 +149,8 @@ def reduction(project_folder,
               output=None, 
               pool=True, 
               umi=False, 
-              preclustering=False,
               keep_cluster_sizes=False, 
+              cluster_sizes_separator='|',
               min_cluser_size=3, 
               clustering_threshold=0.975, 
               consentroid='centroid', 
@@ -159,6 +168,39 @@ def reduction(project_folder,
 
     start = time.time()
     files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if 'airr' in f])
+
+    if output:
+        project_folder = os.path.join(project_folder, output)
+        make_dir(project_folder)
+    
+    total_sequences = 0
+    pooled_heavies = []
+    pooled_lights = []
+
+    for file in files:
+        sample = os.path.basename(file).split('.')[0]
+
+        print(f"Processing {sample}")
+        print("-"*(len(sample)+11)+'\n')
+        
+        keys = ['sequence_id', 'v_gene', 'j_gene', 'locus', 'sequence']
+        if umi:
+            keys.append('umi')
+
+        df = pl.read_csv(file, columns=keys, separator='\t', null_values="None", low_memory=True if large_files else False, )
+
+        print(f"Loaded {df.shape[0]:,} annotated sequences")
+        total_sequences += df.shape[0]
+
+        heavies = df.filter(pl.col('locus') == 'IGH')
+        lights = df.filter(pl.col('locus') != 'IGH')
+
+        if pool:
+            pooled_heavies.append(heavies)
+            pooled_lights.append(lights)
+        else:
+            heavies = heavies.with_columns((pl.col("v_gene") + pl.col("j_gene")).alias("concatenated"))
+
 
     # TO-DO: everything!
 
