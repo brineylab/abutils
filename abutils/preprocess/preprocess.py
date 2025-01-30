@@ -80,7 +80,7 @@ def deduplication(project_folder,
         else:
             df = pl.read_csv(file, columns=['sequence_id', 'sequence'], separator='\t', null_values="None", low_memory=True if large_files else False, )
 
-        print(f"Loaded {df.shape[0]:,} annotated sequences")
+        print(f"Loaded {df.height:,} annotated sequences")
         total_sequences += df.shape[0]
 
         if umi:
@@ -93,19 +93,26 @@ def deduplication(project_folder,
                 df_unique = df.unique(subset=["concatenated"]).sort("concatenated")
             else:
                 df_unique = (
-                    df.group_by("concatenated").agg(pl.count().alias("count"))
-                    .sort("sequence")
-                )
+                                df.group_by("sequence").agg(
+                                    pl.count().alias("count"), 
+                                    pl.col("sequence_id").first(), 
+                                    pl.col("umi").first() 
+                                )
+                                .sort("sequence")
+                            )
         else:
             if not keep_read_numbers:
                 df_unique = df.unique(subset=["sequence"]).sort("sequence")
             else:
                 df_unique = (
-                    df.group_by("sequence").agg(pl.count().alias("count"))
-                    .sort("sequence")
-                )
+                                df.group_by("sequence").agg(
+                                    pl.count().alias("count"), 
+                                    pl.col("sequence_id").first(), 
+                                )
+                                .sort("sequence")
+                            )
 
-        msg = f"Found {df_unique.shape[0]:,} unique sequences"
+        msg = f"Found {df_unique.height:,} unique sequences"
         if pool:
             msg += " added to the pool\n"
         print(msg)
@@ -115,31 +122,40 @@ def deduplication(project_folder,
         else:
             fasta_file = os.path.join(project_folder, sample)+'.fasta'
             if keep_read_numbers:
-                # To-do: add read numbers to sequence names using read_number_separator
+                df_unique = df_unique.with_columns(
+                                                    (pl.col("sequence_id") + read_number_separator + pl.col("count").cast(pl.Utf8)).alias("sequence_id")
+                                                )
 
-                pass
-            tuples_list = list(zip(df["sequence_id"].to_list(), df["sequence"].to_list()))
+            tuples_list = list(zip(df_unique["sequence_id"].to_list(), df_unique["sequence"].to_list()))
             to_fasta(tuples_list, fasta_file, )
             print(f"Output written to fasta file: {fasta_file}\n")
 
     if pool:
         pool_df = pl.concat(pooled)
-        pool_unique = pool_df.unique(subset=["sequence"]).sort("sequence")
-        
-        print(f"\nFound {pool_unique.shape[0]:,} unique sequences in pooled data")
+
+        if not keep_read_numbers:
+            pool_unique = pool_df.unique(subset=["sequence"]).sort("sequence")
+        else:
+            pool_unique = (
+                                pool_df.group_by("sequence").agg(
+                                    pl.count().alias("count"), 
+                                    pl.col("sequence_id").first(), 
+                                )
+                                .sort("sequence")
+                            )
+                            
+        print(f"\nFound {pool_unique.height:,} unique sequences in pooled data")
     
         fasta_file = os.path.join(project_folder, "deduplicated_pool.fasta")
-        if keep_read_numbers:
-            # To-do: add read numbers to sequence names using read_number_separator
-
-            pass
+        
         tuples_list = list(zip(pool_unique["sequence_id"].to_list(), pool_unique["sequence"].to_list()))
+
         to_fasta(tuples_list, fasta_file, )
         print(f"Output written to fasta file: {fasta_file}\n")
 
     end = time.time()
     duration = end - start
-    print(f"Deduplication complete. Total elapsed time: {datetime.timedelta(seconds=duration)}.")
+    print(f"Deduplication complete. Total elapsed time: {datetime.timedelta(seconds=int(duration))}.")
 
     return
 
@@ -167,12 +183,13 @@ def reduction(project_folder,
     """
 
     start = time.time()
-    files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if 'airr' in f])
 
     if output:
         project_folder = os.path.join(project_folder, output)
         make_dir(project_folder)
-    
+
+    files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if 'airr' in f])
+
     total_sequences = 0
     pooled_heavies = []
     pooled_lights = []
@@ -189,8 +206,8 @@ def reduction(project_folder,
 
         df = pl.read_csv(file, columns=keys, separator='\t', null_values="None", low_memory=True if large_files else False, )
 
-        print(f"Loaded {df.shape[0]:,} annotated sequences")
-        total_sequences += df.shape[0]
+        print(f"Loaded {df.height:,} annotated sequences")
+        total_sequences += df.height
 
         heavies = df.filter(pl.col('locus') == 'IGH')
         lights = df.filter(pl.col('locus') != 'IGH')
@@ -200,13 +217,22 @@ def reduction(project_folder,
             pooled_lights.append(lights)
         else:
             heavies = heavies.with_columns((pl.col("v_gene") + pl.col("j_gene")).alias("concatenated"))
+            lights = lights.with_columns((pl.col("v_gene") + pl.col("j_gene")).alias("concatenated"))
+
+            
 
 
-    # TO-DO: everything!
+
+
+    if pool:
+        heavies = pl.concat(pooled_heavies)
+        lights = pl.concat(pooled_lights)
+
+
 
     end = time.time()
     duration = end - start
-    print(f"Data reduction complete. Total elapsed time: {datetime.timedelta(seconds=duration)}.")
+    print(f"Data reduction complete. Total elapsed time: {datetime.timedelta(seconds=int(duration))}.")
 
 
     return 
