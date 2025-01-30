@@ -83,12 +83,26 @@ def deduplication(project_folder,
         total_sequences += df.shape[0]
 
         if umi:
-            df = df.with_columns((pl.col("sequence") + pl.col("umi")).alias("concatenated"))
-            df_unique = df.unique(subset=["concatenated"]).sort("sequence")
-        else:
-            df_unique = df.unique(subset=["sequence"]).sort("sequence")
+            if debug:
+                print(f"Deduplicating with UMI ({df.unique(subset=['umi']).height} unique UMIs)")
             
-        # TO-DO: count-persistent deduplication
+            df = df.with_columns((pl.col("sequence") + pl.col("umi")).alias("concatenated"))
+
+            if not keep_read_numbers:
+                df_unique = df.unique(subset=["concatenated"]).sort("concatenated")
+            else:
+                df_unique = (
+                    df.group_by("concatenated").agg(pl.count().alias("count"))
+                    .sort("sequence")
+                )
+        else:
+            if not keep_read_numbers:
+                df_unique = df.unique(subset=["sequence"]).sort("sequence")
+            else:
+                df_unique = (
+                    df.group_by("sequence").agg(pl.count().alias("count"))
+                    .sort("sequence")
+                )
 
         msg = f"Found {df_unique.shape[0]:,} unique sequences"
         if pool:
