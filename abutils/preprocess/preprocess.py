@@ -33,10 +33,10 @@ from ..io import list_files, make_dir, to_fasta, from_polars
 from ..tools import cluster, alignment
 
 
-__all__ = ['deduplication', 'reduction']
+__all__ = ['deduplicate', 'reduction']
 
 
-def deduplication(project_folder, 
+def deduplicate(project_folder, 
                   output=None, 
                   pool=True, 
                   umi=False, 
