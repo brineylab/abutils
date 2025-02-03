@@ -67,6 +67,9 @@ def deduplicate(project_folder,
         project_folder = os.path.join(project_folder, output)
         make_dir(project_folder)
     
+    if os.path.isfile(project_folder):
+        project_folder = os.path.dirname(project_folder)
+
     total_sequences = 0
     pooled = []
     
