@@ -97,7 +97,7 @@ def deduplicate(project_folder,
                 df_unique = df.unique(subset=["concatenated"]).sort("concatenated")
             else:
                 df_unique = (
-                                df.group_by("sequence").agg(
+                                df.group_by("concatenated").agg(
                                     pl.count().alias("count"), 
                                     pl.col("sequence_id").first(), 
                                     pl.col("umi").first() 
