@@ -100,17 +100,13 @@ def deduplicate(project_folder,
             if debug:
                 print(f"Deduplicating with UMI ({df.unique(subset=['umi']).height} unique UMIs)")
             
-            df = df.with_columns((pl.col("sequence") + pl.col("umi")).alias("concatenated"))
-
             if not keep_read_numbers:
-                df_unique = df.unique(subset=["concatenated"]).sort("concatenated")
+                df_unique = df.unique(subset=["sequence", "umi"]).sort("sequence")
             else:
                 df_unique = (
-                                df.group_by("concatenated").agg(
+                                df.group_by(["sequence", "umi"]).agg(
                                     pl.count().alias("count"), 
-                                    pl.col("sequence_id").first(),
-                                    pl.col("sequence").first(), 
-                                    pl.col("umi").first() 
+                                    pl.col("sequence_id").first(), 
                                 )
                                 .sort("sequence")
                             )
