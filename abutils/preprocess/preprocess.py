@@ -61,14 +61,23 @@ def deduplicate(project_folder,
     '''
 
     start = time.time()
-    files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if 'airr' in f])
+
+    if os.path.isfile(project_folder):
+        project_folder = os.path.dirname(project_folder)
+        if debug:
+            print(f"Project folder is set to: {project_folder}")
+         
+    files = sorted([f for f in list_files(project_folder, extension='tsv', recursive=True, ) if not 'tmp' in f])
+
+    if len(files) == 0:
+        print('No files found. Exiting.')
+    elif len(files) == 1:
+        pool = False
 
     if output:
         project_folder = os.path.join(project_folder, output)
         make_dir(project_folder)
     
-    if os.path.isfile(project_folder):
-        project_folder = os.path.dirname(project_folder)
 
     total_sequences = 0
     pooled = []
