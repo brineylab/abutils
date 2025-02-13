@@ -26,6 +26,7 @@
 import os
 import time
 import datetime
+from typing import Optional
 from tqdm.auto import tqdm
 
 import polars as pl
@@ -36,14 +37,37 @@ from ..tools import cluster, alignment
 __all__ = ['deduplicate', 'reduction']
 
 
-def deduplicate(project_folder, 
-                  output=None, 
-                  pool=True, 
-                  umi=False, 
-                  keep_read_numbers=False,
-                  read_number_separator='|',
-                  large_files=False, 
-                  debug=False):
+def _deduplicate_sequences(df, group_by_cols, keep_read_numbers):
+    if not keep_read_numbers:
+        return df.unique(subset=group_by_cols).sort("sequence")
+    return (
+        df.group_by(group_by_cols).agg(
+            pl.count().alias("count"),
+            pl.col("sequence_id").first(),
+        ).sort("sequence")
+    )
+
+
+def _write_fasta(df, file_path, keep_read_numbers, read_number_separator):
+    if keep_read_numbers:
+        df = df.with_columns(
+            (pl.col("sequence_id") + read_number_separator + pl.col("count").cast(pl.Utf8)).alias("sequence_id")
+        )
+    tuples_list = list(zip(df["sequence_id"].to_list(), df["sequence"].to_list()))
+    to_fasta(tuples_list, file_path)
+    print(f"Output written to FASTA file: {file_path}\n")
+
+
+def deduplicate(project_folder: str,
+    output: Optional[str] = None,
+    output_format: str = 'fasta',
+    pool: bool = True,
+    umi: bool = False,
+    keep_read_numbers: bool = False,
+    read_number_separator: str = '|',
+    large_files: bool = False,
+    debug: bool = False
+) -> None:
     '''
     A polyvalent tool for deduplication of assigned reads. This function takes as input the AIRR-compliant 
     tables and is specifically designed to handle extremely large files with a minimal footprint.
@@ -51,17 +75,23 @@ def deduplicate(project_folder,
     Parameters:
     project_folder (str): Path to the project folder containing AIRR-compliant tables.
     output (str, optional): Subdirectory for output files. Created if non-existent. Defaults to None.
+    output_format (str): Either "fasta" or "tsv". Default is "fasta".
     pool (bool, optional): If True, pool all samples together. Defaults to True.
     umi (bool, optional): If True, use UMI for deduplication. Defaults to False.
     keep_read_numbers (bool, optional): If True, read numbers will be added to sequence names. Defaults to False.
     large_files (bool, optional): If True, optimize for large files (>100Go). Defaults to False.
     debug (bool, optional): If True, print debug information. Defaults to False.
 
-    Returns: None. A fasta file is written to disk.
+    Returns: None. A FASTA- or TSV- file is written to disk.
     '''
 
     start = time.time()
 
+    # Assert that output_format is valid
+    if output_format not in ['fasta', 'tsv']:
+        raise ValueError("Invalid output_format. Must be 'fasta' or 'tsv'.")
+
+    # Preparing input and output file(s) / folder(s)
     if os.path.isfile(project_folder):
         project_folder = os.path.dirname(project_folder)
         if debug:
@@ -78,7 +108,7 @@ def deduplicate(project_folder,
         project_folder = os.path.join(project_folder, output)
         make_dir(project_folder)
     
-
+    # Running main deduplication process
     total_sequences = 0
     pooled = []
     
@@ -88,39 +118,35 @@ def deduplicate(project_folder,
         print(f"Processing {sample}")
         print("-"*(len(sample)+11)+'\n')
         
+        # Loading files
         if umi:
-            df = pl.read_csv(file, columns=['sequence_id', 'sequence', 'umi'], separator='\t', null_values="None", low_memory=True if large_files else False, )
+            try:
+                df = pl.read_csv(file, columns=['sequence_id', 'sequence', 'umi'], separator='\t', null_values="None", low_memory=True if large_files else False, )
+            except Exception as e:
+                print(f"Error reading file {file}: {e}")
+                continue
         else:
-            df = pl.read_csv(file, columns=['sequence_id', 'sequence'], separator='\t', null_values="None", low_memory=True if large_files else False, )
+            try:
+                df = pl.read_csv(file, columns=['sequence_id', 'sequence'], separator='\t', null_values="None", low_memory=True if large_files else False, )
+            except Exception as e:
+                print(f"Error reading file {file}: {e}")
+                continue
 
         print(f"Loaded {df.height:,} annotated sequences")
         total_sequences += df.shape[0]
 
+        # Processing with deduplication in the presence of UMIs
         if umi:
             if debug:
                 print(f"Deduplicating with UMI ({df.unique(subset=['umi']).height} unique UMIs)")
             
-            if not keep_read_numbers:
-                df_unique = df.unique(subset=["sequence", "umi"]).sort("sequence")
-            else:
-                df_unique = (
-                                df.group_by(["sequence", "umi"]).agg(
-                                    pl.count().alias("count"), 
-                                    pl.col("sequence_id").first(), 
-                                )
-                                .sort("sequence")
-                            )
+            df_unique = _deduplicate_sequences(df, ["sequence", "umi"], keep_read_numbers)
+
+                
+        # Processing with deduplication in the absence of UMIs
         else:
-            if not keep_read_numbers:
-                df_unique = df.unique(subset=["sequence"]).sort("sequence")
-            else:
-                df_unique = (
-                                df.group_by("sequence").agg(
-                                    pl.count().alias("count"), 
-                                    pl.col("sequence_id").first(), 
-                                )
-                                .sort("sequence")
-                            )
+            df_unique = _deduplicate_sequences(df, ["sequence"], keep_read_numbers)
+
 
         msg = f"Found {df_unique.height:,} unique sequences"
         if pool:
@@ -130,15 +156,43 @@ def deduplicate(project_folder,
         if pool:
             pooled.append(df_unique)
         else:
-            fasta_file = os.path.join(project_folder, sample)+'.fasta'
-            if keep_read_numbers:
-                df_unique = df_unique.with_columns(
-                                                    (pl.col("sequence_id") + read_number_separator + pl.col("count").cast(pl.Utf8)).alias("sequence_id")
-                                                )
+            # Saving deduplicated single output to FASTA file 
+            if output_format == "fasta":
+                fasta_file = os.path.join(project_folder, sample)+'.fasta'
+                
+                _write_fasta(df_unique, fasta_file, keep_read_numbers, read_number_separator)
+                
 
-            tuples_list = list(zip(df_unique["sequence_id"].to_list(), df_unique["sequence"].to_list()))
-            to_fasta(tuples_list, fasta_file, )
-            print(f"Output written to fasta file: {fasta_file}\n")
+            # Saving deduplicated single output to TSV file
+            elif output_format == "tsv":
+                tsv_file = os.path.join(project_folder, sample)+'.tsv'
+                # Convert df_unique to LazyFrame for more efficient processing
+                df_unique_lazy = pl.LazyFrame(df_unique)
+                # Scan the complete original AIRR table
+                new_df = pl.scan_csv(file, separator='\t')
+
+                # Filter new_df to only include rows with matching sequence_ids
+                filtered_df = new_df.join(
+                    df_unique_lazy.select(["sequence_id"]),
+                    on="sequence_id",
+                    how="semi"
+                ).select(new_df.columns)
+
+                # Add the 'count' column to the filtered DataFrame (only for matching rows)
+                if keep_read_numbers:
+                    filtered_df = filtered_df.join(
+                        df_unique_lazy.select(["sequence_id", "count"]),
+                        on="sequence_id",
+                        how="left"
+                    ).with_columns(
+                        pl.col("count").fill_null(0)  # Replace null values with 0 if necessary
+                    ).rename(
+                        {"count": "duplicates"}  # Rename the column
+                    )
+                    
+                # Sink the resulting DataFrame to a TSV file
+                filtered_df.collect().write_csv(tsv_file, separator='\t')
+                print(f"Output written to TSV file: {tsv_file}\n")
 
     if pool:
         pool_df = pl.concat(pooled)
@@ -155,14 +209,50 @@ def deduplicate(project_folder,
                             )
                             
         print(f"\nFound {pool_unique.height:,} unique sequences in pooled data")
-    
-        fasta_file = os.path.join(project_folder, "deduplicated_pool.fasta")
+
+        # Saving deduplicated pooled output to FASTA file
+        if output_format == 'fasta':
+            fasta_file = os.path.join(project_folder, "deduplicated_pool.fasta")
+            _write_fasta(pool_unique, fasta_file, keep_read_numbers, read_number_separator)
+            
+
+        # Saving deduplicated pooled output to TSV file
+        elif output_format == "tsv":
+            tsv_file = os.path.join(project_folder, "deduplicated_pool.tsv")
+            
+            # Convert df_unique to LazyFrame for more efficient processing
+            df_unique_lazy = pl.LazyFrame(pool_unique)
+            
+            # Scan and concatenate multiple AIRR tables
+            new_df = pl.concat(
+                [pl.scan_csv(file, separator="\t") for file in files]
+            )
+            
+            # Filter new_df to only include rows with matching sequence_ids
+            filtered_df = new_df.join(
+                df_unique_lazy.select(["sequence_id"]),
+                on="sequence_id",
+                how="semi"
+            ).select(new_df.columns)
+
+            # Add the 'count' column to the filtered DataFrame (only for matching rows)
+            if keep_read_numbers:
+                filtered_df = filtered_df.join(
+                    df_unique_lazy.select(["sequence_id", "count"]),
+                    on="sequence_id",
+                    how="left"
+                ).with_columns(
+                    pl.col("count").fill_null(0)  # Replace null values with 0 if necessary
+                ).rename(
+                    {"count": "duplicates"}  # Rename the column
+                )
+                
+            # Sink the resulting DataFrame to a TSV file
+            filtered_df.collect().write_csv(tsv_file, separator='\t')
+            print(f"Output written to TSV file: {tsv_file}\n")
+
         
-        tuples_list = list(zip(pool_unique["sequence_id"].to_list(), pool_unique["sequence"].to_list()))
-
-        to_fasta(tuples_list, fasta_file, )
-        print(f"Output written to fasta file: {fasta_file}\n")
-
+    # Finalizing 
     end = time.time()
     duration = end - start
     print(f"Deduplication complete. Total elapsed time: {datetime.timedelta(seconds=int(duration))}.")
