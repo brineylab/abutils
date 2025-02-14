@@ -274,7 +274,7 @@ def deduplicate(project_folder: str,
                 # Convert df_unique to LazyFrame for more efficient processing
                 df_unique_lazy = pl.LazyFrame(df_unique)
                 # Scan the complete original AIRR table
-                new_df = pl.scan_csv(file, separator='\t')
+                new_df = pl.scan_csv(file, separator='\t', low_memory=True if large_files else False)
 
                 # Filter new_df to only include rows with matching sequence_ids
                 filtered_df = new_df.join(
@@ -330,7 +330,7 @@ def deduplicate(project_folder: str,
             
             # Scan and concatenate multiple AIRR tables
             new_df = pl.concat(
-                [pl.scan_csv(file, separator="\t") for file in files]
+                [pl.scan_csv(file, separator="\t", low_memory=True if large_files else False) for file in files]
             )
             
             # Filter new_df to only include rows with matching sequence_ids
@@ -510,7 +510,7 @@ def reduction(
                 centroids_lazy = pl.LazyFrame(sample_consentroids)
                 
                 # Scan the complete original AIRR table
-                new_df = pl.scan_csv(file, separator='\t')
+                new_df = pl.scan_csv(file, separator='\t', low_memory=True if large_files else False)
 
                 # Filter new_df to only include rows with matching sequence_ids
                 filtered_df = new_df.join(
@@ -562,7 +562,7 @@ def reduction(
             centroids_lazy = pl.LazyFrame(all_consentroids)
             
             # Scan the complete original AIRR table
-            new_df = pl.concat([pl.scan_csv(f, separator='\t') for f in files])
+            new_df = pl.concat([pl.scan_csv(f, separator='\t',low_memory=True if large_files else False) for f in files])
 
             # Filter new_df to only include rows with matching sequence_ids
             filtered_df = new_df.join(
