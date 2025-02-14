@@ -119,7 +119,7 @@ def _process_chains(
     if output_format == 'fasta':
         return consentroids
         
-    elif output_format == 'tsv':
+    elif output_format == 'airr':
         df = to_polars(consentroids)
         if keep_cluster_sizes and len(df) != 0:
             df = df.with_columns(
@@ -180,7 +180,7 @@ def deduplicate(project_folder: str,
     Parameters:
     project_folder (str): Path to the project folder containing AIRR-compliant tables.
     output (str, optional): Subdirectory for output files. Created if non-existent. Defaults to None.
-    output_format (str): Either "fasta" or "tsv". Default is "fasta".
+    output_format (str): Either "fasta" or "airr". Default is "fasta".
     pool (bool, optional): If True, pool all samples together. Defaults to True.
     umi (bool, optional): If True, use UMI for deduplication. Defaults to False.
     keep_read_numbers (bool, optional): If True, read numbers will be added to sequence names. Defaults to False.
@@ -193,8 +193,8 @@ def deduplicate(project_folder: str,
     start = time.time()
 
     # Assert that output_format is valid
-    if output_format not in ['fasta', 'tsv']:
-        raise ValueError("Invalid output_format. Must be 'fasta' or 'tsv'.")
+    if output_format not in ['fasta', 'airr']:
+        raise ValueError("Invalid output_format. Must be 'fasta' or 'airr'.")
 
     # Preparing input and output file(s) / folder(s)
     if os.path.isfile(project_folder):
@@ -269,7 +269,7 @@ def deduplicate(project_folder: str,
                 
 
             # Saving deduplicated single output to TSV file
-            elif output_format == "tsv":
+            elif output_format == "airr":
                 tsv_file = os.path.join(project_folder, sample)+'.tsv'
                 # Convert df_unique to LazyFrame for more efficient processing
                 df_unique_lazy = pl.LazyFrame(df_unique)
@@ -322,7 +322,7 @@ def deduplicate(project_folder: str,
             
 
         # Saving deduplicated pooled output to TSV file
-        elif output_format == "tsv":
+        elif output_format == "airr":
             tsv_file = os.path.join(project_folder, "deduplicated_pool.tsv")
             
             # Convert df_unique to LazyFrame for more efficient processing
@@ -391,7 +391,7 @@ def reduction(
     Parameters:
     project_folder (str): Path to the project folder containing AIRR-compliant tables.
     output (str, optional): Subdirectory for output files. Created if non-existent. Defaults to None.
-    output_format (str): Either "fasta" or "tsv". Default is "fasta".
+    output_format (str): Either "fasta" or "airr". Default is "fasta".
     pool (bool, optional): If True, pool all samples together. Defaults to True.
     umi (bool, optional): If True, use UMI for clustering. Defaults to False.
     keep_cluster_sizes (bool, optional): If True, cluster sizes will be added to sequence names. Defaults to False.
@@ -413,8 +413,8 @@ def reduction(
         cluster_sizes_separator += "cluster_size="
 
     # Assert that output_format is valid
-    if output_format not in ['fasta', 'tsv']:
-        raise ValueError("Invalid output_format. Must be 'fasta' or 'tsv'.")
+    if output_format not in ['fasta', 'airr']:
+        raise ValueError("Invalid output_format. Must be 'fasta' or 'airr'.")
 
     # Assert that clustering_threshold is valid
     if not (0 < clustering_threshold <= 1):
@@ -425,9 +425,9 @@ def reduction(
         raise ValueError("Consentroid must be either 'centroid' or 'consensus'.")
 
     # Check for incompatible consentroid and output_format arguments
-    if consentroid == 'consensus' and output_format == 'tsv':
+    if consentroid == 'consensus' and output_format == 'airr':
         raise ValueError(
-            "The 'consensus' consentroid method is incompatible with the 'tsv' output format. "
+            "The 'consensus' consentroid method is incompatible with the 'airr' output format. "
             "Please use 'centroid' or choose 'fasta' as the output format."
         )
         
@@ -480,7 +480,7 @@ def reduction(
         if pool:
             pooled_heavies.append(heavies)
             pooled_lights.append(lights)
-            
+
         else:
             sample_consentroids = []
 
@@ -502,12 +502,12 @@ def reduction(
                 fasta_file = os.path.join(project_folder, sample)+'_reduced.fasta'
                 to_fasta(sample_consentroids, fasta_file)
                 
-            elif output_format == 'tsv':
+            elif output_format == 'airr':
                 # Saving centroids to TSV file (consensus can't be exported as AIRR-annotated TSV table as they haven't been annotated yet)
                 tsv_file = os.path.join(project_folder, sample + '_reduced.tsv')
 
                 # Convert centroids to LazyFrame for more efficient processing
-                centroids_lazy = pl.LazyFrame(sample_consentroids)
+                centroids_lazy = pl.LazyFrame(sample_consentroids, )
                 
                 # Scan the complete original AIRR table
                 new_df = pl.scan_csv(file, separator='\t', low_memory=True if large_files else False)
@@ -554,7 +554,7 @@ def reduction(
             fasta_file = os.path.join(project_folder, "reduced_pool.fasta")
             to_fasta(all_consentroids, fasta_file)
 
-        elif output_format == 'tsv':
+        elif output_format == 'airr':
             # Saving consentroids to TSV file
             tsv_file = os.path.join(project_folder, 'reduced_pool.tsv')
             
