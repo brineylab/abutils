@@ -9,7 +9,8 @@ functions for tree inference using FastTree, tree visualization with baltic, and
 in the context of antibody lineage analysis. The phylogeny module integrates sequence clustering, multiple sequence alignment,
 and tree inference into a cohesive and easy-to-use interface.
 
-All phylogeny functions are accessible through the ``abutils.tools.phylo`` module.
+All phylogeny functions are accessible through the ``abutils.tl`` module, which is the recommended way to
+use these utilities in your code.
 
 |  
 
@@ -17,9 +18,9 @@ All phylogeny functions are accessible through the ``abutils.tools.phylo`` modul
    :header: "phylogeny utility", "description"
    :widths: 10, 16
 
-   ":ref:`abutils.tools.phylo.fasttree() <fasttree-function>`", "computes a phylogenetic tree from a multiple sequence alignment using FastTree"
-   ":ref:`abutils.tools.phylo.phylogeny() <phylogeny-function>`", "creates a Phylogeny object from a list of sequences or a FASTA file"
-   ":ref:`abutils.tools.phylo.Phylogeny <phylogeny-class>`", "a class for representing and visualizing phylogenetic trees"
+   ":ref:`abutils.tl.fasttree() <fasttree-function>`", "computes a phylogenetic tree from a multiple sequence alignment using FastTree"
+   ":ref:`abutils.tl.phylogeny() <phylogeny-function>`", "creates a Phylogeny object from a list of sequences or a FASTA file"
+   ":ref:`abutils.tl.Phylogeny <phylogeny-class>`", "a class for representing and visualizing phylogenetic trees"
 
 examples
 ---------
@@ -33,7 +34,7 @@ Compute a phylogenetic tree from a multiple sequence alignment:
     import abutils
     
     # Compute a tree from a FASTA alignment file
-    tree_file = abutils.tools.phylo.fasttree(
+    tree_file = abutils.tl.fasttree(
         "my_alignment.fasta",
         tree_file="my_tree.newick",
         is_aa=False
@@ -47,7 +48,7 @@ Compute a phylogenetic tree from a multiple sequence alignment:
     >seq3
     ACATACGTACGA
     """
-    tree_string = abutils.tools.phylo.fasttree(alignment_string)
+    tree_string = abutils.tl.fasttree(alignment_string)
 
 |
 
@@ -62,7 +63,7 @@ Create a Phylogeny object and visualize the tree:
     
     # Create a Phylogeny object from a list of Sequence objects
     sequences = [...]  # List of abutils.Sequence objects
-    phylo = abutils.tools.phylo.phylogeny(
+    phylo = abutils.tl.phylogeny(
         sequences,
         name="my_lineage",
         cluster=True,
@@ -94,7 +95,7 @@ Customize the tree visualization with different marker sizes, colors, and layout
     import matplotlib.pyplot as plt
     
     # Create a Phylogeny object
-    phylo = abutils.tools.phylo.phylogeny("sequences.fasta")
+    phylo = abutils.tl.phylogeny("sequences.fasta")
     
     # Create a color mapping for specific sequences
     color_dict = {
