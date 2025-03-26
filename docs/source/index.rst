@@ -109,10 +109,6 @@ colors (``abutils.cl``)
 ``abutils`` provides utility functions that are generally useful when working with antibody repertoire data.
 These include functions for monitoring multiprocessing jobs, creating and manipulating color palettes, and more.
 
-  * :ref:`io <io>`: functions for reading and writing sequence data
-
-  * :ref:`jobs <jobs>`: functions for monitoring multiprocessing jobs
-
   * :ref:`colors <colors>`: comprehensive functions for working with colors and color palettes, accessible through the ``abutils.cl`` module
 
 
