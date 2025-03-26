@@ -1,6 +1,6 @@
 .. _bar-plot:
 
-bar plot
+bar
 ========
 
 ``abutils`` provides functionality for creating bar plots of categorical data. The bar plot function

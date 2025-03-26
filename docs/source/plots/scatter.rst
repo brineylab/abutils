@@ -1,6 +1,6 @@
 .. _scatter-plot:
 
-scatter plot
+scatter
 ===========
 
 ``abutils`` provides functionality for creating highly customizable scatter plots. The scatter plot function
