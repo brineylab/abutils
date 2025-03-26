@@ -7,7 +7,7 @@ clonify
 algorithm. This algorithm uses a combination of CDR3 sequence similarity and shared somatic hypermutation 
 patterns to group sequences into B cell clonal lineages.
 
-The primary function is ``abutils.tools.clonify()``, which handles lineage assignment at scale, with support
+The primary function is ``abutils.tl.clonify()``, which handles lineage assignment at scale, with support
 for different input/output formats and parallel processing.
 
 |  
@@ -16,8 +16,8 @@ for different input/output formats and parallel processing.
    :header: "lineage assignment method", "function"
    :widths: 10, 16
 
-   "Clonify algorithm", :ref:`abutils.tools.clonify() <clonify-function>`
-   "Pairwise distance calculation", :ref:`abutils.tools.pairwise_distance() <pairwise-distance-function>`
+   "Clonify algorithm", :ref:`abutils.tl.clonify() <clonify-function>`
+   "Pairwise distance calculation", :ref:`abutils.tl.pairwise_distance() <pairwise-distance-function>`
 
 examples
 ---------
@@ -32,7 +32,7 @@ Parquet files, or lists of :class:`abutils.Sequence` objects.
     import abutils
 
     # clonal assignment using default parameters
-    lineages = abutils.tools.clonify(
+    lineages = abutils.tl.clonify(
         sequences='path/to/airr_data.tsv',
         output_path='path/to/output_with_lineages.tsv',
         verbose=True
@@ -49,7 +49,7 @@ You can customize the parameters that control lineage assignment sensitivity and
     import abutils
 
     # customize lineage assignment parameters
-    lineages = abutils.tools.clonify(
+    lineages = abutils.tl.clonify(
         sequences='path/to/airr_data.tsv',
         output_path='path/to/output_with_lineages.tsv',
         distance_cutoff=0.32,             # stricter distance threshold
@@ -71,7 +71,7 @@ For paired data, you can use light chain information in the lineage assignment p
     import abutils
 
     # lineage assignment with paired heavy/light chain data
-    lineages = abutils.tools.clonify(
+    lineages = abutils.tl.clonify(
         sequences='path/to/paired_data.parquet',
         output_path='path/to/output_with_lineages.parquet',
         output_fmt='parquet',

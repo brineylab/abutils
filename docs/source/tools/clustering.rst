@@ -23,7 +23,7 @@ If ``algo`` is not provided, ``abutils.tl.cluster`` will use CD-HIT for inputs w
 ``abutils.tl.cluster`` returns a :class:`abutils.tl.Clusters` object, which contains the clustering results as one or more :class:`abutils.tl.Cluster` objects.
 By default, the ``abutils.tl.Clusters`` object is sorted by cluster size in descending order, so the first cluster is the largest. 
 
-|  
+| 
 
 examples
 -----------

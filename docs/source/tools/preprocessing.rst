@@ -7,7 +7,7 @@ preprocessing
 FASTQ files. The preprocessing module can handle different file naming schemas (Illumina and Element)
 and supports various merging algorithms. 
 
-The primary function is ``abutils.tools.merge_fastqs()``, which handles the process of organizing, 
+The primary function is ``abutils.tl.merge_fastqs()``, which handles the process of organizing, 
 grouping, and merging paired-end FASTQ files.
 
 |  
@@ -16,9 +16,9 @@ grouping, and merging paired-end FASTQ files.
    :header: "preprocessing method", "function"
    :widths: 10, 16
 
-   "Merge paired-end reads", :ref:`abutils.tools.merge_fastqs() <merge-fastqs>`
-   "Merge with fastp", :ref:`abutils.tools.merge_fastqs_fastp() <merge-fastqs-fastp>`
-   "Merge with vsearch", :ref:`abutils.tools.merge_fastqs_vsearch() <merge-fastqs-vsearch>`
+   "Merge paired-end reads", :ref:`abutils.tl.merge_fastqs() <merge-fastqs>`
+   "Merge with fastp", :ref:`abutils.tl.merge_fastqs_fastp() <merge-fastqs-fastp>`
+   "Merge with vsearch", :ref:`abutils.tl.merge_fastqs_vsearch() <merge-fastqs-vsearch>`
 
 examples
 ---------
@@ -33,7 +33,7 @@ quality filtering and adapter trimming.
     import abutils
 
     # merge paired-end FASTQ files from a directory
-    merged_files = abutils.tools.merge_fastqs(
+    merged_files = abutils.tl.merge_fastqs(
         files='path/to/fastq/directory',
         output_directory='path/to/output',
         schema='illumina',  # file naming schema: 'illumina' or 'element'
@@ -52,7 +52,7 @@ You can customize the quality trimming and adapter removal parameters.
     import abutils
 
     # merge with customized quality trimming and adapter removal
-    merged_files = abutils.tools.merge_fastqs(
+    merged_files = abutils.tl.merge_fastqs(
         files='path/to/fastq/directory',
         output_directory='path/to/output',
         trim_adapters=True,
@@ -76,7 +76,7 @@ specifying each of the input files and output file paths, rather than simply inp
     import abutils
 
     # merge a specific pair of files with fastp
-    abutils.tools.merge_fastqs_fastp(
+    abutils.tl.merge_fastqs_fastp(
         forward='path/to/sample_R1.fastq.gz',
         reverse='path/to/sample_R2.fastq.gz',
         merged='path/to/output/sample.fastq.gz',
@@ -87,7 +87,7 @@ specifying each of the input files and output file paths, rather than simply inp
     )
 
     # or with vsearch
-    abutils.tools.merge_fastqs_vsearch(
+    abutils.tl.merge_fastqs_vsearch(
         forward='path/to/sample_R1.fastq.gz',
         reverse='path/to/sample_R2.fastq.gz',
         merged_file='path/to/output/sample.fastq',
