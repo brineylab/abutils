@@ -434,7 +434,7 @@ def cluster(
         )
     else:
         err = f"Invalid algo option: {algo}."
-        err += " Valid choices are: 'vsearch', 'mmseqs', or 'auto'."
+        err += " Valid choices are: 'vsearch', 'mmseqs', 'cdhit', or 'auto'."
         raise (ValueError, err)
     cluster_info = {}
     for cname, cdata in cluster_dict.items():
