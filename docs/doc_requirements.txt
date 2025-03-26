@@ -15,18 +15,24 @@ celery
 # fastcluster
 # matplotlib
 # mnemonic
-# natsort
-# numpy
-# pandas
+natsort
+numpy
+pandas
 # paramiko
 parasail
+polars
+pyarrow
+pyfamsa
+pyfastx
 # pymongo
 # pytest
 # python-circos
 # python-Levenshtein
 # pyyaml
+rapidfuzz
 # sample-sheet
 # scikit-learn
-# scipy
+scipy
 # seaborn
 # smart_open
+tqdm

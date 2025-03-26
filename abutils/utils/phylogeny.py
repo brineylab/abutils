@@ -41,7 +41,7 @@ from collections import Counter
 from copy import copy, deepcopy
 from typing import Optional
 
-import abstar
+# import abstar
 import ete3
 import matplotlib.pyplot as plt
 import numpy as np

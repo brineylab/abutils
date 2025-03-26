@@ -1,4 +1,5 @@
 from collections import Counter
+
 import pytest
 
 from ..core.sequence import Sequence
@@ -14,8 +15,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -25,8 +26,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -36,8 +37,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -47,8 +48,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -58,8 +59,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -69,8 +70,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -80,8 +81,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -91,8 +92,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-2",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -102,8 +103,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-69",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -113,8 +114,8 @@ def clonify_seqs():
                 sequence="ATCGATCGATCG",
                 v_gene="IGHV1-69",
                 j_gene="IGHJ4",
-                cdr3_aa="CASSLDRYFDYW",
-                v_mutations=[],
+                cdr3="CASSLDRYFDYW",
+                v_mutations="",
                 locus="IGH",
             )
         ),
@@ -127,6 +128,8 @@ def pairwise_distance_seqs():
         dict(
             sequence_id="seq1",
             sequence="ATCGATCGATCG",
+            v_gene="IGHV1-69",
+            j_gene="IGHJ4",
             cdr3="CASSLDRYFDYW",
             mutations=["V1A", "V2G", "V3C"],
         )
@@ -135,6 +138,8 @@ def pairwise_distance_seqs():
         dict(
             sequence_id="seq2",
             sequence="ATCGATCGATCG",
+            v_gene="IGHV1-69",
+            j_gene="IGHJ4",
             cdr3="CASSLDRYFDYW",
             mutations=["V1A", "V2G", "V3C"],
         )
@@ -143,6 +148,8 @@ def pairwise_distance_seqs():
         dict(
             sequence_id="seq3",
             sequence="ATCGATCGATCG",
+            v_gene="IGHV1-69",
+            j_gene="IGHJ4",
             cdr3="CASSLDYFDYW",
             mutations=["V1A", "V2G", "V3T"],
         )

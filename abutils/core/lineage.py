@@ -22,42 +22,34 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import colorsys
-from collections import Counter
 import math
-import os
 import random
-import string
 import subprocess as sp
-import sys
-
-import numpy as np
+from collections import Counter
+from typing import Iterable, Optional
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import polars as pl
+import prettytable as pt
 from matplotlib.colors import ListedColormap
+from natsort import natsorted
 
-import ete3
+from ..io import from_polars, to_polars
+from ..tools.alignment import muscle, semiglobal_alignment
+from ..tools.cluster import cluster
 
-from .pair import Pair
-from .sequence import Sequence
-from ..utils.alignment import mafft, muscle
-from ..utils.cluster import cluster
-from ..utils.color import hex_to_rgb, get_cmap
+# from ..utils.alignment import muscle, semiglobal_alignment
+# from ..utils.cluster import cluster
+from ..utils.color import get_cmap
 from ..utils.decorators import lazy_property
-
-# # imports to overload ete2's SequenceItem class
-# if sys.version_info[0] > 2:
-#     from PyQt5.QtWidgets import QGraphicsRectItem
-#     from PyQt5.QtGui import QPen, QColor, QBrush, QFont
-#     from PyQt5.QtCore import Qt
-# else:
-#     from PyQt4.QtGui import QGraphicsRectItem, QPen, QColor, QBrush, QFont
-#     from PyQt4.QtCore import Qt
+from .pair import Pair
+from .sequence import Sequence, translate
 
 
-class Lineage(object):
+class Lineage:
     """
     Methods for manipulating an antibody lineage.
 
@@ -139,8 +131,19 @@ class Lineage(object):
 
     """
 
-    def __init__(self, pairs, name=None):
-        super(Lineage, self).__init__()
+    def __init__(self, pairs: Iterable[Pair], name: Optional[str] = None):
+        """
+        Initialize a ``Lineage`` object.
+
+        Parameters
+        ----------
+        pairs : Iterable[Pair]
+            An iterable of ``Pair`` objects
+
+        name : Optional[str]
+            The name of the lineage (optional)
+
+        """
         self.pairs = pairs
         self.rmp_threshold = 0.9
         self.rmp_alt_allowed_mismatches = 1
@@ -166,13 +169,16 @@ class Lineage(object):
     @lazy_property
     def name(self):
         """
-        Returns the lineage name, or None if the name cannot be found.
+        Returns the lineage name, or ``None`` if the name cannot be found.
         """
-        clonify_ids = [
-            p.heavy["clonify"]["id"] for p in self.heavies if "clonify" in p.heavy
-        ]
-        if len(clonify_ids) > 0:
-            return clonify_ids[0]
+        if any([hasattr(p, "lineage") for p in self.pairs]):
+            lineage_names = [p.lineage for p in self.pairs if hasattr(p, "lineage")]
+        else:
+            lineage_names = [
+                p.heavy["lineage"] for p in self.heavies if "lineage" in p.heavy
+            ]
+        if len(lineage_names) > 0:
+            return lineage_names[0]
         return None
 
     @lazy_property
@@ -268,34 +274,39 @@ class Lineage(object):
             return True
         return False
 
-    def size(self, pairs_only=False):
+    def size(self, pairs_only: bool = False) -> int:
         """
         Calculate the size of the lineage.
 
-        Inputs (optional)
-        -----------------
-        pairs_only: count only paired sequences
+        Parameters
+        ----------
+        pairs_only: bool, default=False
+            If True, only count pairs with both heavy and light chains.
 
         Returns
         -------
-        Lineage size (int)
+        int
+            The size of the lineage.
+
         """
         if pairs_only:
             return len(self.just_pairs)
         else:
             return len(self.heavies)
 
-    def verify_light_chains(self, threshold=0.9):
+    def verify_light_chains(self, threshold: float = 0.9):
         """
         Clusters the light chains to identify potentially spurious (non-lineage)
         pairings. Following clustering, all pairs in the largest light chain
         cluster are assumed to be correctly paired. For each of those pairs,
-        the <verified> attribute is set to True. For pairs not in the largest
-        light chain cluster, the <verified> attribute is set to False.
+        the ``verified`` attribute is set to True. For pairs not in the largest
+        light chain cluster, the ``verified`` attribute is set to False.
 
-        Inputs (optional)
-        -----------------
-        threshold: CD-HIT clustering threshold. Default is 0.9.
+        Parameters
+        ----------
+        threshold: float, default=0.9
+            The clustering threshold.
+
         """
         lseqs = [l.light for l in self.lights]
         clusters = cluster(lseqs, threshold=threshold)
@@ -306,28 +317,46 @@ class Lineage(object):
 
     def dot_alignment(
         self,
-        seq_field="vdj_nt",
-        name_field="seq_id",
-        uca=None,
-        chain="heavy",
-        uca_name="UCA",
-        as_fasta=False,
-        just_alignment=False,
+        seq_field: str = "sequence",
+        name_field: Optional[str] = None,
+        uca: Optional[Sequence] = None,
+        chain: str = "heavy",
+        uca_name: str = "UCA",
+        as_fasta: bool = False,
+        just_alignment: bool = False,
     ):
         """
         Returns a multiple sequence alignment of all lineage sequence with the UCA
         where matches to the UCA are shown as dots and mismatches are shown as the
         mismatched residue.
 
-        Inputs (optional)
-        -----------------
-        seq_field: the sequence field to be used for alignment. Default is 'vdj_nt'.
-        name_field: field used for the sequence name. Default is 'seq_id'.
-        chain: either 'heavy' or 'light'. Default is 'heavy'.
+        Parameters
+        ----------
+        seq_field: str, default='sequence'
+            The sequence field to be used for alignment.
+
+        name_field: Optional[str], default=None
+            The field used for the sequence name. If None, the ``Pair`` name will be used.
+
+        chain: str, default='heavy'
+            Either 'heavy' or 'light'.
+
+        uca: Optional[Sequence], default=None
+            The UCA sequence. If not provided, the UCA will be computed.
+
+        uca_name: str, default='UCA'
+            The name of the UCA sequence.
+
+        as_fasta: bool, default=False
+            If True, return the alignment as a FASTA string.
+
+        just_alignment: bool, default=False
+            If True, return the alignment as a list of strings.
 
         Returns
         -------
-        The dot alignment (string)
+        The dot alignment (string or list of strings)
+
         """
         if uca is None:
             uca = self.uca.heavy if chain == "heavy" else self.uca.light
@@ -385,8 +414,8 @@ class Lineage(object):
         for dot in dot_alignment:
             data.append([res_vals.get(res.upper(), len(res_vals) + 1) for res in dot])
         mag = (int(math.log10(len(data[0]))) + int(math.log10(len(data)))) / 2
-        x_dim = len(data[0]) / 10 ** mag
-        y_dim = len(data) / 10 ** mag
+        x_dim = len(data[0]) / 10**mag
+        y_dim = len(data) / 10**mag
         plt.figure(figsize=(x_dim, y_dim), dpi=100)
         plt.imshow(data, cmap=cmap, interpolation="none")
         plt.axis("off")
@@ -395,6 +424,9 @@ class Lineage(object):
             plt.close()
         else:
             plt.show()
+
+    #
+    #
 
     # def phylogeny(self, project_dir, aln_file=None, tree_file=None, root=None, seq_field='vdj_nt', aa=False,
     #         root_name=None, show_root_name=False, colors=None, color_function=None, orders=None, order_function=None,
@@ -517,29 +549,29 @@ class Lineage(object):
     #         alignment_height=alignment_height, alignment_width=alignment_width, show_scale=show_scale,
     #         compact_alignment=compact_alignment, scale_factor=scale_factor, linewidth=linewidth)
 
-    def _get_metadata(self, field):
-        _metadata = None
-        if self.heavies:
-            _metadata = [p.heavy._mongo.get(field, None) for p in self.heavies]
-            _metadata = [g for g in _metadata if g is not None]
-            if len(list(set(_metadata))) == 1:
-                metadata = _metadata[0]
-            elif len(list(set(_metadata))) > 1:
-                mcount = Counter(_metadata)
-                metadata = sorted(
-                    [s for s in mcount.keys()], key=lambda x: mcount[s], reverse=True
-                )[0]
-        if self.lights and metadata is None:
-            _metadata = [p.light._mongo.get(field, None) for p in self.lights]
-            _metadata = [g for g in _metadata if g is not None]
-            if len(list(set(_metadata))) == 1:
-                metadata = _metadata[0]
-            elif len(list(set(_metadata))) > 1:
-                mcount = Counter(_metadata)
-                metadata = sorted(
-                    [s for s in mcount.keys()], key=lambda x: mcount[s], reverse=True
-                )[0]
-        return metadata
+    # def _get_metadata(self, field):
+    #     _metadata = None
+    #     if self.heavies:
+    #         _metadata = [p.heavy._mongo.get(field, None) for p in self.heavies]
+    #         _metadata = [g for g in _metadata if g is not None]
+    #         if len(list(set(_metadata))) == 1:
+    #             metadata = _metadata[0]
+    #         elif len(list(set(_metadata))) > 1:
+    #             mcount = Counter(_metadata)
+    #             metadata = sorted(
+    #                 [s for s in mcount.keys()], key=lambda x: mcount[s], reverse=True
+    #             )[0]
+    #     if self.lights and metadata is None:
+    #         _metadata = [p.light._mongo.get(field, None) for p in self.lights]
+    #         _metadata = [g for g in _metadata if g is not None]
+    #         if len(list(set(_metadata))) == 1:
+    #             metadata = _metadata[0]
+    #         elif len(list(set(_metadata))) > 1:
+    #             mcount = Counter(_metadata)
+    #             metadata = sorted(
+    #                 [s for s in mcount.keys()], key=lambda x: mcount[s], reverse=True
+    #             )[0]
+    #     return metadata
 
     # def _make_tree_figure(self, tree, fig, colors, orders, root_name, scale=None, branch_vert_margin=None,
     #         fontsize=12, show_names=True, name_field='seq_id', rename_function=None, color_node_labels=False, label_colors=None,
@@ -776,6 +808,479 @@ class Lineage(object):
             "vdj_aa": "vdj_germ_aa",
         }
         return fmap.get(field.lower(), None)
+
+
+class LineageSummary:
+    """
+    docstring for LineageSummary
+    """
+
+    def __init__(
+        self,
+        lineage,
+        name: Optional[str] = None,
+        dot_alignment: bool = True,
+        in_color: bool = True,
+        pairs_only: bool = False,
+        padding_width: int = 1,
+    ):
+        if isinstance(lineage, (pl.DataFrame, pl.LazyFrame)):
+            if isinstance(lineage, pl.LazyFrame):
+                lineage = lineage.collect()
+            self.df = lineage
+            self.pairs = from_polars(lineage)
+        elif isinstance(lineage, pd.DataFrame):
+            lineage = pl.from_pandas(lineage)
+            self.df = lineage
+            self.pairs = from_polars(lineage)
+        elif all([isinstance(l, Pair) for l in lineage]):
+            self.pairs = lineage
+            self.df = to_polars(lineage)
+        else:
+            raise ValueError("invalid input type")
+        self.lineage = lineage
+        self.name = name
+
+        self.heavies = [p.heavy for p in self.pairs if p.heavy is not None]
+        self.lights = [p.light for p in self.pairs if p.light is not None]
+
+        self.adata = None
+        self.obs = None
+        self.bcrs = None
+        self.agbcs = None
+        self.specificities = None
+        self.extra_blocks = []
+        self.dot_alignment = dot_alignment
+        self.in_color = in_color
+        self.pairs_only = pairs_only
+        self.padding_width = padding_width
+
+        self.COLOR_PREFIX = {
+            "yellow": "\033[93m",
+            "green": "\033[92m",
+            "red": "\033[91m",
+            "blue": "\033[94m",
+            "pink": "\033[95m",
+            "black": "\033[90m",
+        }
+
+        self.REGION_COLORS = {
+            "cdr1": "red",
+            "cdr2": "yellow",
+            "junction_v": "green",
+            "junction_j": "blue",
+            "junction": "black",
+        }
+
+    def __repr__(self):
+        return self._assemble_summary()
+
+    def __str__(self):
+        s = self._assemble_summary()
+        return s.get_string()
+
+    def show(self, in_color=None):
+        s = self._assemble_summary(in_color=in_color)
+        print(s)
+
+    def to_string(self, in_color=False):
+        s = self._assemble_summary(in_color=in_color)
+        return s.get_string()
+
+    def _assemble_summary(self, in_color=None):
+        in_color = in_color if in_color is not None else self.in_color
+
+        # group identical AA sequences
+        identical_dict = {}
+        for pair in self.pairs:
+            aa = ""
+            if pair.heavy is not None:
+                aa += pair.heavy["sequence_aa"]
+            if pair.light is not None:
+                aa += pair.light["sequence_aa"]
+            if aa not in identical_dict:
+                identical_dict[aa] = []
+            identical_dict[aa].append(pair)
+        identical_groups = sorted(
+            identical_dict.values(), key=lambda x: len(x), reverse=True
+        )
+        h_standards = [ig[0].heavy for ig in identical_groups]
+        l_standards = [ig[0].light for ig in identical_groups]
+
+        # initialize table
+        x = pt.PrettyTable()
+
+        # frequencies block
+        freq_block = self._frequencies_block(identical_groups)
+        x.add_column("frequencies", ["", freq_block], align="r")
+
+        # # specificities_block
+        # if self.specificities is not None:
+        #     spec_block = self._specificities_block(identical_groups)
+        #     x.add_column("specificities", ["", spec_block], align="r")
+
+        # # AgBCs block
+        # if self.agbcs is not None:
+        #     agbc_block = self._agbc_block(identical_groups)
+        #     x.add_column("agbcs", ["", agbc_block], align="r")
+
+        # # extra blocks
+        # for xblock in self.extra_blocks:
+        #     extra_block = self._extra_block(xblock, identical_groups)
+        #     x.add_column(xblock, ["", extra_block], align="r")
+
+        # HC and LC blocks
+        hgene_block = self._germline_block(self.heavies)
+        hcdr_block = self._cdr_alignment_block(h_standards, color=in_color)
+        x.add_column("heavy", [hgene_block, hcdr_block], align="l")
+
+        lgene_block = self._germline_block(self.lights)
+        lcdr_block = self._cdr_alignment_block(l_standards, color=in_color)
+        x.add_column("light", [lgene_block, lcdr_block], align="l")
+
+        # style
+        x.set_style(pt.DEFAULT)
+        x.header = False
+        x.hrules = pt.ALL
+        x.left_padding_width = self.padding_width
+        x.right_padding_width = self.padding_width
+        x.title = self.name
+        return x
+
+    def _frequencies_block(self, identical_groups):
+        # id column
+        ids = ["", "all"] + [f"{i}" for i in range(len(identical_groups))]
+
+        # sequence count
+        n_seqs = ["n", len(self.pairs)] + [len(ig) for ig in identical_groups]
+
+        # isotypes
+        isotypes = natsorted(set([h["c_gene"] for h in self.heavies]))
+        isotype_dict = {}
+        for i in isotypes:
+            isotype_dict[i] = []
+            for ig in identical_groups:
+                heavies = [b.heavy for b in ig if b is not None]
+                isotype_dict[i].append(sum([h["c_gene"] == i for h in heavies]))
+            isotype_dict[i] = [i, sum(isotype_dict[i])] + isotype_dict[i]
+
+        # build the block
+        x = pt.PrettyTable()
+        x.add_column("ids", ids)
+        x.add_column("n_seqs", n_seqs)
+        for i in isotypes:
+            x.add_column(i, isotype_dict[i])
+        x.set_style(pt.PLAIN_COLUMNS)
+        x.header = False
+        x.left_padding_width = 0
+        x.right_padding_width = self.padding_width
+        x.align = "r"
+        table_string = x.get_string()
+        unpadded = "\n".join([l.strip() for l in table_string.split("\n")])
+        return unpadded
+
+    # def _specificities_block(self, identical_groups):
+    #     specificities_dict = {}
+    #     for s in self.specificities:
+    #         counts = []
+    #         for ig in identical_groups:
+    #             names = [b.name for b in ig]
+    #             positives = sum(self.obs[f"is_{s}"][names])
+    #             counts.append(positives)
+    #         specificities_dict[s] = [s, sum(counts)] + counts
+    #     # build the block
+    #     x = pt.PrettyTable()
+    #     for s in self.specificities:
+    #         x.add_column(s, specificities_dict[s])
+    #     x.set_style(pt.PLAIN_COLUMNS)
+    #     x.header = False
+    #     x.left_padding_width = 0
+    #     x.right_padding_width = self.padding_width
+    #     x.align = "r"
+    #     table_string = x.get_string()
+    #     unpadded = "\n".join([l.strip() for l in table_string.split("\n")])
+    #     return unpadded
+
+    # def _agbc_block(self, identical_groups):
+    #     agbc_dict = {}
+    #     for a in self.agbcs:
+    #         vals = []
+    #         for ig in identical_groups:
+    #             names = [b.name for b in ig]
+    #             mean = np.mean(self.obs[f"{a}"][names])
+    #             std = np.std(self.obs[f"{a}"][names])
+    #             vals.append(f"{mean:.1f} ({std:.1f})")
+    #         agbc_dict[a] = [a, ""] + vals
+    #     # build the block
+    #     x = pt.PrettyTable()
+    #     for a in self.agbcs:
+    #         x.add_column(a, agbc_dict[a])
+    #     x.set_style(pt.PLAIN_COLUMNS)
+    #     x.header = False
+    #     x.left_padding_width = 0
+    #     x.right_padding_width = self.padding_width
+    #     x.align = "r"
+    #     table_string = x.get_string()
+    #     unpadded = "\n".join([l.strip() for l in table_string.split("\n")])
+    #     return unpadded
+
+    # def _extra_block(self, column, identical_groups):
+    #     categories = natsorted(self.adata.obs[column].unique())
+    #     extra_dict = {}
+    #     for c in categories:
+    #         extra_dict[c] = []
+    #         for ig in identical_groups:
+    #             names = [b.name for b in ig]
+    #             _adata = self.adata[names]
+    #             extra_dict[c].append(_adata[_adata.obs[column] == c].shape[0])
+    #         extra_dict[c] = [c, sum(extra_dict[c])] + extra_dict[c]
+    #     # build the block
+    #     x = pt.PrettyTable()
+    #     for c in categories:
+    #         x.add_column(c, extra_dict[c])
+    #     x.set_style(pt.PLAIN_COLUMNS)
+    #     x.header = False
+    #     x.left_padding_width = 0
+    #     x.right_padding_width = self.padding_width
+    #     x.align = "r"
+    #     table_string = x.get_string()
+    #     unpadded = "\n".join([l.strip() for l in table_string.split("\n")])
+    #     return unpadded
+
+    def _germline_block(self, sequences):
+        block_strings = []
+
+        # chain
+        sequences = [s for s in sequences if s is not None]
+        if all([s["locus"] == "IGH" for s in sequences]):
+            chain = "HEAVY CHAIN\n"
+        else:
+            chain = "LIGHT CHAIN\n"
+        # germline genes and CDR3 length
+        v_call = Counter([s["v_call"] for s in sequences]).most_common(1)[0][0]
+        if any([s["d_call"] for s in sequences]):
+            d_call = Counter(
+                [s["d_call"] for s in sequences if s["d_call"]]
+            ).most_common(1)[0][0]
+            dcount = len(list(set([s["d_call"] for s in sequences])))
+            if len(list(set([s["d_call"] for s in sequences]))) > 1:
+                d_call = f"{d_call}{'.' * (dcount-1)}"
+        else:
+            d_call = None
+        j_call = Counter([s["j_call"] for s in sequences]).most_common(1)[0][0]
+        cdr3_length = Counter([s["cdr3_length"] for s in sequences]).most_common(1)[0][
+            0
+        ]
+        if d_call is not None:
+            block_strings.append(
+                f"{chain}{v_call} | {d_call} | {j_call} | {cdr3_length}"
+            )
+        else:
+            block_strings.append(f"{chain}{v_call} | {j_call} | {cdr3_length}")
+
+        # identities
+        ident_string = "mutation: "
+        nt_identities = [100.0 * (1 - float(s["v_identity"])) for s in sequences]
+        min_nt = round(np.min(nt_identities), 1)
+        max_nt = round(np.max(nt_identities), 1)
+        if f"{min_nt:.0f}" == f"{max_nt:.0f}":
+            ident_string += f"{min_nt:.0f}% nt"
+        else:
+            ident_string += f"{min_nt:.0f}-{max_nt:.0f}% nt"
+        aa_identities = [100.0 * (1 - float(s["v_identity_aa"])) for s in sequences]
+        mean_aa = round(np.mean(aa_identities), 1)
+        min_aa = round(np.min(aa_identities), 1)
+        max_aa = round(np.max(aa_identities), 1)
+        ident_string += " | "
+        if f"{min_aa:.0f}" == f"{max_aa:.0f}":
+            ident_string += f"{min_aa:.0f}% aa"
+        else:
+            ident_string += f"{min_aa:.0f}-{max_aa:.0f}% aa"
+        block_strings.append(ident_string)
+
+        # multiple seqeunces for a single chain
+        if chain.startswith("H"):
+            multiples = sum([len(b.heavies) > 1 for b in self.pairs])
+            block_strings.append(f"multiple heavies: {multiples}")
+        else:
+            multiples = sum([len(b.lights) > 1 for b in self.pairs])
+            block_strings.append(f"multiple lights: {multiples}")
+
+        return "\n".join(block_strings)
+
+    def _cdr_alignment_block(self, sequences, dot_alignment=True, color=True):
+        aln_data = []
+
+        # get a representative sequence for parsing junction germline info
+        notnone_sequences = [s for s in sequences if s is not None]
+        ref = notnone_sequences[0]
+
+        # get data for germline line
+        d = {"name": "germ", "order": 0}
+
+        # CDR1 germline
+        cdr1_aln = semiglobal_alignment(
+            ref["cdr1_aa"],
+            ref["sequence_alignment_aa"],
+        )
+        cdr1_aa = ref["germline_alignment_aa"][
+            cdr1_aln.target_begin : cdr1_aln.target_end + 1
+        ]
+
+        # CDR2 germline
+        cdr2_aln = semiglobal_alignment(
+            ref["cdr2_aa"],
+            ref["sequence_alignment_aa"],
+        )
+        cdr2_aa = ref["germline_alignment_aa"][
+            cdr2_aln.target_begin : cdr2_aln.target_end + 1
+        ]
+
+        # v-gene portion of junction
+        v_aln = semiglobal_alignment(
+            ref["v_sequence"], ref["junction"], gap_open=50, gap_extend=50
+        )
+        junction_v_length = v_aln.query_end - v_aln.query_begin + 1
+        junction_v_nt = ref["v_germline"][-junction_v_length:]
+        junction_v = translate(junction_v_nt)
+
+        # j-gene portion of junction
+        j_aln = semiglobal_alignment(
+            ref["j_sequence"], ref["junction"], gap_open=50, gap_extend=50
+        )
+        junction_j_length = j_aln.query_end + 1
+        junction_j_nt = ref["j_germline"][:junction_j_length]
+        junction_j = translate(junction_j_nt, frame=(len(junction_j_nt) % 3) + 1)
+        junction_x = "X" * (len(ref["junction_aa"]) - len(junction_v) - len(junction_j))
+
+        # add the germline data
+        d["cdr1"] = cdr1_aa
+        d["cdr2"] = cdr2_aa
+        d["junction"] = junction_v + junction_x + junction_j
+        d["junction_v"] = junction_v
+        d["junction_j"] = junction_j
+        aln_data.append(d)
+
+        # get data for each sequence line
+        for i, seq in enumerate(sequences, 1):
+            d = {"name": i, "order": i}
+            for region in ["cdr1", "cdr2", "junction"]:
+                if seq is not None:
+                    d[region] = seq[f"{region}_aa"]
+                else:
+                    d[region] = "X"
+            aln_data.append(d)
+
+        # make a dataframe
+        df = pd.DataFrame(aln_data).sort_values(by="order")
+
+        # do the alignments
+        names = df["name"]
+        for region in ["cdr1", "cdr2", "junction"]:
+            aln_seqs = [Sequence(s, id=n) for s, n in zip(df[region], names)]
+            aln = muscle(aln_seqs)
+            # aln_dict = {rec.id: str(rec.seq) for rec in aln}
+            aln_dict = {}
+            for rec in aln:
+                if not str(rec.sequence).replace("-", "").replace("X", ""):
+                    aln_dict[rec.id] = " " * len(str(rec.sequence))
+                else:
+                    aln_dict[rec.id] = str(rec.sequence)
+            df[f"{region}_aligned"] = [aln_dict[str(n)] for n in names]
+
+        # make a dot alignment
+        for region in ["cdr1", "cdr2"]:
+            dot_alns = []
+            dot_ref = df[f"{region}_aligned"][0]
+            dot_alns.append(dot_ref)
+            for name, reg in zip(df["name"], df[f"{region}_aligned"]):
+                if name == "germ":
+                    continue
+                dot_aln = ""
+                for r1, r2 in zip(dot_ref, reg):
+                    if r1 == r2 == "-":
+                        dot_aln += "-"
+                    elif r1 == r2:
+                        dot_aln += "."
+                    else:
+                        dot_aln += r2
+                dot_alns.append(dot_aln)
+            df[f"{region}_dot_aligned"] = dot_alns
+        df["junction_dot_aligned"] = df["junction_aligned"]
+
+        # make the block
+        block_data = []
+        header = []
+        sep = " " * self.padding_width
+        regions = ["cdr1", "cdr2", "junction"]
+        is_dot = "_dot" if dot_alignment else ""
+        for _, row in df.iterrows():
+            d = []
+            if row["name"] == "germ":
+                for region in regions:
+                    c = self.COLOR_PREFIX[self.REGION_COLORS[region]] if color else ""
+                    r = row[f"{region}{is_dot}_aligned"]
+                    if region == "junction":
+                        vc = (
+                            self.COLOR_PREFIX[self.REGION_COLORS["junction_v"]]
+                            if color
+                            else ""
+                        )
+                        jc = (
+                            self.COLOR_PREFIX[self.REGION_COLORS["junction_j"]]
+                            if color
+                            else ""
+                        )
+                        r = r.replace("X", ".")
+                        # v = r.split(".")[0]
+                        # j = r.split(".")[-1]
+                        if "." in r:
+                            v = r.split(".")[0]
+                            j = r.split(".")[-1]
+                        else:
+                            v = ""
+                            iter_r = iter(r)
+                            while len(v.replace("-", "")) < len(row["junction_v"]):
+                                v += next(iter_r)
+                            j = ""
+                            iter_r_rev = iter(r[::-1])
+                            while len(j.replace("-", "")) < len(row["junction_j"]):
+                                j += next(iter_r_rev)
+                            j = j[::-1]
+                        n = "." * (len(r) - len(v) - len(j))
+                        r = f"{vc}{v}{c}{n}{jc}{j}{c}"
+                        # build the junction header
+                        vheader = "v"
+                        vheader += "-" * (len(v) - 1)
+                        # vheader += '>'
+                        vheader = vheader[: len(v)]
+                        # jheader = '<'
+                        jheader = "-" * (len(j) - 1)
+                        jheader += "j"
+                        jheader = jheader[-len(j) :]
+                        header.append(f"{vheader}{' ' * len(n)}{jheader}")
+                    else:
+                        rname = region if len(region) <= len(r) else region[-1:]
+                        h_dashes = max((len(r) - len(rname)) / 2, 0)
+                        prefix_dashes = "-" * int(np.floor(h_dashes))
+                        suffix_dashes = "-" * int(np.ceil(h_dashes))
+                        header.append(f"{prefix_dashes}{rname}{suffix_dashes}")
+                        r = f"{c}{r}"
+                    d.append(r)
+            else:
+                d.extend([row[f"{region}{is_dot}_aligned"] for region in regions])
+            block_data.append([str(_d) for _d in d])
+        # assemble the alignment table
+        x = pt.PrettyTable()
+        for bd in [header] + block_data:
+            x.add_row(bd)
+        x.set_style(pt.PLAIN_COLUMNS)
+        x.header = False
+        x.left_padding_width = self.padding_width
+        x.right_padding_width = self.padding_width
+        table_string = x.get_string()
+        unpadded = "\n".join([l.strip() for l in table_string.split("\n")])
+        return unpadded
 
 
 def fast_tree(alignment, tree, is_aa, show_output=False):

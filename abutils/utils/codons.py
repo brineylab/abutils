@@ -89,4 +89,3 @@ codon_lookup = {
     "GGA": "G",
     "GGG": "G",
 }
-

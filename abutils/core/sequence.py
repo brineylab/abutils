@@ -24,6 +24,7 @@
 
 
 import csv
+import gzip
 import json
 import operator
 import os
@@ -35,9 +36,12 @@ from typing import Iterable, Optional, Union
 
 import dnachisel as dc
 import pandas as pd
+import polars as pl
+import pyfastx
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+# from ..io import delete_files
 from ..utils.codons import codon_lookup
 from ..utils.pipeline import make_dir
 from ..utils.utilities import nested_dict_lookup
@@ -124,18 +128,19 @@ class Sequence(object):
 
     def __init__(
         self,
-        seq: Union[str, Iterable, dict, SeqRecord],
+        sequence: Union[str, Iterable, dict, SeqRecord],
         id: Optional[str] = None,
         qual: Optional[str] = None,
         annotations: Optional[dict] = None,
         id_key: Optional[str] = None,
         seq_key: Optional[str] = None,
     ):
-        super(Sequence, self).__init__()
+        super().__init__()
         self._input_sequence = None
         self._input_id = id
         self._input_qual = qual
         self._annotations = annotations
+        self._clobbered_annotations = {}
         self.id = None
         self.sequence = None
         self.qual = None
@@ -148,7 +153,7 @@ class Sequence(object):
         self.seq_key = seq_key
         self.description = None
 
-        self._process_input(seq, id, qual)
+        self._process_input(sequence, id, qual)
 
     def __len__(self) -> int:
         """
@@ -249,6 +254,51 @@ class Sequence(object):
         if all([hasattr(other, "sequence"), hasattr(other, "id")]):
             return all([self.sequence == other.sequence, self.id == other.id])
         return False
+
+    # def __getattr__(self, name):
+    #     """
+    #     Allows attribute access to the ``annotations`` dictionary.
+
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         Name of the attribute to be accessed.
+
+    #     Returns
+    #     -------
+    #     Any
+    #         The value of the attribute, if present in the ``annotations`` dictionary.
+
+    #     Raises
+    #     ------
+    #     AttributeError
+    #         If the attribute is not in the ``annotations`` dictionary.
+    #     """
+    #     if name in self.annotations:
+    #         return self.annotations[name]
+    #     raise AttributeError(f"{self.__class__.__name__} has no attribute '{name}'")
+
+    # # def __setattr__(self, name, value):
+    # #     """
+    # #     Allows attribute assignment to the ``annotations`` dictionary.
+
+    # #     Parameters
+    # #     ----------
+    # #     name : str
+    # #         Name of the attribute to be set.
+
+    # #     value : Any
+    # #         Value to be set for the attribute.
+    # #     """
+    # #     # start with the built-in attributes
+    # #     if name in self.__dict__:
+    # #         super().__setattr__(name, value)
+    # #     # then try the annotations
+    # #     elif name in self._annotations:
+    # #         self.annotations[name] = value
+    # #     # otherwise, set the attribute normally (make a new attribute)
+    # #     else:
+    # #         super().__setattr__(name, value)
 
     @classmethod
     def from_json(cls, data):
@@ -510,6 +560,7 @@ class Sequence(object):
         return self.annotations.get(key, default)
 
     def _process_input(self, seq, id, qual):
+        # sequence was passed as a string
         if type(seq) in STR_TYPES:
             if id is None:
                 id = str(uuid.uuid4())
@@ -517,6 +568,8 @@ class Sequence(object):
             self.id = id
             self.qual = qual
             self._input_sequence = self.sequence
+
+        # sequence is already a Sequence object
         elif type(seq) == Sequence:
             self.id = id if id is not None else seq.id
             self.sequence = seq.sequence
@@ -524,11 +577,18 @@ class Sequence(object):
             self.qual = seq.qual
             self._input_sequence = self.sequence
             self._annotations = seq._annotations
+
+        # sequence is an iterable of (id, sequence, [qual])
         elif type(seq) in [list, tuple]:
             self.id = str(seq[0])
             self.sequence = str(seq[1]).upper()
-            self.qual = qual
+            if len(seq) == 3 and qual is None:
+                self.qual = seq[2]
+            else:
+                self.qual = qual
             self._input_sequence = self.sequence
+
+        # sequence is a biopython SeqRecord
         elif type(seq) == SeqRecord:
             if qual is None:
                 if "phred_quality" in seq.letter_annotations:
@@ -544,6 +604,8 @@ class Sequence(object):
             self.sequence = str(seq.seq).upper()
             self.qual = qual
             self._input_sequence = self.sequence
+
+        # sequence is an annotation dict
         elif type(seq) in [dict, OrderedDict]:
             if self.id_key is None:
                 id_options = ["seq_id", "sequence_id"]
@@ -611,7 +673,10 @@ def reverse_complement(
 
 
 def translate(
-    sequence: Sequence, sequence_key: Optional[str] = None, frame: int = 1
+    sequence: Sequence,
+    sequence_key: Optional[str] = None,
+    frame: int = 1,
+    allow_dots: bool = False,
 ) -> str:
     """
     Translates a nucleotide sequence.
@@ -628,6 +693,10 @@ def translate(
     frame : int, default=1
         Reading frame to translate. Default is ``1``.
 
+    allow_dots : bool, default=False
+        If ``True``, an all-dot codon ("...") will be translated as a single dot (".").
+        Useful when translating IMGT-gapped sequences.Default is ``False``.
+
 
     Returns
     -------
@@ -636,14 +705,11 @@ def translate(
 
     """
     if sequence_key is not None:
-        seq = Sequence(
-            nested_dict_lookup(sequence.annotations, sequence_key.split("."))
-        )
+        seq = Sequence(sequence[sequence_key])
     else:
         seq = Sequence(sequence)
     if seq is None:
         return None
-    # start = (frame % 3 or 3) - 1  # too clever by half
     if frame not in range(1, 4):
         raise ValueError(f"Invalid frame: {frame}. Must be 1, 2 or 3.")
     start = frame - 1
@@ -652,8 +718,12 @@ def translate(
     translated = ""
     for i in range(0, len(seq), 3):
         codon = seq[i : i + 3]
-        if all([c == "-" for c in codon]):
+        if len(codon) != 3:
+            continue
+        if codon == "---":
             aa = "-"
+        elif allow_dots and codon == "...":
+            aa = "."
         else:
             aa = codon_lookup.get(codon, "X")
         translated += aa
@@ -827,7 +897,7 @@ def read_json(
 
 def read_csv(
     csv_file: str,
-    delimiter: str = ",",
+    separator: str = ",",
     match: Optional[dict] = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
@@ -841,8 +911,8 @@ def read_csv(
     csv_file : str
         Path to the input CSV file. Required.
 
-    delimiter : str, default=","
-        Column delimiter. Default is ``","``.
+    separator : str, default=","
+        Column separator. Default is ``","``.
 
     match : dict, default=None
         A ``dict`` for filtering sequences from the input file.
@@ -880,9 +950,11 @@ def read_csv(
         if sequence_key not in fields:
             fields.append(sequence_key)
     sequences = []
-    df = pd.read_csv(csv_file, delimiter=delimiter)
-    for _, r in df.iterrows():
-        r = r.to_dict()
+    # df = pd.read_csv(csv_file, delimiter=delimiter)
+    df = pl.read_csv(csv_file, separator=separator)
+    # for _, r in df.iterrows():
+    for r in df.iter_rows(named=True):
+        # r = r.to_dict()
         try:
             if all([r[k] == v for k, v in match.items()]):
                 if fields is not None:
@@ -924,17 +996,45 @@ def read_airr(
     -------
     sequences : list of ``Sequences``
     """
-    return read_csv(tsv_file, delimiter="\t", match=match, fields=fields)
+    return read_csv(tsv_file, separator="\t", match=match, fields=fields)
 
 
-def read_fasta(fasta: str) -> Iterable[Sequence]:
+def read_parquet(
+    parquet_file: str,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
     """
-    Reads FASTA-formatted sequence data and returns ``Sequence`` objects.
+    Reads a Parquet file and returns ``Sequence`` objects.
 
     Parameters
     ----------
-    fasta : str
-        Either a FASTA-formatted string or the path to a FASTA file. Required.
+    parquet_file : str
+        Path to the input Parquet file. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
 
 
     Returns
@@ -942,15 +1042,332 @@ def read_fasta(fasta: str) -> Iterable[Sequence]:
     sequences : list of ``Sequences``
 
     """
-    if os.path.isfile(fasta):
-        with open(fasta) as f:
-            sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
-    else:
-        from io import StringIO
-
-        f = StringIO(fasta)
-        sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
+    df = pl.read_parquet(parquet_file)
+    for r in df.iter_rows(named=True):
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
     return sequences
+
+
+def sequences_from_polars(
+    df: Union[pl.DataFrame, pl.LazyFrame],
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
+    """
+    Reads a Polars DataFrame and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    df : Union[pl.DataFrame, pl.LazyFrame]
+        The input Polars DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
+    if isinstance(df, pl.LazyFrame):
+        df = df.collect()
+    for r in df.iter_rows(named=True):
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
+    return sequences
+
+
+def sequences_from_pandas(
+    df: pd.DataFrame,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Sequence]:
+    """
+    Reads a pandas DataFrame and returns ``Sequence`` objects.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input pandas DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'locus'`` field is not ``'IGH'``:
+
+        .. code-block:: python
+
+            {'locus': 'IGH'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Sequence``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    sequences = []
+    for _, r in df.iterrows():
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                if fields is not None:
+                    _fields = [f for f in fields if f in r]
+                    r = {f: r[f] for f in _fields}
+                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
+        except KeyError:
+            continue
+    return sequences
+
+
+def determine_fastx_format(fastx_file: str) -> str:
+    """
+    Get the format of a FASTA or FASTQ file.
+
+    Parameters
+    ----------
+    fastx_file : str
+        The path to the FASTA or FASTQ file. Can be gzip-compressed.
+
+    Returns
+    -------
+    str
+        The file format -- either "fasta" or "fastq". If the initial non-whitespace
+        character in the input file isn't ">" or "@", ``None`` is returned.
+    """
+    fmt = None
+    # return None if the file doesn't exist
+    if not os.path.exists(fastx_file):
+        return fmt
+    # get the appropriate open function
+    if fastx_file.endswith(".gz"):
+        open_fn = gzip.open
+        mode = "rt"
+    else:
+        open_fn = open
+        mode = "r"
+    # check file contents to determine format
+    try:
+        with open_fn(fastx_file, mode) as f:
+            line = next(f)
+            while not line.strip():
+                line = next(f)
+            if line.lstrip().startswith(">"):
+                fmt = "fasta"
+            elif line.lstrip().startswith("@"):
+                fmt = "fastq"
+    except StopIteration:
+        pass
+    return fmt
+
+
+def read_fastx(fastx: str) -> Iterable[Sequence]:
+    """
+    Reads FASTA or FASTQ-formatted sequence data and returns ``Sequence`` objects.
+    Gzipped files are supported.
+
+    Parameters
+    ----------
+    fastx : str
+        Path to a FASTA or FASTQ-formatted file, optionally gzip-compressed. Required.
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+    """
+    # if input is a FASTA-formatted string, write to a temp file
+    # because pyfastx only accepts file paths, not file-like objects,
+    # which means we can't use StringIO to do it all in-memory
+    if os.path.isfile(fastx):
+        tmp = None
+    else:
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        tmp.write(fastx)
+        fastx = tmp.name
+
+    # get the appropriate reader class
+    fmt = determine_fastx_format(fastx)
+    if fmt is None:
+        raise ValueError(f"Unsupported file format for {fastx}")
+    reader = pyfastx.Fasta if fmt == "fasta" else pyfastx.Fastq
+
+    # read sequences
+    sequences = []
+    for seq_tuple in reader(fastx, build_index=False):
+        sequences.append(Sequence(seq_tuple))
+
+    # cleanup
+    if tmp is not None:
+        from ..io import delete_files
+
+        delete_files(tmp.name)
+    return sequences
+
+
+def parse_fastx(fastx: str) -> Sequence:
+    """
+    Parses FASTA or FASTQ-formatted sequence data and returns ``Sequence`` objects.
+    This differs from ``read_fastx`` in that it yields sequences one at a time
+    rather than reading all into memory and returning a list. This method is
+    safe for extremely large files that are potentially too large to fit into memory.
+
+    Parameters
+    ----------
+    fastx : str
+        Path to a FASTA or FASTQ-formatted file, optionally gzip-compressed. Required.
+
+    Yields
+    -------
+    sequences : ``Sequence``
+    """
+    # get the appropriate reader class
+    fmt = determine_fastx_format(fastx)
+    if fmt is None:
+        raise ValueError(f"Unsupported file format for {fastx}")
+    reader = pyfastx.Fasta if fmt == "fasta" else pyfastx.Fastq
+
+    # parse sequences
+    for seq_tuple in reader(fastx, build_index=False):
+        yield Sequence(seq_tuple)
+
+
+def read_fasta(fasta: str) -> Iterable[Sequence]:
+    """
+    Reads FASTA-formatted sequence data and returns ``Sequence`` objects.
+    Gzipped files are supported.
+
+    Parameters
+    ----------
+    fasta : str
+        Either a FASTA-formatted string or the path to a FASTA file.
+        FASTA files can be gzip-compressed. Required.
+
+
+    Returns
+    -------
+    sequences : list of ``Sequences``
+
+    """
+    # if input is a FASTA-formatted string, write to a temp file
+    # because pyfastx only accepts file paths, not file-like objects,
+    # which means we can't use StringIO to do it all in-memory
+    if os.path.isfile(fasta):
+        tmp = None
+    else:
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        tmp.write(fasta)
+        fasta = tmp.name
+    sequences = []
+    for name, sequence in pyfastx.Fasta(fasta, build_index=False, full_name=True):
+        sequences.append(Sequence(sequence, id=name))
+
+    # cleanup
+    if tmp is not None:
+        from ..io import delete_files
+
+        delete_files(tmp.name)
+    return sequences
+
+    # if os.path.isfile(fasta):
+    #     with open(fasta) as f:
+    #         sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    # else:
+    #     from io import StringIO
+
+    #     f = StringIO(fasta)
+    #     sequences = [Sequence(s) for s in SeqIO.parse(f, "fasta")]
+    # return sequences
+
+
+def parse_fasta(fasta: str) -> Sequence:
+    """
+    Parses FASTA-formatted sequence data and returns ``Sequence`` objects. This
+    differs from ``read_fasta`` in that it yields sequences one at a time
+    rather than reading all into memory and returning a list. This method is
+    safe for extremely large files that are potentially too large to fit into memory.
+
+    Parameters
+    ----------
+    fasta : str
+        Path to a FASTA-formatted file, optionally gzip-compressed. Required.
+
+    Yields
+    -------
+    sequences : ``Sequence``
+    """
+    for name, sequence in pyfastx.Fasta(fasta, build_index=False, full_name=True):
+        yield Sequence(sequence, id=name)
 
 
 def read_fastq(fastq: str) -> Iterable[Sequence]:
@@ -961,7 +1378,8 @@ def read_fastq(fastq: str) -> Iterable[Sequence]:
     Parameters
     ----------
     fastq : str
-        Either a FASTQ-formatted string or the path to a FASTQ file. Required.
+        Either a FASTQ-formatted string or the path to a FASTQ file.
+        FASTQ files can be gzip-compressed. Required.
 
 
     Returns
@@ -969,21 +1387,63 @@ def read_fastq(fastq: str) -> Iterable[Sequence]:
     sequences : list of ``Sequences``
 
     """
+    # if input is a FASTA-formatted string, write to a temp file
+    # because pyfastx only accepts file paths, not file-like objects,
+    # which means we can't use StringIO to do it all in-memory
     if os.path.isfile(fastq):
-        if fastq.endswith(".gz"):
-            import gzip
-
-            open_func = gzip.open
-        else:
-            open_func = open
-        with open_func(fastq, "rt") as f:
-            sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+        tmp = None
     else:
-        from io import StringIO
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        tmp.write(fastq)
+        fastq = tmp.name
+    sequences = []
+    for name, sequence, qual in pyfastx.Fastq(fastq, build_index=False):
+        sequences.append(Sequence(sequence, id=name, qual=qual))
 
-        f = StringIO(fastq)
-        sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    # cleanup
+    if tmp is not None:
+        from ..io import delete_files
+
+        delete_files(tmp.name)
     return sequences
+
+    # if os.path.isfile(fastq):
+    #     if fastq.endswith(".gz"):
+    #         open_func = gzip.open
+    #         mode = "rt"
+    #         encoding = "utf-8"
+    #     else:
+    #         open_func = open
+    #         mode = "r"
+    #         encoding = None
+    #     with open_func(fastq, mode=mode, encoding=encoding) as f:
+    #         sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    # else:
+    #     from io import StringIO
+
+    #     f = StringIO(fastq)
+    #     sequences = [Sequence(s) for s in SeqIO.parse(f, "fastq")]
+    # return sequences
+
+
+def parse_fastq(fastq: str) -> Sequence:
+    """
+    Parses FASTQ-formatted sequence data and returns ``Sequence`` objects. This
+    differs from ``read_fasta`` in that it yields sequences one at a time
+    rather than reading all into memory and returning a list. This method is
+    safe for extremely large files that are potentially too large to fit into memory.
+
+    Parameters
+    ----------
+    fastq : str
+        Path to a FASTQ-formatted file, optionally gzip-compressed. Required.
+
+    Yields
+    -------
+    sequences : ``Sequence``
+    """
+    for name, sequence, qual in pyfastx.Fastq(fastq, build_index=False):
+        yield Sequence(sequence, id=name, qual=qual)
 
 
 def from_mongodb(db, collection, match=None, project=None, limit=None):
@@ -998,92 +1458,104 @@ def from_mongodb(db, collection, match=None, project=None, limit=None):
     return [Sequence(r) for r in results]
 
 
-def to_fasta(
-    sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
-    fasta_file: Optional[str] = None,
-    as_string: bool = False,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
-    tempfile_dir: str = "/tmp",
-) -> str:
-    """
-    Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
+# def to_fasta(
+#     sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
+#     fasta_file: Optional[str] = None,
+#     # as_string: bool = False,
+#     id_key: Optional[str] = None,
+#     sequence_key: Optional[str] = None,
+#     tempfile_dir: Optional[str] = None,
+#     append_chain: bool = True,
+# ) -> str:
+#     """
+#     Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
 
-    Parameters
-    ----------
-    sequences : Iterable[Sequence]
-        An iterable of any of the following:
-            1. list of abutils ``Sequence`` objects
-            2. FASTA-formatted string
-            3. path to a FASTA-formatted file
-            4. list of BioPython ``SeqRecord`` objects
-            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
-        Required.
+#     Parameters
+#     ----------
+#     sequences : Iterable[Sequence]
+#         Accepts any of the following:
+#             1. list of abutils ``Sequence`` and/or ``Pair`` objects
+#             2. FASTA/Q-formatted string
+#             3. path to a FASTA/Q-formatted file
+#             4. list of BioPython ``SeqRecord`` objects
+#             5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+#         Required.
 
-    fasta_file : str, default=None
-        Path to the output FASTA file. If not provided and `as_string` is ``False``,
-        a file will be created using ``tempfile.NamedTemporaryFile()``.
+#         .. note::
+#             Processing a list containing a mixture of ``Sequence`` and/or ``Pair`` objects is supported.
 
-    as_string : bool, default=False
-        Return a FASTA-formatted string rather than writing to file.
+#     fasta_file : str, default=None
+#         Path to the output FASTA file. If neither `fasta_file` nor `tempfile_dir`
+#         are provided, a FASTA-formatted string will be returned.
 
-    id_key : str, default=None
-        Name of the annotation field containing the sequence ID. If not provided,
-        ``sequence.id`` is used.
+#     id_key : str, default=None
+#         Name of the annotation field containing the sequence ID. If not provided,
+#         ``sequence.id`` is used.
 
-    sequence_key : str, default=None
-        Name of the annotation field containg the sequence. If not provided,
-        ``sequence.sequence`` is used.
+#     sequence_key : str, default=None
+#         Name of the annotation field containg the sequence. If not provided,
+#         ``sequence.sequence`` is used.
 
-    tempfile_dir : str, default="/tmp"
-        If `fasta_file` is not provided, directory into which the tempfile
-        should be created. If the directory does not exist, it will be
-        created. Default is "/tmp".
+#     tempfile_dir : str, optional
+#         If `fasta_file` is not provided, directory into which the tempfile
+#         should be created. If the directory does not exist, it will be
+#         created.
+
+#     append_chain : bool, default=True
+#         If ``True``, the chain (heavy or light) will be appended to the sequence name:
+#         ``>MySequence_heavy``.
+
+#         .. note::
+#             This option is ignored unless a list containing ``Pair`` objects is provided.
 
 
-    Returns
-    --------
-    fasta : str
-        Path to a FASTA file or a FASTA-formatted string
+#     Returns
+#     --------
+#     fasta : str
+#         Path to a FASTA file or a FASTA-formatted string
 
-    """
-    if isinstance(sequences, str):
-        # if sequences is already a FASTA-formatted file
-        if os.path.isfile(sequences):
-            if as_string:
-                with open(sequences, "r") as f:
-                    fasta_string = f.read()
-                return fasta_string
-            return sequences
-        # if sequences is a FASTA-formatted string
-        else:
-            fasta_string = sequences
-    # if sequences is a list of Sequences
-    elif all([type(s) == Sequence for s in sequences]):
-        ids = [s.get(id_key, s.id) if id_key is not None else s.id for s in sequences]
-        seqs = [
-            s.get(sequence_key, s.sequence) if sequence_key is not None else s.sequence
-            for s in sequences
-        ]
-        fasta_string = "\n".join(f">{i}\n{s}" for i, s in zip(ids, seqs))
-    # anything else..
-    else:
-        fasta_string = "\n".join(
-            [Sequence(s, id_key=id_key, seq_key=sequence_key).fasta for s in sequences]
-        )
-    # output
-    if as_string:
-        return fasta_string
-    if fasta_file is None:
-        make_dir(tempfile_dir)
-        ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
-        ff.close()
-        fasta_file = ff.name
-    else:
-        make_dir(os.path.dirname(fasta_file))
-    with open(fasta_file, "w") as f:
-        f.write(fasta_string)
-    return fasta_file
+#     """
+#     if isinstance(sequences, str):
+#         # if sequences is already a FASTA/Q-formatted file
+#         if os.path.isfile(sequences):
+#             fasta_string = "\n".join([s.fasta for s in parse_fasta(sequences)])
+#         # if sequences is a FASTA-formatted string
+#         else:
+#             fasta_string = sequences
+#     # if sequences is a list of Sequences
+#     elif all([isinstance(s, (Sequence, Pair)) for s in sequences]):
+#         fasta_strings = []
+#         for s in sequences:
+#             if isinstance(s, Pair):
+#                 fasta_strings.append(
+#                     s.fasta(
+#                         name_field=id_key,
+#                         sequence_field=sequence_key,
+#                         append_chain=append_chain,
+#                     )
+#                 )
+#             else:
+#                 fasta_strings.append(
+#                     s.as_fasta(name_field=id_key, seq_field=sequence_key)
+#                 )
+#         fasta_string = "\n".join(fasta_strings)
+#     # anything else..
+#     else:
+#         fasta_string = "\n".join(
+#             [Sequence(s, id_key=id_key, seq_key=sequence_key).fasta for s in sequences]
+#         )
+#     # output
+#     if fasta_file is not None:
+#         make_dir(os.path.dirname(fasta_file))
+#         with open(fasta_file, "w") as f:
+#             f.write(fasta_string)
+#         return fasta_file
+#     elif tempfile_dir is not None:
+#         make_dir(tempfile_dir)
+#         ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
+#         ff.close()
+#         return ff.name
+#     return fasta_file
 
 
 def to_fastq(
@@ -1180,13 +1652,174 @@ def to_fastq(
     return fastq_file
 
 
-def to_csv(
+def sequences_to_polars(
+    sequences: Iterable[Sequence],
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> pl.DataFrame:
+    """
+    Converts a list of ``Sequence`` objects to a ``polars.DataFrame`` object.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be converted to a ``polars.DataFrame`` object. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the ``polars.DataFrame`` object.
+
+    columns : list, default=None
+        Deprecated, use ``annotations`` instead. If provided and ``annotations`` is not,
+        ``annotations`` will be set to ``columns``. If both are provided, ``annotations``
+        will supercede ``columns``.
+
+    properties : list, default=None
+        A list of properties to be included in the ``polars.DataFrame`` object.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the ``polars.DataFrame`` object.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the ``polars.DataFrame`` object.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the ``polars.DataFrame`` object.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the ``polars.DataFrame`` object. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the ``polars.DataFrame`` object and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    pl.DataFrame
+        A ``polars.DataFrame`` object.
+    """
+    data = []
+    # read Sequence data
+    for s in sequences:
+        if not s.annotations:
+            d = {"sequence_id": s.id, "sequence": s.sequence}
+        else:
+            d = s.annotations
+        if properties is not None:
+            for prop in properties:
+                try:
+                    d[prop] = getattr(s, prop)
+                except AttributeError:
+                    continue
+        data.append(d)
+
+    # populate DataFrame
+    df = pl.DataFrame(data, infer_schema_length=None)
+
+    # drop NaN
+    if drop_na_columns:
+        df = df[[s.name for s in df if not (s.null_count() == df.height)]]
+
+    # excluded columns
+    if exclude is not None:
+        if isinstance(exclude, str):
+            exclude = []
+        cols = [c for c in df.columns if c not in exclude]
+        df = df.select(cols)
+
+    # reorder
+    if order is not None:
+        cols = [o for o in order if o in df.columns]
+        df = df.select(cols)
+
+    # leading columns
+    if leading is not None:
+        if isinstance(leading, str):
+            leading = [leading]
+        leading = [l for l in leading if l in df.columns]
+        cols = leading + [c for c in df.columns if c not in leading]
+        df = df.select(cols)
+
+    if annotations is None and columns is not None:
+        annotations = columns
+    if annotations is not None:
+        cols = [c for c in annotations if c in df.columns]
+        df = df.select(cols)
+
+    return df
+
+
+def sequences_to_pandas(
+    sequences: Iterable[Sequence],
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> pd.DataFrame:
+    """
+    Converts a list of ``Sequence`` objects to a ``pandas.DataFrame`` object.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be converted to a ``pandas.DataFrame`` object. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the ``pandas.DataFrame`` object.
+
+    columns : list, default=None
+        Deprecated, use ``annotations`` instead. If provided and ``annotations`` is not,
+        ``annotations`` will be set to ``columns``. If both are provided, ``annotations``
+        will supercede ``columns``.
+
+    properties : list, default=None
+        A list of properties to be included in the ``pandas.DataFrame`` object.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the ``pandas.DataFrame`` object.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the `pandas.DataFrame`` object.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the ``pandas.DataFrame`` object.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the ``pandas.DataFrame`` object. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the ``pandas.DataFrame`` object and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A ``pandas.DataFrame`` object.
+    """
+    df = sequences_to_polars(
+        sequences,
+        annotations=annotations,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    return df.to_pandas()
+
+
+def sequences_to_csv(
     sequences: Iterable[Sequence],
     csv_file: str,
-    sep: str = ",",
+    separator: str = ",",
     header: bool = True,
     columns: Optional[Iterable] = None,
-    index: bool = False,
     properties: Optional[Iterable[str]] = None,
     drop_na_columns: bool = True,
     order: Optional[Iterable[str]] = None,
@@ -1204,8 +1837,8 @@ def to_csv(
     csv_file : str
         Path to the output CSV file. Required.
 
-    sep : str, default=","
-        Column delimiter. Default is ``","``.
+    separator : str, default=","
+        Column separator. Default is ``","``.
 
     header : bool, default=True
         If ``True``, the CSV file will contain a header row. Default is ``True``.
@@ -1213,9 +1846,6 @@ def to_csv(
     columns : list, default=None
         A list of fields to be retained in the output CSV file. Fields must be column
         names in the input file.
-
-    index : bool, default=False
-        If ``True``, the CSV file will contain an index column. Default is ``False``.
 
     properties : list, default=None
         A list of properties to be included in the CSV file.
@@ -1235,39 +1865,139 @@ def to_csv(
         if both are provided, fields in ``leading`` will appear first in the CSV file and
         remaining fields will appear in the order provided in ``order``.
 
-    """
-    data = []
-    for s in sequences:
-        if not s.annotations:
-            d = {"sequence_id": s.id, "sequence": s.sequence}
-        else:
-            d = s.annotations
-        if properties is not None:
-            for prop in properties:
-                try:
-                    d[prop] = getattr(s, prop)
-                except AttributeError:
-                    continue
-        data.append(d)
-    df = pd.DataFrame(data)
-    # drop NaN
-    if drop_na_columns:
-        df.dropna(axis=1, how="all", inplace=True)
-    # excluded columns
-    if exclude is not None:
-        if isinstance(exclude, str):
-            exclude = []
-        cols = [c for c in df.columns.values if c not in exclude]
-        df = df[cols]
-    # reorder
-    if order is not None:
-        cols = [o for o in order if o in df.columns.values]
-        df = df[cols]
-    if leading is not None:
-        if isinstance(leading, str):
-            leading = [leading]
-        leading = [l for l in leading if l in df.columns.values]
-        cols = leading + [c for c in df.columns.values if c not in leading]
-        df = df[cols]
+    Returns
+    -------
+    None
 
-    df.to_csv(csv_file, sep=sep, index=index, columns=columns, header=header)
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_csv(csv_file, separator=separator, include_header=header)
+
+
+def sequences_to_parquet(
+    sequences: Iterable[Sequence],
+    parquet_file: str,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Sequence`` objects to a Parquet file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be saved to a Parquet file. Required.
+
+    parquet_file : str
+        Path to the output Parquet file. Required.
+
+    columns : list, default=None
+        A list of fields to be retained in the output Parquet file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+    properties : list, default=None
+        A list of properties to be included in the Parquet file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the Parquet file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the Parquet file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the Parquet file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the Parquet file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Parquet file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_parquet(parquet_file)
+
+
+def to_airr(
+    sequences: Iterable[Sequence],
+    airr_file: str,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Sequence`` objects to a CSV file.
+
+    Parameters
+    ----------
+    sequences : Iterable[Sequence]
+        List of ``Sequence`` objects to be saved to an AIRR file. Required.
+
+    airr_file : str
+        Path to the output AIRR file. Required.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    Returns
+    -------
+    None
+
+    """
+    df = sequences_to_polars(
+        sequences,
+        columns=columns,
+        properties=properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_csv(airr_file, separator="\t", include_header=True)

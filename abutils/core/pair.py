@@ -22,41 +22,53 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import copy
 import csv
-import sys
-import traceback
+import os
+from typing import Callable, Iterable, Optional, Union
 
-from Bio.Seq import Seq
+import pandas as pd
+import polars as pl
 
-from .sequence import Sequence
-from ..utils import germlines
-from ..utils.alignment import global_alignment
-from ..utils.utilities import nested_dict_lookup
+from ..core.sequence import Sequence
 
-
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-else:
-    STR_TYPES = [str, unicode]
+# from ..utils.utilities import nested_dict_lookup
 
 
 class Pair(object):
     """
-    Holds a pair of sequences, corresponding to HC and LC of a single mAb.
+    Holds a one or more ``Sequence`` objects, corresponding to a paired mAb or TCR.
 
-    Input is a list of dicts, with each dict containing sequence information from a single
-    chain, formatted as would be returned from a query on a MongoDB database containing
-    AbStar output.
     """
 
-    def __init__(self, seqs, name=None, chain_selection_func=None):
-        self._seqs = seqs
+    def __init__(
+        self,
+        sequences: Iterable[Union[dict, Sequence]],
+        name: Optional[str] = None,
+        chain_selection_func: Optional[Callable] = None,
+        properties: Optional[dict] = None,
+    ):
+        """
+        Initialize a Pair object.
+
+        Parameters
+        ----------
+        sequences : Iterable[Union[dict, Sequence]]
+            A list of sequence objects, each containing sequence information.
+
+        name : Optional[str], default=None
+            The name of the pair.
+
+        chain_selection_func : Optional[Callable], default=None
+            A function that takes a list of sequences and orders them to determine
+            the "correct" heavy and light chains in cases for which multiple heavy
+            or light chains exist. If not provided, chains are prioritized in the order
+            provided.
+
+        properties : Optional[dict], default=None
+            A dictionary of additional properties to add to the Pair object.
+
+        """
+        self._sequences = sequences
         self._receptor = None
         self._heavy = None
         self._light = None
@@ -84,6 +96,9 @@ class Pair(object):
             if chain_selection_func is not None
             else self._chain_selector
         )
+        if properties is not None:
+            for k, v in properties.items():
+                setattr(self, k, v)
 
     def __eq__(self, other):
         return (self.heavy, self.light) == (other.heavy, other.light)
@@ -100,29 +115,38 @@ class Pair(object):
     @property
     def receptor(self):
         if self._receptor is None:
-            if all([s["chain"] is not None for s in self._seqs]):
+            # check for the "locus" annotation
+            if all([s["locus"] is not None for s in self._sequences]):
                 if all(
-                    [s["chain"] in ["heavy", "kappa", "lambda"] for s in self._seqs]
+                    [
+                        s["locus"].upper() in ["IGH", "IGK", "IGL"]
+                        for s in self._sequences
+                    ]
                 ):
                     self._receptor = "bcr"
                 elif all(
                     [
-                        s["chain"] in ["alpha", "beta", "delta", "gamma"]
-                        for s in self._seqs
+                        s["locus"].upper() in ["TRA", "TRB", "TRD", "TRG"]
+                        for s in self._sequences
                     ]
                 ):
                     self._receptor = "tcr"
                 else:
                     self._receptor = "unknown"
-            elif all([s["locus"] is not None for s in self._seqs]):
+
+            # if locus isn't present, infer from V-gene assignment
+            elif all([s["v_call"] is not None for s in self._sequences]):
                 if all(
-                    [s["locus"].lower() in ["igh", "igk", "igl"] for s in self._seqs]
+                    [
+                        s["v_call"][:3].upper() in ["IGH", "IGK", "IGL"]
+                        for s in self._sequences
+                    ]
                 ):
                     self._receptor = "bcr"
                 elif all(
                     [
-                        s["locus"].lower() in ["tra", "trb", "trd", "trg"]
-                        for s in self._seqs
+                        s["v_call"][:3].upper() in ["TRA", "TRB", "TRD", "TRG"]
+                        for s in self._sequences
                     ]
                 ):
                     self._receptor = "tcr"
@@ -197,57 +221,101 @@ class Pair(object):
     @property
     def heavies(self):
         if self._heavies is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._heavies = [s for s in self._seqs if s["chain"] == "heavy"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._heavies = [s for s in self._seqs if s["locus"] == "IGH"]
+            self._heavies = [
+                s for s in self._sequences if self._is_locus_type(s, ["IGH", "heavy"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._heavies = [s for s in self._seqs if s["chain"] == "heavy"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._heavies = [s for s in self._seqs if s["locus"] == "IGH"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._heavies = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "IGH"
+            #     ]
         return self._heavies
 
     @property
     def lights(self):
         if self._lights is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._lights = [
-                    s for s in self._seqs if s["chain"] in ["kappa", "lambda"]
-                ]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._lights = [s for s in self._seqs if s["locus"] in ["IGK", "IGL"]]
+            self._lights = [
+                s
+                for s in self._sequences
+                if self._is_locus_type(s, ["IGK", "IGL", "kappa", "lambda"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._lights = [
+            #         s for s in self._seqs if s["chain"] in ["kappa", "lambda"]
+            #     ]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._lights = [s for s in self._seqs if s["locus"] in ["IGK", "IGL"]]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._lights = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() in ["IGK", "IGL"]
+            #     ]
         return self._lights
 
     @property
     def alphas(self):
         if self._alphas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._alphas = [s for s in self._seqs if s["chain"] == "alpha"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._alphas = [s for s in self._seqs if s["locus"] == "TRA"]
+            self._alphas = [
+                s for s in self._sequences if self._is_locus_type(s, ["TRA", "alpha"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._alphas = [s for s in self._seqs if s["chain"] == "alpha"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._alphas = [s for s in self._seqs if s["locus"] == "TRA"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._alphas = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRA"
+            #     ]
         return self._alphas
 
     @property
     def betas(self):
         if self._betas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._betas = [s for s in self._seqs if s["chain"] == "beta"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._betas = [s for s in self._seqs if s["locus"] == "TRB"]
+            self._betas = [
+                s for s in self._sequences if self._is_locus_type(s, ["TRB", "beta"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._betas = [s for s in self._seqs if s["chain"] == "beta"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._betas = [s for s in self._seqs if s["locus"] == "TRB"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._betas = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRB"
+            #     ]
         return self._betas
 
     @property
     def deltas(self):
         if self._deltas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._deltas = [s for s in self._seqs if s["chain"] == "delta"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._deltas = [s for s in self._seqs if s["locus"] == "TRD"]
+            self._deltas = [
+                s for s in self._sequences if self._is_locus_type(s, ["TRD", "delta"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._deltas = [s for s in self._seqs if s["chain"] == "delta"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._deltas = [s for s in self._seqs if s["locus"] == "TRD"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._deltas = [
+            #       s for s in self._seqs if s["v_gene"][:3].upper() == "TRD"
+            #     ]
         return self._deltas
 
     @property
     def gammas(self):
         if self._gammas is None:
-            if all([s["chain"] is not None for s in self._seqs]):
-                self._gammas = [s for s in self._seqs if s["chain"] == "gamma"]
-            elif all([s["locus"] is not None for s in self._seqs]):
-                self._gammas = [s for s in self._seqs if s["locus"] == "TRG"]
+            self._gammas = [
+                s for s in self._sequences if self._is_locus_type(s, ["TRG", "gamma"])
+            ]
+            # if all([s["chain"] is not None for s in self._seqs]):
+            #     self._gammas = [s for s in self._seqs if s["chain"] == "gamma"]
+            # elif all([s["locus"] is not None for s in self._seqs]):
+            #     self._gammas = [s for s in self._seqs if s["locus"] == "TRG"]
+            # elif all([s["v_gene"] is not None for s in self._seqs]):
+            #     self._gammas = [
+            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRG"
+            #     ]
         return self._gammas
 
     @property
@@ -267,6 +335,10 @@ class Pair(object):
                 self._lineage = self.heavy["clonify"]["id"]
         return self._lineage
 
+    @lineage.setter
+    def lineage(self, lineage):
+        self._lineage = lineage
+
     @property
     def name(self):
         if self._name is None:
@@ -275,8 +347,8 @@ class Pair(object):
                     self._name = self.heavy.id
                 elif self.heavy["sequence_id"] is not None:
                     self._name = self.heavy["sequence_id"]
-                elif self.heavy["seq_id"] is not None:
-                    self._name = self.heavy["seq_id"]
+                # elif self.heavy["seq_id"] is not None:
+                #     self._name = self.heavy["seq_id"]
                 else:
                     pass
             elif self.light is not None:
@@ -284,8 +356,8 @@ class Pair(object):
                     self._name = self.light.id
                 elif self.light["sequence_id"] is not None:
                     self._name = self.light["sequence_id"]
-                elif self.light["seq_id"] is not None:
-                    self._name = self.light["seq_id"]
+                # elif self.light["seq_id"] is not None:
+                #     self._name = self.light["seq_id"]
                 else:
                     pass
             elif self.alpha is not None:
@@ -293,8 +365,8 @@ class Pair(object):
                     self._name = self.alpha.id
                 elif self.alpha["sequence_id"] is not None:
                     self._name = self.alpha["sequence_id"]
-                elif self.alpha["seq_id"] is not None:
-                    self._name = self.alpha["seq_id"]
+                # elif self.alpha["seq_id"] is not None:
+                #     self._name = self.alpha["seq_id"]
                 else:
                     pass
             elif self.beta is not None:
@@ -302,8 +374,8 @@ class Pair(object):
                     self._name = self.beta.id
                 elif self.beta["sequence_id"] is not None:
                     self._name = self.beta["sequence_id"]
-                elif self.beta["seq_id"] is not None:
-                    self._name = self.beta["seq_id"]
+                # elif self.beta["seq_id"] is not None:
+                #     self._name = self.beta["seq_id"]
                 else:
                     pass
             elif self.delta is not None:
@@ -311,8 +383,8 @@ class Pair(object):
                     self._name = self.delta.id
                 elif self.delta["sequence_id"] is not None:
                     self._name = self.delta["sequence_id"]
-                elif self.delta["seq_id"] is not None:
-                    self._name = self.delta["seq_id"]
+                # elif self.delta["seq_id"] is not None:
+                #     self._name = self.delta["seq_id"]
                 else:
                     pass
             elif self.gamma is not None:
@@ -320,8 +392,8 @@ class Pair(object):
                     self._name = self.gamma.id
                 elif self.gamma["sequence_id"] is not None:
                     self._name = self.gamma["sequence_id"]
-                elif self.gamma["seq_id"] is not None:
-                    self._name = self.gamma["seq_id"]
+                # elif self.gamma["seq_id"] is not None:
+                #     self._name = self.gamma["seq_id"]
                 else:
                     pass
         return self._name
@@ -329,6 +401,30 @@ class Pair(object):
     @name.setter
     def name(self, name):
         self._name = name
+
+    def _is_locus_type(self, seq: Sequence, locus_names: Iterable[str]) -> bool:
+        """
+        Check if the sequence is of the specified locus type.
+
+        Parameters
+        ----------
+        seq : Sequence
+            The sequence to check.
+
+        locus_names : list[str]
+            The list of locus names to check against.
+
+        Returns
+        -------
+        bool
+            True if the sequence is of the specified locus type, False otherwise.
+        """
+        if seq["locus"] in locus_names:
+            return True
+        elif seq["v_call"] is not None:
+            if seq["v_call"][:3] in locus_names:
+                return True
+        return False
 
     # @property
     # def sample(self):
@@ -472,7 +568,10 @@ class Pair(object):
     #     seq['vdj_aa'] = Seq(seq['vdj_nt']).translate()
 
     def fasta(
-        self, name_field="sequence_id", sequence_field="sequence", append_chain=True
+        self,
+        name_field: str = "sequence_id",
+        sequence_field: str = "sequence",
+        append_chain: bool = True,
     ):
         """
         Returns the sequence pair as a fasta string. If the Pair object contains
@@ -495,22 +594,20 @@ class Pair(object):
                 fastas.append(">{}{}\n{}".format(s[name_field], c, s[sequence_field]))
         return "\n".join(fastas)
 
-    def summarize(self, annotation_format="airr"):
+    def summarize(self, annotation_format: Optional[str] = None) -> None:
+        """
+        Prints a summary of the pair to the console.
+
+        Parameters
+        ----------
+        annotation_format : str, optional
+            No longer used, retained for legacy compatibility.
+
+        Returns
+        -------
+        None
+        """
         try:
-            if annotation_format == "airr":
-                v_key = "v_gene"
-                d_key = "d_gene"
-                j_key = "j_gene"
-                junc_key = "junction_aa"
-                vident_key = "v_identity"
-                isotype_key = "isotype"
-            elif annotation_format == "json":
-                v_key = "v_gene.gene"
-                d_key = "d_gene.gene"
-                j_key = "j_gene.gene"
-                junc_key = "junc_aa"
-                vident_key = "nt_identity.v"
-                isotype_key = "isotype"
             vline = ""
             dline = ""
             jline = ""
@@ -518,17 +615,24 @@ class Pair(object):
             identline = ""
             isotypeline = ""
             if self.heavy is not None:
-                vline += nested_dict_lookup(self.heavy, v_key.split("."))
-                dline += nested_dict_lookup(self.heavy, d_key.split("."))
-                jline += nested_dict_lookup(self.heavy, j_key.split("."))
-                juncline += nested_dict_lookup(self.heavy, junc_key.split("."))
-                identline += nested_dict_lookup(self.heavy, vident_key.split("."))
-                isotypeline += nested_dict_lookup(self.heavy, isotype_key.split("."))
+                vline += self.heavy["v_gene"]
+                dline += self.heavy["d_gene"]
+                jline += self.heavy["j_gene"]
+                juncline += self.heavy["junction_aa"]
+                identline += self.heavy["v_identity"]
+                isotypeline += self.heavy["isotype"]
             pad = (
                 max(
                     [
-                        len(l)
-                        for l in [vline, dline, jline, juncline, identline, isotypeline]
+                        len(line)
+                        for line in [
+                            vline,
+                            dline,
+                            jline,
+                            juncline,
+                            identline,
+                            isotypeline,
+                        ]
                     ]
                 )
                 + 4
@@ -540,24 +644,25 @@ class Pair(object):
             identline += " " * (pad - len(identline))
             isotypeline += " " * (pad - len(isotypeline))
             if self.light is not None:
-                vline += nested_dict_lookup(self.light, v_key.split("."))
-                jline += nested_dict_lookup(self.light, j_key.split("."))
-                juncline += nested_dict_lookup(self.light, junc_key.split("."))
-                identline += nested_dict_lookup(self.light, vident_key.split("."))
+                vline += self.light["v_gene"]
+                jline += self.light["j_gene"]
+                juncline += self.light["junction_aa"]
+                identline += self.light["v_identity"]
+                isotypeline += self.light["isotype"]
 
             header_len = max(
                 [
-                    len(l)
-                    for l in [vline, dline, jline, juncline, identline, isotypeline]
+                    len(line)
+                    for line in [vline, dline, jline, juncline, identline, isotypeline]
                 ]
             )
             header_spaces = int((header_len - len(self.name)) / 2)
             print(f"{' ' * header_spaces}{self.name}")
             print("-" * header_len)
-            for l in [vline, dline, jline, juncline, identline, isotypeline]:
-                print(l)
+            for line in [vline, dline, jline, juncline, identline, isotypeline]:
+                print(line)
             print("")
-        except:
+        except Exception:
             return
 
     def _chain_selector(self, seqs):
@@ -611,17 +716,17 @@ def get_pairs(
     if subject is not None:
         if type(subject) in (list, tuple):
             match["subject"] = {"$in": subject}
-        elif type(subject) in STR_TYPES:
+        elif isinstance(subject, str):
             match["subject"] = subject
     if group is not None:
         if type(group) in (list, tuple):
             match["group"] = {"$in": group}
-        elif type(group) in STR_TYPES:
+        elif isinstance(group, str):
             match["group"] = group
     if experiment is not None:
         if type(experiment) in (list, tuple):
             match["experiment"] = {"$in": experiment}
-        elif type(experiment) in STR_TYPES:
+        elif isinstance(experiment, str):
             match["experiment"] = experiment
     seqs = list(db[collection].find(match))
     return assign_pairs(
@@ -635,32 +740,53 @@ def get_pairs(
 
 
 def assign_pairs(
-    seqs,
-    id_key="sequence_id",
-    delim=None,
-    delim_occurance=1,
-    pairs_only=False,
-    chain_selection_func=None,
-    tenx_annot_file=None,
-):
+    seqs: Iterable[Union[dict, Sequence]],
+    id_key: str = "sequence_id",
+    delim: Optional[str] = None,
+    delim_occurance: int = 1,
+    pairs_only: bool = False,
+    chain_selection_func: Optional[Callable] = None,
+    tenx_annot_file: Optional[str] = None,
+) -> Iterable[Pair]:
     """
     Assigns sequences to the appropriate mAb pair, based on the sequence name.
 
-    Inputs:
-
-    ::seqs:: is a list of dicts, of the format returned by querying a MongoDB containing
+    Parameters
+    ----------
+    seqs : Iterable[Union[dict, Sequence]]
+        List of sequence objects, of the format returned by querying a MongoDB containing
         Abstar output.
-    ::name:: is the dict key of the field to be used to group the sequences into pairs.
+
+    id_key : str, default="sequence_id"
+        The dict key of the field to be used to group the sequences into pairs.
         Default is 'seq_id'
-    ::delim:: is an optional delimiter used to truncate the contents of the ::name:: field.
+
+    delim : Optional[str], default=None
+        An optional delimiter used to truncate the contents of the ::name:: field.
         Default is None, which results in no name truncation.
-    ::delim_occurance:: is the occurance of the delimiter at which to trim. Trimming is performed
+
+    delim_occurance : int, default=1
+        The occurance of the delimiter at which to trim. Trimming is performed
         as delim.join(name.split(delim)[:delim_occurance]), so setting delim_occurance to -1 will
         trucate after the last occurance of delim. Default is 1.
-    ::pairs_only:: setting to True results in only truly paired sequences (pair.is_pair == True)
+
+    pairs_only : bool, default=False
+        Setting to True results in only truly paired sequences (pair.is_pair == True)
         will be returned. Default is False.
 
-    Returns a list of Pair objects, one for each mAb pair.
+    chain_selection_func : Optional[Callable], default=None
+        A function that takes a list of sequences and returns a single sequence.
+        Default is None, which results in the first sequence in the list being returned.
+
+    tenx_annot_file : Optional[str], default=None
+        A path to a 10x Genomics annotations file. If provided, the UMIs and 10x
+        annotations will be added to the sequence annotations.
+
+    Returns
+    -------
+    pairs : Iterable[Pair]
+        A list of ``Pair`` objects, one for each mAb pair.
+
     """
     # add UMIs to the sequence annotations if a 10xG annotations file is provided
     if tenx_annot_file is not None:
@@ -696,6 +822,543 @@ def assign_pairs(
     if pairs_only:
         pairs = [p for p in pairs if p.is_pair]
     return pairs
+
+
+def pairs_to_polars(
+    pairs: Iterable[Pair],
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> pl.DataFrame:
+    """
+    Converts a list of ``Pair`` objects to a Polars DataFrame.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be converted to a Polars DataFrame. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the Polars DataFrame. The difference
+        between ``annotations`` and ``columns`` is that ``annotations`` refers to fields
+        in the heavy/light chain annotations (like ``"sequence"``, ``"v_gene"``, etc.),
+        while ``columns`` refers to fields in the Polars DataFrame (like ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc.).
+
+    columns : list, default=None
+        A list of fields to be retained in the output Polars DataFrame. Fields must be column
+        names in the input file. The difference between ``annotations`` and ``columns`` is
+        that ``annotations`` refers to fields in the heavy/light chain annotations (like
+        ``"sequence"``, ``"v_gene"``, etc.), while ``columns`` refers to fields in the
+        Polars DataFrame (like ``"sequence:0"``, ``"sequence:1"``, ``"name"``, etc.).
+
+    properties : list, default=None
+        A list of properties to be included in the Polars DataFrame. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the Polars DataFrame.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the Polars DataFrame.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the Polars DataFrame.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the Polars DataFrame. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Polars DataFrame and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    data = []
+    # read Pair data
+    for p in pairs:
+        d = {"name": p.name}
+        # heavy chain
+        if p.heavy is not None:
+            if not p.heavy.annotations:
+                d.update({"sequence_id:0": p.heavy.id, "sequence:0": p.heavy.sequence})
+            else:
+                if annotations is not None:
+                    keys = [a for a in annotations if a in p.heavy.annotations]
+                else:
+                    keys = list(p.heavy.annotations.keys())
+                d.update({f"{k}:0": p.heavy[k] for k in keys})
+            if sequence_properties is not None:
+                for prop in sequence_properties:
+                    try:
+                        d[f"{prop}:0"] = getattr(p.heavy, prop)
+                    except AttributeError:
+                        pass
+        # light chain
+        if p.light is not None:
+            if not p.light.annotations:
+                d.update({"sequence_id:1": p.light.id, "sequence:1": p.light.sequence})
+            else:
+                if annotations is not None:
+                    keys = [a for a in annotations if a in p.light.annotations]
+                else:
+                    keys = list(p.light.annotations.keys())
+                d.update({f"{k}:1": p.light[k] for k in keys})
+            if sequence_properties is not None:
+                for prop in sequence_properties:
+                    try:
+                        d[f"{prop}:1"] = getattr(p.light, prop)
+                    except AttributeError:
+                        pass
+        # properties
+        if properties is not None:
+            for prop in properties:
+                try:
+                    d[prop] = getattr(p, prop)
+                except AttributeError:
+                    continue
+        data.append(d)
+
+    # build dataframe
+    df = pl.DataFrame(data, infer_schema_length=len(data))
+
+    # drop NaN
+    if drop_na_columns:
+        df = df[[s.name for s in df if not (s.null_count() == df.height)]]
+
+    # excluded columns
+    if exclude is not None:
+        if isinstance(exclude, str):
+            exclude = []
+        cols = [c for c in df.columns if c not in exclude]
+        df = df.select(cols)
+
+    # reorder
+    if order is not None:
+        cols = [o for o in order if o in df.columns]
+        df = df.select(cols)
+
+    # leading columns
+    if leading is not None:
+        if isinstance(leading, str):
+            leading = [leading]
+        leading = [l for l in leading if l in df.columns]
+        cols = leading + [c for c in df.columns if c not in leading]
+        df = df.select(cols)
+
+    if columns is not None:
+        cols = [c for c in columns if c in df.columns]
+        df = df.select(cols)
+
+    return df
+
+
+def pairs_from_polars(
+    df: Union[pl.DataFrame, pl.LazyFrame],
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Pair]:
+    """
+    Reads a Polars DataFrame and returns ``Pair`` objects.
+
+    Parameters
+    ----------
+    df : Union[pl.DataFrame, pl.LazyFrame]
+        The input Polars DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Pair``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    pairs : list of ``Pairs``
+
+    """
+    if match is None:
+        match = {}
+    if fields is not None:
+        if id_key not in fields:
+            fields.append(id_key)
+        if sequence_key not in fields:
+            fields.append(sequence_key)
+    pairs = []
+    if isinstance(df, pl.LazyFrame):
+        df = df.collect()
+    for r in df.iter_rows(named=True):
+        try:
+            if all([r[k] == v for k, v in match.items()]):
+                heavy = None
+                light = None
+                name = r.get("name", None)
+                # heavy chain
+                heavy_dict = {
+                    k.split(":")[0]: v for k, v in r.items() if k.endswith(":0")
+                }
+                if fields is not None:
+                    hc_fields = [f for f in fields if f in heavy_dict]
+                    heavy_dict = {f: heavy_dict[f] for f in hc_fields}
+                if any([v is not None for v in heavy_dict.values()]):
+                    heavy = Sequence(heavy_dict, id_key=id_key, seq_key=sequence_key)
+                # light chain
+                light_dict = {
+                    k.split(":")[0]: v for k, v in r.items() if k.endswith(":1")
+                }
+                if fields is not None:
+                    lc_fields = [f for f in fields if f in light_dict]
+                    light_dict = {f: light_dict[f] for f in lc_fields}
+                if any([v is not None for v in light_dict.values()]):
+                    light = Sequence(light_dict, id_key=id_key, seq_key=sequence_key)
+                # extra fields:
+                extra_fields = {}
+                for k, v in r.items():
+                    if (
+                        not k.endswith(":0")
+                        and not k.endswith(":1")
+                        and k.lower() != "name"
+                    ):
+                        extra_fields[k] = v
+                # pair
+                sequences = [s for s in [heavy, light] if s is not None]
+                pairs.append(
+                    Pair(sequences=sequences, name=name, properties=extra_fields)
+                )
+        except KeyError:
+            continue
+    return pairs
+
+
+def pairs_to_pandas(
+    pairs: Iterable[Pair],
+    annotations: Optional[Iterable[str]] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> pd.DataFrame:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a CSV file. Required.
+
+    annotations : list, default=None
+        A list of annotation fields to be included in the Polars DataFrame. The difference
+        between ``annotations`` and ``columns`` is that ``annotations`` refers to fields
+        in the heavy/light chain annotations (like ``"sequence"``, ``"v_gene"``, etc.),
+        while ``columns`` refers to fields in the Polars DataFrame (like ``"sequence:0"``,
+        ``"sequence:1"``, ``"name"``, etc.).
+
+    columns : list, default=None
+        A list of fields to be retained in the output Polars DataFrame. Fields must be column
+        names in the input file. The difference between ``annotations`` and ``columns`` is
+        that ``annotations`` refers to fields in the heavy/light chain annotations (like
+        ``"sequence"``, ``"v_gene"``, etc.), while ``columns`` refers to fields in the
+        Polars DataFrame (like ``"sequence:0"``, ``"sequence:1"``, ``"name"``, etc.).
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    df = pairs_to_polars(
+        pairs,
+        annotations=annotations,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    return df.to_pandas()
+
+
+def pairs_from_pandas(
+    df: pd.DataFrame,
+    match: Optional[dict] = None,
+    fields: Iterable = None,
+    id_key: str = "sequence_id",
+    sequence_key: str = "sequence",
+) -> Iterable[Pair]:
+    """
+    Reads a Polars DataFrame and returns ``Pair`` objects.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input pandas DataFrame. Required.
+
+    match : dict, default=None
+        A ``dict`` for filtering sequences from the input file.
+        Sequences must match all conditions to be returned. For example,
+        the following ``dict`` will filter out all sequences for which
+        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+
+        .. code-block:: python
+
+            {'v_gene:0': 'IGHV1-2'}
+
+    fields : list, default=None
+        A ``list`` of fields to be retained in the output ``Pair``
+        objects. Fields must be column names in the input file.
+
+    id_key : str, default="sequence_id"
+        Name of the annotation field containing the sequence ID. Used to
+        populate the ``Sequence.id`` property.
+
+    sequence_key : str, default="sequence"
+        Name of the annotation field containg the sequence. Used to
+        populate the ``Sequence.sequence`` property.
+
+
+    Returns
+    -------
+    pairs : list of ``Pairs``
+
+    """
+    polars_df = pl.from_pandas(df)
+    return pairs_from_polars(
+        df=polars_df,
+        match=match,
+        fields=fields,
+        id_key=id_key,
+        sequence_key=sequence_key,
+    )
+
+
+def pairs_to_csv(
+    pairs: Iterable[Pair],
+    csv_file: Optional[str] = None,
+    separator: str = ",",
+    header: bool = True,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a CSV file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a CSV file. Required.
+
+    csv_file : str
+        Path to the output CSV file. If not provided, a ``polars.DataFrame``
+        containing the CSV data will be returned.
+
+    separator : str, default=","
+        Column separator. Default is ``","``.
+
+    header : bool, default=True
+        If ``True``, the CSV file will contain a header row. Default is ``True``.
+
+    columns : list, default=None
+        A list of fields to be retained in the output CSV file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the CSV file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the CSV file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the CSV file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the CSV file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    df = pairs_to_polars(
+        pairs,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_csv(csv_file, separator=separator, include_header=header)
+
+
+def pairs_to_parquet(
+    pairs: Iterable[Pair],
+    parquet_file: Optional[str] = None,
+    columns: Optional[Iterable] = None,
+    properties: Optional[Iterable[str]] = None,
+    sequence_properties: Optional[Iterable[str]] = None,
+    drop_na_columns: bool = True,
+    order: Optional[Iterable[str]] = None,
+    exclude: Optional[Union[str, Iterable[str]]] = None,
+    leading: Optional[Union[str, Iterable[str]]] = None,
+) -> None:
+    """
+    Saves a list of ``Pair`` objects to a Parquet file.
+
+    Parameters
+    ----------
+    pairs : Iterable[Pair]
+        List of ``Pair`` objects to be saved to a Parquet file. Required.
+
+    parquet_file : str
+        Path to the output Parquet file. If not provided, a ``polars.DataFrame``
+        containing the Parquet data will be returned.
+
+    columns : list, default=None
+        A list of fields to be retained in the output Parquet file. Fields must be column
+        names in the input file.
+
+    properties : list, default=None
+        A list of properties to be included in the Parquet file. If not provided, everything
+        in the ``annotations`` field of each heavy/light chain will be included.
+
+    sequence_properties : list, default=None
+        A list of sequence properties to be included. Differs from ``properties``, which
+        refers to properties of the ``Pair`` object. These properties are those of the
+        heavy/light ``Sequence`` objects.
+
+    drop_na_columns : bool, default=True
+        If ``True``, columns with all ``NaN`` values will be dropped from the Parquet file.
+        Default is ``True``.
+
+    order : list, default=None
+        A list of fields in the order they should appear in the Parquet file.
+
+    exclude : str or list, default=None
+        Field or list of fields to be excluded from the Parquet file.
+
+    leading : str or list, default=None
+        Field or list of fields to appear first in the Parquet file. Supercedes ``order``, so
+        if both are provided, fields in ``leading`` will appear first in the Parquet file and
+        remaining fields will appear in the order provided in ``order``.
+
+    """
+    df = pairs_to_polars(
+        pairs,
+        columns=columns,
+        properties=properties,
+        sequence_properties=sequence_properties,
+        drop_na_columns=drop_na_columns,
+        order=order,
+        exclude=exclude,
+        leading=leading,
+    )
+    df.write_parquet(parquet_file)
+
+
+# def pairs_to_fasta(
+#     pairs: Iterable[Pair],
+#     fasta_file: Optional[str] = None,
+#     id_key: str = "sequence_id",
+#     sequence_key: str = "sequence",
+#     append_chain: bool = False,
+# ) -> str:
+#     """
+#     Saves a list of ``Pair`` objects to a FASTA-formatted file.
+
+#     Parameters
+#     ----------
+#     pairs : Iterable[Pair]
+#         List of ``Pair`` objects to be saved to a FASTA-formatted file. Required.
+
+#     fasta_file : str
+#         Path to the output FASTA-formatted file. If not provided, the FASTA-formatted
+#         sequences will be returned as a string.
+
+#     Returns
+#     -------
+#     fasta_str : str
+#         FASTA-formatted sequences as a string if ``fasta_file`` is not provided. If
+#         ``fasta_file`` is provided, the path to the output file is returned.
+
+#     """
+#     fastas = [
+#         p.to_fasta(id_key=id_key, sequence_key=sequence_key, append_chain=append_chain)
+#         for p in pairs
+#     ]
+#     if fasta_file is None:
+#         return "\n".join(fastas)
+#     else:
+#         from ..io import make_dir
+
+#         make_dir(os.path.dirname(fasta_file))
+#         with open(fasta_file, "w") as f:
+#             f.write("\n".join(fastas))
+#         return fasta_file
 
 
 # def deduplicate(pairs, aa=False, ignore_primer_regions=False):

@@ -4,10 +4,19 @@
 import os
 import tempfile
 
+import pandas as pd
+import polars as pl
 import pytest
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence, read_airr, read_fasta, to_fasta
+from ..core.sequence import Sequence
+from ..io import (
+    read_airr,
+    read_csv,
+    read_fasta,
+    read_parquet,
+    to_fasta,
+)
 
 
 @pytest.fixture
@@ -20,12 +29,78 @@ def fasta_sequence():
 
 
 @pytest.fixture
-def airr_sequence():
-    a = "sequence_id\tsequence\tsequence_aa\nairr_sequence\tATCGATCGATCG\tCASSLDRYFDYW\n"
+def airr_sequences():
+    a = "sequence_id\tsequence\tsequence_aa\nairr_sequence\tATCGATCGATCG\tCASSLDRYFDYW\nairr_sequence2\tATCGATCGATCG\tCASSLDRYFDYW\n"
     airr = tempfile.NamedTemporaryFile(delete=False)
     airr.write(a.encode("utf-8"))
     airr.close()
-    return airr
+    return airr.name
+
+
+@pytest.fixture
+def parquet_sequences():
+    a = [
+        {
+            "sequence_id": "airr_sequence",
+            "sequence": "ATCGATCGATCG",
+            "sequence_aa": "CASSLDRYFDYW",
+        },
+        {
+            "sequence_id": "airr_sequence2",
+            "sequence": "ATCGATCGATCG",
+            "sequence_aa": "CASSLDRYFDYW",
+        },
+    ]
+    df = pl.DataFrame(a)
+    parquet = tempfile.NamedTemporaryFile(delete=False)
+    df.write_parquet(parquet.name)
+    parquet.close()
+    return parquet.name
+
+
+@pytest.fixture
+def csv_sequences():
+    a = "sequence_id,sequence,sequence_aa\nairr_sequence,ATCGATCGATCG,CASSLDRYFDYW\nairr_sequence2,ATCGATCGATCG,CASSLDRYFDYW\n"
+    csv = tempfile.NamedTemporaryFile(delete=False)
+    csv.write(a.encode("utf-8"))
+    csv.close()
+    return csv.name
+
+
+@pytest.fixture
+def polars_sequences():
+    a = [
+        {
+            "sequence_id": "airr_sequence",
+            "sequence": "ATCGATCGATCG",
+            "sequence_aa": "CASSLDRYFDYW",
+        },
+        {
+            "sequence_id": "airr_sequence2",
+            "sequence": "ATCGATCGATCG",
+            "sequence_aa": "CASSLDRYFDYW",
+        },
+    ]
+    df = pl.DataFrame(a)
+    return df
+
+
+@pytest.fixture
+def pandas_sequences():
+    a = [
+        {
+            "sequence_id": "airr_sequence",
+            "sequence": "ATCGATCGATCG",
+            "sequence_aa": "CASSLDRYFDYW",
+        },
+        {
+            "sequence_id": "airr_sequence2",
+            "sequence": "ATCGATCGATCG",
+            "sequence_aa": "CASSLDRYFDYW",
+        },
+    ]
+    df = pd.DataFrame(a)
+    return df
 
 
 @pytest.fixture
@@ -91,7 +166,7 @@ def test_sequence_with_list():
 
 
 def test_sequence_with_dict():
-    seq = Sequence({"seq_id": "seq1", "vdj_nt": "ATCG"})
+    seq = Sequence({"sequence_id": "seq1", "sequence": "ATCG"})
     assert seq.sequence == "ATCG"
     assert seq.id == "seq1"
 
@@ -192,12 +267,59 @@ def test_read_fasta(fasta_sequence):
     )
 
 
-def test_read_airr(airr_sequence):
-    seqs = read_airr(airr_sequence.name)
-    assert len(seqs) == 1
+def test_read_airr(airr_sequences):
+    seqs = read_airr(airr_sequences)
+    assert len(seqs) == 2
     assert seqs[0].id == "airr_sequence"
     assert seqs[0].sequence == "ATCGATCGATCG"
     assert seqs[0]["sequence_aa"] == "CASSLDRYFDYW"
+    assert seqs[1].id == "airr_sequence2"
+    assert seqs[1].sequence == "ATCGATCGATCG"
+    assert seqs[1]["sequence_aa"] == "CASSLDRYFDYW"
+
+
+def test_read_parquet(parquet_sequences):
+    seqs = read_parquet(parquet_sequences)
+    assert len(seqs) == 2
+    assert seqs[0].id == "airr_sequence"
+    assert seqs[0].sequence == "ATCGATCGATCG"
+    assert seqs[0]["sequence_aa"] == "CASSLDRYFDYW"
+    assert seqs[1].id == "airr_sequence2"
+    assert seqs[1].sequence == "ATCGATCGATCG"
+    assert seqs[1]["sequence_aa"] == "CASSLDRYFDYW"
+
+
+def test_read_csv(csv_sequences):
+    seqs = read_csv(csv_sequences)
+    assert len(seqs) == 2
+    assert seqs[0].id == "airr_sequence"
+    assert seqs[0].sequence == "ATCGATCGATCG"
+    assert seqs[0]["sequence_aa"] == "CASSLDRYFDYW"
+    assert seqs[1].id == "airr_sequence2"
+    assert seqs[1].sequence == "ATCGATCGATCG"
+    assert seqs[1]["sequence_aa"] == "CASSLDRYFDYW"
+
+
+# def test_from_polars(polars_sequences):
+#     seqs = from_polars(polars_sequences)
+#     assert len(seqs) == 2
+#     assert seqs[0].id == "airr_sequence"
+#     assert seqs[0].sequence == "ATCGATCGATCG"
+#     assert seqs[0]["sequence_aa"] == "CASSLDRYFDYW"
+#     assert seqs[1].id == "airr_sequence2"
+#     assert seqs[1].sequence == "ATCGATCGATCG"
+#     assert seqs[1]["sequence_aa"] == "CASSLDRYFDYW"
+
+
+# def test_from_pandas(pandas_sequences):
+#     seqs = from_pandas(pandas_sequences)
+#     assert len(seqs) == 2
+#     assert seqs[0].id == "airr_sequence"
+#     assert seqs[0].sequence == "ATCGATCGATCG"
+#     assert seqs[0]["sequence_aa"] == "CASSLDRYFDYW"
+#     assert seqs[1].id == "airr_sequence2"
+#     assert seqs[1].sequence == "ATCGATCGATCG"
+#     assert seqs[1]["sequence_aa"] == "CASSLDRYFDYW"
 
 
 # ------------------

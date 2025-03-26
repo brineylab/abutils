@@ -3,12 +3,14 @@
 
 import os
 
-from . import bin, cl, io, pl, tl
+from . import bin, cl, io, log, pl, tl
 from . import cl as color
 from .core import lineage, pair, sequence
 from .core.lineage import Lineage
 from .core.pair import Pair
 from .core.sequence import Sequence
+
+# from .tools import log
 from .tools.phylo import Phylogeny
 from .utils import (
     alignment,
@@ -16,7 +18,7 @@ from .utils import (
     # color,
     decorators,
     jobs,
-    log,
+    # log,
     phylogeny,
     pipeline,
     progbar,

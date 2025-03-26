@@ -8,6 +8,16 @@ All pairwise alignment functions return a subclass of the :class:`abutils.tl.Pai
 classes for each pairwise alignment type are identical, with the exception of the ``alignment_function`` and ``alignment_type``
 properties, so the user can easily switch between alignment methods with minimal changes to their code.
 
+|  
+
+.. csv-table:: 
+   :header: "alignment type", "function"
+   :widths: 10, 16
+
+   "local", :ref:`abutils.tl.local_alignment() <local-aln>`
+   "global", :ref:`abutils.tl.global_alignment() <global-aln>`
+   "semi-global", :ref:`abutils.tl.semiglobal_alignment() <semiglobal-aln>`
+
 
 examples
 -------------
@@ -87,7 +97,7 @@ alignments (which, by default, sorts by alignment score), and selects the top sc
     )
 
     # get the highest scoring alignment
-    best_aln = alns.sort(reverse=True)[0]
+    best_aln = sorted(alns, reverse=True)[0]
 
 
 | 
@@ -95,8 +105,17 @@ alignments (which, by default, sorts by alignment score), and selects the top sc
 api
 -----------
 
+
+.. _local-aln:
+
 .. autofunction:: abutils.tl.local_alignment
+
+.. _global-aln:
+
 .. autofunction:: abutils.tl.global_alignment
+
+.. _semiglobal-aln:
+
 .. autofunction:: abutils.tl.semiglobal_alignment
 
 | 

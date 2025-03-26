@@ -25,13 +25,13 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from itertools import chain
 import os
+from itertools import chain
 from zipfile import ZipFile
 
 from Bio import SeqIO
 
-from .pipeline import list_files, make_dir
+from ..io import list_files, make_dir
 
 
 def abi_to_fasta(input, output):

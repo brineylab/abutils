@@ -59,7 +59,8 @@
 
 
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 # read version
 version_file = os.path.join(os.path.dirname(__file__), "abutils", "version.py")
@@ -84,8 +85,9 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/briney/abutils",
     packages=find_packages(),
-    install_requires=requirements,
+    # package_dir={"": "abutils"},
     include_package_data=True,
+    install_requires=requirements,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",

@@ -29,7 +29,7 @@ import subprocess as sp
 import sys
 import tempfile
 import uuid
-from abc import ABC, abstractmethod
+from abc import ABC
 from copy import copy, deepcopy
 from io import StringIO
 from itertools import groupby
@@ -43,11 +43,12 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from ..bin import get_path as get_binary_path
-from ..core.sequence import Sequence, read_fasta
-from ..io import to_fasta
+from ..core.sequence import Sequence
+from ..io import read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 
 __all__ = [
+    "famsa",
     "mafft",
     "muscle",
     "muscle_v3",
@@ -489,7 +490,9 @@ def mafft(
     # process input
     if fasta is not None:
         sequences = fasta
-    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    ffile = to_fasta(
+        sequences, id_key=id_key, sequence_key=seq_key, tempfile_dir="/tmp"
+    )
     # configure output path
     if alignment_file is None:
         # as_file = False
@@ -644,7 +647,9 @@ def muscle(
     # process input
     if fasta is not None:
         sequences = fasta
-    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    ffile = to_fasta(
+        sequences, id_key=id_key, sequence_key=seq_key, tempfile_dir="/tmp"
+    )
     # configure output path
     if alignment_file is None:
         # as_file = False
@@ -926,7 +931,9 @@ def muscle_v3(
     # )
     if fasta is not None:
         sequences = fasta
-    ffile = to_fasta(sequences, id_key=id_key, sequence_key=seq_key)
+    ffile = to_fasta(
+        sequences, id_key=id_key, sequence_key=seq_key, tempfile_dir="/tmp"
+    )
     # configure output path
     if alignment_file is None:
         # as_file = False
@@ -1352,6 +1359,20 @@ class PairwiseAlignment(ABC):
         return self.target.id
 
     def align(self):
+        # parasail throws an error if query or target sequences are of length 0
+        # but -- annoyingly -- it also prints a warning to stdout
+        # the stdout printing can mess with downstream code like abstar
+        # to fix, we'll catch the problem before alignment and raise an error
+        if len(self.query.sequence) == 0:
+            raise ValueError(
+                f"{self.alignment_type.upper()} ALIGNMENT ERROR: query sequence is empty."
+            )
+        if len(self.target.sequence) == 0:
+            raise ValueError(
+                f"{self.alignment_type.upper()} ALIGNMENT ERROR: target sequence is empty."
+            )
+
+        # do the alignment
         aln = self.alignment_function(
             self.query.sequence,
             self.target.sequence,

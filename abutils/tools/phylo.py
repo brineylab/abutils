@@ -24,12 +24,11 @@
 
 
 import os
-import platform
 import subprocess as sp
 import tempfile
 import uuid
 from collections import Counter
-from copy import copy, deepcopy
+from copy import deepcopy
 from io import StringIO
 from typing import Callable, Iterable, List, Optional, Union
 
@@ -42,10 +41,12 @@ from matplotlib import markers
 from matplotlib.path import Path
 
 from ..bin import get_path as get_binary_path
-from ..core.sequence import Sequence, read_fasta, to_fasta
+from ..core.sequence import Sequence
+from ..io import make_dir, read_fasta, to_fasta
+from ..tools.alignment import mafft
 from ..tools.cluster import Cluster, cluster
-from ..utils.alignment import mafft
-from ..utils.pipeline import make_dir
+
+# from ..utils.pipeline import make_dir
 
 __all__ = ["fasttree", "Phylogeny", "phylogeny"]
 
@@ -451,7 +452,7 @@ class Phylogeny:
         sequences : list of Sequence objects
             Processed sequences.
         """
-        sequences = deepcopy(sequences)
+        # sequences = deepcopy(sequences)
         sequences = [
             Sequence(
                 s[self.seq_key] if self.seq_key is not None else s.sequence,

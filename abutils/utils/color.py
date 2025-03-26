@@ -28,16 +28,7 @@ from typing import Iterable, Optional, Tuple, Union
 import matplotlib as mpl
 import numpy as np
 import seaborn as sns
-
-# from matplotlib import cm, colors
 from matplotlib import pyplot as plt
-
-# from matplotlib.colors import (
-#     Colormap,
-#     LinearSegmentedColormap,
-#     ListedColormap,
-#     to_rgba_array,
-# )
 
 __all__ = [
     "get_cmap",
@@ -49,7 +40,6 @@ __all__ = [
     "hls",
     "husl",
     "truncate_colormap",
-    # "cmaps",
     "monochrome_palette",
 ]
 
@@ -89,7 +79,9 @@ true_false_palette = {True: "#e41a1c", False: "#d1d1d1"}
 
 def show_palettes() -> None:
     """
-    inspired by https://matplotlib.org/stable/tutorials/colors/colormaps.html
+    Displays all abutils built-in color palettes. Inspired by matplotlib's `colormaps`_ tutorial.
+
+    .. _colormaps: https://matplotlib.org/stable/tutorials/colors/colormaps.html
     """
     gradient = np.linspace(0, 1, 256)
     gradient = np.vstack((gradient, gradient))

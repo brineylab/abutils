@@ -1,8 +1,8 @@
 import os
-import pytest
 import tempfile
 import unittest
 
+import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -35,11 +35,11 @@ def nt_sequence_strings():
 def aa_sequences(aa_sequence_strings):
     # a total of 5 sequences, of which 3 are identical (s1) and 2 are identical (s2)
     s1, s2 = aa_sequence_strings
-    seq1 = Sequence(seq=s1, id="seq1")
-    seq2 = Sequence(seq=s1, id="seq2")
-    seq3 = Sequence(seq=s1, id="seq3")
-    seq4 = Sequence(seq=s2, id="seq4")
-    seq5 = Sequence(seq=s2, id="seq5")
+    seq1 = Sequence(sequence=s1, id="seq1")
+    seq2 = Sequence(sequence=s1, id="seq2")
+    seq3 = Sequence(sequence=s1, id="seq3")
+    seq4 = Sequence(sequence=s2, id="seq4")
+    seq5 = Sequence(sequence=s2, id="seq5")
     return [seq1, seq2, seq3, seq4, seq5]
 
 
@@ -47,11 +47,11 @@ def aa_sequences(aa_sequence_strings):
 def nt_sequences(nt_sequence_strings):
     # a total of 5 sequences, of which 3 are identical (s1) and 2 are identical (s2)
     s1, s2 = nt_sequence_strings
-    seq1 = Sequence(seq=s1, id="seq1")
-    seq2 = Sequence(seq=s1, id="seq2")
-    seq3 = Sequence(seq=s1, id="seq3")
-    seq4 = Sequence(seq=s2, id="seq4")
-    seq5 = Sequence(seq=s2, id="seq5")
+    seq1 = Sequence(sequence=s1, id="seq1")
+    seq2 = Sequence(sequence=s1, id="seq2")
+    seq3 = Sequence(sequence=s1, id="seq3")
+    seq4 = Sequence(sequence=s2, id="seq4")
+    seq5 = Sequence(sequence=s2, id="seq5")
     return [seq1, seq2, seq3, seq4, seq5]
 
 

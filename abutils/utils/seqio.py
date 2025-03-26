@@ -23,25 +23,24 @@
 #
 
 
-from abc import ABCMeta, abstractmethod
 import json
 import os
 import sys
+from abc import ABCMeta, abstractmethod
 
 from Bio import SeqIO
 
+from ..core.sequence import Sequence
+from ..io import list_files
 from . import mongodb
 from .decorators import lazy_property
-from .pipeline import list_files
-from ..core.sequence import Sequence
 
-
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-else:
-    STR_TYPES = [str, unicode]
+# if sys.version_info[0] > 2:
+#     STR_TYPES = [
+#         str,
+#     ]
+# else:
+#     STR_TYPES = [str, unicode]
 
 
 # def read_input(input, data_type,
@@ -143,7 +142,7 @@ class BaseInput:
     @property
     @abstractmethod
     def as_generator(self):
-        " Returns the input as a genarator of Sequence objects"
+        "Returns the input as a genarator of Sequence objects"
         pass
 
 
@@ -162,7 +161,7 @@ class FASTAInput(BaseInput):
 
     @property
     def files(self):
-        if type(self.input) in STR_TYPES:
+        if isinstance(self.input, str):
             if os.path.isdir(self.input):
                 return list_files(self.input, "json")
             else:
@@ -209,7 +208,7 @@ class JSONInput(BaseInput):
 
     @property
     def files(self):
-        if type(self.input) in STR_TYPES:
+        if isinstance(self.input, str):
             if os.path.isdir(self.input):
                 return list_files(self.input, "json")
             else:
@@ -289,7 +288,7 @@ class MongoDBInput(BaseInput):
 
     @property
     def collections(self):
-        if type(self.raw_collections) in STR_TYPES:
+        if isinstance(self.raw_collections, str):
             return [
                 self.raw_collections,
             ]
@@ -323,7 +322,7 @@ class MongoDBInput(BaseInput):
                 yield Sequence(r, seq_key=self.seq_field)
 
     def _process_collections(self, collection):
-        if type(collection) in STR_TYPES:
+        if isinstance(collection, str):
             return [
                 collection,
             ]
@@ -331,4 +330,3 @@ class MongoDBInput(BaseInput):
             return mongodb.get_collections(self.db)
         else:
             return collection
-

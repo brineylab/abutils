@@ -1,14 +1,13 @@
 import os
 import platform
-import pytest
 import tempfile
 
 import numpy as np
-
+import pytest
 from matplotlib.path import Path
 
 from ..core.sequence import Sequence
-from ..tools.phylo import fasttree, phylogeny, Phylogeny, align_marker
+from ..tools.phylo import Phylogeny, align_marker, fasttree, phylogeny
 
 
 @pytest.fixture
@@ -76,7 +75,7 @@ def fasta_file_aa(fasta_string_aa):
 
 @pytest.fixture
 def root_sequence():
-    return Sequence(seq="ATCGATCGATCGATCGGGCGATCGATCG", id="root")
+    return Sequence(sequence="ATCGATCGATCGATCGGGCGATCGATCG", id="root")
 
 
 # ---------------------------
