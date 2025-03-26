@@ -169,11 +169,11 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :caption: tools
 
    tools/alignment
-   tools/clustering
-   tools/search
-   tools/preprocessing
    tools/clonify
+   tools/clustering
    tools/phylogeny
+   tools/preprocessing
+   tools/search
 
 .. toctree::
    :maxdepth: 1
@@ -181,9 +181,9 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :caption: plots
 
    plots/bar
-   plots/scatter
-   plots/kde
    plots/donut
+   plots/kde-plot
+   plots/scatter
 
 .. toctree::
     :maxdepth: 2
