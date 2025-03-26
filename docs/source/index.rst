@@ -70,6 +70,12 @@ into custom pipelines or for use when performing interactive analyses:
 
   * :ref:`clustering <clustering>`: identity-based sequence clustering with VSEARCH_, CDHIT_, or MMseqs2_
 
+  * :ref:`search <search>`: fast sequence similarity search with MMseqs2_
+  
+  * :ref:`preprocessing <preprocessing>`: preprocessing functions for sequence data, including merging paired-end reads
+  
+  * :ref:`clonify <clonify>`: assigning antibody sequences to clonal lineages using the clonify_ algorithm
+
   * :ref:`phylogeny <phylogeny>`: computing phylogenies with FastTree_ or IgPhyML_, tree drawing with baltic_
 
 All of the tool functions are accessible via ``abutils.tl``.
@@ -81,17 +87,17 @@ plots (``abutils.pl``)
 
 ``abutils`` provides a number of plotting functions for visualizing antibody repertoire data.
 These functions are built on top of matplotlib and seaborn and are designed to be easily
-integrated into custom analyses or pipelines. Plotting funcions are desogmed tp work with
+integrated into custom analyses or pipelines. Plotting functions are designed to work with
 ``Sequence``, ``Pair``, and ``Lineage`` objects, and fully support AIRR-C annotation formats for
 plotting adaptive immune receptor features like CDR3 length distributions and germline gene usage.
 
-  .. * :ref:`bar <bar-plot>`: plot categorical data or frequency distributions as a bar plot
+  * :ref:`bar <bar-plot>`: plot categorical data or frequency distributions as a bar plot
 
-  .. * :ref:`scatter <scatter-plot>`: plot two-dimensional data as a scatter plot
+  * :ref:`scatter <scatter-plot>`: plot two-dimensional data as a scatter plot
 
-  .. * :ref:`kde <pkde-plot>`: plot one- or two-dimensional data as a kernel density estimate
+  * :ref:`kde <kde-plot>`: plot one- or two-dimensional data as a kernel density estimate
 
-  .. * :ref:`donut <donut-plot>`: plot categorical data (such as lineages or germline genes) as a donut plot
+  * :ref:`donut <donut-plot>`: plot categorical data (such as lineages or germline genes) as a donut plot
 
 All of the plotting functions are accessible via ``abutils.pl``
 
@@ -126,6 +132,7 @@ multiprocessing jobs, creating and modifying color palettes, and others.
 .. _baltic: https://github.com/evogytis/baltic
 .. _Pandas: https://pandas.pydata.org/
 .. _Polars: https://pola.rs/
+.. _clonify: https://doi.org/10.1038/srep23901
 
 
 
@@ -164,16 +171,19 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    tools/alignment
    tools/clustering
    tools/search
+   tools/preprocessing
+   tools/clonify
+   tools/phylogeny
 
 .. toctree::
    :maxdepth: 1
    :hidden:
    :caption: plots
 
-   modules/bar
-   modules/scatter
-   modules/kde
-   modules/donut
+   plots/bar
+   plots/scatter
+   plots/kde
+   plots/donut
 
 .. toctree::
     :maxdepth: 2
