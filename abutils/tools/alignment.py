@@ -48,6 +48,7 @@ from ..io import read_fasta, to_fasta
 from ..utils.decorators import lazy_property
 
 __all__ = [
+    "famsa",
     "mafft",
     "muscle",
     "muscle_v3",
