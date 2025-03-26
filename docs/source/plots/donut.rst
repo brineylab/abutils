@@ -1,6 +1,6 @@
 .. _donut-plot:
 
-donut
+donut plot
 ==========
 
 ``abutils`` provides a function for creating donut plots, which are useful for visualizing the distribution

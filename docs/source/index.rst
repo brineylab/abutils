@@ -106,15 +106,14 @@ All of the plotting functions are accessible via ``abutils.pl``
 colors (``abutils.cl``)
 -------------------------
 
-``abutils`` also provides a number of utility functions that are generally useful 
-when working with antibody repertoire data. These include funcions for monitoring 
-multiprocessing jobs, creating and modifying color palettes, and others.
+``abutils`` provides utility functions that are generally useful when working with antibody repertoire data.
+These include functions for monitoring multiprocessing jobs, creating and manipulating color palettes, and more.
 
   * :ref:`io <io>`: functions for reading and writing sequence data
 
   * :ref:`jobs <jobs>`: functions for monitoring multiprocessing jobs
 
-  * :ref:`colors <colors>`: functions for working with colors and color palettes
+  * :ref:`colors <colors>`: comprehensive functions for working with colors and color palettes, accessible through the ``abutils.cl`` module
 
 
 
@@ -181,9 +180,9 @@ multiprocessing jobs, creating and modifying color palettes, and others.
    :caption: plots
 
    plots/bar
-   plots/donut
-   plots/kde-plot
    plots/scatter
+   plots/kde
+   plots/donut
 
 .. toctree::
     :maxdepth: 2

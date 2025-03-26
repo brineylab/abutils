@@ -1,6 +1,6 @@
 .. _kde-plot:
 
-kde
+kde plot
 ========
 
 ``abutils`` provides functionality for creating kernel density estimate (KDE) plots. These plots are useful
