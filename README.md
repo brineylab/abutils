@@ -14,7 +14,9 @@ Models, functions and visualization tools for working with adaptive immune recep
   <!-- - Docker: [hub.docker.com/r/briney/abstar/](https://hub.docker.com/r/briney/abstar/)   -->  
   
 ### install  
-`pip install abutils`  
+``` bash
+pip install abutils
+```
 
 
 ### api  
@@ -23,14 +25,14 @@ We've tried to design the  `abutils` API to be intuitive yet powerful, with the 
 
 ### testing  
 You can run the complete `abutils` test suite by first installing `pytest`:
-```
+``` bash
 pip install pytest
 ```
 
 followed by:
 
-```
-git clone https://github.com/briney/abutils
+``` bash
+git clone https://github.com/brineylab/abutils
 cd abutils
 pytest
 ```
@@ -64,18 +66,13 @@ scipy
 seaborn  
 smart_open  
   
-All of the above dependencies can be installed with `pip`, and will be installed automatically when installing `abutils` with `pip`.  
-  
-`abutils` packages several additional external binaries that are required for specific functions:
+`abutils` packages several additional binaries that are required for specific functions:
 
 * ``abutils.tl.mafft`` uses [MAFFT](https://mafft.cbrc.jp/alignment/software/)
 * ``abutils.tl.muscle`` uses [MUSCLE](https://www.drive5.com/muscle/)
-* ``abutils.tl.cluster`` requires:
-  * [CD-HIT](https://cd-hit.org)
-  * [MMseqs2](https://github.com/soedinglab/MMseqs2)
-  * [VSEARCH](https://github.com/torognes/vsearch)
-* ``abutils.tl.fasttree`` requires [FastTree](http://www.microbesonline.org/fasttree/)
+* ``abutils.tl.cluster`` uses [CD-HIT](https://cd-hit.org), [MMseqs2](https://github.com/soedinglab/MMseqs2), and [VSEARCH](https://github.com/torognes/vsearch)
+* ``abutils.tl.fasttree`` uses [FastTree](http://www.microbesonline.org/fasttree/)
 
-Althogh these binaries are all packaged into `abutils`, each respective `abutils` function provides the option to supply a different binary path in case you'd prefer to use a different version or an alternate compilation.  
+Althogh these binaries are all packaged into `abutils`, each respective `abutils.tl` function provides the option to supply a different binary path in case you'd prefer to use a different version or an alternate compilation.  
 
 
