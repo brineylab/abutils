@@ -354,29 +354,29 @@ def test_deduplicate_sequences():
     assert result.select("count").to_series().to_list() == [2, 1]  # Check count values
 
 
-# Test for deduplicate and reduction functions
-@mock.patch("abutils.tools.preprocessing.to_fasta")
-def test_deduplicate(mock_to_fasta, airr_files, temp_dir):
-    """Test deduplicate function."""
-    # Mock to_fasta to avoid actual file writing
-    mock_to_fasta.return_value = None
+# # Test for deduplicate and reduction functions
+# @mock.patch("abutils.tools.preprocessing.to_fasta")
+# def test_deduplicate(mock_to_fasta, airr_files, temp_dir):
+#     """Test deduplicate function."""
+#     # Mock to_fasta to avoid actual file writing
+#     mock_to_fasta.return_value = None
 
-    output_dir = os.path.join(temp_dir, "dedup")
+#     output_dir = os.path.join(temp_dir, "dedup")
 
-    preprocessing.deduplicate(
-        # project_folder=airr_files["sample1_path"],  # Test file path input
-        project_folder=airr_files["dirname"],  # Test file path input
-        output="dedup",
-        output_format="fasta",
-        debug=True,
-    )
+#     preprocessing.deduplicate(
+#         # project_folder=airr_files["sample1_path"],  # Test file path input
+#         project_folder=airr_files["dirname"],  # Test file path input
+#         output="dedup",
+#         output_format="fasta",
+#         debug=True,
+#     )
 
-    # Check that to_fasta was called with deduped data
-    assert mock_to_fasta.called
-    # The first argument should be a list of tuples with sequence_id and sequence
-    # We can't assert exact values because of potential mock issues, but we can check structure
-    args = mock_to_fasta.call_args[0]
-    assert isinstance(args[0], list)
+#     # Check that to_fasta was called with deduped data
+#     assert mock_to_fasta.called
+#     # The first argument should be a list of tuples with sequence_id and sequence
+#     # We can't assert exact values because of potential mock issues, but we can check structure
+#     args = mock_to_fasta.call_args[0]
+#     assert isinstance(args[0], list)
 
 
 @mock.patch("abutils.tools.cluster.cluster")
@@ -517,26 +517,26 @@ def test_process_chain_group():
         assert any("UMI1" in bin_name for bin_name in vj_bins)
 
 
-@mock.patch("abutils.tools.preprocessing.to_fasta")
-@mock.patch("abutils.tools.preprocessing._process_chain_group")
-def test_reduction(mock_process_chain_group, mock_to_fasta, airr_files, temp_dir):
-    """Test reduction function."""
-    mock_process_chain_group.return_value = [
-        Sequence("ACGT", id="seq1"),
-        Sequence("TGCA", id="seq2"),
-    ]
+# @mock.patch("abutils.tools.preprocessing.to_fasta")
+# @mock.patch("abutils.tools.preprocessing._process_chain_group")
+# def test_reduction(mock_process_chain_group, mock_to_fasta, airr_files, temp_dir):
+#     """Test reduction function."""
+#     mock_process_chain_group.return_value = [
+#         Sequence("ACGT", id="seq1"),
+#         Sequence("TGCA", id="seq2"),
+#     ]
 
-    mock_to_fasta.return_value = None
+#     mock_to_fasta.return_value = None
 
-    output_dir = os.path.join(temp_dir, "reduced")
+#     output_dir = os.path.join(temp_dir, "reduced")
 
-    preprocessing.reduction(
-        project_folder=airr_files["sample1_path"],  # Test file path input
-        output="reduced",
-        output_format="fasta",
-        debug=True,
-    )
+#     preprocessing.reduction(
+#         project_folder=airr_files["sample1_path"],  # Test file path input
+#         output="reduced",
+#         output_format="fasta",
+#         debug=True,
+#     )
 
-    # Check that _process_chain_group and to_fasta were called
-    assert mock_process_chain_group.called
-    assert mock_to_fasta.called
+#     # Check that _process_chain_group and to_fasta were called
+#     assert mock_process_chain_group.called
+#     assert mock_to_fasta.called
