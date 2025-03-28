@@ -39,7 +39,7 @@ This test suite is automatically run following every commit, and is tested again
   
 
 ### requirements  
-**python 3.8+**  
+**python 3.10+**  
   
 abstar  
 baltic  
