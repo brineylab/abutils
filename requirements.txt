@@ -1,6 +1,6 @@
 abstar>=0.6.3
 baltic
-biopython >= 1.78
+biopython >= 1.79
 celery
 dnachisel
 ete3
