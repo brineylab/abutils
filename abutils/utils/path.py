@@ -23,6 +23,141 @@
 #
 
 
+import glob
+import os
+import re
+from typing import Iterable, Optional, Union
+
+from natsort import natsorted
+
+# =======================
+#   General file I/O
+# =======================
+
+
+def make_dir(directory: str) -> None:
+    """
+    Makes a directory, if it doesn't already exist.
+
+    Parameters
+    ----------
+    directory : str
+        Path to a directory.
+
+    """
+    if not os.path.exists(directory):
+        os.makedirs(os.path.abspath(directory))
+
+
+def list_files(
+    directory: str,
+    extension: Union[str, Iterable, None] = None,
+    recursive: bool = False,
+    match: Optional[str] = None,
+    ignore_dot_files: bool = True,
+) -> Iterable[str]:
+    """
+    Lists files in a given directory.
+
+    Parameters
+    ----------
+    directory : str
+        Path to a directory. If a file path is passed instead, the returned list of files will contain
+        only that file path.
+
+    extension : str
+        If supplied, only files that end with the specificied extension(s) will be returned. Can be either
+        a string or a list of strings. Extension evaluation is case-insensitive and can match complex
+        extensions (e.g. '.fastq.gz'). Default is ``None``, which returns all files in the directory,
+        regardless of extension.
+
+    recursive : bool, default=False
+        If ``True``, the directory will be searched recursively, and all files in all subdirectories will be returned.
+
+    match : str, optional
+        If supplied, only files that match the specified pattern will be returned. Regular expressions are supported.
+
+    ignore_dot_files : bool, default=True
+        If ``True``, dot files (hidden files) will be ignored.
+
+    Returns
+    -------
+    Iterable[str]
+
+    """
+    directory = os.path.abspath(directory)
+    if os.path.exists(directory):
+        if os.path.isdir(directory):
+            if recursive:
+                files = []
+                for root, dirs, _files in os.walk(directory):
+                    for f in _files:
+                        file_path = os.path.join(root, f)
+                        files.append(file_path)
+            else:
+                files = natsorted(glob.glob(directory + "/*"))
+        else:
+            files = [directory]
+    else:
+        raise ValueError(f"Directory {directory} does not exist.")
+    if extension is not None:
+        if isinstance(extension, str):
+            extension = [
+                extension,
+            ]
+        files = [
+            f
+            for f in files
+            if any(
+                [
+                    any([f.lower().endswith(e.lower()) for e in extension]),
+                    any([f.endswith(e.upper()) for e in extension]),
+                    any([f.endswith(e.lower()) for e in extension]),
+                ]
+            )
+        ]
+    if ignore_dot_files:
+        files = [f for f in files if not os.path.basename(f).startswith(".")]
+    if match is not None:
+        files = [f for f in files if re.match(match, os.path.basename(f)) is not None]
+    return files
+
+
+def rename_file(file: str, new_name: str) -> None:
+    """
+    Renames a file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the file to be renamed.
+
+    new_name : str
+        New name for the file.
+
+    """
+    os.rename(file, new_name)
+
+
+def delete_files(files: Union[str, Iterable]) -> None:
+    """
+    Deletes files.
+
+    Parameters
+    ----------
+    files : Union[str, Iterable]
+        Path to a file or an iterable of file paths.
+
+    """
+    if isinstance(files, str):
+        files = [
+            files,
+        ]
+    for f in files:
+        if os.path.exists(f):
+            os.remove(f)
+
+
 # from __future__ import absolute_import, division, print_function, unicode_literals
 
 # import glob

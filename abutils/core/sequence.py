@@ -41,9 +41,8 @@ import pyfastx
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
-# from ..io import delete_files
-from ..io import make_dir
 from ..utils.codons import codon_lookup
+from ..utils.path import make_dir
 from ..utils.utilities import nested_dict_lookup
 
 STR_TYPES = [str]
