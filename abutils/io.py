@@ -70,8 +70,7 @@ from .core.sequence import (
     # to_fasta,
     to_fastq,
 )
-
-# from .utils.convert import abi_to_fasta
+from .utils.path import delete_files, list_files, make_dir, rename_file
 
 # =======================
 #   General file I/O

@@ -1,9 +1,9 @@
 abstar>=0.6.3
 baltic
 biopython >= 1.78
-celery
+# celery
 dnachisel
-ete3
+# ete3
 fastcluster
 matplotlib
 mnemonic
@@ -17,7 +17,7 @@ prettytable
 pyarrow
 pyfamsa
 pyfastx
-pymongo
+# pymongo
 pytest
 python-circos
 pyyaml
