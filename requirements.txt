@@ -1,6 +1,6 @@
-abstar>=0.6.3
+abstar>=0.7
 baltic
-biopython >= 1.78
+biopython>=1.78
 # celery
 dnachisel
 # ete3
@@ -8,7 +8,7 @@ fastcluster
 matplotlib
 mnemonic
 natsort
-numpy
+numpy<2
 pandas
 paramiko
 parasail
