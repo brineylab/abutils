@@ -11,15 +11,15 @@ Models, functions and visualization tools for working with adaptive immune recep
   - Source code: [github.com/briney/abutils](https://github.com/briney/abutils)  
   - Documentation: [abutils.readthedocs.org](http://abutils.readthedocs.org)  
   - Download: [pypi.python.org/pypi/abutils](https://pypi.python.org/pypi/abutils)  
-  <!-- - Docker: [hub.docker.com/r/briney/abstar/](https://hub.docker.com/r/briney/abstar/)   -->  
+  - Docker: [hub.docker.com/r/brineylab/datascience/](https://hub.docker.com/r/brineylab/datascience/)  
   
-### install  
+## install  
 ``` bash
 pip install abutils
 ```
 
 
-### api  
+## api  
 We've tried to design the  `abutils` API to be intuitive yet powerful, with the goal of enabling both interactive analyses (via environments like Jupyter notebooks) as well as integration of `abutils` tools into more complex analysis pipelines and/or standalone software tools. See the [documentation](http://abutils.readthedocs.org) for more detail about the API. As always, any feedback is greatly appreciated!!  
 
 
@@ -29,7 +29,7 @@ You can run the complete `abutils` test suite by first installing `pytest`:
 pip install pytest
 ```
 
-followed by:
+and then running:
 
 ``` bash
 git clone https://github.com/brineylab/abutils
@@ -37,7 +37,7 @@ cd abutils
 pytest
 ```
 
-This test suite is automatically run following every commit, and is tested against all supported versions of Python.
+This test suite is automatically run against all supported versions of Python following every commit.
   
 
 ### requirements  
@@ -46,33 +46,37 @@ This test suite is automatically run following every commit, and is tested again
 abstar  
 baltic  
 biopython  
-celery  
-ete3  
+dnachisel  
 fastcluster  
 matplotlib  
 mnemonic  
 natsort  
 numpy  
 pandas  
-paramiko  
 parasail  
+polars  
+prettytable  
+pyarrow  
+pyfamsa  
+pyfastx  
 pytest  
 python-circos  
-python-Levenshtein  
 pyyaml  
+rapidfuzz  
 sample-sheet  
 scikit-learn  
 scipy  
 seaborn  
 smart_open  
+tqdm  
   
-`abutils` packages several additional binaries that are required for specific functions:
+`abutils` includes several additional binaries that are required for certain functionality:
 
 * ``abutils.tl.mafft`` uses [MAFFT](https://mafft.cbrc.jp/alignment/software/)
 * ``abutils.tl.muscle`` uses [MUSCLE](https://www.drive5.com/muscle/)
 * ``abutils.tl.cluster`` uses [CD-HIT](https://cd-hit.org), [MMseqs2](https://github.com/soedinglab/MMseqs2), and [VSEARCH](https://github.com/torognes/vsearch)
 * ``abutils.tl.fasttree`` uses [FastTree](http://www.microbesonline.org/fasttree/)
 
-Althogh these binaries are all packaged into `abutils`, each respective `abutils.tl` function provides the option to supply a different binary path in case you'd prefer to use a different version or an alternate compilation.  
+Although these binaries are all packaged into `abutils`, each respective `abutils.tl` function provides the option to supply a alternate binary path in case you'd prefer to use a different version.  
 
 
