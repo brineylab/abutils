@@ -214,8 +214,8 @@ class Clusters:
         if isinstance(clusts, dict):
             clusters = []
             for name, cdata in clusts.items():
-                seqs = cdata["seqs"]
-                centroid = cdata["centroid"]
+                seqs = cdata.get("seqs", [])
+                centroid = cdata.get("centroid", None)
                 clusters.append(Cluster(name, seqs, centroid=centroid))
             return clusters
         elif clusts is None:
@@ -246,6 +246,7 @@ def cluster(
     threads: Optional[int] = None,
     strand: str = "plus",
     as_dict: bool = False,
+    quiet: bool = False,
     debug: bool = False,
 ) -> Union[dict, Clusters]:
     """
@@ -356,6 +357,9 @@ def cluster(
                                "seqs": [seq4, seq5, seq6, ...]},
             }
 
+    quiet : bool, default=False
+        If ``True``, suppresses all output from the clustering algorithm.
+
     debug : bool, default=False
         If ``True``, prints MAFFT's standard output and standard error.
         Default is ``False``.
@@ -408,6 +412,7 @@ def cluster(
             temp_dir=temp_dir,
             mmseqs_bin=mmseqs_bin,
             as_dict=True,
+            quiet=quiet,
             debug=debug,
         )
     elif algo in ["cdhit", "cd_hit", "cd-hit"]:
@@ -418,6 +423,7 @@ def cluster(
             cdhit_bin=cdhit_bin,
             threads=0 if threads is None else threads,
             as_dict=True,
+            quiet=quiet,
             debug=debug,
         )
     elif algo == "vsearch":
@@ -430,6 +436,7 @@ def cluster(
             strand=strand,
             threads=threads,
             as_dict=True,
+            quiet=quiet,
             debug=debug,
         )
     else:
@@ -456,6 +463,7 @@ def cluster_vsearch(
     strand: str = "plus",
     threads: Optional[int] = None,
     as_dict: bool = False,
+    quiet: bool = False,
     debug: bool = False,
 ) -> Union[dict, Clusters]:
     """
@@ -506,6 +514,9 @@ def cluster_vsearch(
                                "seqs": [seq4, seq5, seq6, ...]},
             }
 
+    quiet : bool, default=False
+        If ``True``, suppresses all output from the clustering algorithm.
+
     debug : bool, default=False
         If ``True``, prints standard output and standard error from ``vsearch``.
         Default is ``False``.
@@ -547,10 +558,11 @@ def cluster_vsearch(
         print("STDERR:", stderr.decode("utf-8"))
     # process output
     if os.stat(uc_file).st_size == 0:
-        err = f"WARNING: the VSEARCH output file ({uc_file}) is empty. "
-        err += "Please verify that the input data is valid."
-        print(err)
-        return None
+        if not quiet:
+            err = f"WARNING: the VSEARCH output file ({uc_file}) is empty. "
+            err += "Please verify that the input data is valid."
+            print(err)
+        return {}
     if as_dict:
         cluster_info = {}
         with open(uc_file, "r") as f:
@@ -586,6 +598,7 @@ def cluster_mmseqs(
     temp_dir: str = "/tmp",
     mmseqs_bin: str = None,
     as_dict: bool = False,
+    quiet: bool = False,
     debug: bool = False,
 ):
     """
@@ -661,6 +674,9 @@ def cluster_mmseqs(
              "cluster2_name": {"centroid_id": cluster2_centroid_id,
                                "seq_ids": [seq4_id, seq5_id, seq6_id, ...]},
             }
+
+    quiet : bool, default=False
+        If ``True``, suppresses all output from the clustering algorithm.
 
     debug : bool, default=False
         If ``True``, prints standard output and standard error from ``mmseqs``.
@@ -755,6 +771,7 @@ def cluster_cdhit(
     cdhit_bin: str = None,
     threads: int = 0,
     as_dict: bool = False,
+    quiet: bool = False,
     debug: bool = False,
 ):
     """
@@ -794,6 +811,9 @@ def cluster_cdhit(
              "cluster2_name": {"centroid_id": cluster2_centroid_id,
                                "seq_ids": [seq4_id, seq5_id, seq6_id, ...]},
             }
+
+    quiet : bool, default=False
+        If ``True``, suppresses all output from the clustering algorithm.
 
     debug : bool, default=False
         If ``True``, prints standard output and standard error from ``mmseqs``.
@@ -837,10 +857,11 @@ def cluster_cdhit(
         print("")
         print("STDERR:", stderr)
     if os.stat(clusters_file).st_size == 0:
-        err = f"WARNING: the CD-HIT output file ({clusters_file}) is empty. "
-        err += "Please verify that the input data is valid."
-        print(err)
-        return None
+        if not quiet:
+            err = f"WARNING: the CD-HIT output file ({clusters_file}) is empty. "
+            err += "Please verify that the input data is valid."
+            print(err)
+        return {}
     # parse CD-HIT output
     if as_dict:
         cluster_info = {}
