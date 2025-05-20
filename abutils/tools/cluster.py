@@ -581,6 +581,7 @@ def cluster_vsearch(
                     cluster_info[cluster_num]["seq_ids"].append(hit)
         if not debug:
             os.remove(uc_file)
+            os.remove(centroid_file)
         return cluster_info
     else:
         return uc_file
@@ -759,6 +760,8 @@ def cluster_mmseqs(
                 cluster_info[name]["seq_ids"].append(s)
         if not debug:
             os.remove(tsv_file)
+            os.remove(db_file)
+            os.remove(clu_file)
         return cluster_info
     else:
         return tsv_file
