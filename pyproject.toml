@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abutils"
+dynamic = ["version"]
+authors = [
+    {name = "Bryan Briney", email = "briney@scripps.edu"},
+]
+description = "Utilities for analysis of adaptive immune receptor repertoire (AIRR) data"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "abstar>=0.7",
+    "baltic",
+    "biopython>=1.78",
+    "dnachisel",
+    "fastcluster",
+    "matplotlib",
+    "mnemonic",
+    "natsort",
+    "numpy<2",
+    "pandas",
+    "paramiko",
+    "parasail",
+    "polars>=1.6",
+    "prettytable",
+    "pyarrow",
+    "pyfamsa",
+    "pyfastx",
+    "pytest",
+    "python-circos",
+    "pyyaml",
+    "rapidfuzz",
+    "sample-sheet",
+    "scikit-learn",
+    "scipy",
+    "seaborn>=0.11",
+    "smart_open",
+    "tqdm",
+]
+
+[project.urls]
+Homepage = "https://github.com/briney/abutils"
+Repository = "https://github.com/briney/abutils"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.dynamic]
+version = {attr = "abutils.version.__version__"}
+
+[tool.setuptools.package-data]
+"abutils" = [
+    "core/*",
+    "plots/*",
+    "plots/models/*",
+    "tools/*",
+    "utils/*",
+    "utils/matrices/*",
+    "binaries/cdhit*",
+    "binaries/fastp*",
+    "binaries/fasttree*",
+    "binaries/minimap2*",
+    "binaries/mmseqs*",
+    "binaries/muscle*",
+    "binaries/sickle*",
+    "binaries/vsearch*",
+    "binaries/mafft_darwin/mafft.bat",
+    "binaries/mafft_darwin/mafftdir/bin/mafft",
+    "binaries/mafft_darwin/mafftdir/libexec/*",
+    "binaries/mafft_linux/mafft.bat",
+    "binaries/mafft_linux/mafftdir/bin/mafft",
+    "binaries/mafft_linux/mafftdir/libexec/*",
+] 
