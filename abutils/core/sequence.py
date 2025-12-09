@@ -29,6 +29,7 @@ import json
 import operator
 import os
 import sys
+from pathlib import Path
 import tempfile
 import uuid
 from collections import OrderedDict
@@ -1208,6 +1209,8 @@ def determine_fastx_format(fastx_file: str) -> str:
     fmt = None
     # return None if the file doesn't exist
     if not os.path.exists(fastx_file):
+        return fmt
+    if Path(fastx_file).stat().st_size == 0:
         return fmt
     # get the appropriate open function
     if fastx_file.endswith(".gz"):
