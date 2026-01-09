@@ -532,7 +532,7 @@ def test_local_alignment_multiple_targets():
 
 
 def test_local_alignment_seqrecord():
-    query = SeqRecord("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP")
+    query = SeqRecord(Seq("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"), id="query")
     target = "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
     alignment = local_alignment(query, target=target)
     assert isinstance(alignment, PairwiseAlignment)
@@ -597,7 +597,7 @@ def test_global_alignment_multiple_targets():
 
 
 def test_global_alignment_seqrecord():
-    query = SeqRecord("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP")
+    query = SeqRecord(Seq("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"), id="query")
     target = "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
     alignment = global_alignment(query, target=target)
     assert isinstance(alignment, PairwiseAlignment)
@@ -662,7 +662,7 @@ def test_semiglobal_alignment_multiple_targets():
 
 
 def test_semiglobal_alignment_seqrecord():
-    query = SeqRecord("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP")
+    query = SeqRecord(Seq("MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"), id="query")
     target = "MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGP"
     alignment = semiglobal_alignment(query, target=target)
     assert isinstance(alignment, PairwiseAlignment)
