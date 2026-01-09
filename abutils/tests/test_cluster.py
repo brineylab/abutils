@@ -183,11 +183,11 @@ def test_cluster_with_fasta_file(nt_fasta_file):
 def test_cluster_with_seqrecord_objects(nt_sequence_strings):
     s1, s2 = nt_sequence_strings
     seqs = [
-        SeqRecord(s1, "seq1"),
-        SeqRecord(s1, "seq2"),
-        SeqRecord(s1, "seq3"),
-        SeqRecord(s2, "seq4"),
-        SeqRecord(s2, "seq5"),
+        SeqRecord(Seq(s1), id="seq1"),
+        SeqRecord(Seq(s1), id="seq2"),
+        SeqRecord(Seq(s1), id="seq3"),
+        SeqRecord(Seq(s2), id="seq4"),
+        SeqRecord(Seq(s2), id="seq5"),
     ]
     clusters = cluster(seqs, threshold=0.9)
     assert isinstance(clusters, Clusters)

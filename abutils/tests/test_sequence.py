@@ -7,6 +7,7 @@ import tempfile
 import pandas as pd
 import polars as pl
 import pytest
+from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from ..core.sequence import Sequence
@@ -135,9 +136,9 @@ def sequences():
 @pytest.fixture
 def seq_records():
     seq_records = [
-        SeqRecord("ATCG", id="seq1"),
-        SeqRecord("GCTA", id="seq2"),
-        SeqRecord("TTTT", id="seq3"),
+        SeqRecord(Seq("ATCG"), id="seq1"),
+        SeqRecord(Seq("GCTA"), id="seq2"),
+        SeqRecord(Seq("TTTT"), id="seq3"),
     ]
     return seq_records
 
@@ -178,10 +179,10 @@ def test_sequence_with_dict_and_keys():
 
 
 def test_sequence_with_seqrecord():
+    from Bio.Seq import Seq
     from Bio.SeqRecord import SeqRecord
 
-    seq = SeqRecord("ATCG")
-    seq.id = "seq1"
+    seq = SeqRecord(Seq("ATCG"), id="seq1")
     ab_seq = Sequence(seq)
     assert ab_seq.sequence == "ATCG"
     assert ab_seq.id == "seq1"

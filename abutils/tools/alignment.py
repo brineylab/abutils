@@ -395,11 +395,27 @@ class MultipleSequenceAlignment:
                 ambiguous = "N"
             else:
                 ambiguous = "X"
-        summary_align = AlignInfo.SummaryInfo(self.aln)
-        consensus = summary_align.gap_consensus(
-            threshold=threshold, ambiguous=ambiguous
-        )
-        consensus_string = str(consensus).replace("-", "")
+        # Build consensus using position-wise frequency analysis
+        # This replaces the deprecated gap_consensus method from Biopython
+        consensus_chars = []
+        alignment_length = self.aln.get_alignment_length()
+        num_sequences = len(self.aln)
+        for i in range(alignment_length):
+            column = self.aln[:, i]
+            # Count occurrences of each character
+            char_counts = {}
+            for char in column:
+                char_counts[char] = char_counts.get(char, 0) + 1
+            # Find the most common character meeting threshold
+            best_char = ambiguous
+            best_freq = 0
+            for char, count in char_counts.items():
+                freq = count / num_sequences
+                if freq >= threshold and freq > best_freq:
+                    best_char = char
+                    best_freq = freq
+            consensus_chars.append(best_char)
+        consensus_string = "".join(consensus_chars).replace("-", "")
         if as_string:
             return consensus_string
         return Sequence(
