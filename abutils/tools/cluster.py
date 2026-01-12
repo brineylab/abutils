@@ -49,9 +49,85 @@ __all__ = [
     "cluster_vsearch",
     "cluster_mmseqs",
     "cluster_cdhit",
+    "linclust",
+    "create_mmseqs_db",
     "Clusters",
     "Cluster",
 ]
+
+
+# -----------------
+# Helper functions
+# -----------------
+
+
+def _is_mmseqs_db(path: str) -> bool:
+    """
+    Check if path points to an existing MMseqs2 database.
+
+    MMseqs2 databases consist of multiple files with a common prefix.
+    The main database file has no extension, and auxiliary files
+    include .index, .dbtype, etc.
+
+    Parameters
+    ----------
+    path : str
+        Path to check.
+
+    Returns
+    -------
+    bool
+        True if the path points to a valid MMseqs2 database.
+    """
+    if not isinstance(path, str):
+        return False
+    # MMseqs2 databases have .index and .dbtype files
+    required_files = [path, f"{path}.index", f"{path}.dbtype"]
+    return all(os.path.exists(f) for f in required_files)
+
+
+def _validate_output_path(path: str) -> None:
+    """
+    Validate that output path's parent directory exists.
+
+    Parameters
+    ----------
+    path : str
+        Output file path to validate.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the parent directory does not exist.
+    """
+    parent_dir = os.path.dirname(os.path.abspath(path))
+    if parent_dir and not os.path.exists(parent_dir):
+        raise FileNotFoundError(f"Parent directory does not exist: {parent_dir}")
+
+
+def _cleanup_mmseqs_db(db_path: str) -> None:
+    """
+    Remove all files associated with an MMseqs2 database.
+
+    Parameters
+    ----------
+    db_path : str
+        Path prefix of the MMseqs2 database to clean up.
+    """
+    extensions = [
+        "",
+        ".index",
+        ".dbtype",
+        "_h",
+        "_h.index",
+        "_h.dbtype",
+        ".lookup",
+        ".source",
+    ]
+    for ext in extensions:
+        f = f"{db_path}{ext}"
+        if os.path.exists(f):
+            os.remove(f)
 
 
 class Cluster:
@@ -252,7 +328,7 @@ def cluster(
     """
     Clusters sequences using `CD-HIT`_, `VSEARCH`_ or `MMseqs2`_. By default, sequences will
     be clustered with VSEARCH if there are fewer than 10,000 nucleotide sequences, with
-    CD-HIT if there are fewer than 10,000 amino acide sequences, and with MMseqs2 if there
+    CD-HIT if there are fewer than 10,000 amino acid sequences, and with MMseqs2 if there
     are more than 10,000 sequences (nucleotide or amino acid). These defaults can be
     overridden with `algo`.
 
@@ -588,7 +664,8 @@ def cluster_vsearch(
 
 
 def cluster_mmseqs(
-    fasta_file: str,
+    fasta_file: Optional[str] = None,
+    db_path: Optional[str] = None,
     threshold: float = 0.975,
     cluster_mode: str = "2",
     cov_mode: str = "0",
@@ -607,9 +684,16 @@ def cluster_mmseqs(
 
     Parameters
     ----------
-    fasta_file : string
-        Path to a FASTA-formatted file. Required. If you'd like to run ``mmseqs``
-        using ``Sequence`` objects as input, use ``cluster(algo="mmseqs")``.
+    fasta_file : string, optional
+        Path to a FASTA-formatted file. Either ``fasta_file`` or ``db_path`` must be
+        provided. If you'd like to run ``mmseqs`` using ``Sequence`` objects as input,
+        use ``cluster(algo="mmseqs")``.
+
+    db_path : string, optional
+        Path to a pre-generated MMseqs2 database (created with ``create_mmseqs_db()``).
+        Either ``fasta_file`` or ``db_path`` must be provided. Using a pre-generated
+        database avoids redundant database creation when clustering the same sequences
+        multiple times with different parameters.
 
     threshold : float, default=0.975
         Identity threshold for clustering. Must be between 0 and 1.
@@ -688,9 +772,26 @@ def cluster_mmseqs(
     -------
     clusters : Path to the TSV output file from ``mmseqs`` or a ``dict`` of cluster info.
 
+    Raises
+    ------
+    ValueError
+        If neither or both of ``fasta_file`` and ``db_path`` are provided.
+
     """
+    # Validate input: exactly one of fasta_file or db_path must be provided
+    if fasta_file is None and db_path is None:
+        raise ValueError("Either 'fasta_file' or 'db_path' must be provided.")
+    if fasta_file is not None and db_path is not None:
+        raise ValueError("Only one of 'fasta_file' or 'db_path' should be provided, not both.")
+
+    # Track whether we created the database (for cleanup)
+    db_is_temporary = db_path is None
+
     # output files
-    db_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="DB_").name
+    if db_is_temporary:
+        db_file = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, prefix="DB_").name
+    else:
+        db_file = db_path
     clu_file = tempfile.NamedTemporaryFile(
         dir=temp_dir, delete=False, prefix="CLU_"
     ).name
@@ -700,18 +801,15 @@ def cluster_mmseqs(
     # get the mmseqs binary
     if mmseqs_bin is None:
         mmseqs_bin = get_binary_path("mmseqs")
-        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        # system = platform.system().lower()
-        # machine = platform.machine().lower().replace("x86_64", "amd64")
-        # mmseqs_bin = os.path.join(mod_dir, f"bin/mmseqs_{system}_{machine}")
-    # build the mmseqs DB
-    db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_file}"
-    p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
-    stdout, stderr = p.communicate()
-    if debug:
-        print("STDOUT:", stdout)
-        print("")
-        print("STDERR:", stderr)
+    # build the mmseqs DB (only if fasta_file is provided)
+    if db_is_temporary:
+        db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_file}"
+        p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+        stdout, stderr = p.communicate()
+        if debug:
+            print("STDOUT:", stdout)
+            print("")
+            print("STDERR:", stderr)
     # do the clustering
     cluster_cmd = f"{mmseqs_bin} cluster"
     cluster_cmd += f" {db_file} {clu_file} {temp_dir}"
@@ -760,7 +858,8 @@ def cluster_mmseqs(
                 cluster_info[name]["seq_ids"].append(s)
         if not debug:
             os.remove(tsv_file)
-            os.remove(db_file)
+            if db_is_temporary:
+                os.remove(db_file)
             os.remove(clu_file)
         return cluster_info
     else:
@@ -908,67 +1007,437 @@ def _get_cdhit_wordsize(threshold):
     return 2
 
 
-def linclust(
-    seqs: Union[str, Iterable[Sequence]],
-    threshold: float = 0.975,
-    cov_mode: Union[str, int] = 0,
-    out_file=None,
-    temp_dir=None,
-    make_db=True,
-    linclust_kwargs: str = None,
-    quiet=False,
-    threads=0,
-    debug=False,
-):
-    """
-    Perform clustering of sequences using ``mmseqs easy-linclust``.
-    """
-    pass
+# -----------------
+# MMseqs2 utilities
+# -----------------
 
 
-def nested_linclust(
-    sequences: Union[str, Iterable[Union[Sequence, Pair]]],
-    thresholds: Iterable[float],
-    project_directory: str,
-    linclust_kwargs: Optional[Union[str, dict]] = None,
-    parquet: bool = False,
-    verbose: bool = True,
+def create_mmseqs_db(
+    sequences: Union[Iterable, str],
+    db_path: str,
+    id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
+    temp_dir: str = "/tmp",
+    mmseqs_bin: Optional[str] = None,
+    quiet: bool = False,
     debug: bool = False,
-) -> None:
+) -> str:
     """
-    Perform nested clustering of sequences using ``mmseqs easy-linclust``.
+    Creates an MMseqs2 database from sequences for reuse across multiple operations.
 
     Parameters
     ----------
-    sequences : Union[str, Iterable[Union[Sequence, Pair]]
-        If a ``str`` is provided, it is assumed to be the path to a AIRR-formatted file (or a
-        directory of AIRR-formatted files) containing the sequences to be clustered. This file
-        should be tab-delimited unless `parquet` is ``True``, in which case it should be
-        a ``parquet`` file. If an iterable is provided, it can contain ``Sequence`` objects,
-        ``Pair`` objects, or a mixture of both. If pairs are provided, the heavy/light chains
-        will be concatenated prior to clustering.
+    sequences : iterable or string
+        Input sequences in any of the following formats:
+            1. list of abutils ``Sequence`` objects
+            2. FASTA-formatted string
+            3. path to a FASTA-formatted file
+            4. list of BioPython ``SeqRecord`` objects
+            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+            6. list of strings, with each string being a separate sequence.
+        Required.
 
-    thresholds : Iterable[float]
-        An iterable of thresholds for clustering. Each should be between 0 and 1.
-        Thresholds will be sorted in descending order. The first threshold will be used
-        for the initial clustering, the results will be clustered at the second threshold,
-        and so on.
+    db_path : str
+        Path where the MMseqs2 database will be created. MMseqs2 creates multiple
+        files with this prefix (e.g., db_path, db_path.index, db_path_h, etc.).
+        The parent directory must exist. Required.
 
-    project_directory : str
-        The path to the project directory. The necessary directory structure will be
-        created automatically based on the provided thresholds.
+    id_key : str, optional
+        Key to retrieve the sequence ID. If not provided, ``Sequence.id`` is used.
 
-    linclust_kwargs : Optional[str], optional
-        Keyword arguments to pass to ``mmseqs easy-linclust``. Should be a string of the form
-        ``"--arg1 value1 --flag1, --arg2 value2..."``, or can be a dictionary mapping
-        threshold values to their corresponding arguments. If a ``dict`` is passed and some
-        thresholds are missing, the missing thresholds will not pass any additional kwargs
-        to ``mmseqs easy-linclust``.
+    seq_key : str, optional
+        Key to retrieve the sequence. If not provided, ``Sequence.sequence`` is used.
+
+    temp_dir : str, default="/tmp"
+        Path to a directory for temporary storage during database creation.
+
+    mmseqs_bin : str, optional
+        Path to an MMseqs2 executable. If not provided, the MMseqs2 binary bundled
+        with ``abutils`` will be used.
+
+    quiet : bool, default=False
+        If ``True``, suppresses all output.
+
+    debug : bool, default=False
+        If ``True``, prints standard output and standard error from ``mmseqs``.
+
+    Returns
+    -------
+    db_path : str
+        Path to the created MMseqs2 database (same as input db_path).
+
+    Raises
+    ------
+    FileNotFoundError
+        If the parent directory of db_path does not exist.
+    RuntimeError
+        If MMseqs2 database creation fails.
+
+    Examples
+    --------
+    >>> from abutils.tl import create_mmseqs_db, linclust
+    >>> db_path = create_mmseqs_db(sequences, "/path/to/my_database")
+    >>> # Use the database for multiple linclust runs with different parameters
+    >>> linclust(db_path, output_tsv="/path/to/results1.tsv", threshold=0.9)
+    >>> linclust(db_path, output_tsv="/path/to/results2.tsv", threshold=0.95)
+
     """
+    # Validate output path
+    _validate_output_path(db_path)
 
-    # linclust kwargs
-    if isinstance(linclust_kwargs, str):
-        linclust_kwargs = {t: linclust_kwargs for t in thresholds}
+    # Get mmseqs binary
+    if mmseqs_bin is None:
+        mmseqs_bin = get_binary_path("mmseqs")
+
+    # Convert sequences to FASTA
+    fasta_file = to_fasta(
+        sequences, tempfile_dir=temp_dir, id_key=id_key, sequence_key=seq_key
+    )
+
+    # Create MMseqs2 database
+    db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_path}"
+    p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+
+    if debug:
+        print("STDOUT:", stdout.decode("utf-8"))
+        print("")
+        print("STDERR:", stderr.decode("utf-8"))
+
+    if p.returncode != 0:
+        raise RuntimeError(
+            f"MMseqs2 database creation failed with return code {p.returncode}.\n"
+            f"Command: {db_cmd}\n"
+            f"stderr: {stderr.decode('utf-8')}"
+        )
+
+    # Clean up temporary FASTA file
+    if not debug and os.path.exists(fasta_file):
+        os.remove(fasta_file)
+
+    if not quiet:
+        print(f"MMseqs2 database created at: {db_path}")
+
+    return db_path
+
+
+def linclust(
+    sequences: Union[Iterable, str],
+    output_tsv: str,
+    output_fasta: Optional[str] = None,
+    threshold: float = 0.9,
+    coverage: float = 0.8,
+    cov_mode: str = "0",
+    alignment_mode: str = "3",
+    seq_id_mode: str = "1",
+    kmer_per_seq: int = 0,
+    kmer_per_seq_scale: float = 0.0,
+    threads: Optional[int] = None,
+    temp_dir: str = "/tmp",
+    mmseqs_bin: Optional[str] = None,
+    id_key: Optional[str] = None,
+    seq_key: Optional[str] = None,
+    quiet: bool = False,
+    debug: bool = False,
+) -> dict:
+    """
+    Performs linear-time clustering using MMseqs2's linclust algorithm.
+
+    ``linclust`` is optimized for large-scale sequence clustering and is significantly
+    faster than ``mmseqs cluster`` for very large datasets (millions of sequences).
+    Unlike ``cluster_mmseqs()``, this function writes output directly to user-specified
+    files rather than returning cluster objects.
+
+    Parameters
+    ----------
+    sequences : iterable, string, or database path
+        Input sequences in any of the following formats:
+            1. list of abutils ``Sequence`` objects
+            2. FASTA-formatted string
+            3. path to a FASTA-formatted file
+            4. list of BioPython ``SeqRecord`` objects
+            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
+            6. list of strings, with each string being a separate sequence
+            7. path to a pre-generated MMseqs2 database (created with ``create_mmseqs_db()``)
+        Required.
+
+    output_tsv : str
+        Path where the TSV output will be written. The TSV file contains two columns:
+        cluster representative ID and member ID (one row per cluster member).
+        The parent directory must exist. Required.
+
+    output_fasta : str, optional
+        Path where representative sequences (cluster centroids) will be written
+        in FASTA format. If not provided, representative FASTA is not generated.
+
+    threshold : float, default=0.9
+        Minimum sequence identity threshold for clustering. Must be between 0 and 1.
+
+    coverage : float, default=0.8
+        Coverage threshold for clustering. Must be between 0 and 1.
+
+    cov_mode : str, default="0"
+        Coverage mode. Options are:
+            - ``"0"``: bidirectional
+            - ``"1"``: target coverage
+            - ``"2"``: query coverage
+            - ``"3"``: target-in-query length coverage
+
+    alignment_mode : str, default="3"
+        Alignment mode. Options are:
+            - ``"0"``: automatic
+            - ``"1"``: only score and end_pos
+            - ``"2"``: also start_pos and cov
+            - ``"3"``: also seq.id
+            - ``"4"``: only ungapped alignment
+
+    seq_id_mode : str, default="1"
+        Sequence ID mode. Options are:
+            - ``"0"``: alignment length
+            - ``"1"``: shorter sequence length
+            - ``"2"``: longer sequence length
+
+    kmer_per_seq : int, default=0
+        k-mers per sequence. 0 means use the MMseqs2 default.
+
+    kmer_per_seq_scale : float, default=0.0
+        Scale k-mers per sequence based on sequence length. 0.0 disables scaling.
+
+    threads : int, optional
+        Number of threads to use. If not provided, MMseqs2 determines automatically.
+
+    temp_dir : str, default="/tmp"
+        Path to a directory for temporary storage of intermediate files.
+
+    mmseqs_bin : str, optional
+        Path to an MMseqs2 executable. If not provided, the MMseqs2 binary bundled
+        with ``abutils`` will be used.
+
+    id_key : str, optional
+        Key to retrieve the sequence ID. Only used if sequences is not a database path.
+
+    seq_key : str, optional
+        Key to retrieve the sequence. Only used if sequences is not a database path.
+
+    quiet : bool, default=False
+        If ``True``, suppresses all output from the clustering algorithm.
+
+    debug : bool, default=False
+        If ``True``, prints standard output and standard error from ``mmseqs``,
+        and retains intermediate files in temp_dir.
+
+    Returns
+    -------
+    result : dict
+        Dictionary containing:
+            - ``"tsv_file"``: Path to the output TSV file
+            - ``"fasta_file"``: Path to the representative FASTA file (or None)
+            - ``"cluster_count"``: Number of clusters
+
+    Raises
+    ------
+    FileNotFoundError
+        If the parent directory of output files does not exist.
+    RuntimeError
+        If MMseqs2 linclust fails.
+    ValueError
+        If sequences input is invalid.
+
+    Examples
+    --------
+    >>> from abutils.tl import linclust
+    >>> # Basic usage with FASTA file
+    >>> result = linclust(
+    ...     "sequences.fasta",
+    ...     output_tsv="clusters.tsv",
+    ...     output_fasta="representatives.fasta",
+    ...     threshold=0.9
+    ... )
+    >>> print(f"Created {result['cluster_count']} clusters")
+    >>> print(f"TSV output: {result['tsv_file']}")
+
+    >>> # Using pre-generated database for multiple runs
+    >>> from abutils.tl import create_mmseqs_db
+    >>> db = create_mmseqs_db(sequences, "/data/mydb")
+    >>> linclust(db, output_tsv="run1.tsv", threshold=0.9)
+    >>> linclust(db, output_tsv="run2.tsv", threshold=0.95)
+
+    See Also
+    --------
+    cluster_mmseqs : Standard MMseqs2 clustering (returns Clusters objects)
+    create_mmseqs_db : Create reusable MMseqs2 database
+    cluster : Auto-selecting clustering with multiple backend support
+
+    """
+    # Validate output paths
+    _validate_output_path(output_tsv)
+    if output_fasta:
+        _validate_output_path(output_fasta)
+
+    # Get mmseqs binary
+    if mmseqs_bin is None:
+        mmseqs_bin = get_binary_path("mmseqs")
+
+    # Track temporary files for cleanup
+    temp_files = []
+    db_is_temporary = False
+    fasta_is_temporary = False
+
+    try:
+        # Determine input type and prepare database
+        if _is_mmseqs_db(sequences):
+            # Use pre-generated database directly
+            db_path = sequences
+        else:
+            # Convert sequences to FASTA and create temporary database
+            fasta_file = to_fasta(
+                sequences, tempfile_dir=temp_dir, id_key=id_key, sequence_key=seq_key
+            )
+            fasta_is_temporary = True
+
+            db_path = tempfile.NamedTemporaryFile(
+                dir=temp_dir, delete=False, prefix="linclust_db_"
+            ).name
+            db_is_temporary = True
+
+            # Create database
+            db_cmd = f"{mmseqs_bin} createdb {fasta_file} {db_path}"
+            p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+            stdout, stderr = p.communicate()
+
+            if debug:
+                print("CREATEDB STDOUT:", stdout.decode("utf-8"))
+                print("CREATEDB STDERR:", stderr.decode("utf-8"))
+
+            if p.returncode != 0:
+                raise RuntimeError(
+                    f"MMseqs2 createdb failed with return code {p.returncode}.\n"
+                    f"stderr: {stderr.decode('utf-8')}"
+                )
+
+        # Create temporary cluster output file
+        clu_path = tempfile.NamedTemporaryFile(
+            dir=temp_dir, delete=False, prefix="linclust_clu_"
+        ).name
+        temp_files.append(clu_path)
+
+        # Run linclust
+        linclust_cmd = f"{mmseqs_bin} linclust"
+        linclust_cmd += f" {db_path} {clu_path} {temp_dir}"
+        linclust_cmd += f" --min-seq-id {threshold}"
+        linclust_cmd += f" -c {coverage}"
+        linclust_cmd += f" --cov-mode {cov_mode}"
+        linclust_cmd += f" --alignment-mode {alignment_mode}"
+        linclust_cmd += f" --seq-id-mode {seq_id_mode}"
+        if kmer_per_seq > 0:
+            linclust_cmd += f" --kmer-per-seq {kmer_per_seq}"
+        if kmer_per_seq_scale > 0:
+            linclust_cmd += f" --kmer-per-seq-scale {kmer_per_seq_scale}"
+        if threads is not None:
+            linclust_cmd += f" --threads {threads}"
+
+        p = sp.Popen(linclust_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+        stdout, stderr = p.communicate()
+
+        if debug:
+            print("LINCLUST STDOUT:", stdout.decode("utf-8"))
+            print("LINCLUST STDERR:", stderr.decode("utf-8"))
+
+        if p.returncode != 0:
+            raise RuntimeError(
+                f"MMseqs2 linclust failed with return code {p.returncode}.\n"
+                f"stderr: {stderr.decode('utf-8')}"
+            )
+
+        # Generate TSV output
+        tsv_cmd = f"{mmseqs_bin} createtsv"
+        tsv_cmd += f" {db_path} {db_path} {clu_path} {output_tsv}"
+
+        p = sp.Popen(tsv_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+        stdout, stderr = p.communicate()
+
+        if debug:
+            print("CREATETSV STDOUT:", stdout.decode("utf-8"))
+            print("CREATETSV STDERR:", stderr.decode("utf-8"))
+
+        if p.returncode != 0:
+            raise RuntimeError(
+                f"MMseqs2 createtsv failed with return code {p.returncode}.\n"
+                f"stderr: {stderr.decode('utf-8')}"
+            )
+
+        # Generate representative FASTA if requested
+        if output_fasta:
+            # Create representative sequence database
+            repseq_path = tempfile.NamedTemporaryFile(
+                dir=temp_dir, delete=False, prefix="linclust_repseq_"
+            ).name
+            temp_files.append(repseq_path)
+
+            repseq_cmd = f"{mmseqs_bin} result2repseq {db_path} {clu_path} {repseq_path}"
+            p = sp.Popen(repseq_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+            stdout, stderr = p.communicate()
+
+            if debug:
+                print("RESULT2REPSEQ STDOUT:", stdout.decode("utf-8"))
+                print("RESULT2REPSEQ STDERR:", stderr.decode("utf-8"))
+
+            if p.returncode != 0:
+                raise RuntimeError(
+                    f"MMseqs2 result2repseq failed with return code {p.returncode}.\n"
+                    f"stderr: {stderr.decode('utf-8')}"
+                )
+
+            # Convert to FASTA
+            fasta_cmd = f"{mmseqs_bin} result2flat {db_path} {db_path} {repseq_path} {output_fasta} --use-fasta-header"
+            p = sp.Popen(fasta_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+            stdout, stderr = p.communicate()
+
+            if debug:
+                print("RESULT2FLAT STDOUT:", stdout.decode("utf-8"))
+                print("RESULT2FLAT STDERR:", stderr.decode("utf-8"))
+
+            if p.returncode != 0:
+                raise RuntimeError(
+                    f"MMseqs2 result2flat failed with return code {p.returncode}.\n"
+                    f"stderr: {stderr.decode('utf-8')}"
+                )
+
+        # Count clusters from TSV
+        cluster_reps = set()
+        with open(output_tsv) as f:
+            for line in f:
+                if line.strip() and not line.startswith("#"):
+                    rep_id = line.strip().split("\t")[0]
+                    cluster_reps.add(rep_id)
+        cluster_count = len(cluster_reps)
+
+        if not quiet:
+            print(f"linclust: clustered sequences into {cluster_count} clusters")
+            print(f"TSV output: {output_tsv}")
+            if output_fasta:
+                print(f"Representative FASTA: {output_fasta}")
+
+        return {
+            "tsv_file": output_tsv,
+            "fasta_file": output_fasta,
+            "cluster_count": cluster_count,
+        }
+
+    finally:
+        # Clean up temporary files
+        if not debug:
+            # Clean up cluster output files
+            for f in temp_files:
+                _cleanup_mmseqs_db(f)
+
+            # Clean up temporary database
+            if db_is_temporary:
+                _cleanup_mmseqs_db(db_path)
+
+            # Clean up temporary FASTA
+            if fasta_is_temporary and os.path.exists(fasta_file):
+                os.remove(fasta_file)
 
 
 # def cluster(seqs, threshold=0.975, out_file=None, temp_dir=None, make_db=True, method='cdhit',
