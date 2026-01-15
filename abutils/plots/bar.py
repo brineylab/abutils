@@ -25,7 +25,7 @@
 
 import math
 from collections import Counter
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -42,35 +42,35 @@ __all__ = ["bar"]
 
 
 def bar(
-    x: Union[str, Iterable, None] = None,
-    y: Union[str, Iterable, None] = None,
-    hue: Union[str, Iterable, None] = None,
-    data: Optional[pd.DataFrame] = None,
-    sequences: Optional[Iterable[Sequence]] = None,
-    order: Optional[Iterable] = None,
-    hue_order: Optional[Iterable] = None,
-    palette: Union[dict, Iterable, None] = None,
-    color: Union[str, Iterable, None] = None,
-    alt_color: Union[str, Iterable] = "#D3D3D3",
+    x: str | Iterable | None = None,
+    y: str | Iterable | None = None,
+    hue: str | Iterable | None = None,
+    data: pd.DataFrame | None = None,
+    sequences: Iterable[Sequence] | None = None,
+    order: Iterable | None = None,
+    hue_order: Iterable | None = None,
+    palette: dict | Iterable | None = None,
+    color: str | Iterable | None = None,
+    alt_color: str | Iterable = "#D3D3D3",
     normalize: bool = False,
-    highlight: Union[str, Iterable, None] = None,
-    highlight_color: Union[str, Iterable, None] = None,
+    highlight: str | Iterable | None = None,
+    highlight_color: str | Iterable | None = None,
     orientation: str = "vertical",
-    plot_kwargs: Optional[dict] = None,
-    legend_kwargs: Optional[dict] = None,
+    plot_kwargs: dict | None = None,
+    legend_kwargs: dict | None = None,
     hide_legend: bool = False,
-    xlabel: Optional[str] = None,
-    ylabel: Optional[str] = None,
-    xlabel_fontsize: Union[int, float] = 16,
-    ylabel_fontsize: Union[int, float] = 16,
-    xtick_labelsize: Union[int, float] = 14,
-    ytick_labelsize: Union[int, float] = 14,
-    xtick_labelrotation: Union[int, float] = 0,
-    ytick_labelrotation: Union[int, float] = 0,
-    ax: Optional[mpl.axes.Axes] = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    xlabel_fontsize: int | float = 16,
+    ylabel_fontsize: int | float = 16,
+    xtick_labelsize: int | float = 14,
+    ytick_labelsize: int | float = 14,
+    xtick_labelrotation: int | float = 0,
+    ytick_labelrotation: int | float = 0,
+    ax: mpl.axes.Axes | None = None,
     show: bool = False,
-    figsize: Optional[Iterable] = None,
-    figfile: Optional[str] = None,
+    figsize: Iterable | None = None,
+    figfile: str | None = None,
 ):
     """
     Produces a bar plot of categorical data. For data with distinct batches, a stacked

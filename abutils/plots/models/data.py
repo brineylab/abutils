@@ -24,7 +24,7 @@
 
 
 import sys
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -41,13 +41,13 @@ class PlotData:
 
     def __init__(
         self,
-        x: Union[Iterable, str, None] = None,
-        y: Union[Iterable, str, None] = None,
-        data: Union[pd.DataFrame, Iterable, dict, None] = None,
-        sequences: Optional[Iterable[Sequence]] = None,
-        hue: Union[Iterable, str, None] = None,
-        column_labels: Optional[Iterable] = None,
-        row_labels: Optional[Iterable] = None,
+        x: Iterable | str | None = None,
+        y: Iterable | str | None = None,
+        data: pd.DataFrame | Iterable | dict | None = None,
+        sequences: Iterable[Sequence] | None = None,
+        hue: Iterable | str | None = None,
+        column_labels: Iterable | None = None,
+        row_labels: Iterable | None = None,
     ):
         """
         Initializes a PlotData object.
@@ -149,13 +149,13 @@ class PlotData:
 
     def process_input(
         self,
-        x: Union[str, Iterable, None] = None,
-        y: Union[str, Iterable, None] = None,
-        data: Union[pd.DataFrame, Iterable, dict, None] = None,
-        sequences: Optional[Iterable[Sequence]] = None,
-        hue: Union[str, Iterable, None] = None,
-        column_labels: Optional[Iterable] = None,
-        row_labels: Optional[Iterable] = None,
+        x: str | Iterable | None = None,
+        y: str | Iterable | None = None,
+        data: pd.DataFrame | Iterable | dict | None = None,
+        sequences: Iterable[Sequence] | None = None,
+        hue: str | Iterable | None = None,
+        column_labels: Iterable | None = None,
+        row_labels: Iterable | None = None,
     ) -> pd.DataFrame:
         """
         Reads input datasets and returns a ``DataFrame`` containing x, y, and hue data.
@@ -215,13 +215,13 @@ class PlotData:
 
     def dropna(
         self,
-        axis: Union[int, str] = "rows",
+        axis: int | str = "rows",
         how: str = "any",
-        thresh: Optional[int] = None,
-        subset: Optional[Union[str, Iterable]] = None,
+        thresh: int | None = None,
+        subset: str | Iterable | None = None,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """
         Drop missing or NA values from the data. Default settings will drop all rows with any
         missing values. See the `pandas.DataFrame.dropna`_ documentation for more information.
@@ -239,15 +239,15 @@ class PlotData:
 
     def fillna(
         self,
-        value: Optional[Union[int, float, str]] = None,
-        axis: Union[int, str] = "columns",
-        subset: Optional[Union[str, Iterable]] = None,
-        method: Optional[str] = None,
-        limit: Optional[int] = None,
-        downcast: Optional[dict] = None,
+        value: int | float | str | None = None,
+        axis: int | str = "columns",
+        subset: str | Iterable | None = None,
+        method: str | None = None,
+        limit: int | None = None,
+        downcast: dict | None = None,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """
         Fill missing or NA values in the data. The default settings will fill all missing values
         with ``0``. See the `pandas.DataFrame.fillna`_ documentation for more information.
@@ -337,12 +337,12 @@ class PlotData:
 
     def norm(
         self,
-        subset: Union[Iterable, str, None] = None,
-        axis: Union[int, str] = "columns",
+        subset: Iterable | str | None = None,
+        axis: int | str = "columns",
         as_percent: bool = False,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """
         Normalize the data. By default, each column is normalized to sum to 1.
 
@@ -404,11 +404,11 @@ class PlotData:
 
     def scale(
         self,
-        subset: Union[Iterable, str, None] = None,
-        axis: Union[int, str, None] = None,
+        subset: Iterable | str | None = None,
+        axis: int | str | None = None,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """
         Scale the data to be between 0 and 1. By default, the entire dataset is scaled
         according to the global minimum and maximum values in the dataset. Alternatively, each
@@ -472,11 +472,11 @@ class PlotData:
 
     def transform(
         self,
-        func: Union[Callable, str, None] = None,
-        subset: Union[Iterable, str, None] = None,
+        func: Callable | str | None = None,
+        subset: Iterable | str | None = None,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """
         Transform the data (log, expoonential, etc). By default, the function is applied
         to all columns the dataset. Alternatively, a subset of columns can be transformed.
@@ -544,13 +544,13 @@ class PlotData:
 
     def clip(
         self,
-        lower: Union[int, float, None] = None,
-        upper: Union[int, float, None] = None,
-        axis: Union[int, str] = "columns",
-        subset: Union[Iterable, str, None] = None,
+        lower: int | float | None = None,
+        upper: int | float | None = None,
+        axis: int | str = "columns",
+        subset: Iterable | str | None = None,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """
         Clip the data. Values less than `lower` will be replaced with `lower` and values
         greater than `upper` will be replaced with `upper`. By default, the entire dataset
@@ -617,14 +617,14 @@ class PlotData:
 
     def reorder(
         self,
-        by: Union[Iterable, str, None] = None,
-        axis: Union[int, str] = "rows",
-        row_order: Optional[Iterable] = None,
-        column_order: Optional[Iterable] = None,
+        by: Iterable | str | None = None,
+        axis: int | str = "rows",
+        row_order: Iterable | None = None,
+        column_order: Iterable | None = None,
         ascending: bool = True,
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """ """
         df = self.raw_df.copy() if use_raw else self.df.copy()
 
@@ -651,13 +651,13 @@ class PlotData:
 
     def groupby(
         self,
-        by: Union[Iterable, str],
-        axis: Union[int, str] = "rows",
-        values: Optional[Union[Iterable, str]] = None,
-        agg: Union[Iterable, Callable, str, dict] = "size",
+        by: Iterable | str,
+        axis: int | str = "rows",
+        values: Iterable | str | None = None,
+        agg: Iterable | Callable | str | dict = "size",
         use_raw: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """ 
         Group the data by row or column values.
 
@@ -714,14 +714,14 @@ class PlotData:
 
     def to_squareform(
         self,
-        rows: Optional[str] = None,
-        columns: Optional[str] = None,
-        values: Optional[str] = None,
-        agg: Union[Iterable, Callable, str] = "size",
+        rows: str | None = None,
+        columns: str | None = None,
+        values: str | None = None,
+        agg: Iterable | Callable | str = "size",
         use_raw: bool = False,
         reset_index: bool = False,
         inplace: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """ 
         Pivots the data into a squareform matrix.
 

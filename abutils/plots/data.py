@@ -25,7 +25,7 @@
 
 from collections import Counter
 from copy import deepcopy
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Iterable
 
 import pandas as pd
 
@@ -33,11 +33,11 @@ from ..core.sequence import Sequence
 
 
 def process_input_data(
-    x: Union[str, Iterable, None] = None,
-    y: Union[str, Iterable, None] = None,
-    hue: Union[str, Iterable, None] = None,
-    sequences: Optional[Iterable[Sequence]] = None,
-    data: Union[pd.DataFrame, dict, None] = None,
+    x: str | Iterable | None = None,
+    y: str | Iterable | None = None,
+    hue: str | Iterable | None = None,
+    sequences: Iterable[Sequence] | None = None,
+    data: pd.DataFrame | dict | None = None,
 ):
     """
     Processes input data for plotting functions.
@@ -123,14 +123,14 @@ class InputData:
 
     def __init__(
         self,
-        data: Union[pd.DataFrame, dict, None] = None,
-        sequences: Optional[Iterable[Sequence]] = None,
-        x: Union[str, Iterable, None] = None,
-        y: Union[str, Iterable, None] = None,
-        values: Union[str, Iterable, dict, None] = None,
-        categories: Union[str, Iterable, None] = None,
-        hue: Union[str, Iterable, None] = None,
-        agg_method: Union[str, Callable] = "count",
+        data: pd.DataFrame | dict | None = None,
+        sequences: Iterable[Sequence] | None = None,
+        x: str | Iterable | None = None,
+        y: str | Iterable | None = None,
+        values: str | Iterable | dict | None = None,
+        categories: str | Iterable | None = None,
+        hue: str | Iterable | None = None,
+        agg_method: str | Callable = "count",
     ):
         """
         Data can be either a dict or a DataFrame

@@ -28,7 +28,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import itertools
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -43,31 +43,31 @@ import pycircos
 
 
 def ring(
-    values: Union[str, dict, Iterable],
-    categories: Optional[Union[str, Iterable]] = None,
-    data: Optional[pd.DataFrame] = None,
-    color: Optional[Union[str, Iterable]] = None,
-    palette: Optional[Union[str, Iterable, dict]] = None,
-    raxis_range: Optional[tuple] = None,
-    linewidth: Optional[float] = 1.0,
-    facecolor: Optional[str] = "#FFFFFF",
-    label_visible: Optional[bool] = False,
-    arc_start: Optional[float] = 0,
-    arc_end: Optional[float] = 360,
-    title: Optional[str] = None,
-    title_fontsize: Optional[float] = 36,
-    title_fontweight: Optional[str] = "heavy",
-    subtitle: Optional[str] = None,
-    subtitle_fontsize: Optional[float] = 20,
-    subtitle_fontweight: Optional[str] = "normal",
-    show_category_labels: Optional[bool] = True,
-    category_label_fontsize: Optional[float] = 16,
-    category_label_position_offsets: Optional[dict] = {},
-    category_label_match_color: Optional[bool] = True,
-    figsize: Optional[Iterable] = [10, 10],
-    figfile: Optional[str] = None,
-    show: Optional[bool] = False,
-) -> Optional[mpl.axes.Axes]:
+    values: str | dict | Iterable,
+    categories: str | Iterable | None = None,
+    data: pd.DataFrame | None = None,
+    color: str | Iterable | None = None,
+    palette: str | Iterable | dict | None = None,
+    raxis_range: tuple | None = None,
+    linewidth: float | None = 1.0,
+    facecolor: str | None = "#FFFFFF",
+    label_visible: bool | None = False,
+    arc_start: float | None = 0,
+    arc_end: float | None = 360,
+    title: str | None = None,
+    title_fontsize: float | None = 36,
+    title_fontweight: str | None = "heavy",
+    subtitle: str | None = None,
+    subtitle_fontsize: float | None = 20,
+    subtitle_fontweight: str | None = "normal",
+    show_category_labels: bool | None = True,
+    category_label_fontsize: float | None = 16,
+    category_label_position_offsets: dict | None = {},
+    category_label_match_color: bool | None = True,
+    figsize: Iterable | None = [10, 10],
+    figfile: str | None = None,
+    show: bool | None = False,
+) -> mpl.axes.Axes | None:
     """ """
     # process input data
 

@@ -24,7 +24,7 @@
 
 
 import sys
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -37,48 +37,48 @@ from ..utils.color import get_cmap
 
 
 def heatmap(
-    data: Union[pd.DataFrame, Iterable],
-    color: Union[str, Iterable, mpl.colors.Colormap] = "Greys",
-    row_colors: Optional[Iterable] = None,
-    column_colors: Optional[Iterable] = None,
+    data: pd.DataFrame | Iterable,
+    color: str | Iterable | mpl.colors.Colormap = "Greys",
+    row_colors: Iterable | None = None,
+    column_colors: Iterable | None = None,
     scale_color_by_row: bool = False,
     scale_color_by_column: bool = False,
-    transform: Optional[str] = None,
+    transform: str | None = None,
     norm: bool = False,
     percent: bool = False,
-    norm_axis: Union[int, str] = "columns",
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
-    row_order: Optional[Iterable] = None,
-    row_labels: Optional[Iterable] = None,
+    norm_axis: int | str = "columns",
+    vmin: float | None = None,
+    vmax: float | None = None,
+    row_order: Iterable | None = None,
+    row_labels: Iterable | None = None,
     row_label_position: str = "left",
     row_label_rotation: float = 0.0,
     row_label_fontsize: float = 14.0,
     show_row_ticks: bool = False,
-    column_order: Optional[Iterable] = None,
-    column_labels: Optional[Iterable] = None,
+    column_order: Iterable | None = None,
+    column_labels: Iterable | None = None,
     column_label_position: str = "top",
     column_label_rotation: float = 90.0,
     column_label_fontsize: float = 14.0,
     show_column_ticks: bool = False,
     show_values: bool = False,
-    values_fmt: Union[str, mpl.ticker.Formatter] = "{x:0.1f}",
+    values_fmt: str | mpl.ticker.Formatter = "{x:0.1f}",
     values_fontsize: float = 9.0,
     values_fontweight: str = "normal",
-    values_color: Union[str, Iterable, None] = None,
-    values_lightcolor: Union[str, Iterable] = "#FFFFFF",
-    values_darkcolor: Union[str, Iterable] = "#303030",
+    values_color: str | Iterable | None = None,
+    values_lightcolor: str | Iterable = "#FFFFFF",
+    values_darkcolor: str | Iterable = "#303030",
     values_horizontalalignment: str = "center",
     values_verticalalignment: str = "center",
-    values_color_threshold: Optional[float] = None,
+    values_color_threshold: float | None = None,
     square: bool = True,
     linewidth: float = 2.0,
     linecolor: str = "#FFFFFF",
     linestyle: str = "-",
-    ax: Optional[mpl.axes.Axes] = None,
-    figsize: Optional[Iterable] = None,
-    figfile: Optional[str] = None,
-) -> Optional[mpl.axes.Axes]:
+    ax: mpl.axes.Axes | None = None,
+    figsize: Iterable | None = None,
+    figfile: str | None = None,
+) -> mpl.axes.Axes | None:
     """
     Creates a heatmap from a pandas DataFrame or an iterable of iterables.
 
@@ -425,7 +425,7 @@ def heatmap(
 
 def get_color_values(
     df: pd.DataFrame,
-    cmap: Union[mpl.colors.Colormap, Iterable[mpl.colors.Colormap]],
+    cmap: mpl.colors.Colormap | Iterable[mpl.colors.Colormap],
     by_row=False,
     by_column=False,
 ) -> pd.DataFrame:

@@ -26,7 +26,7 @@
 import glob
 import os
 import re
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 from natsort import natsorted
 
@@ -51,9 +51,9 @@ def make_dir(directory: str) -> None:
 
 def list_files(
     directory: str,
-    extension: Union[str, Iterable, None] = None,
+    extension: str | Iterable | None = None,
     recursive: bool = False,
-    match: Optional[str] = None,
+    match: str | None = None,
     ignore_dot_files: bool = True,
 ) -> Iterable[str]:
     """
@@ -139,7 +139,7 @@ def rename_file(file: str, new_name: str) -> None:
     os.rename(file, new_name)
 
 
-def delete_files(files: Union[str, Iterable]) -> None:
+def delete_files(files: str | Iterable) -> None:
     """
     Deletes files.
 

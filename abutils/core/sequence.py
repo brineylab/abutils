@@ -32,7 +32,7 @@ import sys
 import tempfile
 import uuid
 from collections import OrderedDict
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import dnachisel as dc
 import pandas as pd
@@ -127,12 +127,12 @@ class Sequence(object):
 
     def __init__(
         self,
-        sequence: Union[str, Iterable, dict, SeqRecord],
-        id: Optional[str] = None,
-        qual: Optional[str] = None,
-        annotations: Optional[dict] = None,
-        id_key: Optional[str] = None,
-        seq_key: Optional[str] = None,
+        sequence: str | Iterable | dict | SeqRecord,
+        id: str | None = None,
+        qual: str | None = None,
+        annotations: dict | None = None,
+        id_key: str | None = None,
+        seq_key: str | None = None,
     ):
         super().__init__()
         self._input_sequence = None
@@ -195,7 +195,7 @@ class Sequence(object):
             return item in self.annotations.keys()
         return item in self.sequence
 
-    def __getitem__(self, key) -> Union[str, dict, None]:
+    def __getitem__(self, key) -> str | dict | None:
         """
         Returns a slice of the ``Sequence`` object.
 
@@ -224,7 +224,7 @@ class Sequence(object):
         return None
 
     def __setitem__(
-        self, key: Union[str, int, float], val: Union[str, int, float]
+        self, key: str | int | float, val: str | int | float
     ) -> None:
         """
         Sets a value in the ``annotations`` property of a ``Sequence`` object.
@@ -350,7 +350,7 @@ class Sequence(object):
         return self._fastq
 
     @property
-    def reverse_complement(self) -> Union[str, "Sequence"]:
+    def reverse_complement(self) -> str | "Sequence":
         """
         Returns the reverse complement of ``Sequence.sequence``.
 
@@ -403,7 +403,7 @@ class Sequence(object):
     def strand(self, strand):
         self._strand = strand
 
-    def translate(self, sequence_key: Optional[str] = None, frame: int = 1) -> str:
+    def translate(self, sequence_key: str | None = None, frame: int = 1) -> str:
         """
         Translate a nucleotide sequence.
 
@@ -428,9 +428,9 @@ class Sequence(object):
         self,
         sequence_key: str = "sequence_aa",
         id_key: str = "sequence_id",
-        frame: Optional[int] = None,
+        frame: int | None = None,
         as_string: bool = True,
-    ) -> Union[str, "Sequence"]:
+    ) -> str | "Sequence":
         """
         Codon optimize a sequence.
 
@@ -467,7 +467,7 @@ class Sequence(object):
         )
 
     def as_fasta(
-        self, name_field: Optional[str] = None, seq_field: Optional[str] = None
+        self, name_field: str | None = None, seq_field: str | None = None
     ) -> str:
         """
         Returns the sequence, as a FASTA-formatted string.
@@ -537,8 +537,8 @@ class Sequence(object):
         return self.annotations.values()
 
     def get(
-        self, key: Union[str, int, float], default: Union[str, int, float, None] = None
-    ) -> Union[str, int, float, None]:
+        self, key: str | int | float, default: str | int | float | None = None
+    ) -> str | int | float | None:
         """
         Returns the value of a key in the ``annotations`` attribute.
 
@@ -624,8 +624,8 @@ class Sequence(object):
 
 
 def reverse_complement(
-    sequence: Union[str, "Sequence"], in_place: bool = False
-) -> Union[str, "Sequence"]:
+    sequence: str | "Sequence", in_place: bool = False
+) -> str | "Sequence":
     """
     Returns the reverse complement of a nucleotide sequence.
 
@@ -673,7 +673,7 @@ def reverse_complement(
 
 def translate(
     sequence: Sequence,
-    sequence_key: Optional[str] = None,
+    sequence_key: str | None = None,
     frame: int = 1,
     allow_dots: bool = False,
 ) -> str:
@@ -731,12 +731,12 @@ def translate(
 
 def codon_optimize(
     sequence,
-    sequence_key: Optional[str] = None,
-    id_key: Optional[str] = None,
-    frame: Optional[int] = None,
+    sequence_key: str | None = None,
+    id_key: str | None = None,
+    frame: int | None = None,
     as_string: bool = False,
     in_place: bool = False,
-) -> Union[str, "Sequence"]:
+) -> str | "Sequence":
     """
     Optimizes the codons of a nucleotide or amino acid sequence.
 
@@ -827,7 +827,7 @@ def codon_optimize(
 
 def read_json(
     json_file: str,
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "seq_id",
     sequence_key: str = "vdj_nt",
@@ -897,7 +897,7 @@ def read_json(
 def read_csv(
     csv_file: str,
     separator: str = ",",
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -966,7 +966,7 @@ def read_csv(
 
 
 def read_airr(
-    tsv_file: str, match: Optional[dict] = None, fields: Optional[Iterable] = None
+    tsv_file: str, match: dict | None = None, fields: Iterable | None = None
 ) -> Iterable[Sequence]:
     """
     Reads an AIRR-formatted annotation file and returns ``Sequence`` objects.
@@ -1000,7 +1000,7 @@ def read_airr(
 
 def read_parquet(
     parquet_file: str,
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -1063,8 +1063,8 @@ def read_parquet(
 
 
 def sequences_from_polars(
-    df: Union[pl.DataFrame, pl.LazyFrame],
-    match: Optional[dict] = None,
+    df: pl.DataFrame | pl.LazyFrame,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -1129,7 +1129,7 @@ def sequences_from_polars(
 
 def sequences_from_pandas(
     df: pd.DataFrame,
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -1558,11 +1558,11 @@ def from_mongodb(db, collection, match=None, project=None, limit=None):
 
 
 def to_fastq(
-    sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
-    fastq_file: Optional[str] = None,
+    sequences: str | Iterable[Sequence] | Iterable[SeqRecord] | Iterable[Iterable],
+    fastq_file: str | None = None,
     as_string: bool = False,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
+    id_key: str | None = None,
+    sequence_key: str | None = None,
     tempfile_dir: str = "/tmp",
 ) -> str:
     """
@@ -1653,13 +1653,13 @@ def to_fastq(
 
 def sequences_to_polars(
     sequences: Iterable[Sequence],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> pl.DataFrame:
     """
     Converts a list of ``Sequence`` objects to a ``polars.DataFrame`` object.
@@ -1753,13 +1753,13 @@ def sequences_to_polars(
 
 def sequences_to_pandas(
     sequences: Iterable[Sequence],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
     Converts a list of ``Sequence`` objects to a ``pandas.DataFrame`` object.
@@ -1818,12 +1818,12 @@ def sequences_to_csv(
     csv_file: str,
     separator: str = ",",
     header: bool = True,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a CSV file.
@@ -1884,12 +1884,12 @@ def sequences_to_csv(
 def sequences_to_parquet(
     sequences: Iterable[Sequence],
     parquet_file: str,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a Parquet file.
@@ -1945,12 +1945,12 @@ def sequences_to_parquet(
 def to_airr(
     sequences: Iterable[Sequence],
     airr_file: str,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a CSV file.

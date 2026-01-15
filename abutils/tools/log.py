@@ -5,7 +5,6 @@
 
 import logging
 import os
-from typing import Optional
 
 from ..io import make_dir
 
@@ -163,7 +162,7 @@ class SimpleLogger:
     the ``write()`` method.
     """
 
-    def __init__(self, log_file: Optional[str] = None):
+    def __init__(self, log_file: str | None = None):
         self.logs = []
         self.exceptions = []
         self.log_file = log_file
@@ -202,7 +201,7 @@ class SimpleLogger:
         self.exceptions.append(exception_str)
 
     def write(
-        self, log_file: Optional[str] = None, sep: str = "\n", append: bool = False
+        self, log_file: str | None = None, sep: str = "\n", append: bool = False
     ):
         """
         Writes the log and exceptions to a file.

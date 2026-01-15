@@ -24,7 +24,6 @@
 
 import os
 import platform
-from typing import Optional
 from urllib.request import urlretrieve
 
 __all__ = ["get_path", "get_binary_directory"]
@@ -68,7 +67,7 @@ def get_binary_directory() -> str:
     return BIN_DIR
 
 
-def copy_to_binary_directory(source: str, name: Optional[str] = None) -> None:
+def copy_to_binary_directory(source: str, name: str | None = None) -> None:
     """
     Copies a binary to the abutils binary directory.
 

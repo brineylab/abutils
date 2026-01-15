@@ -25,7 +25,7 @@
 
 import itertools
 import math
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -58,8 +58,8 @@ class RepertoireSimilarity:
         self,
         similarities: Iterable[float],
         method: str,
-        sample1_name: Optional[str] = None,
-        sample2_name: Optional[str] = None,
+        sample1_name: str | None = None,
+        sample2_name: str | None = None,
     ):
         self.similarities = similarities
         self.method = method
@@ -143,7 +143,7 @@ class RepertoireSimilarities:
     Object containing repertoire similarity data for a multiple pairwise comparisons.
     """
 
-    def __init__(self, similarities: Optional[Iterable[RepertoireSimilarity]] = None):
+    def __init__(self, similarities: Iterable[RepertoireSimilarity] | None = None):
         self.similarities = similarities if similarities is not None else []
         self.df_needs_update = True
         self._df = None
@@ -275,18 +275,18 @@ class RepertoireSimilarities:
 
 
 def repertoire_similarity(
-    repertoires: Iterable[Union[Iterable[Sequence], Iterable[Pair]]],
-    names: Optional[Iterable[str]] = None,
+    repertoires: Iterable[Iterable[Sequence] | Iterable[Pair]],
+    names: Iterable[str] | None = None,
     method: str = "morisita-horn",
-    features: Union[str, Iterable[str], None] = None,
+    features: str | Iterable[str] | None = None,
     n_iters: int = 1,
-    subsample_size: Optional[int] = None,
+    subsample_size: int | None = None,
     sample_with_replacement: bool = False,
     pairs_only: bool = False,
-    chain: Optional[str] = None,
+    chain: str | None = None,
     force_self_comparisons: bool = False,
-    seed: Union[int, float, str, None] = None,
-) -> Union[float, RepertoireSimilarity, RepertoireSimilarities]:
+    seed: int | float | str | None = None,
+) -> float | RepertoireSimilarity | RepertoireSimilarities:
     """
     Compute the pairwise similarity between two or more repertoires.
 
@@ -430,8 +430,8 @@ def repertoire_similarity(
 
 
 def _calculate_similarity(
-    repertoire1: Union[Iterable[Sequence], Iterable[Pair]],
-    repertoire2: Union[Iterable[Sequence], Iterable[Pair]],
+    repertoire1: Iterable[Sequence] | Iterable[Pair],
+    repertoire2: Iterable[Sequence] | Iterable[Pair],
     name1: str,
     name2: str,
     method: str,
@@ -441,8 +441,8 @@ def _calculate_similarity(
     n_iters: int,
     pairs_only: bool,
     locus: Iterable[str],
-    seed: Union[int, float, str],
-) -> Union[float, RepertoireSimilarity]:
+    seed: int | float | str,
+) -> float | RepertoireSimilarity:
     """
     Calculates the similarity between two repertoires.
 
@@ -537,7 +537,7 @@ def _calculate_similarity(
 
 
 def _get_features(
-    repertoire: Union[Iterable[Sequence], Iterable[Pair]],
+    repertoire: Iterable[Sequence] | Iterable[Pair],
     features: Iterable[str],
     locus: Iterable[str],
     pairs_only: bool = False,
@@ -593,7 +593,7 @@ def _get_features(
 
 
 def normalize(
-    s1: Iterable[Union[int, float]], s2: Iterable[Union[int, float]]
+    s1: Iterable[int | float], s2: Iterable[int | float]
 ) -> tuple:
     """
     Normalizes two distributions.
@@ -616,7 +616,7 @@ def normalize(
 
 
 def make_continuous(
-    s1: Iterable[Union[int, float]], s2: Iterable[Union[int, float]]
+    s1: Iterable[int | float], s2: Iterable[int | float]
 ) -> tuple:
     """
     Makes two distributions continuous by removing zero values.

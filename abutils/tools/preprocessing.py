@@ -27,7 +27,7 @@ import os
 import subprocess as sp
 import tempfile
 import time
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import polars as pl
 from natsort import natsorted
@@ -167,19 +167,19 @@ class MergeGroup:
     def merge(
         self,
         merged_directory: str,
-        log_directory: Optional[str] = None,
+        log_directory: str | None = None,
         format: str = "fastq",
         algo: str = "fastp",
-        binary_path: Optional[str] = None,
+        binary_path: str | None = None,
         minimum_overlap: int = 30,
         allowed_mismatches: int = 5,
         allowed_mismatch_percent: float = 20.0,
         trim_adapters: bool = True,
-        adapter_file: Optional[str] = None,
+        adapter_file: str | None = None,
         quality_trim: bool = True,
         window_size: int = 4,
         quality_cutoff: int = 20,
-        merge_args: Optional[str] = None,
+        merge_args: str | None = None,
         compress_output: bool = False,
         verbose: bool = False,
         debug: bool = False,
@@ -262,19 +262,19 @@ class MergeGroup:
 
 
 def merge_fastqs(
-    files: Union[str, Iterable],
+    files: str | Iterable,
     output_directory: str,
     output_format: str = "fastq",
-    log_directory: Optional[str] = None,
+    log_directory: str | None = None,
     schema: str = "illumina",
     algo: str = "fastp",
-    binary_path: Optional[str] = None,
-    merge_args: Optional[str] = None,
+    binary_path: str | None = None,
+    merge_args: str | None = None,
     minimum_overlap: int = 30,
     allowed_mismatches: int = 5,
     allowed_mismatch_percent: float = 20.0,
     trim_adapters: bool = True,
-    adapter_file: Optional[str] = None,
+    adapter_file: str | None = None,
     quality_trim: bool = True,
     window_size: int = 4,
     quality_cutoff: int = 20,
@@ -432,11 +432,11 @@ def merge_fastqs_vsearch(
     reverse: str,
     merged_file: str,
     output_format: str = "fasta",
-    binary_path: Optional[str] = None,
+    binary_path: str | None = None,
     minimum_overlap: int = 30,
     allowed_mismatches: int = 5,
     allowed_mismatch_percent: float = 20.0,
-    additional_args: Optional[str] = None,
+    additional_args: str | None = None,
     debug: bool = False,
 ) -> str:
     """
@@ -511,19 +511,19 @@ def merge_fastqs_fastp(
     forward: str,
     reverse: str,
     merged: str,
-    binary_path: Optional[str] = None,
+    binary_path: str | None = None,
     minimum_overlap: int = 30,
     allowed_mismatches: int = 5,
     allowed_mismatch_percent: int = 20,
     correct_overlap_region: bool = False,
     trim_adapters: bool = True,
-    adapter_file: Optional[str] = None,
+    adapter_file: str | None = None,
     quality_trim: bool = True,
     window_size: int = 4,
     quality_cutoff: int = 20,
-    name: Optional[str] = None,
-    log_directory: Optional[str] = None,
-    additional_args: Optional[str] = None,
+    name: str | None = None,
+    log_directory: str | None = None,
+    additional_args: str | None = None,
     debug: bool = False,
 ) -> str:
     """
@@ -832,7 +832,7 @@ def _process_chain_group(
 
 def deduplicate(
     project_folder: str,
-    output: Optional[str] = None,
+    output: str | None = None,
     output_format: str = "fasta",
     pool: bool = True,
     umi: bool = False,
@@ -1101,7 +1101,7 @@ def deduplicate(
 
 def reduction(
     project_folder: str,
-    output: Optional[str] = None,
+    output: str | None = None,
     output_format: str = "fasta",
     pool: bool = True,
     umi: bool = False,

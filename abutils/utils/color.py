@@ -23,7 +23,7 @@
 #
 
 
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Tuple
 
 import matplotlib as mpl
 import numpy as np
@@ -119,13 +119,13 @@ def show_palettes() -> None:
 
 
 def get_cmap(
-    c: Union[mpl.colors.Colormap, str, Iterable],
+    c: mpl.colors.Colormap | str | Iterable,
     dark: bool = False,
-    zero_color: Union[str, Iterable, None] = None,
+    zero_color: str | Iterable | None = None,
     n: int = 256,
     minval: float = 0.0,
     maxval: float = 1.0,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> mpl.colors.Colormap:
     """
     Gets a matplotlib ``Colormap``.
@@ -199,7 +199,7 @@ def get_cmap(
 
 
 def monochrome_palette(
-    color: Union[str, Iterable], n_colors: int = 10, include_white: bool = False
+    color: str | Iterable, n_colors: int = 10, include_white: bool = False
 ) -> list:
     """
     Returns a monochromatic palette of colors, from `color` to white.
@@ -240,7 +240,7 @@ def monochrome_palette(
 
 
 def cmap_from_color(
-    color: Union[str, Tuple], dark: bool = False
+    color: str | Tuple, dark: bool = False
 ) -> mpl.colors.Colormap:
     """
     Generates a matplotlib colormap from a single color. Colormap will be built,
