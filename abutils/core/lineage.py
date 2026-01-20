@@ -735,17 +735,17 @@ class Lineage:
         # heavy chain UCA
         if len(heavies) >= 1:
             lmhc = sorted(
-                heavies, key=lambda x: x.heavy["nt_identity"]["v"], reverse=True
+                heavies, key=lambda x: x.heavy["v_identity"], reverse=True
             )[0].heavy
-            hc_uca = run_abstar(("UCA", lmhc["vdj_germ_nt"]), isotype=False)
+            hc_uca = run_abstar(Sequence(lmhc["germline_vdjc"], id="UCA"))
         else:
             hc_uca = None
         # light chain UCA
         if len(lights) >= 1:
             lmlc = sorted(
-                lights, key=lambda x: x.light["nt_identity"]["v"], reverse=True
+                lights, key=lambda x: x.light["v_identity"], reverse=True
             )[0].light
-            lc_uca = run_abstar(("UCA", lmlc["vdj_germ_nt"]), isotype=False)
+            lc_uca = run_abstar(Sequence(lmlc["germline_vdjc"], id="UCA"))
         else:
             lc_uca = None
         return Pair([uca for uca in [hc_uca, lc_uca] if uca is not None])
