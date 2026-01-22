@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import itertools
 import multiprocessing as mp
 import os
@@ -71,6 +72,7 @@ def clonify(
     lineage_field: str = "lineage",
     lineage_size_field: str = "lineage_size",
     mnemonic_names: bool = True,
+    deterministic: bool = True,
     input_fmt: str = "airr",
     output_fmt: str = "airr",
     temp_directory: str | None = None,
@@ -190,6 +192,12 @@ def clonify(
     mnemonic_names : bool, default=True
         If ``True``, mnemonic names are used for lineages. If ``False``, lineages are
         named using a random string of alphanumeric characters.
+
+    deterministic : bool, default=True
+        If ``True``, lineage names are generated deterministically based on the sorted
+        sequence IDs in each lineage. This ensures that identical sets of sequences
+        will always receive the same lineage name across different runs. If ``False``,
+        lineage names are generated randomly (legacy behavior).
 
     input_fmt : str, default='airr'
         Input format of the sequences. Can be ``"fasta"``, ``"fastq"``, ``"airr"``,
@@ -392,7 +400,11 @@ def clonify(
     for seqs in sequence_groups:
         # no need to process if there's only one sequence
         if len(seqs) == 1:
-            if mnemonic_names:
+            if deterministic:
+                assign_dict[seqs[0].id] = _deterministic_lineage_name(
+                    [seqs[0].id], mnemonic=mnemonic_names, mnemo=mnemo
+                )
+            elif mnemonic_names:
                 assign_dict[seqs[0].id] = "_".join(
                     mnemo.generate(strength=128).split()[:8]
                 )
@@ -437,7 +449,18 @@ def clonify(
 
         # rename clusters
         cluster_ids = set(cluster_list)
-        if mnemonic_names:
+        if deterministic:
+            # group sequences by cluster ID to get members for each cluster
+            cluster_members = {c: [] for c in cluster_ids}
+            for seq, cid in zip(seqs, cluster_list):
+                cluster_members[cid].append(seq.id)
+            cluster_names = {
+                c: _deterministic_lineage_name(
+                    cluster_members[c], mnemonic=mnemonic_names, mnemo=mnemo
+                )
+                for c in cluster_ids
+            }
+        elif mnemonic_names:
             cluster_names = {
                 c: "_".join(mnemo.generate(strength=128).split()[:8])
                 for c in cluster_ids
@@ -482,6 +505,58 @@ def clonify(
     if output_fmt.lower == "pandas":
         return df.to_pandas()
     return from_polars(df)
+
+
+def _deterministic_lineage_name(
+    sequence_ids: Iterable[str],
+    mnemonic: bool = True,
+    mnemo: Mnemonic | None = None,
+) -> str:
+    """
+    Generate a deterministic lineage name based on sorted sequence IDs.
+
+    The name is derived from a SHA256 hash of the sorted sequence IDs,
+    ensuring that identical sets of sequences always produce the same
+    lineage name.
+
+    Parameters
+    ----------
+    sequence_ids : Iterable[str]
+        Sequence IDs belonging to the lineage.
+
+    mnemonic : bool, default=True
+        If ``True``, returns a mnemonic name (8 words joined by underscores).
+        If ``False``, returns a 16-character hexadecimal string.
+
+    mnemo : Mnemonic, optional
+        A pre-initialized Mnemonic instance. If not provided, a new one
+        will be created. Passing a pre-initialized instance is more efficient
+        when generating many names.
+
+    Returns
+    -------
+    str
+        A deterministic lineage name.
+
+    """
+    # Sort for order-independence (determinism)
+    sorted_ids = sorted(sequence_ids)
+    combined = "\n".join(sorted_ids)
+
+    # Hash to get deterministic bytes
+    hash_bytes = hashlib.sha256(combined.encode()).digest()
+
+    if mnemonic:
+        # Use hash bytes as entropy source for mnemonic
+        # Mnemonic expects bytes, use first 16 bytes (128 bits) for 12-word mnemonic
+        # then take first 8 words
+        if mnemo is None:
+            mnemo = Mnemonic("english")
+        words = mnemo.to_mnemonic(hash_bytes[:16]).split()[:8]
+        return "_".join(words)
+    else:
+        # Return hex digest prefix (16 chars = 64 bits of entropy)
+        return hash_bytes.hex()[:16]
 
 
 def batch_pairwise_distance(sequences, batches, **kwargs):
