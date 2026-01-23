@@ -49,7 +49,7 @@ from ..utils.utilities import generate_batches
 
 
 def clonify(
-    sequences: str | Iterable[Sequence],
+    sequences: str | pl.DataFrame | pl.LazyFrame | Iterable[Sequence],
     output_path: str | None = None,
     distance_cutoff: float = 0.35,
     shared_mutation_bonus: float = 0.35,
@@ -92,17 +92,24 @@ def clonify(
 
     Parameters
     ----------
-    sequences : Union[str, Iterable[Sequence]]
+    sequences : Union[str, pl.DataFrame, pl.LazyFrame, Iterable[Sequence]]
         Input sequences in any of the following formats:
 
             1. list of abutils ``Sequence`` or ``Pair`` objects
-            2. path to a FASTA/Q-formatted file (if `input_fmt` == "fasta" or "fastq")
-            3. path to an TSV file of AIRR-formatted annotations (if `input_fmt` == "airr")
-            4. path to an Parquet file of AIRR-formatted annotations (if `input_fmt` == "parquet")
-            5. path to a CSV file of AIRR-formatted annotations (if `input_fmt` == "csv")
+            2. ``polars.DataFrame`` or ``polars.LazyFrame`` with AIRR-formatted annotations
+               (single-chain or paired data with ``:0``/``:1`` column suffixes)
+            3. path to a FASTA/Q-formatted file (if `input_fmt` == "fasta" or "fastq")
+            4. path to an TSV file of AIRR-formatted annotations (if `input_fmt` == "airr")
+            5. path to an Parquet file of AIRR-formatted annotations (if `input_fmt` == "parquet")
+            6. path to a CSV file of AIRR-formatted annotations (if `input_fmt` == "csv")
 
         If a FASTA/Q file is provided, ``abstar`` will be used to annotate the sequences
         before lineage assignment.
+
+        .. note::
+            If a Polars DataFrame is provided, paired data is automatically detected by the
+            presence of ``:0`` and ``:1`` column suffixes (e.g., ``sequence_id:0``, ``v_gene:0``).
+            Single-chain data should have standard AIRR column names without suffixes.
 
         .. note::
             If a CSV or Parquet file is provided, it can contain annotated data for ``Sequence``
@@ -252,7 +259,16 @@ def clonify(
     make_dir(temp_directory)
 
     # process input data
-    if isinstance(sequences, str):
+    is_paired = False
+    if isinstance(sequences, (pl.DataFrame, pl.LazyFrame)):
+        # Handle Polars DataFrame/LazyFrame input directly
+        if isinstance(sequences, pl.LazyFrame):
+            df = sequences.collect()
+        else:
+            df = sequences
+        # Detect if paired data by checking for :0 suffix columns
+        is_paired = any(col.endswith(":0") for col in df.columns)
+    elif isinstance(sequences, str):
         input_fmt = input_fmt.lower()
         if input_fmt in ["fasta", "fastq"]:
             import abstar  # import here to avoid circular import
@@ -266,8 +282,13 @@ def clonify(
             sequences = read_csv(sequences)
         else:
             raise ValueError(f"Invalid input format: {input_fmt}")
-    df = to_polars(sequences)
-    is_paired = isinstance(sequences[0], Pair)
+        df = to_polars(sequences)
+        is_paired = isinstance(sequences[0], Pair)
+    else:
+        # Iterable of Sequence or Pair objects
+        sequences = list(sequences)  # Ensure we can index into it
+        df = to_polars(sequences)
+        is_paired = isinstance(sequences[0], Pair)
 
     # filter DataFrame
     fields = [id_key, vgene_key, jgene_key, cdr3_key, mutations_key]
