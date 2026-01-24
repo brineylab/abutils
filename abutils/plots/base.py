@@ -37,6 +37,26 @@ __all__ = ['barplot', 'heatmap']
 
 def barplot(x, y, colors, fig_file=None, xlabel=None, ylabel=None,
             rotate_xtick_labels=False, grid=False, size=None, xfontsize=None):
+    """Create a bar plot.
+
+    Generates a bar chart with customizable colors, labels, and styling options.
+
+    Args:
+        x: Sequence of category labels for the x-axis.
+        y: Sequence of bar heights corresponding to each category.
+        colors: Bar colors. Can be a single color applied to all bars, or a
+            sequence of colors with one per bar.
+        fig_file: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+        xlabel: Label for the x-axis. Defaults to ``None``.
+        ylabel: Label for the y-axis. Defaults to ``None``.
+        rotate_xtick_labels: If ``True``, rotate x-axis tick labels 90 degrees.
+            Defaults to ``False``.
+        grid: If ``True``, display horizontal grid lines. Defaults to ``False``.
+        size: Figure size as (width, height) tuple in inches. If ``None``, uses
+            matplotlib defaults. Defaults to ``None``.
+        xfontsize: Font size for x-axis tick labels. Defaults to ``None``.
+    """
     # set bar locations and width
     ind = np.arange(len(x))
     width = 0.75
@@ -77,6 +97,17 @@ def barplot(x, y, colors, fig_file=None, xlabel=None, ylabel=None,
 
 
 def heatmap(df, fig_file=None):
+    """Create a heatmap from a DataFrame.
+
+    Generates a heatmap visualization using seaborn with a blue color scale
+    and a horizontal colorbar.
+
+    Args:
+        df: pandas DataFrame containing the data to visualize. Rows become
+            y-axis labels and columns become x-axis labels.
+        fig_file: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+    """
     sns.set()
     # set up plot, determine plot size
     h, w = df.shape

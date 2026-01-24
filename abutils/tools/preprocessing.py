@@ -52,14 +52,20 @@ __all__ = ["deduplicate", "reduction", "merge_fastqs", "group_fastq_pairs"]
 
 
 class FASTQFile:
-    """
-    Base class for processing paired FASTQ filenames.
+    """Base class for processing paired FASTQ filenames.
 
-    Parameters
-    ----------
-    file : str
-        Path to a FASTQ file.
+    Provides common functionality for parsing FASTQ file paths and extracting
+    filename components. Subclasses implement vendor-specific filename parsing.
 
+    Args:
+        file: Path to a FASTQ file.
+
+    Attributes:
+        file: Original file path as provided.
+        path: Absolute path to the file.
+        basename: Filename without directory path.
+        dir: Directory containing the file.
+        filename: Filename with .fastq/.fq and .gz extensions removed.
     """
 
     def __init__(self, file: str):
@@ -74,15 +80,22 @@ class FASTQFile:
 
 
 class IlluminaFile(FASTQFile):
-    """
-    Class for processing Illumina-formatted FASTQ filenames.
+    """Parser for Illumina-formatted FASTQ filenames.
+
+    Parses FASTQ filenames following the Illumina naming convention:
+    ``{SampleName}_{SampleNumber}_{Lane}_{Read}_{Number}.fastq.gz``
+
     Also compatible with Element's "legacy" filename structure.
 
-    Parameters
-    ----------
-    file : str
-        Path to a FASTQ file.
+    Args:
+        file: Path to a FASTQ file.
 
+    Attributes:
+        name: Sample name extracted from filename.
+        number: File number (e.g., "001").
+        read: Read identifier (e.g., "R1" or "R2").
+        lane: Lane identifier (e.g., "L001").
+        sample: Sample identifier (e.g., "S1").
     """
 
     def __init__(self, file: str):
@@ -111,14 +124,17 @@ class IlluminaFile(FASTQFile):
 
 
 class ElementFile(FASTQFile):
-    """
-    Class for processing Element-formatted FASTQ filenames.
+    """Parser for Element Biosciences FASTQ filenames.
 
-    Parameters
-    ----------
-    file : str
-        Path to a FASTQ file.
+    Parses FASTQ filenames following the Element naming convention:
+    ``{SampleName}_{Read}.fastq.gz``
 
+    Args:
+        file: Path to a FASTQ file.
+
+    Attributes:
+        name: Sample name extracted from filename.
+        read: Read identifier (e.g., "R1" or "R2").
     """
 
     def __init__(self, file: str):
@@ -147,17 +163,19 @@ class ElementFile(FASTQFile):
 
 
 class MergeGroup:
-    """
-    Group of FASTQ files to be merged.
+    """Group of FASTQ files to be merged.
 
-    Parameters
-    ----------
-    name : str
-        Name of the sample.
+    Represents a collection of paired-end FASTQ files from the same sample
+    that should be merged together. Handles merging across multiple lanes.
 
-    files : Iterable[FASTQFile]
-        Iterable of FASTQFile objects.
+    Args:
+        name: Sample name identifier.
+        files: Iterable of FASTQFile objects to merge.
 
+    Attributes:
+        name: Sample name.
+        files: List of FASTQFile objects.
+        merged_file: Path to merged output file (set after merging).
     """
 
     def __init__(self, name: str, files: Iterable[FASTQFile]):
@@ -283,75 +301,52 @@ def merge_fastqs(
     debug: bool = False,
     verbose: bool = False,
 ) -> Iterable[str]:
-    """
-    Merge paired-end fastq files.
+    """Merge paired-end FASTQ files.
 
-    Parameters
-    ----------
-    files : Union[str, Iterable]
-        Path to a directory containing paired-end fastq files, or an iterable of paired-end fastq files.
+    Processes paired-end FASTQ files by merging overlapping read pairs,
+    optionally trimming adapters and low-quality bases.
 
-    output_directory : str
-        Path to the directory in which to save the merged files.
+    Args:
+        files: Path to a directory containing paired-end FASTQ files, or an
+            iterable of file paths.
+        output_directory: Directory to save merged output files.
+        output_format: Output format, either ``"fastq"`` or ``"fasta"``.
+            Defaults to ``"fastq"``.
+        log_directory: Directory to save fastp processing reports. If ``None``,
+            reports are not saved. Defaults to ``None``.
+        schema: Filename naming convention. Either ``"illumina"`` or
+            ``"element"``. Defaults to ``"illumina"``.
+        algo: Merging algorithm. Currently only ``"fastp"`` is supported.
+            Defaults to ``"fastp"``.
+        binary_path: Path to the merge algorithm binary. If ``None``, uses the
+            binary bundled with abutils. Defaults to ``None``.
+        merge_args: Additional command-line arguments to pass to the merge
+            tool. Defaults to ``None``.
+        minimum_overlap: Minimum required overlap between reads for merging.
+            Defaults to ``30``.
+        allowed_mismatches: Maximum allowed mismatches in the overlap region.
+            Defaults to ``5``.
+        allowed_mismatch_percent: Maximum allowed mismatch percentage in the
+            overlap region. Defaults to ``20.0``.
+        trim_adapters: If ``True``, trim adapter sequences.
+            Defaults to ``True``.
+        adapter_file: Path to a FASTA file containing adapter sequences. If
+            ``None``, uses default Illumina TruSeq adapters.
+            Defaults to ``None``.
+        quality_trim: If ``True``, trim low-quality bases.
+            Defaults to ``True``.
+        window_size: Sliding window size for quality trimming.
+            Defaults to ``4``.
+        quality_cutoff: Mean quality threshold for trimming.
+            Defaults to ``20``.
+        compress_output: If ``True``, gzip-compress output files.
+            Defaults to ``False``.
+        debug: If ``True``, print debug output. Defaults to ``False``.
+        verbose: If ``True``, print progress information.
+            Defaults to ``False``.
 
-    output_format : str, optional
-        Output format. Must be 'fastq' or 'fasta'. Default is 'fastq'.
-
-    log_directory : str, optional
-        Path to the directory in which to save the fastp reports.
-        If not provided, fastp reports will not be saved.
-
-    schema : str, optional
-        Schema of the file names. Can be 'illumina' or 'element'. Default is 'illumina'.
-
-    algo : str, optional
-        Algorithm to use for merging. Must be 'fastp'. Default is 'fastp'.
-
-    binary_path : str, optional
-        Path to the merge algorithm binary. If not provided, the binary packaged with abutils will be used.
-
-    merge_args : str, optional
-        Additional arguments (as a string) to pass to the merge function.
-
-    minimum_overlap : int, optional
-        Minimum overlap between reads. Default is 30.
-
-    allowed_mismatches : int, optional
-        Allowed mismatches between reads. Default is 5.
-
-    allowed_mismatch_percent : float, optional
-        Allowed mismatch percentage between reads. Default is 20.0.
-
-    trim_adapters : bool, optional
-        If True, trim adapters. Default is True.
-
-    adapter_file : str, optional
-        Path to a FASTA file containing adapter sequences. If not provided, the default
-        adapter sequences (Illumina TruSeq) will be used.
-
-    quality_trim : bool, optional
-        If True, trim low-quality bases. Default is True.
-
-    window_size : int, optional
-        Sliding window size for quality trimming. Default is 4.
-
-    quality_cutoff : int, optional
-        Mean quality cutoff for quality trimming. Default is 20.
-
-    compress_output : bool, optional
-        If True, compress the output file using gzip. Default is False.
-
-    debug : bool, optional
-        If True, print debug output. Default is False.
-
-    verbose : bool, optional
-        If True, print verbose output. Default is False.
-
-    Returns
-    -------
-    list
-        A list of paths to the merged FASTA/Q files.
-
+    Returns:
+        List of paths to the merged output files.
     """
     # process input files
     if isinstance(files, str):
@@ -402,22 +397,17 @@ def merge_fastqs(
 def group_fastq_pairs(
     files: Iterable[FASTQFile], verbose: bool = False
 ) -> Iterable[MergeGroup]:
-    """
-    Group paired-end fastq files by sample name. If a sample has multiple lanes, the files will be combined.
+    """Group paired-end FASTQ files by sample name.
 
-    Parameters
-    ----------
-    files : Union[str, Iterable]
-        Path to a directory containing paired-end fastq files, or an iterable of paired-end fastq files.
+    Groups FASTQ files from the same sample, combining files from multiple
+    lanes into a single MergeGroup.
 
-    verbose : bool, optional
-        If True, print verbose output. Default is False.
+    Args:
+        files: Iterable of FASTQFile objects to group.
+        verbose: If ``True``, print progress information. Defaults to ``False``.
 
-    Returns
-    -------
-    list
-        A list of MergeGroup objects.
-
+    Returns:
+        List of MergeGroup objects, naturally sorted by sample name.
     """
     group_dict = {}
     for f in files:
@@ -842,44 +832,28 @@ def deduplicate(
     large_files: bool = False,
     debug: bool = False,
 ) -> None:
-    """
-    A polyvalent tool for deduplication of assigned reads.
-    This function takes as input the AIRR-compliant
-    tables and is specifically designed to handle extremely
-    large files with a minimal footprint.
+    """Deduplicate sequences from AIRR-compliant tables.
 
-    Parameters
-    ----------
-    project_folder : str
-        Path to the project folder containing AIRR-compliant tables.
+    Removes duplicate sequences from AIRR-formatted TSV files. Designed to
+    handle very large files with minimal memory footprint.
 
-    output : str, optional
-        Subdirectory for output files. Created if non-existent. Defaults to None.
-
-    output_format : str
-        Either "fasta" or "airr". Default is "fasta".
-
-    pool : bool, optional
-        If True, pool all samples together. Defaults to True.
-
-    umi : bool, optional
-        If True, use UMI for deduplication. Defaults to False.
-
-    keep_read_numbers : bool, optional
-        If True, read numbers will be added to sequence names. Defaults to False.
-
-    read_number_separator : str, optional
-        Separator for read numbers in sequence names. Defaults to "|".
-
-    large_files : bool, optional
-        If True, optimize for large files (>100Go). Defaults to False.
-
-    debug : bool, optional
-        If True, print debug information. Defaults to False.
-
-    Returns
-    -------
-    None. A FASTA- or TSV-formatted file is written to disk.
+    Args:
+        project_folder: Path to directory containing AIRR-compliant TSV files.
+        output: Subdirectory name for output files. Created if it doesn't
+            exist. Defaults to ``None``.
+        output_format: Output format, either ``"fasta"`` or ``"airr"``.
+            Defaults to ``"fasta"``.
+        pool: If ``True``, pool sequences from all samples together.
+            Defaults to ``True``.
+        umi: If ``True``, use UMI sequences for deduplication.
+            Defaults to ``False``.
+        keep_read_numbers: If ``True``, append read counts to sequence names.
+            Defaults to ``False``.
+        read_number_separator: Separator between sequence name and read count.
+            Defaults to ``"|"``.
+        large_files: If ``True``, optimize processing for very large files
+            (>100GB). Defaults to ``False``.
+        debug: If ``True``, print debug information. Defaults to ``False``.
     """
 
     start = time.time()
@@ -1114,28 +1088,36 @@ def reduction(
     large_files: bool = False,
     debug: bool = False,
 ) -> None:
-    """
-    This function takes as an input AIRR-compliant tables (tsv) and proceeds to
-    data reduction by clustering sequences to a high identity threshold.
+    """Reduce sequence data by clustering at high identity threshold.
 
-    This is specifically designed to handle large files with minimal footprint.
-    Preclustering can be applied to increase performance over large datasets.
+    Clusters sequences from AIRR-formatted TSV files at a high identity
+    threshold to reduce data complexity. Designed for large files with
+    minimal memory footprint.
 
-    Parameters:
-    project_folder (str): Path to the project folder containing AIRR-compliant tables.
-    output (str, optional): Subdirectory for output files. Created if non-existent. Defaults to None.
-    output_format (str): Either "fasta" or "airr". Default is "fasta".
-    pool (bool, optional): If True, pool all samples together. Defaults to True.
-    umi (bool, optional): If True, use UMI for clustering. Defaults to False.
-    keep_cluster_sizes (bool, optional): If True, cluster sizes will be added to sequence names. Defaults to False.
-    cluster_sizes_separator (str, optional): Separator for cluster sizes in sequence names. Defaults to '|'.
-    min_cluster_size (int, optional): Minimum cluster size to consider. Defaults to 3.
-    clustering_threshold (float, optional): Identity threshold for clustering. Defaults to 0.975.
-    consentroid (str, optional): Method to determine cluster representative ('centroid' or 'consensus'). Defaults to 'centroid'.
-    large_files (bool, optional): If True, optimize for large files (>100Go). Defaults to False.
-    debug (bool, optional): If True, print debug information. Defaults to False.
-
-    Returns: None. A fasta file is written to disk.
+    Args:
+        project_folder: Path to directory containing AIRR-compliant TSV files.
+        output: Subdirectory name for output files. Created if it doesn't
+            exist. Defaults to ``None``.
+        output_format: Output format, either ``"fasta"`` or ``"airr"``.
+            Defaults to ``"fasta"``.
+        pool: If ``True``, pool sequences from all samples together.
+            Defaults to ``True``.
+        umi: If ``True``, use UMI sequences for clustering.
+            Defaults to ``False``.
+        keep_cluster_sizes: If ``True``, append cluster sizes to sequence
+            names. Defaults to ``False``.
+        cluster_sizes_separator: Separator between sequence name and cluster
+            size. Defaults to ``"|"``.
+        min_cluster_size: Minimum cluster size to include in output.
+            Defaults to ``3``.
+        clustering_threshold: Sequence identity threshold for clustering
+            (0 to 1). Defaults to ``0.975``.
+        consentroid: Method to select cluster representative, either
+            ``"centroid"`` (most central sequence) or ``"consensus"``
+            (consensus sequence). Defaults to ``"centroid"``.
+        large_files: If ``True``, optimize processing for very large files
+            (>100GB). Defaults to ``False``.
+        debug: If ``True``, print debug information. Defaults to ``False``.
     """
 
     start = time.time()

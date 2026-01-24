@@ -51,100 +51,40 @@ from .sequence import Sequence, translate
 
 
 class Lineage:
-    """
-    Methods for manipulating an antibody lineage.
+    """Container for a clonal lineage of related antibody or TCR sequences.
 
+    A Lineage groups Pair objects that share a common ancestor, typically
+    identified through CDR3 similarity and shared somatic mutations. Provides
+    methods for analyzing lineage characteristics, computing the unmutated
+    common ancestor (UCA), and building phylogenetic trees.
 
-    INPUTS
-    ------
-    pairs: a list of one or more vaxtools.utils.pair.Pair objects
+    Args:
+        pairs: Iterable of Pair objects belonging to this lineage.
+        name: Identifier for the lineage. If ``None``, attempts to extract
+            the clonify ID from sequence annotations. Defaults to ``None``.
 
+    Attributes:
+        pairs: List of all Pair objects in the lineage.
+        name: Lineage identifier (from clonify ID or provided name).
+        just_pairs: List of Pairs with both heavy and light chains.
+        verified_pairs: List of Pairs with verified heavy/light pairing.
+        heavies: List of Pairs containing a heavy chain.
+        lights: List of Pairs containing a light chain.
+        uca: Unmutated common ancestor as a Pair object. Computed from germline
+            V(D)J regions plus N-additions from the least mutated sequence.
+        subject: Subject identifier(s) from Pair annotations.
+        experiment: Experiment identifier(s) from Pair annotations.
+        group: Group identifier(s) from Pair annotations.
+        timepoint: Timepoint identifier(s) from Pair annotations.
 
-    PROPERTIES
-    ----------
-    name: the Clonify ID of the lineage (if Clonify was used to assign lineages).
-        if ['clonify']['id'] does not exist in any of the heavy chains, name will
-        be None.
-
-    just_pairs: a list containing all lineage Pair objects that have both heavy
-        and light chains.
-
-    verified_pairs: a list containing all lineage Pair objects that contain a
-        verified heavy/light pair.
-
-    heavies: a list of all lineage Pair objects with a heavy chain (whether or not
-        they also have a light chain)
-
-    lights: a list of all lineage Pair objects with a light chain (whether or not
-        they also have a heavy chain)
-
-    uca: returns a Pair objecct of the unmutated common ancestor for the lineage.
-        The uca is computed by taking the germline V(D)J regions, plus the N-addition
-        region(s) from the least mutated heavy or light chain. If the lineage contains
-        both heavy and light chains, the returned Pair will have ucas for both chains.
-
-    subject: if any of the Pair objects contains a 'subject' property, this will be returned.
-        If all 'subject' properties are the same, the return value will be a string. If there are
-        multiple different 'subject' properties, the return value will be a list. If no Pairs
-        have a 'subject' property, None will be returned.
-
-    experiment: if any of the Pair objects contains a 'experiment' property, this will be returned.
-        If all 'experiment' properties are the same, the return value will be a string. If there are
-        multiple different 'experiment' properties, the return value will be a list. If no Pairs
-        have a 'experiment' property, None will be returned.
-
-    group: if any of the Pair objects contains a 'group' property, this will be returned.
-        If all 'group' properties are the same, the return value will be a string. If there are
-        multiple different 'group' properties, the return value will be a list. If no Pairs
-        have a 'group' property, None will be returned.
-
-    timepoint: if any of the Pair objects contains a 'timepoint' property, this will be returned.
-        If all 'timepoint' properties are the same, the return value will be a string. If there are
-        multiple different 'timepoint' properties, the return value will be a list. If no Pairs
-        have a 'timepoint' property, None will be returned.
-
-
-    METHODS
-    -------
-
-    Lineage.phylogeny()
-
-        Inputs
-        ------
-        project_dir: directory for alignment, tree and figure files (required)
-
-        aln_file: if an alignment file has already been computed, passing the file path
-            will force phylogeny() to use this alignment instead of computing a new one.
-
-        tree_file: if a tree file has already been computed, passing the file path
-            will force phylogeny() to use this tree instead of computing a new one.
-
-        aa: if True, build an alignment based on amino acid sequences. Default is False.
-
-        root: provide a sequence (string) to root the tree. Default is to use the UCA.
-
-        colors: a dict that maps sequences to colors (as hex values). If used without
-            orders or order_function, keys should be Pair names and values should be hex
-            strings for all Pairs to be colored. Any Pair not present in the dict will
-            be colored black. If used with orders or order_function, the keys should be
-            orders and the values should be hex strings. As before, any order values
-            not present in the dict will be colored black.
-
+    Example:
+        >>> pairs = abutils.tl.clonify(all_pairs)
+        >>> lineage = Lineage(pairs, name="lineage_1")
+        >>> print(lineage.size())
+        >>> uca = lineage.uca
     """
 
     def __init__(self, pairs: Iterable[Pair], name: str | None = None):
-        """
-        Initialize a ``Lineage`` object.
-
-        Parameters
-        ----------
-        pairs : Iterable[Pair]
-            An iterable of ``Pair`` objects
-
-        name : Optional[str]
-            The name of the lineage (optional)
-
-        """
         self.pairs = pairs
         self.rmp_threshold = 0.9
         self.rmp_alt_allowed_mismatches = 1
@@ -812,8 +752,29 @@ class Lineage:
 
 
 class LineageSummary:
-    """
-    docstring for LineageSummary
+    """Formatted summary display for a clonal lineage.
+
+    Generates a formatted text summary of lineage characteristics including
+    sequence counts, germline usage, CDR alignments, and optional metadata.
+    Supports both plain text and ANSI color-coded output for terminal display.
+
+    Args:
+        lineage: Input lineage data as a Polars/Pandas DataFrame, or an
+            iterable of Pair objects.
+        name: Display name for the lineage. Defaults to ``None``.
+        dot_alignment: If ``True``, show CDR alignments in dot notation where
+            dots indicate positions matching the reference. Defaults to ``True``.
+        in_color: If ``True``, use ANSI color codes for terminal output.
+            Defaults to ``True``.
+        pairs_only: If ``True``, only include sequences with both heavy and
+            light chains. Defaults to ``False``.
+        padding_width: Number of spaces between table columns.
+            Defaults to ``1``.
+
+    Example:
+        >>> summary = LineageSummary(lineage_pairs, name="VRC01-lineage")
+        >>> summary.show()  # Display in terminal with colors
+        >>> text = summary.to_string(in_color=False)  # Get plain text
     """
 
     def __init__(

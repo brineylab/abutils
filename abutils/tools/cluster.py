@@ -132,29 +132,23 @@ def _cleanup_mmseqs_db(db_path: str) -> None:
 
 
 class Cluster:
-    """
-    Class for a sequence cluster.
+    """A sequence cluster from clustering operations.
 
-    Attributes
-    ----------
-    name : str
-        Name of the cluster.
+    Represents a group of similar sequences identified through clustering.
+    Provides access to cluster members, centroid, and consensus sequences.
 
-    sequences : list
-        List of sequences in the cluster.
+    Args:
+        name: Cluster identifier.
+        sequences: List of Sequence objects in the cluster.
+        centroid: Centroid Sequence of the cluster. Defaults to ``None``.
 
-    size : int
-        Number of sequences in the cluster.
-
-    seq_ids : list
-        List of sequence IDs in the cluster.
-
-    centroid : ``Sequence``
-        Centroid sequence of the cluster.
-
-    consensus : ``Sequence``
-        Consensus sequence of the cluster.
-
+    Attributes:
+        name: Cluster identifier.
+        sequences: List of Sequence objects in the cluster.
+        size: Number of sequences in the cluster.
+        sequence_ids: List of sequence IDs in the cluster.
+        centroid: Centroid Sequence (most representative member).
+        consensus: Consensus Sequence computed from cluster alignment.
     """
 
     def __init__(self, name, sequences, centroid=None):
@@ -192,26 +186,21 @@ class Cluster:
         algo: str = "mafft",
         ambiguous: str | None = None,
     ) -> Sequence:
-        """
-        Makes a consensus sequence from the cluster's sequences.
+        """Compute a consensus sequence from cluster members.
 
-        Parameters
-        ----------
-        threshold : float, default=0.51
-            Threshold for calling a consensus base. Must be between 0 and 1.
+        Aligns cluster sequences and generates a consensus based on the most
+        common base/residue at each position.
 
-        algo : str, default="mafft"
-            Algorithm to be used for generating the consensus sequence. Options are
-            ``"mafft"``, ``"famsa"``, or ``"muscle"``.
+        Args:
+            threshold: Minimum frequency (0-1) for calling a consensus position.
+                Defaults to ``0.51``.
+            algo: Multiple sequence alignment algorithm. Options are ``"mafft"``,
+                ``"famsa"``, or ``"muscle"``. Defaults to ``"mafft"``.
+            ambiguous: Character for ambiguous positions. If ``None``, uses the
+                default for the sequence type. Defaults to ``None``.
 
-        ambiguous : str, default=None
-            Character to use for ambiguous bases. If not provided, the default
-            ambiguous base for the sequence type will be used.
-
-        Returns
-        -------
-        consensus : ``Sequence``
-
+        Returns:
+            Consensus Sequence object.
         """
         if len(self.sequences) == 1:
             self._consensus = self.sequences[0]
@@ -237,25 +226,21 @@ class Cluster:
 
 
 class Clusters:
-    """
-    Class for a collection of clusters.
+    """Collection of sequence clusters.
 
-    Attributes
-    ----------
-    clusters : list
-        List of clusters. Clusters are sorted in descending order by size,
-        with the largest cluster first.
+    Container for multiple Cluster objects, providing iteration, indexing,
+    and access to cluster statistics.
 
-    centroids : list
-        List of cluster centroids.
+    Args:
+        clusters: Initial clusters as a list of Cluster objects, a dictionary
+            mapping cluster names to cluster data, or ``None`` for an empty
+            collection. Defaults to ``None``.
 
-    largest_cluster : ``Cluster``
-        The largest cluster in the collection.
-
-    count : int
-        Number of clusters in the collection.
-
-
+    Attributes:
+        clusters: List of Cluster objects, sorted by size (largest first).
+        centroids: List of centroid Sequences from all clusters.
+        largest_cluster: The Cluster with the most sequences.
+        count: Number of clusters in the collection.
     """
 
     def __init__(self, clusters=None):
@@ -326,134 +311,48 @@ def cluster(
     quiet: bool = False,
     debug: bool = False,
 ) -> dict | Clusters:
-    """
-    Clusters sequences using `CD-HIT`_, `VSEARCH`_ or `MMseqs2`_. By default, sequences will
-    be clustered with VSEARCH if there are fewer than 10,000 nucleotide sequences, with
-    CD-HIT if there are fewer than 10,000 amino acid sequences, and with MMseqs2 if there
-    are more than 10,000 sequences (nucleotide or amino acid). These defaults can be
-    overridden with `algo`.
+    """Cluster sequences by identity using CD-HIT, VSEARCH, or MMseqs2.
 
-    Parameters
-    ----------
-    sequences : iterable or string
-        Input sequences in any of the following formats:
-            1. list of abutils ``Sequence`` objects
-            2. FASTA-formatted string
-            3. path to a FASTA-formatted file
-            4. list of BioPython ``SeqRecord`` objects
-            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
-            6. list of strings, with each string being a separate sequence.
-        Required.
+    Groups sequences by similarity using one of several clustering algorithms.
+    By default, automatically selects the algorithm based on sequence count
+    and type.
 
-    .. note::
+    Args:
+        sequences: Input sequences as Sequence objects, FASTA string/file path,
+            BioPython SeqRecords, or list of [id, sequence] pairs.
+        threshold: Identity threshold for clustering (0-1). Defaults to ``0.975``.
+        algo: Clustering algorithm. Options: ``"vsearch"``, ``"mmseqs"``,
+            ``"cdhit"``, or ``"auto"``. Auto selects VSEARCH for <10k nucleotide
+            sequences, CD-HIT for <10k amino acid sequences, and MMseqs2
+            otherwise. Defaults to ``"auto"``.
+        temp_dir: Directory for temporary clustering files. Defaults to ``"/tmp"``.
+        iddef: VSEARCH identity definition (0-4). Defaults to ``0``.
+        cluster_mode: MMseqs2 clustering mode. ``"1"`` greedy set cover,
+            ``"2"`` connected component, ``"3"`` greedy incremental.
+            Defaults to ``"2"``.
+        cov_mode: MMseqs2 coverage mode (0-3). Defaults to ``"0"``.
+        coverage: MMseqs2 coverage threshold (0-1). Defaults to ``0.8``.
+        alignment_mode: MMseqs2 alignment mode (0-4). Defaults to ``"3"``.
+        seq_id_mode: MMseqs2 sequence ID mode (0-2). Defaults to ``"1"``.
+        vsearch_bin: Path to VSEARCH binary. Uses bundled binary if ``None``.
+        mmseqs_bin: Path to MMseqs2 binary. Uses bundled binary if ``None``.
+        cdhit_bin: Path to CD-HIT binary. Uses bundled binary if ``None``.
+        id_key: Key for sequence ID in annotations. Defaults to ``None``.
+        seq_key: Key for sequence in annotations. Defaults to ``None``.
+        threads: Number of threads for clustering. Defaults to ``None``.
+        strand: Sequence strand, ``"plus"`` or ``"both"``. Defaults to ``"plus"``.
+        as_dict: If ``True``, return dict instead of Clusters object.
+            Defaults to ``False``.
+        quiet: If ``True``, suppress clustering output. Defaults to ``False``.
+        debug: If ``True``, print debug information. Defaults to ``False``.
 
-        If ``sequences`` is a list of ``str`` objects, they will be assigned random IDs.
+    Returns:
+        Clusters object or dict mapping cluster names to centroid and sequences.
 
-    threshold : float, default=0.975
-        Identity threshold for clustering. Must be between 0 and 1.
-
-    algo : float, default="auto"
-        Algorithm to be used for clustering. Options are ``"vsearch"``, ``"mmseqs"``, ``"cdhit"``,
-        or ``"auto"``. By default (``"auto"``), VSEARCH will be used if there are fewer than 10,000
-        nucleotide sequences, CD-HIT will be used if there are fewer than 10,000 amino acid sequences,
-        and MMseqs2 will be used for 10,000 sequences or more. Providing ``"vsearch"``, ``"cdhit"``,
-        or ``"mmseqs"`` will force the use of the desired clustering algorithm regardless of the
-        number or sequences to be clustered.
-
-    temp_dir : str, default="/tmp"
-        Path to a directory for temporary storage of clustering files.
-
-    iddef : int, default=1
-        Identity definition, as implemented by VSEARCH. Options are:
-            0. CD-HIT definition: (matching columns) / (shortest sequence length).
-            1. edit distance: (matching columns) / (alignment length).
-            2. edit distance excluding terminal gaps (same as --id).
-            3. Marine Biological Lab definition counting each gap opening (internal or
-               terminal) as a single mismatch, whether or not the gap was extended: 1.0
-               - [(mismatches + gap openings)/(longest sequence length)]
-            4. BLAST definition, equivalent to --iddef 1 in a context of global pairwise
-               alignment.
-
-    cluster_mode : str, default="2"
-        Clustering mode, as implemented by MMseqs2. Options are:
-            1. greedy set cover
-            2. connected component
-            3. greedy incremental (CD-HIT-like)
-
-    cov_mode : str, default="0"
-        Coverage mode, as implemented by MMseqs2. Options are:
-            0. bidirectional
-            1. target coverage
-            2. query coverage
-            3. target-in-query length coverage
-
-    coverage : float, default=0.8
-        Coverage threshold for clustering with MMseqs2. Must be between 0 and 1.
-
-    alignment_mode : str, default="3"
-        Alignment mode, as implemented by MMseqs2. Options are:
-            0. automatic
-            1. only score and end_pos
-            2. also start_pos and cov
-            3. also seq.id
-            4. only ungapped alignment
-
-    seq_id_mode : str, default="1"
-        Sequence ID mode, as implemented by MMseqs2. Options are:
-            0. alignment length
-            1. shorter sequence length
-            2. longer sequence length
-
-    vsearch_bin : str, optional
-        Path to a VSEARCH executable. If not provided, the VSEARCH binary bundled
-        with ``abutils`` will be used.
-
-    mmseqs_bin : str, optional
-        Path to a MMseqs2 executable. If not provided, the MMseqs2 binary bundled
-        with ``abutils`` will be used.
-
-    cdhit_bin : str, optional
-        Path to a CD-HIT executable. If not provided, the CD-HIT binary bundled
-        with ``abutils`` will be used.
-
-    id_key : str, default=None
-        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-
-    sequence_key : str, default=None
-        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
-
-    strand : str, default="plus"
-        Strand of the sequences to align. Options are ``"plus"`` and ``"both"``.
-
-    as_dict : bool, default=False
-        If ``True``, return clustering results as a ``dict`` rather than a ``Clusters``
-        object. the ``dict`` is of the format:
-            {"cluster1_name": {"centroid": cluster1_centroid,
-                               "seqs": [seq1, seq2, seq3, ...]},
-             "cluster2_name": {"centroid": cluster2_centroid,
-                               "seqs": [seq4, seq5, seq6, ...]},
-            }
-
-    quiet : bool, default=False
-        If ``True``, suppresses all output from the clustering algorithm.
-
-    debug : bool, default=False
-        If ``True``, prints MAFFT's standard output and standard error.
-        Default is ``False``.
-
-
-    Returns
-    -------
-    clusters : ``Clusters`` or ``dict``
-
-
-    .. _VSEARCH
-        https://github.com/torognes/vsearch
-    .. _MMseqs2
-        https://github.com/soedinglab/MMseqs2
-    .. _CD-HIT
-       https://github.com/weizhongli/cdhit/wiki
-
+    Example:
+        >>> seqs = abutils.io.read_fasta("sequences.fasta")
+        >>> clusters = abutils.tl.cluster(seqs, threshold=0.97)
+        >>> print(f"Found {clusters.count} clusters")
     """
     # check input data to get the number of sequences
     fasta_file = to_fasta(

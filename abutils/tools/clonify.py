@@ -581,6 +581,19 @@ def _deterministic_lineage_name(
 
 
 def batch_pairwise_distance(sequences, batches, **kwargs):
+    """Compute pairwise distances for batches of sequence pairs.
+
+    Helper function for parallel computation of pairwise distances across
+    multiple sequence pairs.
+
+    Args:
+        sequences: List of Sequence objects.
+        batches: Iterable of (index1, index2) tuples specifying pairs to compare.
+        **kwargs: Additional arguments passed to ``pairwise_distance()``.
+
+    Returns:
+        List of distance values for each sequence pair.
+    """
     distances = []
     for i1, i2 in batches:
         d = pairwise_distance(sequences[i1], sequences[i2], **kwargs)

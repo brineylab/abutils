@@ -37,9 +37,43 @@ from ..core.sequence import Sequence
 
 
 class Pair(object):
-    """
-    Holds a one or more ``Sequence`` objects, corresponding to a paired mAb or TCR.
+    """Container for paired antibody or T-cell receptor sequences.
 
+    Holds one or more Sequence objects representing paired chains from a single
+    cell. For B-cell receptors (BCR), this typically includes heavy and light
+    (kappa or lambda) chains. For T-cell receptors (TCR), this includes
+    alpha/beta or gamma/delta chains.
+
+    The Pair class automatically detects receptor type and chain assignments
+    based on locus annotations or V-gene names.
+
+    Args:
+        sequences: Iterable of sequence data, either as dictionaries or
+            Sequence objects. Each represents one chain of the receptor.
+        name: Identifier for this pair. Defaults to ``None``.
+        chain_selection_func: Custom function to prioritize chains when multiple
+            heavy or light chains exist. Takes a list of sequences and returns
+            them in priority order. If ``None``, chains are used in the order
+            provided. Defaults to ``None``.
+        properties: Dictionary of additional attributes to set on the Pair
+            object. Defaults to ``None``.
+
+    Attributes:
+        heavy: Primary heavy chain Sequence (BCR).
+        light: Primary light chain Sequence (BCR).
+        alpha: Primary alpha chain Sequence (TCR).
+        beta: Primary beta chain Sequence (TCR).
+        heavies: List of all heavy chain Sequences.
+        lights: List of all light chain Sequences.
+        receptor: Receptor type, either ``"bcr"`` or ``"tcr"``.
+        name: Pair identifier.
+
+    Example:
+        >>> heavy = {"sequence": "EVQLVES...", "locus": "IGH", "v_call": "IGHV1-2"}
+        >>> light = {"sequence": "DIQMTQS...", "locus": "IGK", "v_call": "IGKV3-20"}
+        >>> pair = Pair([heavy, light], name="antibody_1")
+        >>> print(pair.receptor)
+        "bcr"
     """
 
     def __init__(
@@ -49,27 +83,6 @@ class Pair(object):
         chain_selection_func: Callable | None = None,
         properties: dict | None = None,
     ):
-        """
-        Initialize a Pair object.
-
-        Parameters
-        ----------
-        sequences : Iterable[Union[dict, Sequence]]
-            A list of sequence objects, each containing sequence information.
-
-        name : Optional[str], default=None
-            The name of the pair.
-
-        chain_selection_func : Optional[Callable], default=None
-            A function that takes a list of sequences and orders them to determine
-            the "correct" heavy and light chains in cases for which multiple heavy
-            or light chains exist. If not provided, chains are prioritized in the order
-            provided.
-
-        properties : Optional[dict], default=None
-            A dictionary of additional properties to add to the Pair object.
-
-        """
         self._sequences = sequences
         self._receptor = None
         self._heavy = None
@@ -1421,6 +1434,22 @@ def pairs_to_parquet(
 
 
 def vrc01_like(pair, loose=False):
+    """Check if a Pair represents a VRC01-class antibody.
+
+    VRC01-class antibodies are characterized by IGHV1-2 heavy chain usage and
+    a short (5 amino acid) light chain CDR3. These broadly neutralizing
+    antibodies target the CD4 binding site of HIV-1 envelope.
+
+    Args:
+        pair: Pair object containing heavy and light chain sequences.
+        loose: If ``True``, use relaxed matching criteria that check any
+            heavy/light chain combination. If ``False``, use strict matching
+            on the primary heavy and light chains. Defaults to ``False``.
+
+    Returns:
+        ``True`` if the pair matches VRC01-class criteria, ``False`` if not,
+        or ``None`` if the annotation format is unrecognized.
+    """
     if loose:
         return loose_vrc01_like(pair)
     else:
@@ -1428,6 +1457,18 @@ def vrc01_like(pair, loose=False):
 
 
 def strict_vrc01_like(pair):
+    """Check if a Pair matches strict VRC01-class criteria.
+
+    Requires both the primary heavy chain to use IGHV1-2 and the primary light
+    chain to have a 5 amino acid CDR3 (or 7 amino acid junction in AIRR format).
+
+    Args:
+        pair: Pair object containing heavy and light chain sequences.
+
+    Returns:
+        ``True`` if the pair matches strict VRC01-class criteria, ``False`` if
+        not, or ``None`` if the annotation format is unrecognized.
+    """
     if any([pair.heavy is None, pair.light is None]):
         vrc01_like = False
     else:
@@ -1452,6 +1493,19 @@ def strict_vrc01_like(pair):
 
 
 def loose_vrc01_like(pair):
+    """Check if a Pair matches relaxed VRC01-class criteria.
+
+    Uses relaxed matching that checks if any heavy chain uses IGHV1-2 and any
+    light chain has a 5 amino acid CDR3. This is useful when a Pair contains
+    multiple heavy or light chain sequences.
+
+    Args:
+        pair: Pair object containing heavy and light chain sequences.
+
+    Returns:
+        ``True`` if any heavy/light combination matches VRC01-class criteria,
+        ``False`` if not, or ``None`` if the annotation format is unrecognized.
+    """
     try:
         # abstar's JSON output format
         if any([l["cdr3_len"] == 5 for l in pair.lights]) and any(

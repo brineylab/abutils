@@ -45,6 +45,29 @@ __all__ = ["germline_use_plot", "cdr3_length_plot", "vj_heatmap"]
 def germline_use_plot(
     seqs, fig_file=None, level="gene", gene="V", species="human", chain="heavy"
 ):
+    """Generate a bar plot showing germline gene usage frequencies.
+
+    Creates a bar chart visualizing the frequency distribution of V, D, or J
+    germline gene usage across a collection of antibody sequences.
+
+    Args:
+        seqs: Iterable of Sequence objects with germline annotations.
+        fig_file: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+        level: Granularity of germline grouping. Either ``"gene"`` for
+            individual genes (e.g., IGHV1-2) or ``"fam"`` for gene families
+            (e.g., IGHV1). Defaults to ``"gene"``.
+        gene: Germline gene type to plot. One of ``"V"``, ``"D"``, or ``"J"``.
+            Defaults to ``"V"``.
+        species: Species for germline reference. Defaults to ``"human"``.
+        chain: Antibody chain type. One of ``"heavy"``, ``"kappa"``, or
+            ``"lambda"``. Defaults to ``"heavy"``.
+
+    Example:
+        >>> import abutils
+        >>> seqs = abutils.io.read_airr("sequences.tsv")
+        >>> abutils.pl.germline_use_plot(seqs, gene="V", level="gene")
+    """
     from .base import barplot
 
     seqs = [s for s in seqs if s["chain"] == chain]
@@ -81,6 +104,30 @@ def germline_use_plot(
 
 
 def cdr3_length_plot(seqs, fig_file=None, max_len=40, chain="heavy", color=None):
+    """Generate a bar plot showing CDR3 length distribution.
+
+    Creates a bar chart visualizing the frequency distribution of CDR3 amino
+    acid lengths across a collection of antibody sequences.
+
+    Args:
+        seqs: Iterable of Sequence objects with CDR3 length annotations.
+        fig_file: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+        max_len: Maximum CDR3 length to include in the plot. Sequences with
+            CDR3 lengths greater than this value are excluded.
+            Defaults to ``40``.
+        chain: Antibody chain type. One of ``"heavy"``, ``"light"``, ``"kappa"``,
+            or ``"lambda"``. Using ``"light"`` includes both kappa and lambda
+            chains. Defaults to ``"heavy"``.
+        color: Bar color as an RGB tuple or any matplotlib-compatible color
+            specification. If ``None``, uses a default color from the HLS
+            palette. Defaults to ``None``.
+
+    Example:
+        >>> import abutils
+        >>> seqs = abutils.io.read_airr("sequences.tsv")
+        >>> abutils.pl.cdr3_length_plot(seqs, max_len=30, chain="heavy")
+    """
     from .base import barplot
 
     if chain == "light":
@@ -112,6 +159,24 @@ def cdr3_length_plot(seqs, fig_file=None, max_len=40, chain="heavy", color=None)
 
 
 def vj_heatmap(seqs, fig_file=None, species="human", chain="heavy"):
+    """Generate a heatmap showing V-J gene pairing frequencies.
+
+    Creates a heatmap visualizing the co-occurrence frequencies of V and J
+    germline gene combinations across a collection of antibody sequences.
+
+    Args:
+        seqs: Iterable of Sequence objects with V and J gene annotations.
+        fig_file: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+        species: Species for germline reference. Defaults to ``"human"``.
+        chain: Antibody chain type. One of ``"heavy"``, ``"kappa"``, or
+            ``"lambda"``. Defaults to ``"heavy"``.
+
+    Example:
+        >>> import abutils
+        >>> seqs = abutils.io.read_airr("sequences.tsv")
+        >>> abutils.pl.vj_heatmap(seqs, species="human", chain="heavy")
+    """
     from .base import heatmap
 
     seqs = [s for s in seqs if s["chain"] == chain]

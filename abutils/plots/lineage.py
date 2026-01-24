@@ -43,6 +43,40 @@ __all__ = ['lineage_donut', 'annotated_donut']
 def lineage_donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False,
                   monochrome_color=None, singleton_color='lightgrey', shuffle_colors=False, seed=1234,
                   text_kws={}, pie_kws={}, fontsize=28, linewidth=2):
+    """Generate a donut chart showing lineage size distribution.
+
+    Creates a donut chart where each wedge represents a clonal lineage, with
+    wedge size proportional to the number of sequences in that lineage.
+    Singleton lineages (containing only one sequence) are grouped together.
+
+    Args:
+        lineages: Iterable of Lineage objects to visualize.
+        figfile: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+        figsize: Figure size as (width, height) tuple in inches.
+            Defaults to ``(6, 6)``.
+        pairs_only: If ``True``, only count paired sequences when calculating
+            lineage sizes. Defaults to ``False``.
+        monochrome_color: Base color for a monochromatic color scheme. If
+            provided, lineages are colored in shades of this color. If ``None``,
+            uses a rainbow color palette. Defaults to ``None``.
+        singleton_color: Color for the combined singleton lineages wedge.
+            Defaults to ``"lightgrey"``.
+        shuffle_colors: If ``True``, randomize the color order (excluding the
+            primary color in monochrome mode). Defaults to ``False``.
+        seed: Random seed for color shuffling. Defaults to ``1234``.
+        text_kws: Additional keyword arguments passed to matplotlib's ``text()``
+            for the center count label. Defaults to ``{}``.
+        pie_kws: Additional keyword arguments passed to matplotlib's ``pie()``.
+            Defaults to ``{}``.
+        fontsize: Font size for the center count label. Defaults to ``28``.
+        linewidth: Width of wedge borders in points. Defaults to ``2``.
+
+    Example:
+        >>> import abutils
+        >>> lineages = abutils.tl.clonify(pairs)
+        >>> abutils.pl.lineage_donut(lineages, figfile="lineages.png")
+    """
     lineages = sorted(lineages, key=lambda x: x.size(pairs_only), reverse=True)
     non_singletons = [l for l in lineages if l.size(pairs_only) > 1]
     singleton_count = sum([1 for l in lineages if l.size(pairs_only) == 1])
@@ -97,7 +131,59 @@ def annotated_donut(lineages, annotations, annotation_colors=None, annotation_or
                     count_fontsize=48, linewidth=2, arc_linewidth=15, figfile=None, figsize=(8, 8), pairs_only=False,
                     monochrome_color=None, singleton_color='lightgrey', shuffle_colors=False, seed=1234,
                     text_kws={}, pie_kws={}):
+    """Generate a donut chart with an outer annotation arc.
 
+    Creates a donut chart similar to ``lineage_donut()`` but with an additional
+    outer arc showing annotation categories. Lineages are grouped by annotation
+    and colored using monochromatic schemes within each annotation group.
+
+    Args:
+        lineages: Iterable of Lineage objects to visualize.
+        annotations: Dictionary mapping annotation labels to lists of lineage
+            names belonging to that annotation category.
+        annotation_colors: Dictionary mapping annotation labels to colors. If
+            ``None``, colors are automatically assigned. Defaults to ``None``.
+        annotation_order: List specifying the order of annotations in the plot.
+            If ``None``, annotations are sorted naturally. Defaults to ``None``.
+        annotation_fontsize: Font size for annotation labels. Defaults to ``20``.
+        unannotated_color: Color for lineages not in any annotation category.
+            Defaults to ``"grey"``.
+        unannotated_label: Label for unannotated lineages. Defaults to
+            ``"unknown"``.
+        arc_width: Width of the outer annotation arc as a fraction of the
+            radius. Defaults to ``0.125``.
+        donut_width: Width of the inner donut as a fraction of the radius.
+            Defaults to ``0.425``.
+        count_fontsize: Font size for the center count label. Defaults to ``48``.
+        linewidth: Width of inner wedge borders in points. Defaults to ``2``.
+        arc_linewidth: Width of outer arc borders in points. Defaults to ``15``.
+        figfile: Path to save the figure. If ``None``, the plot is displayed
+            but not saved. Defaults to ``None``.
+        figsize: Figure size as (width, height) tuple in inches.
+            Defaults to ``(8, 8)``.
+        pairs_only: If ``True``, only count paired sequences when calculating
+            lineage sizes. Defaults to ``False``.
+        monochrome_color: Unused parameter retained for API compatibility.
+            Defaults to ``None``.
+        singleton_color: Color for singleton lineages within each annotation
+            group. Defaults to ``"lightgrey"``.
+        shuffle_colors: If ``True``, randomize the color order within each
+            annotation group. Defaults to ``False``.
+        seed: Random seed for color shuffling. Defaults to ``1234``.
+        text_kws: Additional keyword arguments passed to matplotlib's ``text()``
+            for the center count label. Defaults to ``{}``.
+        pie_kws: Additional keyword arguments passed to matplotlib's ``pie()``.
+            Defaults to ``{}``.
+
+    Example:
+        >>> import abutils
+        >>> lineages = abutils.tl.clonify(pairs)
+        >>> annotations = {
+        ...     "VRC01-class": ["lineage_1", "lineage_5"],
+        ...     "Other bnAbs": ["lineage_2", "lineage_3"]
+        ... }
+        >>> abutils.pl.annotated_donut(lineages, annotations)
+    """
     all_sizes = []
     all_colors = []
     if annotation_order is None:

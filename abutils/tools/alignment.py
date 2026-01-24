@@ -438,71 +438,37 @@ def mafft(
     debug: bool = False,
     fasta: str | None = None,
 ) -> MultipleSeqAlignment | str:
-    """
-    Performs multiple sequence alignment with `MAFFT`_.
+    """Perform multiple sequence alignment using MAFFT.
 
-    Parameters
-    ----------
-    sequences : (str, iterable)
-        Can be one of several things:
-            1. path to a FASTA-formatted file
-            2. a FASTA-formatted string
-            3. a list of BioPython ``SeqRecord`` objects
-            4. a list of abutils ``Sequence`` objects
-            5. a list of lists/tuples, of the format ``[sequence_id, sequence]``
+    Args:
+        sequences: Input sequences as a FASTA file path, FASTA string,
+            BioPython SeqRecords, abutils Sequences, or [id, sequence] pairs.
+        alignment_file: Output alignment file path. Required if ``as_file`` is
+            ``True``. Defaults to ``None``.
+        fmt: Output format: ``"fasta"``, ``"phylip"``, or ``"clustal"``.
+            Defaults to ``"fasta"``.
+        threads: Number of threads. ``-1`` uses all available CPUs.
+            Defaults to ``-1``.
+        as_file: If ``True``, return the alignment file path instead of
+            a MultipleSeqAlignment object. Defaults to ``False``.
+        as_string: If ``True``, return the alignment as a string.
+            Defaults to ``False``.
+        reorder: If ``True``, reorder output sequences by similarity.
+            Defaults to ``True``.
+        mafft_bin: Path to MAFFT binary. Uses bundled binary if ``None``.
+        id_key: Key for sequence ID in annotations. Defaults to ``None``.
+        seq_key: Key for sequence in annotations. Defaults to ``None``.
+        debug: If ``True``, print MAFFT stdout/stderr. Defaults to ``False``.
+        fasta: Deprecated alias for ``sequences``. Defaults to ``None``.
 
-    alignment_file : str, optional
-        Path for the output alignment file. Required if ``as_file`` is ``True``.
+    Returns:
+        MultipleSequenceAlignment object, alignment file path (if ``as_file``),
+        or alignment string (if ``as_string``).
 
-    fmt : str, default='fasta'
-        Format of the output alignment. Choices are 'fasta', 'phylip', and 'clustal'.
-        Default is 'fasta'.
-
-    threads : int, default=-1
-        Number of threads for MAFFT to use. Default is ``-1``, which uses all
-        available CPUs.
-
-    as_file: bool, default=False
-        If ``True``, returns the path to the alignment file. If ``False``,
-        returns either a BioPython ``MultipleSeqAlignment`` object or the alignment
-        output as a ``str``, depending on `as_string`. If `alignment_file` is not
-        provided, a temporary file will be created with ``tempfile.NamedTemporaryFile``.
-        Note that this temporary file is created in ``"/tmp"`` and may be removed
-        by the operating system without notice.
-
-    as_string: bool, default=False
-        If ``True``, returns a the alignment output as a string. If ``False``,
-        returns a BioPython ``MultipleSeqAlignment`` object (obtained by calling
-        ``Bio.AlignIO.read()`` on the alignment file).
-
-    mafft_bin : str, optional
-        Path to a MAFFT executable. Default is ``None``, which results in
-        using the default system MAFFT binary (just calling ``'mafft'``).
-
-    id_key : str, default=None
-        Key to retrieve the sequence ID. If not provided or missing, ``Sequence.id`` is used.
-
-    sequence_key : str, default=None
-        Key to retrieve the sequence. If not provided or missing, ``Sequence.sequence`` is used.
-
-    debug : bool, default=False
-        If ``True``, prints MAFFT's standard output and standard error.
-        Default is ``False``.
-
-    fasta : str, optional
-        Path to a FASTA-formatted input file. *Depricated* (use `sequences`
-        for all types if input), but retained for backwards compatibility.
-
-
-    Returns
-    -------
-    alignment : str or ``MultipleSeqAlignment``
-        If ``as_file`` is ``True``, returns a path to the output alignment file,
-        Otherwise, returns a BioPython ``MultipleSeqAlignment`` object.
-
-
-    .. _MAFFT:
-        https://mafft.cbrc.jp/alignment/software/
+    Example:
+        >>> seqs = abutils.io.read_fasta("sequences.fasta")
+        >>> aln = abutils.tl.mafft(seqs)
+        >>> print(len(aln))
     """
     # process input
     if fasta is not None:
@@ -1443,8 +1409,34 @@ class PairwiseAlignment(ABC):
 
 
 class LocalAlignment(PairwiseAlignment):
-    """
-    docstring for LocalAlignment
+    """Local pairwise sequence alignment using the Smith-Waterman algorithm.
+
+    Performs local alignment, which finds the best matching subsequences
+    between query and target. Unlike global alignment, local alignment does
+    not require the entire sequences to align - it identifies the highest-scoring
+    local region of similarity.
+
+    Args:
+        query: Query sequence to align.
+        target: Target sequence to align against.
+        match: Score for matching positions. Defaults to 3.
+        mismatch: Penalty for mismatching positions. Defaults to -2.
+        gap_open: Gap opening penalty. Defaults to 5.
+        gap_extend: Gap extension penalty. Defaults to 2.
+        matrix: Substitution matrix, either as a string name (e.g., "blosum62")
+            or a parasail.Matrix object. If not provided, a simple match/mismatch
+            matrix is created using ``match`` and ``mismatch`` scores.
+        gap_open_penalty: Deprecated alias for ``gap_open``.
+        gap_extend_penalty: Deprecated alias for ``gap_extend``.
+        alignment_function: Parasail alignment function to use.
+            Defaults to ``parasail.sw_trace_striped_16``.
+
+    Example:
+        >>> from abutils.core.sequence import Sequence
+        >>> query = Sequence("ACGTACGT", id="query")
+        >>> target = Sequence("TACGTACG", id="target")
+        >>> aln = LocalAlignment(query, target)
+        >>> print(aln.score)
     """
 
     def __init__(
@@ -1476,8 +1468,33 @@ class LocalAlignment(PairwiseAlignment):
 
 
 class GlobalAlignment(PairwiseAlignment):
-    """
-    docstring for LocalAlignment
+    """Global pairwise sequence alignment using the Needleman-Wunsch algorithm.
+
+    Performs global alignment, which aligns the entire length of both sequences
+    from end to end. This is best used when sequences are expected to be similar
+    across their full lengths.
+
+    Args:
+        query: Query sequence to align.
+        target: Target sequence to align against.
+        match: Score for matching positions. Defaults to 3.
+        mismatch: Penalty for mismatching positions. Defaults to -2.
+        gap_open: Gap opening penalty. Defaults to 5.
+        gap_extend: Gap extension penalty. Defaults to 2.
+        matrix: Substitution matrix, either as a string name (e.g., "blosum62")
+            or a parasail.Matrix object. If not provided, a simple match/mismatch
+            matrix is created using ``match`` and ``mismatch`` scores.
+        gap_open_penalty: Deprecated alias for ``gap_open``.
+        gap_extend_penalty: Deprecated alias for ``gap_extend``.
+        alignment_function: Parasail alignment function to use.
+            Defaults to ``parasail.nw_trace_striped_16``.
+
+    Example:
+        >>> from abutils.core.sequence import Sequence
+        >>> query = Sequence("ACGTACGT", id="query")
+        >>> target = Sequence("ACGTACGT", id="target")
+        >>> aln = GlobalAlignment(query, target)
+        >>> print(aln.score)
     """
 
     def __init__(
@@ -1509,8 +1526,33 @@ class GlobalAlignment(PairwiseAlignment):
 
 
 class SemiGlobalAlignment(PairwiseAlignment):
-    """
-    docstring for LocalAlignment
+    """Semi-global pairwise sequence alignment with free end gaps.
+
+    Performs semi-global alignment, which allows gaps at the beginning or end
+    of either sequence without penalty. This is useful when aligning sequences
+    of different lengths or when one sequence may be a subsequence of the other.
+
+    Args:
+        query: Query sequence to align.
+        target: Target sequence to align against.
+        match: Score for matching positions. Defaults to 3.
+        mismatch: Penalty for mismatching positions. Defaults to -2.
+        gap_open: Gap opening penalty. Defaults to 5.
+        gap_extend: Gap extension penalty. Defaults to 2.
+        matrix: Substitution matrix, either as a string name (e.g., "blosum62")
+            or a parasail.Matrix object. If not provided, a simple match/mismatch
+            matrix is created using ``match`` and ``mismatch`` scores.
+        gap_open_penalty: Deprecated alias for ``gap_open``.
+        gap_extend_penalty: Deprecated alias for ``gap_extend``.
+        alignment_function: Parasail alignment function to use.
+            Defaults to ``parasail.sg_trace_striped_16``.
+
+    Example:
+        >>> from abutils.core.sequence import Sequence
+        >>> query = Sequence("ACGT", id="query")
+        >>> target = Sequence("AACGTAA", id="target")
+        >>> aln = SemiGlobalAlignment(query, target)
+        >>> print(aln.score)
     """
 
     def __init__(
@@ -1628,67 +1670,39 @@ def local_alignment(
     gap_open_penalty: int | None = None,
     gap_extend_penalty: int | None = None,
 ) -> LocalAlignment | Iterable:
-    """
-    Striped Smith-Waterman local pairwise sequence alignment.
+    """Perform local pairwise alignment using Smith-Waterman algorithm.
 
-    Parameters
-    ----------
-    query : str, SeqRecord, Sequence, or list
-        Query sequence. Can be any of the following:
-            1. a nucleotide or amino acid sequence, as a string
-            2. a Biopython ``SeqRecord`` object
-            3. an abutils ``Sequence`` object
-            4. a ``list`` or ``tuple`` of the format ``[seq_id, sequence]``
+    Finds the best local alignment between query and target sequences,
+    identifying the highest-scoring matching subsequences.
 
-    target : str, SeqRecord, Sequence, or list, default=None
-        Target sequence. Can be anything accepted by `query`. One of
-        `target` or `targets` must be provided.
+    Args:
+        query: Query sequence as a string, BioPython SeqRecord, abutils
+            Sequence, or [id, sequence] pair.
+        target: Single target sequence. Same formats as ``query``. One of
+            ``target`` or ``targets`` is required. Defaults to ``None``.
+        targets: Multiple target sequences as an iterable. Defaults to ``None``.
+        match: Score for matching positions. Defaults to ``3``.
+        mismatch: Penalty for mismatches (typically <= 0). Defaults to ``-2``.
+        gap_open: Gap opening penalty (<= 0). Defaults to ``-5``.
+        gap_extend: Gap extension penalty (<= 0). Defaults to ``-2``.
+        matrix: Substitution matrix as a name (e.g., "blosum62"), file path,
+            or parasail.Matrix. If ``None``, uses match/mismatch scores.
+            Defaults to ``None``.
+        alignment_function: Parasail alignment function.
+            Defaults to ``parasail.sw_trace_striped_16``.
+        aa: Unused, retained for backwards compatibility. Defaults to ``False``.
+        gap_open_penalty: Deprecated alias for ``gap_open``.
+        gap_extend_penalty: Deprecated alias for ``gap_extend``.
 
-    target : str, SeqRecord, Sequence, or list, default=None
-        Iterable of multiple target sequences. A ``list`` or ``tuple`` of
-        anything accepted by `query`. One of `target` or `targets` must be provided.
+    Returns:
+        LocalAlignment object for single target, or list of LocalAlignment
+        objects for multiple targets.
 
-    match : int, default=3
-        Match score. Should be a positive integer.
-
-    mismatch : int, default=-2
-        Mismatch score. Typically should be less than or equal to ``0``.
-
-    gap_open : int, default=-5
-        Gap open score. Must be less than or equal to ``0``.
-
-    gap_extend : int, default=-2
-        Gap extension score. Must be less than or equal to ``0``.
-
-    matrix : str, dict or parasail.Matrix, default=None
-        Scoring matrix. Can be either:
-            - the name of a ``parasail`` `built-in sbustitution matrix <https://github.com/jeffdaily/parasail-python#substitution-matrices>`_.
-            - path to a matrix file (in a format accepted by ``parasail``).
-            - a ``parasail.Matrix`` object
-        If not provided, a matrix will be created using `match` and `mismatch`.
-
-    alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `local alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_ to be used for alignment.
-
-    aa : bool, default=False
-        Not used. Retained for backwards compatibility.
-
-    gap_open_penalty : int, default=None
-        Depricated, but retained for backwards compatibility. Use `gap_open`
-        insteaed.
-
-    gap_extend_penalty : int, default=None
-        Depricated, but retained for backwards compatibility. Use `gap_exted`
-        insteaed.
-
-
-    Returns
-    -------
-    alignment : LocalAlignment or iterable
-        If a single target sequence is provided (via ``target``), a single ``LocalAlignment``
-        object will be returned. If multiple target sequences are supplied (via ``targets``),
-        a list of ``LocalAlignment`` objects will be returned.
-
+    Example:
+        >>> query = Sequence("ACGTACGT", id="query")
+        >>> target = Sequence("TACGTACG", id="target")
+        >>> aln = local_alignment(query, target)
+        >>> print(aln.score)
     """
     # input processing
     query = Sequence(query)
@@ -1728,67 +1742,39 @@ def global_alignment(
     gap_open_penalty: int | None = None,
     gap_extend_penalty: int | None = None,
 ) -> GlobalAlignment | Iterable:
-    """
-    Needleman-Wunch global pairwise sequence alignment.
+    """Perform global pairwise alignment using Needleman-Wunsch algorithm.
 
-    Parameters
-    ----------
-    query : str, SeqRecord, Sequence, or list
-        Query sequence. Can be any of the following:
-            1. a nucleotide or amino acid sequence, as a string
-            2. a Biopython ``SeqRecord`` object
-            3. an abutils ``Sequence`` object
-            4. a ``list`` or ``tuple`` of the format ``[seq_id, sequence]``
+    Aligns the full length of both query and target sequences end-to-end,
+    finding the optimal global alignment.
 
-    target : str, SeqRecord, Sequence, or list, default=None
-        Target sequence. Can be anything accepted by `query`. One of
-        `target` or `targets` must be provided.
+    Args:
+        query: Query sequence as a string, BioPython SeqRecord, abutils
+            Sequence, or [id, sequence] pair.
+        target: Single target sequence. Same formats as ``query``. One of
+            ``target`` or ``targets`` is required. Defaults to ``None``.
+        targets: Multiple target sequences as an iterable. Defaults to ``None``.
+        match: Score for matching positions. Defaults to ``3``.
+        mismatch: Penalty for mismatches (typically <= 0). Defaults to ``-2``.
+        gap_open: Gap opening penalty (<= 0). Defaults to ``-5``.
+        gap_extend: Gap extension penalty (<= 0). Defaults to ``-2``.
+        matrix: Substitution matrix as a name (e.g., "blosum62"), file path,
+            or parasail.Matrix. If ``None``, uses match/mismatch scores.
+            Defaults to ``None``.
+        alignment_function: Parasail alignment function.
+            Defaults to ``parasail.nw_trace_striped_16``.
+        aa: Unused, retained for backwards compatibility. Defaults to ``False``.
+        gap_open_penalty: Deprecated alias for ``gap_open``.
+        gap_extend_penalty: Deprecated alias for ``gap_extend``.
 
-    target : str, SeqRecord, Sequence, or list, default=None
-        Iterable of multiple target sequences. A ``list`` or ``tuple`` of
-        anything accepted by `query`. One of `target` or `targets` must be provided.
+    Returns:
+        GlobalAlignment object for single target, or list of GlobalAlignment
+        objects for multiple targets.
 
-    match : int, default=3
-        Match score. Should be a positive integer.
-
-    mismatch : int, default=-2
-        Mismatch score. Typically should be less than or equal to ``0``.
-
-    gap_open : int, default=-5
-        Gap open score. Must be  less than or equal to ``0``.
-
-    gap_extend : int, default=-2
-        Gap extension score. Must be less than or equal to ``0``.
-
-    matrix : str, dict or parasail.Matrix, default=None
-        Scoring matrix. Can be either:
-            - the name of a ``parasail`` `built-in substitution matrix <https://github.com/jeffdaily/parasail-python#substitution-matrices>`_.
-            - path to a matrix file (in a format accepted by ``parasail``).
-            - a ``parasail.Matrix`` object
-        If not provided, a matrix will be created using `match` and `mismatch`.
-
-    alignment_function : Callable, default=parasail.nw_trace_striped_16
-        ``parasail`` `global alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_ to be used for alignment.
-
-    aa : bool, default=False
-        Not used. Retained for backwards compatibility.
-
-    gap_open_penalty : int, default=None
-        Depricated, but retained for backwards compatibility. Use `gap_open`
-        insteaed.
-
-    gap_extend_penalty : int, default=None
-        Depricated, but retained for backwards compatibility. Use `gap_exted`
-        insteaed.
-
-
-    Returns
-    -------
-    alignment : GlobalAlignment or iterable
-        If a single target sequence is provided (via ``target``), a single ``GlobalAlignment``
-        object will be returned. If multiple target sequences are supplied (via ``targets``),
-        a list of ``GlobalAlignment`` objects will be returned.
-
+    Example:
+        >>> query = Sequence("ACGTACGT", id="query")
+        >>> target = Sequence("ACGTACGT", id="target")
+        >>> aln = global_alignment(query, target)
+        >>> print(aln.score)
     """
     # input processing
     query = Sequence(query)
@@ -1828,67 +1814,39 @@ def semiglobal_alignment(
     gap_open_penalty: int | None = None,
     gap_extend_penalty: int | None = None,
 ) -> SemiGlobalAlignment | Iterable:
-    """
-    Semi-global pairwise sequence alignment.
+    """Perform semi-global pairwise alignment with free end gaps.
 
-    Parameters
-    ----------
-    query : str, SeqRecord, Sequence, or list
-        Query sequence. Can be any of the following:
-            1. a nucleotide or amino acid sequence, as a string
-            2. a Biopython ``SeqRecord`` object
-            3. an abutils ``Sequence`` object
-            4. a ``list`` or ``tuple`` of the format ``[seq_id, sequence]``
+    Aligns sequences allowing gaps at sequence ends without penalty, useful
+    when one sequence may be a subsequence of another.
 
-    target : str, SeqRecord, Sequence, or list, default=None
-        Target sequence. Can be anything accepted by `query`. One of
-        `target` or `targets` must be provided.
+    Args:
+        query: Query sequence as a string, BioPython SeqRecord, abutils
+            Sequence, or [id, sequence] pair.
+        target: Single target sequence. Same formats as ``query``. One of
+            ``target`` or ``targets`` is required. Defaults to ``None``.
+        targets: Multiple target sequences as an iterable. Defaults to ``None``.
+        match: Score for matching positions. Defaults to ``3``.
+        mismatch: Penalty for mismatches (typically <= 0). Defaults to ``-2``.
+        gap_open: Gap opening penalty (<= 0). Defaults to ``-5``.
+        gap_extend: Gap extension penalty (<= 0). Defaults to ``-2``.
+        matrix: Substitution matrix as a name (e.g., "blosum62"), file path,
+            or parasail.Matrix. If ``None``, uses match/mismatch scores.
+            Defaults to ``None``.
+        alignment_function: Parasail alignment function.
+            Defaults to ``parasail.sg_trace_striped_16``.
+        aa: Unused, retained for backwards compatibility. Defaults to ``False``.
+        gap_open_penalty: Deprecated alias for ``gap_open``.
+        gap_extend_penalty: Deprecated alias for ``gap_extend``.
 
-    target : str, SeqRecord, Sequence, or list, default=None
-        Iterable of multiple target sequences. A ``list`` or ``tuple`` of
-        anything accepted by `query`. One of `target` or `targets` must be provided.
+    Returns:
+        SemiGlobalAlignment object for single target, or list of
+        SemiGlobalAlignment objects for multiple targets.
 
-    match : int, default=3
-        Match score. Should be a positive integer.
-
-    mismatch : int, default=-2
-        Mismatch score. Typically should be less than or equal to ``0``.
-
-    gap_open : int, default=-5
-        Gap open score. Must be  less than or equal to ``0``.
-
-    gap_extend : int, default=-2
-        Gap extension score. Must be less than or equal to ``0``.
-
-    matrix : str, dict or parasail.Matrix, default=None
-        Scoring matrix. Can be either:
-            - the name of a ``parasail`` `built-in substitution matrix <https://github.com/jeffdaily/parasail-python#substitution-matrices>`_.
-            - path to a matrix file (in a format accepted by ``parasail``).
-            - a ``parasail.Matrix`` object
-        If not provided, a matrix will be created using `match` and `mismatch`.
-
-    alignment_function : Callable, default=parasail.sw_trace_striped_16
-        ``parasail`` `semi-global alignment function <https://github.com/jeffdaily/parasail-python#standard-function-naming-convention>`_ to be used for alignment.
-
-    aa : bool, default=False
-        Not used. Retained for backwards compatibility.
-
-    gap_open_penalty : int, default=None
-        Depricated, but retained for backwards compatibility. Use `gap_open`
-        insteaed.
-
-    gap_extend_penalty : int, default=None
-        Depricated, but retained for backwards compatibility. Use `gap_exted`
-        insteaed.
-
-
-    Returns
-    -------
-    alignment : SemiGlobalAlignment or iterable
-        If a single target sequence is provided (via ``target``), a single ``SemiGlobalAlignment``
-        object will be returned. If multiple target sequences are supplied (via ``targets``),
-        a list of ``SemiGlobalAlignment`` objects will be returned.
-
+    Example:
+        >>> query = Sequence("ACGT", id="query")
+        >>> target = Sequence("AACGTAA", id="target")
+        >>> aln = semiglobal_alignment(query, target)
+        >>> print(aln.score)
     """
     # input processing
     query = Sequence(query)

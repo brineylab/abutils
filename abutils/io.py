@@ -79,14 +79,10 @@ from .utils.path import delete_files, list_files, make_dir, rename_file
 
 
 def make_dir(directory: str) -> None:
-    """
-    Makes a directory, if it doesn't already exist.
+    """Create a directory if it doesn't already exist.
 
-    Parameters
-    ----------
-    directory : str
-        Path to a directory.
-
+    Args:
+        directory: Path to the directory to create.
     """
     if not os.path.exists(directory):
         os.makedirs(os.path.abspath(directory))
@@ -99,34 +95,22 @@ def list_files(
     match: str | None = None,
     ignore_dot_files: bool = True,
 ) -> Iterable[str]:
-    """
-    Lists files in a given directory.
+    """List files in a directory.
 
-    Parameters
-    ----------
-    directory : str
-        Path to a directory. If a file path is passed instead, the returned list of files will contain
-        only that file path.
+    Args:
+        directory: Path to a directory. If a file path is provided, returns
+            a list containing only that file.
+        extension: Filter by file extension(s). Can be a string or list of
+            strings. Case-insensitive, supports complex extensions like
+            ``.fastq.gz``. Defaults to ``None`` (all files).
+        recursive: If ``True``, search subdirectories recursively.
+            Defaults to ``False``.
+        match: Filter files by regex pattern. Defaults to ``None``.
+        ignore_dot_files: If ``True``, exclude hidden files starting with
+            ``.``. Defaults to ``True``.
 
-    extension : str
-        If supplied, only files that end with the specificied extension(s) will be returned. Can be either
-        a string or a list of strings. Extension evaluation is case-insensitive and can match complex
-        extensions (e.g. '.fastq.gz'). Default is ``None``, which returns all files in the directory,
-        regardless of extension.
-
-    recursive : bool, default=False
-        If ``True``, the directory will be searched recursively, and all files in all subdirectories will be returned.
-
-    match : str, optional
-        If supplied, only files that match the specified pattern will be returned. Regular expressions are supported.
-
-    ignore_dot_files : bool, default=True
-        If ``True``, dot files (hidden files) will be ignored.
-
-    Returns
-    -------
-    Iterable[str]
-
+    Returns:
+        List of file paths matching the criteria.
     """
     directory = os.path.abspath(directory)
     if os.path.exists(directory):
@@ -600,56 +584,26 @@ def to_fasta(
     append_chain: bool = True,
     as_string: bool = False,
 ) -> str:
-    """
-    Writes sequences to a FASTA-formatted file or returns a FASTA-formatted string.
+    """Write sequences to a FASTA file or return as a FASTA string.
 
-    Parameters
-    ----------
-    sequences : str or Iterable
-        Accepts any of the following:
-            1. list of abutils ``Sequence`` and/or ``Pair`` objects
-            2. FASTA/Q-formatted string
-            3. path to a FASTA/Q-formatted file
-            4. list of BioPython ``SeqRecord`` objects
-            5. list of lists/tuples, of the format ``[sequence_id, sequence]``
-        Required.
+    Args:
+        sequences: Input as Sequence/Pair objects, FASTA/Q string/file,
+            BioPython SeqRecords, or [id, sequence] pairs.
+        fasta_file: Output file path. If ``None`` and no ``tempfile_dir``,
+            returns a FASTA string. Defaults to ``None``.
+        id_key: Annotation field for sequence ID. Uses ``sequence.id`` if
+            ``None``. Defaults to ``None``.
+        sequence_key: Annotation field for sequence. Uses ``sequence.sequence``
+            if ``None``. Defaults to ``None``.
+        tempfile_dir: Directory for temp file if ``fasta_file`` not provided.
+            Created if it doesn't exist. Defaults to ``None``.
+        append_chain: For Pair objects, append chain type to sequence name
+            (e.g., ``MySequence_heavy``). Defaults to ``True``.
+        as_string: Deprecated, kept for backwards compatibility.
+            Defaults to ``False``.
 
-        .. note::
-            Processing a list containing a mixture of ``Sequence`` and/or ``Pair`` objects is supported.
-
-    fasta_file : str, default=None
-        Path to the output FASTA file. If neither `fasta_file` nor `tempfile_dir`
-        are provided, a FASTA-formatted string will be returned.
-
-    id_key : str, default=None
-        Name of the annotation field containing the sequence ID. If not provided,
-        ``sequence.id`` is used.
-
-    sequence_key : str, default=None
-        Name of the annotation field containg the sequence. If not provided,
-        ``sequence.sequence`` is used.
-
-    tempfile_dir : str, optional
-        If `fasta_file` is not provided, directory into which the tempfile
-        should be created. If the directory does not exist, it will be
-        created.
-
-    append_chain : bool, default=True
-        If ``True``, the chain (heavy or light) will be appended to the sequence name:
-        ``>MySequence_heavy``.
-
-        .. note::
-            This option is ignored unless a list containing ``Pair`` objects is provided.
-
-    as_string : bool, default=False
-        Deprecated. Kept for backwards compatibility.
-
-
-    Returns
-    --------
-    fasta : str
-        Path to a FASTA file or a FASTA-formatted string
-
+    Returns:
+        Path to the FASTA file, or FASTA-formatted string if no file output.
     """
     if isinstance(sequences, str):
         # if sequences is already a FASTA/Q-formatted file
@@ -703,38 +657,22 @@ def from_polars(
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
 ) -> Iterable[Sequence | Pair]:
-    """
-    Reads a Polars DataFrame and returns a list of ``Sequence`` or ``Pair`` objects.
+    """Convert a Polars DataFrame to Sequence or Pair objects.
 
-    Parameters
-    ----------
-    df : polars.DataFrame or polars.LazyFrame
-        The input Polars DataFrame or LazyFrame.
+    Automatically detects whether the DataFrame contains single sequences or
+    paired data based on column naming conventions (`:0`/`:1` suffixes).
 
-    match : dict, optional
-        A ``dict`` for filtering sequences from the input file.
-        Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which
-        the ``'v_gene:0'`` field is not ``'IGHV1-2'``:
+    Args:
+        df: Input Polars DataFrame or LazyFrame.
+        match: Filter criteria as ``{column: value}`` dict. Only rows matching
+            all conditions are returned. Defaults to ``None``.
+        fields: Columns to include. If ``None``, all columns are read.
+            Defaults to ``None``.
+        id_key: Column name for sequence IDs. Defaults to ``"sequence_id"``.
+        sequence_key: Column name for sequence data. Defaults to ``"sequence"``.
 
-        .. code-block:: python
-
-            {'v_gene:0': 'IGHV1-2'}
-
-    fields : list, optional
-        A list of fields to be read from the input file. If not provided, all fields will be read.
-
-    id_key : str, default="sequence_id"
-        The name of the column that contains the sequence IDs. Default is ``"sequence_id"``.
-
-    sequence_key : str, default="sequence"
-        The name of the column that contains the sequence data. Default is ``"sequence"``.
-
-    Returns
-    -------
-    Iterable[Union[Sequence, Pair]]
-        A list of ``Sequence`` or ``Pair`` objects.
-
+    Returns:
+        List of Sequence or Pair objects.
     """
     if isinstance(df, pl.LazyFrame):
         df = df.collect()
@@ -759,55 +697,26 @@ def to_polars(
     exclude: str | Iterable[str] | None = None,
     leading: str | Iterable[str] | None = None,
 ) -> pl.DataFrame | None:
-    """
-    Saves a list of ``Pair`` objects to a Polars DataFrame.
+    """Convert Sequence or Pair objects to a Polars DataFrame.
 
-    Parameters
-    ----------
-    sequences : Iterable[Sequence, Pair]
-        List of ``Sequence`` or ``Pair`` objects to be saved to a Polars DataFrame. Required.
+    Args:
+        sequences: List of Sequence or Pair objects.
+        annotations: Annotation fields to include in output. For Pairs, refers
+            to heavy/light chain annotations. Defaults to ``None`` (all).
+        columns: Column names to retain (for Pairs only), e.g., ``"sequence:0"``.
+            Defaults to ``None``.
+        properties: Pair-level properties to include. Defaults to ``None``.
+        sequence_properties: Sequence-level properties to include (Pairs only).
+            Defaults to ``None``.
+        drop_na_columns: Remove columns with all null values.
+            Defaults to ``True``.
+        order: Column ordering for output DataFrame. Defaults to ``None``.
+        exclude: Columns to exclude from output. Defaults to ``None``.
+        leading: Columns to place first, superseding ``order``.
+            Defaults to ``None``.
 
-    annotations : list, default=None
-        A list of annotation fields to be included in the Polars DataFrame. For ``Sequence``
-        objects, this refers to fields in the ``annotations`` field. For ``Pair`` objects,
-        this refers to fields in the heavy and light chain annotations.
-
-    columns : list, default=None
-        Used only for ``Pair`` objects. A list of fields to be retained in the output Polars
-        DataFrame. Fields should be column names in the input file, such as ``"sequence:0"``,
-        ``"sequence:1"``, ``"name"``, etc. This option is provided to allow differential
-        selection of heavy and light chain fields. For cases in which the same fields will
-        be selected for both chains, it is recommended to use ``annotations`` instead.
-
-    properties : list, default=None
-        A list of properties to be included in the Polars DataFrame. If not provided, everything
-        in the ``annotations`` field of each heavy/light chain will be included.
-
-    sequence_properties : list, default=None
-        A list of sequence properties to be included. Differs from ``properties``, which
-        refers to properties of the ``Pair`` object. These properties are those of the
-        heavy/light ``Sequence`` objects. Ignored if the input is a list of ``Sequence`` objects.
-
-    drop_na_columns : bool, default=True
-        If ``True``, columns with all ``NaN`` values will be dropped from the Polars DataFrame.
-        Default is ``True``.
-
-    order : list, default=None
-        A list of fields in the order they should appear in the Polars DataFrame.
-
-    exclude : str or list, default=None
-        Field or list of fields to be excluded from the Polars DataFrame.
-
-    leading : str or list, default=None
-        Field or list of fields to appear first in the Polars DataFrame. Supercedes ``order``, so
-        if both are provided, fields in ``leading`` will appear first in the Polars DataFrame and
-        remaining fields will appear in the order provided in ``order``.
-
-    Returns
-    -------
-    pl.DataFrame
-        A ``polars.DataFrame`` object.
-
+    Returns:
+        Polars DataFrame containing the sequence data.
     """
     if all([isinstance(s, Sequence) for s in sequences]):
         return sequences_to_polars(
