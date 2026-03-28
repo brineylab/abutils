@@ -39,9 +39,6 @@ from ..bin import get_path as get_binary_path
 from ..core.pair import Pair
 from ..core.sequence import Sequence
 from ..io import read_fasta, to_fasta
-
-# from ..utils.decorators import lazy_property
-# from ..utils.pipeline import make_dir
 from .alignment import make_consensus
 
 __all__ = [
@@ -147,16 +144,6 @@ class Cluster:
             )
             self._consensus = consensus
         return self._consensus
-        # return consensus
-        # aln = mafft(self.sequences)
-        # if aln is None:
-        #     print("ERROR: Failed to generate an alignmnet for a consensus sequence.")
-        #     return None
-        # summary_align = AlignInfo.SummaryInfo(aln)
-        # consensus = summary_align.gap_consensus(threshold=0.51, ambiguous="n")
-        # consensus_string = str(consensus).replace("-", "")
-        # consensus_seq = Sequence(consensus_string.upper())
-        # return consensus_seq
 
 
 class Clusters:

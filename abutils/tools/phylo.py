@@ -46,8 +46,6 @@ from ..io import make_dir, read_fasta, to_fasta
 from ..tools.alignment import mafft
 from ..tools.cluster import Cluster, cluster
 
-# from ..utils.pipeline import make_dir
-
 __all__ = ["fasttree", "Phylogeny", "phylogeny"]
 
 
@@ -112,14 +110,6 @@ def fasttree(
     # set the FastTree binary
     if fasttree_bin is None:
         fasttree_bin = get_binary_path("fasttree")
-        # mod_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        # # fasttree_bin = os.path.join(
-        # #     mod_dir, f"bin/fasttree_{platform.system().lower()}"
-        # # )
-        # system = platform.system().lower()
-        # machine = platform.machine().lower()
-        # fasttree_bin = os.path.join(mod_dir, f"bin/fasttree_{system}_{machine}")
-        # fasttree_bin = fasttree_bin.replace("x86_64", "amd64")
     # make output directory if necessary
     if tree_file is None:
         as_file = False

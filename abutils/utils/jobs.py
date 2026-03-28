@@ -35,48 +35,6 @@ from . import progbar
 __all__ = ["monitor_mp_jobs", "monitor_celery_jobs"]
 
 
-# def monitor_mp_jobs(
-#     results: Iterable,
-#     start_time: time.time = None,
-#     completion_string: str = "\n",
-#     print_progress: bool = True,
-# ):
-#     """
-#     Monitors the progress of a set of multiprocessing jobs.
-
-#     Parameters
-#     ----------
-#     results : Iterable[mp.pool.AsyncResult]
-#         A list of AsyncResult objects from multiprocessing jobs.
-
-#     start_time : time.time
-#         The time at which the jobs started. If not provided, elapsed time will not be shown.
-
-#     completion_string : str
-#         A string to print when the jobs are complete. Default is a newline.
-
-#     print_progress : bool
-#         Whether or not to print a progress bar. Default is ``True``.
-
-#     """
-#     finished = 0
-#     jobs = len(results)
-#     while finished < jobs:
-#         time.sleep(1)
-#         ready = [ar for ar in results if ar.ready()]
-#         finished = len(ready)
-#         if print_progress:
-#             progbar.progress_bar(finished, jobs, start_time=start_time)
-#     if print_progress:
-#         progbar.progress_bar(
-#             finished,
-#             jobs,
-#             start_time=start_time,
-#             complete=True,
-#             completion_string=completion_string,
-#         )
-
-
 def monitor_mp_jobs(
     results: Iterable,
     completion_string: Optional[str] = None,

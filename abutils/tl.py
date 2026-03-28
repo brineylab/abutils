@@ -33,15 +33,4 @@ from .tools.cluster import *
 from .tools.phylo import *
 from .tools.search import *
 from .tools.similarity import repertoire_similarity
-
-# from .utils.phylogeny import igphyml, lsd
-# from .utils.alignment import (
-#     global_alignment,
-#     local_alignment,
-#     dot_alignment,
-#     muscle,
-#     muscle_v3,
-#     mafft,
-# )
-# from .utils.cluster import cluster, cluster_vsearch, cluster_mmseqs
 from .utils.progbar import progress_bar

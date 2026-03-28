@@ -31,8 +31,6 @@ import polars as pl
 
 from ..core.sequence import Sequence
 
-# from ..utils.utilities import nested_dict_lookup
-
 
 class Pair(object):
     """
@@ -224,14 +222,6 @@ class Pair(object):
             self._heavies = [
                 s for s in self._sequences if self._is_locus_type(s, ["IGH", "heavy"])
             ]
-            # if all([s["chain"] is not None for s in self._seqs]):
-            #     self._heavies = [s for s in self._seqs if s["chain"] == "heavy"]
-            # elif all([s["locus"] is not None for s in self._seqs]):
-            #     self._heavies = [s for s in self._seqs if s["locus"] == "IGH"]
-            # elif all([s["v_gene"] is not None for s in self._seqs]):
-            #     self._heavies = [
-            #         s for s in self._seqs if s["v_gene"][:3].upper() == "IGH"
-            #     ]
         return self._heavies
 
     @property
@@ -242,16 +232,6 @@ class Pair(object):
                 for s in self._sequences
                 if self._is_locus_type(s, ["IGK", "IGL", "kappa", "lambda"])
             ]
-            # if all([s["chain"] is not None for s in self._seqs]):
-            #     self._lights = [
-            #         s for s in self._seqs if s["chain"] in ["kappa", "lambda"]
-            #     ]
-            # elif all([s["locus"] is not None for s in self._seqs]):
-            #     self._lights = [s for s in self._seqs if s["locus"] in ["IGK", "IGL"]]
-            # elif all([s["v_gene"] is not None for s in self._seqs]):
-            #     self._lights = [
-            #         s for s in self._seqs if s["v_gene"][:3].upper() in ["IGK", "IGL"]
-            #     ]
         return self._lights
 
     @property
@@ -260,14 +240,6 @@ class Pair(object):
             self._alphas = [
                 s for s in self._sequences if self._is_locus_type(s, ["TRA", "alpha"])
             ]
-            # if all([s["chain"] is not None for s in self._seqs]):
-            #     self._alphas = [s for s in self._seqs if s["chain"] == "alpha"]
-            # elif all([s["locus"] is not None for s in self._seqs]):
-            #     self._alphas = [s for s in self._seqs if s["locus"] == "TRA"]
-            # elif all([s["v_gene"] is not None for s in self._seqs]):
-            #     self._alphas = [
-            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRA"
-            #     ]
         return self._alphas
 
     @property
@@ -276,14 +248,6 @@ class Pair(object):
             self._betas = [
                 s for s in self._sequences if self._is_locus_type(s, ["TRB", "beta"])
             ]
-            # if all([s["chain"] is not None for s in self._seqs]):
-            #     self._betas = [s for s in self._seqs if s["chain"] == "beta"]
-            # elif all([s["locus"] is not None for s in self._seqs]):
-            #     self._betas = [s for s in self._seqs if s["locus"] == "TRB"]
-            # elif all([s["v_gene"] is not None for s in self._seqs]):
-            #     self._betas = [
-            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRB"
-            #     ]
         return self._betas
 
     @property
@@ -292,14 +256,6 @@ class Pair(object):
             self._deltas = [
                 s for s in self._sequences if self._is_locus_type(s, ["TRD", "delta"])
             ]
-            # if all([s["chain"] is not None for s in self._seqs]):
-            #     self._deltas = [s for s in self._seqs if s["chain"] == "delta"]
-            # elif all([s["locus"] is not None for s in self._seqs]):
-            #     self._deltas = [s for s in self._seqs if s["locus"] == "TRD"]
-            # elif all([s["v_gene"] is not None for s in self._seqs]):
-            #     self._deltas = [
-            #       s for s in self._seqs if s["v_gene"][:3].upper() == "TRD"
-            #     ]
         return self._deltas
 
     @property
@@ -308,14 +264,6 @@ class Pair(object):
             self._gammas = [
                 s for s in self._sequences if self._is_locus_type(s, ["TRG", "gamma"])
             ]
-            # if all([s["chain"] is not None for s in self._seqs]):
-            #     self._gammas = [s for s in self._seqs if s["chain"] == "gamma"]
-            # elif all([s["locus"] is not None for s in self._seqs]):
-            #     self._gammas = [s for s in self._seqs if s["locus"] == "TRG"]
-            # elif all([s["v_gene"] is not None for s in self._seqs]):
-            #     self._gammas = [
-            #         s for s in self._seqs if s["v_gene"][:3].upper() == "TRG"
-            #     ]
         return self._gammas
 
     @property
@@ -425,147 +373,6 @@ class Pair(object):
             if seq["v_call"][:3] in locus_names:
                 return True
         return False
-
-    # @property
-    # def sample(self):
-    #     if self._sample is None:
-    #         slist = []
-    #         if self.experiment is not None:
-    #             slist.append(str(self.experiment))
-    #         if self.group is not None:
-    #             slist.append(str(self.group))
-    #         if self.subject is not None:
-    #             slist.append(str(self.subject))
-    #         if self.timepoint is not None:
-    #             slist.append(str(self.timepoint))
-    #         if slist:
-    #             self._sample = '|'.join(slist)
-    #     return self._sample
-
-    # @property
-    # def subject(self):
-    #     if self._subject is None:
-    #         if self.heavy is not None and 'subject' in self.heavy.keys():
-    #             self._subject = self.heavy['subject']
-    #         elif self.light is not None and 'subject' in self.light.keys():
-    #             self._subject = self.light['subject']
-    #     return self._subject
-
-    # @subject.setter
-    # def subject(self, subject):
-    #     self._subject = subject
-
-    # @property
-    # def group(self):
-    #     if self._group is None:
-    #         if self.heavy is not None and 'group' in self.heavy.keys():
-    #             self._group = self.heavy['group']
-    #         elif self.light is not None and 'group' in self.light.keys():
-    #             self._group = self.light['group']
-    #     return self._group
-
-    # @group.setter
-    # def group(self, group):
-    #     self._group = group
-
-    # @property
-    # def experiment(self):
-    #     if self._experiment is None:
-    #         if self.heavy is not None and 'experiment' in self.heavy.keys():
-    #             self._experiment = self.heavy['experiment']
-    #         elif self.light is not None and 'experiment' in self.light.keys():
-    #             self._experiment = self.light['experiment']
-    #     return self._experiment
-
-    # @experiment.setter
-    # def experiment(self, experiment):
-    #     self._experiment = experiment
-
-    # @property
-    # def timepoint(self):
-    #     if self._timepoint is None:
-    #         if self.heavy is not None and 'timepoint' in self.heavy.keys():
-    #             self._timepoint = self.heavy['timepoint']
-    #         elif self.light is not None and 'timepoint' in self.light.keys():
-    #             self._timepoint = self.light['timepoint']
-    #     return self._timepoint
-
-    # @timepoint.setter
-    # def timepoint(self, timepoint):
-    #     self._timepoint = timepoint
-
-    # def refine(self, heavy=True, light=True, species='human'):
-    #     for seq in [s for s in [self.heavy, self.light] if s is not None]:
-    #         try:
-    #             self.remove_ambigs(seq)
-    #             self._refine_v(seq, species)
-    #             self._refine_j(seq, species)
-    #             self._retranslate(seq)
-    #         except:
-    #             print('REFINEMENT FAILED: {}, {} chain'.format(seq['seq_id'], seq['chain']))
-    #             print(traceback.format_exception_only(*sys.exc_info()[:2]))
-
-    # @staticmethod
-    # def remove_ambigs(seq):
-    #     # fix Ns in the nucleotide sequence
-    #     vdj = ''
-    #     for s, g in zip(seq['vdj_nt'], seq['vdj_germ_nt']):
-    #         if s.upper() == 'N':
-    #             vdj += g
-    #         else:
-    #             vdj += s
-    #     seq['vdj_nt'] = vdj
-    #     # fix Xs in the amino acid sequence
-    #     vdj = ''
-    #     for s, g in zip(seq['vdj_aa'], seq['vdj_germ_aa']):
-    #         if s.upper() == 'X':
-    #             vdj += g
-    #         else:
-    #             vdj += s
-    #     seq['vdj_aa'] = vdj
-
-    # @staticmethod
-    # def _refine_v(seq, species):
-    #     '''
-    #     Completes the 5' end of a a truncated sequence with germline nucleotides.
-    #     Input is a MongoDB dict (seq) and the species.
-    #     '''
-    #     vgerm = germlines.get_germline(seq['v_gene']['full'], species)
-    #     aln = global_alignment(seq['vdj_nt'], vgerm)
-    #     prepend = ''
-    #     for s, g in zip(aln.aligned_query, aln.aligned_target):
-    #         if s != '-':
-    #             break
-    #         else:
-    #             prepend += g
-    #     seq['vdj_nt'] = prepend + seq['vdj_nt']
-
-    # @staticmethod
-    # def _refine_j(seq, species):
-    #     '''
-    #     Completes the 3' end of a a truncated sequence with germline nucleotides.
-    #     Input is a MongoDB dict (seq) and the species.
-    #     '''
-    #     jgerm = germlines.get_germline(seq['j_gene']['full'], species)
-    #     aln = global_alignment(seq['vdj_nt'], jgerm)
-    #     append = ''
-    #     for s, g in zip(aln.aligned_query[::-1], aln.aligned_target[::-1]):
-    #         if s != '-':
-    #             break
-    #         else:
-    #             append += g
-    #     seq['vdj_nt'] = seq['vdj_nt'] + append[::-1]
-
-    # @staticmethod
-    # def _retranslate(seq):
-    #     '''
-    #     Retranslates a nucleotide sequence following refinement.
-    #     Input is a Pair sequence (basically a dict of MongoDB output).
-    #     '''
-    #     if len(seq['vdj_nt']) % 3 != 0:
-    #         trunc = len(seq['vdj_nt']) % 3
-    #         seq['vdj_nt'] = seq['vdj_nt'][:-trunc]
-    #     seq['vdj_aa'] = Seq(seq['vdj_nt']).translate()
 
     def fasta(
         self,

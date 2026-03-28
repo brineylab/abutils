@@ -23,8 +23,6 @@
 #
 
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 from itertools import chain
 from zipfile import ZipFile

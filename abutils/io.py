@@ -33,17 +33,11 @@ import pandas as pd
 import polars as pl
 from Bio.SeqRecord import SeqRecord
 
-# import pyarrow as pa
-# import pyarrow.parquet as pq
 from natsort import natsorted
 
 from .core.pair import (
     Pair,
-    # pairs_from_pandas,
     pairs_from_polars,
-    # pairs_to_csv,
-    # pairs_to_pandas,
-    # pairs_to_parquet,
     pairs_to_polars,
 )
 from .core.sequence import (
@@ -53,21 +47,12 @@ from .core.sequence import (
     parse_fasta,
     parse_fastq,
     parse_fastx,
-    # read_airr,
-    # read_csv,
     read_fasta,
     read_fastq,
     read_fastx,
     read_json,
-    # read_parquet,
-    # sequences_from_pandas,
     sequences_from_polars,
-    # sequences_to_csv,
-    # sequences_to_pandas,
-    # sequences_to_parquet,
     sequences_to_polars,
-    # to_airr,
-    # to_fasta,
     to_fastq,
 )
 from .utils.path import delete_files, list_files, make_dir, rename_file
