@@ -116,6 +116,7 @@ def test_clusters_class(aa_sequences):
     assert clusters[1] == cluster2
 
 
+
 def test_cluster_mmseqs(aa_fasta_file):
     cluster_info = cluster_mmseqs(
         aa_fasta_file.name,
@@ -128,6 +129,7 @@ def test_cluster_mmseqs(aa_fasta_file):
     name = list(cluster_info.keys())[0]
     assert len(cluster_info[name]["seq_ids"]) == 3
     os.unlink(aa_fasta_file.name)
+
 
 
 def test_cluster_cdhit(aa_fasta_file):
@@ -144,6 +146,7 @@ def test_cluster_cdhit(aa_fasta_file):
     os.unlink(aa_fasta_file.name)
 
 
+
 def test_cluster_vsearch(nt_fasta_file):
     cluster_info = cluster_vsearch(
         nt_fasta_file.name,
@@ -158,6 +161,7 @@ def test_cluster_vsearch(nt_fasta_file):
     os.unlink(nt_fasta_file.name)
 
 
+
 def test_cluster_with_list_of_sequences(nt_sequence_strings):
     s1, s2 = nt_sequence_strings
     seqs = [s1, s1, s1, s2, s2]
@@ -169,6 +173,7 @@ def test_cluster_with_list_of_sequences(nt_sequence_strings):
     assert clusters.clusters[1].size == 2
 
 
+
 def test_cluster_with_fasta_file(nt_fasta_file):
     clusters = cluster(nt_fasta_file.name, threshold=0.9)
     assert isinstance(clusters, Clusters)
@@ -177,6 +182,7 @@ def test_cluster_with_fasta_file(nt_fasta_file):
     assert clusters.clusters[0].size == 3
     assert clusters.clusters[1].size == 2
     os.unlink(nt_fasta_file.name)
+
 
 
 def test_cluster_with_seqrecord_objects(nt_sequence_strings):
@@ -196,6 +202,7 @@ def test_cluster_with_seqrecord_objects(nt_sequence_strings):
     assert clusters.clusters[1].size == 2
 
 
+
 def test_cluster_with_sequence_objects(nt_sequences):
     clusters = cluster(nt_sequences, threshold=0.9)
     assert isinstance(clusters, Clusters)
@@ -203,6 +210,7 @@ def test_cluster_with_sequence_objects(nt_sequences):
     assert clusters.count == 2
     assert clusters.clusters[0].size == 3
     assert clusters.clusters[1].size == 2
+
 
 
 def test_cluster_with_list_of_lists(nt_sequence_strings):

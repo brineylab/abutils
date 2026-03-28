@@ -83,6 +83,7 @@ def root_sequence():
 # ---------------------------``
 
 
+
 def test_fasttree_with_file_input(fasta_file):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
     tree_path = fasttree(
@@ -95,6 +96,7 @@ def test_fasttree_with_file_input(fasta_file):
     os.remove(tree_path)
 
 
+
 def test_fasttree_with_string_input(fasta_string):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
     tree_path = fasttree(
@@ -105,6 +107,7 @@ def test_fasttree_with_string_input(fasta_string):
         tree_string = f.read()
     assert tree_string.startswith("(")
     os.remove(tree_path)
+
 
 
 def test_fasttree_with_aa_file_input(fasta_file_aa):
@@ -123,6 +126,7 @@ def test_fasttree_with_aa_file_input(fasta_file_aa):
     os.remove(tree_path)
 
 
+
 def test_fasttree_with_aa_string_input(fasta_string_aa):
     tree_file = tempfile.NamedTemporaryFile(delete=False)
     tree_path = fasttree(
@@ -133,6 +137,7 @@ def test_fasttree_with_aa_string_input(fasta_string_aa):
         tree_string = f.read()
     assert tree_string.startswith("(")
     os.remove(tree_path)
+
 
 
 def test_fasttree_with_custom_binary(fasta_file):
@@ -160,10 +165,12 @@ def test_fasttree_with_custom_binary(fasta_file):
 # ---------------------------
 
 
+
 def test_phylogeny_with_sequence_input(sequences):
     phylo = phylogeny(sequences)
     assert isinstance(phylo, Phylogeny)
     assert len(phylo.sequences) == 3
+
 
 
 def test_phylogeny_with_file_input(fasta_file):
@@ -172,10 +179,12 @@ def test_phylogeny_with_file_input(fasta_file):
     assert len(phylo.sequences) == 3
 
 
+
 def test_phylogeny_with_list_input(sequences):
     phylo = phylogeny(sequences)
     assert isinstance(phylo, Phylogeny)
     assert len(phylo.sequences) == 3
+
 
 
 def test_phylogeny_with_name(fasta_file):
@@ -185,10 +194,12 @@ def test_phylogeny_with_name(fasta_file):
     assert phylo.name == name
 
 
+
 def test_phylogeny_with_root_sequence(fasta_file, root_sequence):
     phylo = phylogeny(fasta_file.name, root=root_sequence)
     assert isinstance(phylo, Phylogeny)
     assert phylo.root.id == root_sequence.id
+
 
 
 def test_phylogeny_with_root_sequence_id(fasta_file):
@@ -198,11 +209,13 @@ def test_phylogeny_with_root_sequence_id(fasta_file):
     assert phylo.root.id == root_seq_id
 
 
+
 def test_phylogeny_with_cluster(fasta_file):
     phylo = phylogeny(fasta_file.name, cluster=True, clustering_algo="cdhit")
     assert isinstance(phylo, Phylogeny)
     assert len(phylo.sequences) == 3
     assert len(phylo.clusters) == 3
+
 
 
 def test_phylogeny_with_clustering_threshold(fasta_file):
@@ -218,6 +231,7 @@ def test_phylogeny_with_clustering_threshold(fasta_file):
     assert len(phylo.clusters) == 2
 
 
+
 def test_phylogeny_with_rename_dict(fasta_file):
     rename_dict = {"seq1": "new_seq1", "seq2": "new_seq2"}
     phylo = phylogeny(fasta_file.name, rename=rename_dict)
@@ -227,6 +241,7 @@ def test_phylogeny_with_rename_dict(fasta_file):
     assert "new_seq2" in phylo_ids
     assert "seq1" not in phylo_ids
     assert "seq2" not in phylo_ids
+
 
 
 def test_phylogeny_with_rename_callable(fasta_file):
@@ -243,10 +258,12 @@ def test_phylogeny_with_rename_callable(fasta_file):
     assert "seq1" not in phylo_ids
 
 
+
 def test_phylogeny_with_id_key(sequences):
     phylo = phylogeny(sequences, id_key="name")
     assert isinstance(phylo, Phylogeny)
     assert len(phylo.sequences) == 3
+
 
 
 def test_phylogeny_with_sequence_key(sequences):

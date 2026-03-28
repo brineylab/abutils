@@ -1,8 +1,8 @@
 """
-Smoke tests for the plotting module.
+Tests for the plotting module.
 
-These tests verify that plotting functions run without error and return
-expected types. They do not verify the visual correctness of the plots.
+Tests verify both that plotting functions run without error and that the
+resulting plots contain expected visual elements.
 """
 
 import matplotlib
@@ -89,30 +89,40 @@ def donut_data():
 # ========================
 
 
-def test_bar_basic_smoke(categorical_data):
-    """Smoke test: bar() with x parameter runs without error."""
+def test_bar_basic(categorical_data):
+    """bar() returns Axes with correct number of bars."""
     from abutils.plots.bar import bar
 
     ax = bar(x="category", data=categorical_data)
     assert isinstance(ax, matplotlib.axes.Axes)
+    # should have bars (patches) for each category
+    n_categories = categorical_data["category"].nunique()
+    patches = [p for p in ax.patches if p.get_height() > 0 or p.get_width() > 0]
+    assert len(patches) >= n_categories
     plt.close("all")
 
 
-def test_bar_with_hue_smoke(categorical_data):
-    """Smoke test: bar() with hue parameter runs without error."""
+def test_bar_with_hue(categorical_data):
+    """bar() with hue produces patches for each category x group combination."""
     from abutils.plots.bar import bar
 
     ax = bar(x="category", hue="group", data=categorical_data)
     assert isinstance(ax, matplotlib.axes.Axes)
+    # with hue, we expect more patches than without
+    patches = [p for p in ax.patches if p.get_height() > 0 or p.get_width() > 0]
+    assert len(patches) >= categorical_data["category"].nunique()
     plt.close("all")
 
 
-def test_bar_horizontal_smoke(categorical_data):
-    """Smoke test: bar() with horizontal orientation runs without error."""
+def test_bar_horizontal(categorical_data):
+    """bar() horizontal orientation produces bars with nonzero widths."""
     from abutils.plots.bar import bar
 
     ax = bar(y="category", data=categorical_data, orientation="horizontal")
     assert isinstance(ax, matplotlib.axes.Axes)
+    # horizontal bars have nonzero widths
+    widths = [p.get_width() for p in ax.patches]
+    assert any(w > 0 for w in widths)
     plt.close("all")
 
 
@@ -121,21 +131,34 @@ def test_bar_horizontal_smoke(categorical_data):
 # ==========================
 
 
-def test_scatter_basic_smoke(scatter_data):
-    """Smoke test: scatter() runs without error and returns Axes."""
+def test_scatter_basic(scatter_data):
+    """scatter() renders data points within expected axis ranges."""
     from abutils.plots.scatter import scatter
 
     ax = scatter(x="x", y="y", data=scatter_data)
     assert isinstance(ax, matplotlib.axes.Axes)
+    # data is 0-1 range; axes should encompass that
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    assert xlim[0] <= 0.0
+    assert xlim[1] >= 1.0
+    assert ylim[0] <= 0.0
+    assert ylim[1] >= 1.0
     plt.close("all")
 
 
-def test_scatter_with_hue_smoke(scatter_data):
-    """Smoke test: scatter() with hue parameter runs without error."""
+def test_scatter_with_hue(scatter_data):
+    """scatter() with hue renders multiple collections."""
     from abutils.plots.scatter import scatter
 
     ax = scatter(x="x", y="y", hue="category", data=scatter_data)
     assert isinstance(ax, matplotlib.axes.Axes)
+    # with hue, should have rendered points (children include PathCollections)
+    collections = [
+        c for c in ax.get_children()
+        if hasattr(c, "get_offsets") and len(c.get_offsets()) > 0
+    ]
+    assert len(collections) >= 1
     plt.close("all")
 
 
@@ -149,7 +172,6 @@ def test_heatmap_basic_smoke(heatmap_data):
     """Smoke test: heatmap() runs without error and returns Axes."""
     from abutils.plots.heatmap import heatmap
 
-    # heatmap expects a simple 2D array/DataFrame of values
     ax = heatmap(data=heatmap_data.values.tolist())
     assert ax is not None
     plt.close("all")
@@ -160,21 +182,31 @@ def test_heatmap_basic_smoke(heatmap_data):
 # =====================
 
 
-def test_kde_basic_smoke(kde_data):
-    """Smoke test: kde() runs without error and returns Axes."""
+def test_kde_basic(kde_data):
+    """kde() produces lines representing the density estimate."""
     from abutils.plots.kde import kde
 
     ax = kde(x="values", data=kde_data)
     assert isinstance(ax, matplotlib.axes.Axes)
+    # KDE should produce at least one line
+    lines = ax.get_lines()
+    assert len(lines) >= 1
+    # the line should span the data range
+    xdata = lines[0].get_xdata()
+    assert min(xdata) < 0  # data has mean=0 component
+    assert max(xdata) > 2  # data has mean=3 component
     plt.close("all")
 
 
-def test_kde_with_hue_smoke(kde_data):
-    """Smoke test: kde() with hue parameter runs without error."""
+def test_kde_with_hue(kde_data):
+    """kde() with hue produces multiple density lines."""
     from abutils.plots.kde import kde
 
     ax = kde(x="values", hue="category", data=kde_data)
     assert isinstance(ax, matplotlib.axes.Axes)
+    # with 2 categories, should have at least 2 lines
+    lines = ax.get_lines()
+    assert len(lines) >= 2
     plt.close("all")
 
 
@@ -183,14 +215,12 @@ def test_kde_with_hue_smoke(kde_data):
 # ======================
 
 
-def test_ridge_basic_smoke(kde_data):
-    """Smoke test: ridge() runs without error."""
+def test_ridge_basic(kde_data):
+    """ridge() returns a result and renders without error."""
     from abutils.plots.ridge import ridge
 
-    # ridge uses 'categories' and 'values' parameters
-    ax = ridge(categories="category", values="values", data=kde_data, show=False)
-    # ridge may return axes or figure depending on implementation
-    assert ax is not None
+    result = ridge(categories="category", values="values", data=kde_data, show=False)
+    assert result is not None
     plt.close("all")
 
 
@@ -199,11 +229,10 @@ def test_ridge_basic_smoke(kde_data):
 # ======================
 
 
-def test_donut_basic_smoke(donut_data):
-    """Smoke test: donut() runs without error."""
+def test_donut_basic(donut_data):
+    """donut() produces a pie/wedge chart."""
     from abutils.plots.donut import donut
 
-    # donut uses 'values' for categories and 'counts' for values
     ax = donut(values="category", counts="value", data=donut_data)
     assert ax is not None
     plt.close("all")
