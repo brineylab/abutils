@@ -15,7 +15,7 @@ parasail
 polars>=1.6
 prettytable
 pyarrow
-pyfamsa
+pyfamsa<0.7.0
 pyfastx
 # pymongo
 pytest
