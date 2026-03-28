@@ -22,9 +22,7 @@
 #
 
 
-import colorsys
 import math
-import random
 import subprocess as sp
 from collections import Counter
 from typing import Iterable, Optional
@@ -40,7 +38,6 @@ from natsort import natsorted
 from ..io import from_polars, to_polars
 from ..tools.alignment import muscle, semiglobal_alignment
 from ..tools.cluster import cluster
-from ..utils.color import get_cmap
 from ..utils.decorators import lazy_property
 from .pair import Pair
 from .sequence import Sequence, translate
@@ -995,93 +992,6 @@ def fast_tree(alignment, tree, is_aa, show_output=False):
         print(stdout)
         print(stderr)
     return tree
-
-
-def donut(
-    lineages,
-    figfile=None,
-    figsize=(6, 6),
-    pairs_only=False,
-    monochrome_color=None,
-    singleton_color="lightgrey",
-    shuffle_colors=False,
-    seed=1234,
-    text_kws={},
-    pie_kws={},
-    fontsize=28,
-    linewidth=2,
-):
-    lineages = sorted(lineages, key=lambda x: x.size(pairs_only), reverse=True)
-    non_singletons = [l for l in lineages if l.size(pairs_only) > 1]
-    singleton_count = sum([1 for l in lineages if l.size(pairs_only) == 1])
-    lineage_sizes = [l.size(pairs_only) for l in lineages if l.size(pairs_only) > 1] + [
-        singleton_count
-    ]
-    if monochrome_color is not None:
-        colors = _get_monochrome_colors(monochrome_color, len(non_singletons))
-        # we shuffle the colors differently if we're using a monochrome palette, because
-        # we want to have the first color (largest lineage) always be the user-supplied
-        # monochrome_color. We only want to shuffle the colors starting with the second one.
-        if shuffle_colors:
-            primary = colors[0]
-            secondary = colors[1:]
-            random.seed(seed)
-            random.shuffle(secondary)
-            colors = [primary] + secondary
-    else:
-        colors = _get_donut_colors(len(non_singletons))
-        if shuffle_colors:
-            random.seed(seed)
-            random.shuffle(colors)
-    colors += [singleton_color]
-
-    # _colors = _get_donut_colors(lineages, len(lineage_sizes), color, singleton_color, shuffle_colors, seed)
-    # for l, c in zip(lineages, _colors):
-    #     l.color = c
-    # colors = [l.color for l in lineages if l.size(pairs_only) > 1] + [singleton_color]
-
-    fig = plt.figure(figsize=figsize)
-    ax = plt.gca()
-    # fig, ax = plt.subplots()
-    ax.axis("equal")
-    width = 0.55
-    kwargs = dict(colors=colors, startangle=90)
-    for k, v in pie_kws.items():
-        kwargs[k] = v
-    inside, _ = ax.pie(lineage_sizes, radius=1, pctdistance=1 - width / 2, **kwargs)
-    plt.setp(inside, width=width, edgecolor="white")
-
-    for w in inside:
-        w.set_linewidth(linewidth)
-
-    kwargs = dict(size=fontsize, color="k", va="center", fontweight="bold")
-    for k, v in text_kws.items():
-        kwargs[k] = v
-    ax.text(0, 0, str(sum(lineage_sizes)), ha="center", **kwargs)
-
-    plt.tight_layout()
-
-    if figfile is not None:
-        plt.savefig(figfile)
-    else:
-        plt.show()
-
-
-def _get_donut_colors(N):
-    HSV_tuples = [(x * 1.0 / N, 0.8, 0.9) for x in range(N)]
-    RGB_tuples = list(map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples))[::-1]
-    return RGB_tuples
-
-
-def _get_monochrome_colors(monochrome_color, N):
-    cmap = get_cmap(from_color=monochrome_color)
-    # this is a bit convoluted, but what's happening is we're getting different colormap
-    # values (which range from 0 to 1). Calling cmap(i) returns an rgba tuple, but we just need
-    # the rbg, so we drop the a. To make sure that one of the colors isn't pure white,
-    # we ask np.linspace() for one more value than we need, reverse the list of RGB tuples
-    # so that it goes from dark to light, and drop the lightest value
-    RGB_tuples = [cmap(i)[:-1] for i in np.linspace(0, 1, N + 1)][::-1][:-1]
-    return RGB_tuples
 
 
 def group_lineages(pairs, just_pairs=False):

@@ -43,7 +43,6 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 from ..utils.codons import codon_lookup
-from ..utils.path import make_dir
 from ..utils.utilities import nested_dict_lookup
 
 STR_TYPES = [str]
@@ -850,174 +849,6 @@ def read_json(
     return sequences
 
 
-def read_csv(
-    csv_file: str,
-    separator: str = ",",
-    match: Optional[dict] = None,
-    fields: Iterable = None,
-    id_key: str = "sequence_id",
-    sequence_key: str = "sequence",
-) -> Iterable[Sequence]:
-    """
-    Reads a tabular annotation file and returns ``Sequence`` objects.
-
-    Parameters
-    ----------
-    csv_file : str
-        Path to the input CSV file. Required.
-
-    separator : str, default=","
-        Column separator. Default is ``","``.
-
-    match : dict, default=None
-        A ``dict`` for filtering sequences from the input file.
-        Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is not ``'IGH'``:
-
-        .. code-block:: python
-
-            {'locus': 'IGH'}
-
-    fields : list, default=None
-        A ``list`` of fields to be retained in the output ``Sequence``
-        objects. Fields must be column names in the input file.
-
-    id_key : str, default="sequence_id"
-        Name of the annotation field containing the sequence ID. Used to
-        populate the ``Sequence.id`` property.
-
-    sequence_key : str, default="sequence"
-        Name of the annotation field containg the sequence. Used to
-        populate the ``Sequence.sequence`` property.
-
-
-    Returns
-    -------
-    sequences : list of ``Sequences``
-
-    """
-    if match is None:
-        match = {}
-    if fields is not None:
-        if id_key not in fields:
-            fields.append(id_key)
-        if sequence_key not in fields:
-            fields.append(sequence_key)
-    sequences = []
-    # df = pd.read_csv(csv_file, delimiter=delimiter)
-    df = pl.read_csv(csv_file, separator=separator)
-    # for _, r in df.iterrows():
-    for r in df.iter_rows(named=True):
-        # r = r.to_dict()
-        try:
-            if all([r[k] == v for k, v in match.items()]):
-                if fields is not None:
-                    _fields = [f for f in fields if f in r]
-                    r = {f: r[f] for f in _fields}
-                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
-        except KeyError:
-            continue
-    return sequences
-
-
-def read_airr(
-    tsv_file: str, match: Optional[dict] = None, fields: Optional[Iterable] = None
-) -> Iterable[Sequence]:
-    """
-    Reads an AIRR-formatted annotation file and returns ``Sequence`` objects.
-
-    Parameters
-    ----------
-    tsv_file : str
-        Path to the input TSV file. Required.
-
-    match : dict, default=None
-        A ``dict`` for filtering sequences from the input file.
-        Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is not ``'IGH'``:
-
-        .. code-block:: python
-
-            {'locus': 'IGH'}
-
-    fields : list, default=None
-        A ``list`` of fields to be retained in the output ``Sequence``
-        objects. Fields must be column names in the input file.
-
-
-    Returns
-    -------
-    sequences : list of ``Sequences``
-    """
-    return read_csv(tsv_file, separator="\t", match=match, fields=fields)
-
-
-def read_parquet(
-    parquet_file: str,
-    match: Optional[dict] = None,
-    fields: Iterable = None,
-    id_key: str = "sequence_id",
-    sequence_key: str = "sequence",
-) -> Iterable[Sequence]:
-    """
-    Reads a Parquet file and returns ``Sequence`` objects.
-
-    Parameters
-    ----------
-    parquet_file : str
-        Path to the input Parquet file. Required.
-
-    match : dict, default=None
-        A ``dict`` for filtering sequences from the input file.
-        Sequences must match all conditions to be returned. For example,
-        the following ``dict`` will filter out all sequences for which
-        the ``'locus'`` field is not ``'IGH'``:
-
-        .. code-block:: python
-
-            {'locus': 'IGH'}
-
-    fields : list, default=None
-        A ``list`` of fields to be retained in the output ``Sequence``
-        objects. Fields must be column names in the input file.
-
-    id_key : str, default="sequence_id"
-        Name of the annotation field containing the sequence ID. Used to
-        populate the ``Sequence.id`` property.
-
-    sequence_key : str, default="sequence"
-        Name of the annotation field containg the sequence. Used to
-        populate the ``Sequence.sequence`` property.
-
-
-    Returns
-    -------
-    sequences : list of ``Sequences``
-
-    """
-    if match is None:
-        match = {}
-    if fields is not None:
-        if id_key not in fields:
-            fields.append(id_key)
-        if sequence_key not in fields:
-            fields.append(sequence_key)
-    sequences = []
-    df = pl.read_parquet(parquet_file)
-    for r in df.iter_rows(named=True):
-        try:
-            if all([r[k] == v for k, v in match.items()]):
-                if fields is not None:
-                    _fields = [f for f in fields if f in r]
-                    r = {f: r[f] for f in _fields}
-                sequences.append(Sequence(r, id_key=id_key, seq_key=sequence_key))
-        except KeyError:
-            continue
-    return sequences
-
-
 def sequences_from_polars(
     df: Union[pl.DataFrame, pl.LazyFrame],
     match: Optional[dict] = None,
@@ -1598,12 +1429,12 @@ def to_fastq(
     if as_string:
         return fastq_string
     if fastq_file is None:
-        make_dir(tempfile_dir)
+        os.makedirs(os.path.abspath(tempfile_dir), exist_ok=True)
         ff = tempfile.NamedTemporaryFile(dir=tempfile_dir, delete=False)
         ff.close()
         fastq_file = ff.name
     else:
-        make_dir(os.path.dirname(fastq_file))
+        os.makedirs(os.path.abspath(os.path.dirname(fastq_file)), exist_ok=True)
     with open(fastq_file, "w") as f:
         f.write(fastq_string)
     return fastq_file
@@ -1898,63 +1729,3 @@ def sequences_to_parquet(
         leading=leading,
     )
     df.write_parquet(parquet_file)
-
-
-def to_airr(
-    sequences: Iterable[Sequence],
-    airr_file: str,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
-) -> None:
-    """
-    Saves a list of ``Sequence`` objects to a CSV file.
-
-    Parameters
-    ----------
-    sequences : Iterable[Sequence]
-        List of ``Sequence`` objects to be saved to an AIRR file. Required.
-
-    airr_file : str
-        Path to the output AIRR file. Required.
-
-    columns : list, default=None
-        A list of fields to be retained in the output CSV file. Fields must be column
-        names in the input file.
-
-    properties : list, default=None
-        A list of properties to be included in the CSV file.
-
-    drop_na_columns : bool, default=True
-        If ``True``, columns with all ``NaN`` values will be dropped from the CSV file.
-        Default is ``True``.
-
-    order : list, default=None
-        A list of fields in the order they should appear in the CSV file.
-
-    exclude : str or list, default=None
-        Field or list of fields to be excluded from the CSV file.
-
-    leading : str or list, default=None
-        Field or list of fields to appear first in the CSV file. Supercedes ``order``, so
-        if both are provided, fields in ``leading`` will appear first in the CSV file and
-        remaining fields will appear in the order provided in ``order``.
-
-    Returns
-    -------
-    None
-
-    """
-    df = sequences_to_polars(
-        sequences,
-        columns=columns,
-        properties=properties,
-        drop_na_columns=drop_na_columns,
-        order=order,
-        exclude=exclude,
-        leading=leading,
-    )
-    df.write_csv(airr_file, separator="\t", include_header=True)

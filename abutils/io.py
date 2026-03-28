@@ -55,7 +55,6 @@ from .core.sequence import (
     sequences_to_polars,
     to_fastq,
 )
-from .utils.path import delete_files, list_files, make_dir, rename_file
 
 # =======================
 #   General file I/O
