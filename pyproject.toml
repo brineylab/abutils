@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "abutils"
+version = "0.5.4"
+description = "Utilities for analysis of adaptive immune receptor repertoire (AIRR) data"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Bryan Briney", email = "briney@scripps.edu" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "abstar>=0.7",
+    "baltic",
+    "biopython>=1.78",
+    "dnachisel",
+    "fastcluster",
+    "matplotlib",
+    "mnemonic",
+    "natsort",
+    "numpy<2",
+    "pandas",
+    "paramiko",
+    "parasail",
+    "polars>=1.6",
+    "prettytable",
+    "pyarrow",
+    "pyfamsa<0.7.0",
+    "pyfastx",
+    "pytest",
+    "python-circos",
+    "pyyaml",
+    "rapidfuzz",
+    "sample-sheet",
+    "scikit-learn",
+    "scipy",
+    "seaborn>=0.11",
+    "smart_open",
+    "tqdm",
+]
+
+[project.urls]
+Homepage = "https://github.com/briney/abutils"
+Repository = "https://github.com/briney/abutils"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/abutils/",
+    "README.md",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/abutils"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["abutils"]
