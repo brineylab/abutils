@@ -24,22 +24,8 @@
 
 
 import itertools
-import math
 import operator
-import sys
-
-if sys.version_info[0] > 2:
-    STR_TYPES = [
-        str,
-    ]
-    from functools import reduce
-# else:
-#     STR_TYPES = [str, unicode]
-
-
-# ================================
-#       USEFUL SNIPPITS
-# ================================
+from functools import reduce
 
 
 def nested_dict_lookup(d, key_list, missing=None):
@@ -74,35 +60,10 @@ def nested_dict_lookup(d, key_list, missing=None):
         return missing
 
 
-def chunker(iterable, chunksize):
-    r = int(math.ceil(len(iterable) / chunksize))
-    for i in range(r):
-        start = i * chunksize
-        end = (i + 1) * chunksize
-        yield iterable[start:end]
-
-
 def generate_batches(iterable, batch_size):
+    """Yields successive batches of ``batch_size`` from an iterable."""
     while True:
-        # Use itertools.islice to take 'batch_size' elements at a time
         batch = list(itertools.islice(iterable, batch_size))
         if not batch:
             break
         yield batch
-
-
-def redirect_stdout(func, *args, **kwargs):
-    """
-    Suppress stdout for a function by redirecting it to a StringIO object.
-    """
-    # Redirect stdout to a StringIO object
-    import io
-
-    old_stdout = sys.stdout
-    sys.stdout = io.StringIO()
-    try:
-        result = func(*args, **kwargs)
-    finally:
-        # Restore the original stdout
-        sys.stdout = old_stdout
-    return result

@@ -22,17 +22,14 @@
 #
 
 
-import math
 import subprocess as sp
 from collections import Counter
 from collections.abc import Iterable
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import polars as pl
 import prettytable as pt
-from matplotlib.colors import ListedColormap
 from natsort import natsorted
 
 from ..io import from_polars, to_polars
@@ -395,29 +392,9 @@ class Lineage:
         return "\n".join(dot_aln)
 
     def pixel(self, seq_field="vdj_nt", figfile=None):
-        if "aa" in seq_field:
-            colors = _aa_pixel_colors
-        else:
-            colors = _nt_pixel_colors
-        ckeys = sorted(colors.keys())
-        res_vals = {r: v for r, v in zip(ckeys, range(len(ckeys)))}
-        cmap_colors = [colors[res] for res in ckeys]
-        cmap = ListedColormap(cmap_colors)
-        data = []
-        dot_alignment = self.dot_alignment(seq_field=seq_field, just_alignment=True)
-        for dot in dot_alignment:
-            data.append([res_vals.get(res.upper(), len(res_vals) + 1) for res in dot])
-        mag = (int(math.log10(len(data[0]))) + int(math.log10(len(data)))) / 2
-        x_dim = len(data[0]) / 10**mag
-        y_dim = len(data) / 10**mag
-        plt.figure(figsize=(x_dim, y_dim), dpi=100)
-        plt.imshow(data, cmap=cmap, interpolation="none")
-        plt.axis("off")
-        if figfile is not None:
-            plt.savefig(figfile, bbox_inches="tight", dpi=400)
-            plt.close()
-        else:
-            plt.show()
+        from ..plots.lineage import pixel_alignment
+
+        pixel_alignment(self, seq_field=seq_field, figfile=figfile)
 
     def _calculate_uca(self, paired_only=False):
         from abstar import run as run_abstar
@@ -1006,171 +983,3 @@ def group_lineages(pairs, just_pairs=False):
                     lineages[l] = []
                 lineages[l].append(p)
     return [Lineage(v) for v in lineages.values()]
-
-
-# class MySequenceItem(QGraphicsRectItem):
-#     def __init__(self, seq, seqtype="aa", poswidth=1, posheight=10,
-#                  draw_text=False):
-#         QGraphicsRectItem.__init__(self)
-#         self.seq = seq
-#         self.seqtype = seqtype
-#         self.poswidth = poswidth
-#         self.posheight = posheight
-#         if draw_text:
-#             self.poswidth = poswidth
-#         self.draw_text = draw_text
-#         if seqtype == "aa":
-#             self.fg = _aafgcolors
-#             self.bg = _aabgcolors
-#         elif seqtype == "nt":
-#             self.fg = _ntfgcolors
-#             self.bg = _ntbgcolors
-#         self.setRect(0, 0, len(seq) * poswidth, posheight)
-
-#     def paint(self, p, option, widget):
-#         x, y = 0, 0
-#         qfont = QFont("Courier")
-#         current_pixel = 0
-#         blackPen = QPen(QColor("black"))
-#         for letter in self.seq:
-#             if x >= current_pixel:
-#                 if self.draw_text and self.poswidth >= 5:
-#                     br = QBrush(QColor(self.bg.get(letter, "white")))
-#                     p.setPen(blackPen)
-#                     p.fillRect(x, 0, self.poswidth, self.posheight, br)
-#                     qfont.setPixelSize(min(self.posheight, self.poswidth))
-#                     p.setFont(qfont)
-#                     p.setBrush(QBrush(QColor("black")))
-#                     p.drawText(x, 0, self.poswidth, self.posheight,
-#                                Qt.AlignCenter | Qt.AlignVCenter,
-#                                letter)
-#                 elif letter == "-" or letter == ".":
-#                     p.setPen(blackPen)
-#                     p.drawLine(x, self.posheight / 2, x + self.poswidth, self.posheight / 2)
-
-#                 else:
-#                     br = QBrush(QColor(self.bg.get(letter, "white")))
-#                     p.fillRect(x, 0, max(1, self.poswidth), self.posheight, br)
-#                     # p.setPen(QPen(QColor(self.bg.get(letter, "black"))))
-#                     # p.drawLine(x, 0, x, self.posheight)
-#                 current_pixel = int(x)
-#             x += self.poswidth
-
-# _aafgcolors = {
-#     'A': "#000000",
-#     'R': "#000000",
-#     'N': "#000000",
-#     'D': "#000000",
-#     'C': "#000000",
-#     'Q': "#000000",
-#     'E': "#000000",
-#     'G': "#000000",
-#     'H': "#000000",
-#     'I': "#000000",
-#     'L': "#000000",
-#     'K': "#000000",
-#     'M': "#000000",
-#     'F': "#000000",
-#     'P': "#000000",
-#     'S': "#000000",
-#     'T': "#000000",
-#     'W': "#000000",
-#     'Y': "#000000",
-#     'V': "#000000",
-#     'B': "#000000",
-#     'Z': "#000000",
-#     'X': "#000000",
-#     '.': "#000000",
-#     '-': "#000000",
-# }
-
-# _aabgcolors = {
-#     'A': "#C8C8C8",
-#     'R': "#145AFF",
-#     'N': "#00DCDC",
-#     'D': "#E60A0A",
-#     'C': "#E6E600",
-#     'Q': "#00DCDC",
-#     'E': "#E60A0A",
-#     'G': "#EBEBEB",
-#     'H': "#8282D2",
-#     'I': "#0F820F",
-#     'L': "#0F820F",
-#     'K': "#145AFF",
-#     'M': "#E6E600",
-#     'F': "#3232AA",
-#     'P': "#DC9682",
-#     'S': "#FA9600",
-#     'T': "#FA9600",
-#     'W': "#B45AB4",
-#     'Y': "#3232AA",
-#     'V': "#0F820F",
-#     'B': "#FF69B4",
-#     'Z': "#FF69B4",
-#     'X': "#BEA06E",
-#     '.': "#FFFFFF",
-#     '-': "#FFFFFF",
-# }
-
-_aa_pixel_colors = {
-    "A": "#C8C8C8",
-    "R": "#145AFF",
-    "N": "#00DCDC",
-    "D": "#E60A0A",
-    "C": "#E6E600",
-    "Q": "#00DCDC",
-    "E": "#E60A0A",
-    "G": "#EBEBEB",
-    "H": "#8282D2",
-    "I": "#0F820F",
-    "L": "#0F820F",
-    "K": "#145AFF",
-    "M": "#E6E600",
-    "F": "#3232AA",
-    "P": "#DC9682",
-    "S": "#FA9600",
-    "T": "#FA9600",
-    "W": "#B45AB4",
-    "Y": "#3232AA",
-    "V": "#0F820F",
-    "B": "#FF69B4",
-    "Z": "#FF69B4",
-    "X": "#BEA06E",
-    ".": "#F2F2F2",
-    "-": "#FFFFFF",
-}
-
-# _ntfgcolors = {
-#     'A': '#000000',
-#     'G': '#000000',
-#     'I': '#000000',
-#     'C': '#000000',
-#     'T': '#000000',
-#     'U': '#000000',
-#     '.': "#000000",
-#     '-': "#000000",
-#     ' ': "#000000"
-# }
-
-# _ntbgcolors = {
-#     'A': '#A0A0FF',
-#     'G': '#FF7070',
-#     'I': '#80FFFF',
-#     'C': '#FF8C4B',
-#     'T': '#A0FFA0',
-#     'U': '#FF8080',
-#     '.': "#FFFFFF",
-#     '-': "#FFFFFF",
-#     ' ': "#FFFFFF"
-# }
-
-_nt_pixel_colors = {
-    "A": "#E12427",
-    "C": "#3B7FB6",
-    "G": "#63BE7A",
-    "T": "#E1E383",
-    # 'U': '#E1E383',
-    ".": "#F2F2F2",
-    "-": "#FFFFFF",
-    # ' ': "#FFFFFF"
-}

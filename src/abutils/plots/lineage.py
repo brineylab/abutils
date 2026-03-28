@@ -24,15 +24,17 @@
 
 
 import colorsys
+import math
 import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import ListedColormap
 from natsort import natsorted
 
 from ..utils.color import get_cmap
 
-__all__ = ['lineage_donut', 'annotated_donut']
+__all__ = ['lineage_donut', 'annotated_donut', 'pixel_alignment']
 
 
 def lineage_donut(lineages, figfile=None, figsize=(6, 6), pairs_only=False,
@@ -204,3 +206,80 @@ def _get_monochrome_colors(monochrome_color, N):
     # so that it goes from dark to light, and drop the lightest value
     RGB_tuples = [cmap(i)[:-1] for i in np.linspace(0, 1, N + 1)][::-1][:-1]
     return RGB_tuples
+
+
+# ---------------------------------
+#        pixel alignment
+# ---------------------------------
+
+
+def pixel_alignment(lineage, seq_field="vdj_nt", figfile=None):
+    """Render a lineage's dot alignment as a color-coded pixel image.
+
+    Args:
+        lineage: A ``Lineage`` object.
+        seq_field: Sequence field to align. Use an ``aa``-containing field
+            for amino acid colors, otherwise nucleotide colors are used.
+        figfile: Path to save the figure. If ``None``, the figure is displayed.
+    """
+    if "aa" in seq_field:
+        colors = _AA_PIXEL_COLORS
+    else:
+        colors = _NT_PIXEL_COLORS
+    ckeys = sorted(colors.keys())
+    res_vals = {r: v for r, v in zip(ckeys, range(len(ckeys)))}
+    cmap_colors = [colors[res] for res in ckeys]
+    cmap = ListedColormap(cmap_colors)
+    data = []
+    dot_alignment = lineage.dot_alignment(seq_field=seq_field, just_alignment=True)
+    for dot in dot_alignment:
+        data.append([res_vals.get(res.upper(), len(res_vals) + 1) for res in dot])
+    mag = (int(math.log10(len(data[0]))) + int(math.log10(len(data)))) / 2
+    x_dim = len(data[0]) / 10**mag
+    y_dim = len(data) / 10**mag
+    plt.figure(figsize=(x_dim, y_dim), dpi=100)
+    plt.imshow(data, cmap=cmap, interpolation="none")
+    plt.axis("off")
+    if figfile is not None:
+        plt.savefig(figfile, bbox_inches="tight", dpi=400)
+        plt.close()
+    else:
+        plt.show()
+
+
+_AA_PIXEL_COLORS = {
+    "A": "#C8C8C8",
+    "R": "#145AFF",
+    "N": "#00DCDC",
+    "D": "#E60A0A",
+    "C": "#E6E600",
+    "Q": "#00DCDC",
+    "E": "#E60A0A",
+    "G": "#EBEBEB",
+    "H": "#8282D2",
+    "I": "#0F820F",
+    "L": "#0F820F",
+    "K": "#145AFF",
+    "M": "#E6E600",
+    "F": "#3232AA",
+    "P": "#DC9682",
+    "S": "#FA9600",
+    "T": "#FA9600",
+    "W": "#B45AB4",
+    "Y": "#3232AA",
+    "V": "#0F820F",
+    "B": "#FF69B4",
+    "Z": "#FF69B4",
+    "X": "#BEA06E",
+    ".": "#F2F2F2",
+    "-": "#FFFFFF",
+}
+
+_NT_PIXEL_COLORS = {
+    "A": "#E12427",
+    "C": "#3B7FB6",
+    "G": "#63BE7A",
+    "T": "#E1E383",
+    ".": "#F2F2F2",
+    "-": "#FFFFFF",
+}
