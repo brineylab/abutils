@@ -26,16 +26,11 @@
 import colorsys
 import random
 
-import numpy as np
-import pandas as pd
-
 import matplotlib.pyplot as plt
-import seaborn as sns
-
+import numpy as np
 from natsort import natsorted
 
 from ..utils.color import get_cmap
-
 
 __all__ = ['lineage_donut', 'annotated_donut']
 

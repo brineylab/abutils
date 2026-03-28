@@ -22,7 +22,7 @@
 #
 
 
-from typing import Callable, Iterable, Optional, Union
+from collections.abc import Callable, Iterable
 
 from tqdm.auto import tqdm
 
@@ -32,17 +32,17 @@ __all__ = ["build_synthesis_constructs"]
 
 
 def build_synthesis_constructs(
-    sequences: Union[Sequence, Iterable[Sequence], str],
-    overhang_5: Optional[dict] = None,
-    overhang_3: Optional[dict] = None,
-    sequence_key: Optional[str] = None,
-    id_key: Optional[str] = None,
-    locus_key: Optional[str] = None,
-    frame: Optional[int] = None,
+    sequences: Sequence | Iterable[Sequence] | str,
+    overhang_5: dict | None = None,
+    overhang_3: dict | None = None,
+    sequence_key: str | None = None,
+    id_key: str | None = None,
+    locus_key: str | None = None,
+    frame: int | None = None,
     add_locus_to_name: bool = True,
     group_by_chain: bool = False,
     show_progress: bool = True,
-    sort_func: Optional[Callable] = None,
+    sort_func: Callable | None = None,
 ):
     """
     Builds codon-optimized synthesis constructs, including Gibson overhangs suitable

@@ -24,7 +24,6 @@
 
 
 import os
-from itertools import chain
 from zipfile import ZipFile
 
 from Bio import SeqIO

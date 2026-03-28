@@ -22,11 +22,10 @@
 #
 
 
-from abc import ABCMeta, abstractmethod
 import os
 import sqlite3
 import sys
-import time
+from abc import ABCMeta, abstractmethod
 
 if sys.version_info[0] > 2:
     STR_TYPES = [
@@ -46,7 +45,7 @@ class SQLiteDatabase:
     __metaclass__ = ABCMeta
 
     def __init__(self, name=None, direc=None, in_memory=False, table_name=None):
-        super(SQLiteDatabase, self).__init__()
+        super().__init__()
         self.name = name
         self.initialized = False
         if all([name is not None, direc is not None]):
@@ -220,7 +219,7 @@ class KeyValueStore(SQLiteDatabase):
     """
 
     def __init__(self, name=None, direc=None, in_memory=False, table_name=None):
-        super(KeyValueStore, self).__init__(
+        super().__init__(
             name=name, direc=direc, in_memory=in_memory, table_name=table_name
         )
 

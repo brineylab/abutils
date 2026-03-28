@@ -23,16 +23,13 @@
 
 
 import glob
-import gzip
 import os
 import re
 import tempfile
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 import pandas as pd
 import polars as pl
-from Bio.SeqRecord import SeqRecord
-
 from natsort import natsorted
 
 from .core.pair import (
@@ -45,15 +42,12 @@ from .core.sequence import (
     determine_fastx_format,
     from_mongodb,
     parse_fasta,
-    parse_fastq,
     parse_fastx,
     read_fasta,
     read_fastq,
-    read_fastx,
     read_json,
     sequences_from_polars,
     sequences_to_polars,
-    to_fastq,
 )
 
 # =======================
@@ -77,9 +71,9 @@ def make_dir(directory: str) -> None:
 
 def list_files(
     directory: str,
-    extension: Union[str, Iterable, None] = None,
+    extension: str | Iterable | None = None,
     recursive: bool = False,
-    match: Optional[str] = None,
+    match: str | None = None,
     ignore_dot_files: bool = True,
 ) -> Iterable[str]:
     """
@@ -165,7 +159,7 @@ def rename_file(file: str, new_name: str) -> None:
     os.rename(file, new_name)
 
 
-def delete_files(files: Union[str, Iterable]) -> None:
+def delete_files(files: str | Iterable) -> None:
     """
     Deletes files.
 
@@ -213,7 +207,7 @@ def split_parquet(
     parquet_file: str,
     output_directory: str,
     num_rows: int = 500,
-    num_splits: Optional[int] = None,
+    num_splits: int | None = None,
     split_prefix: str = "chunk_",
     start_numbering_at: int = 0,
 ) -> Iterable[str]:
@@ -426,7 +420,7 @@ def split_fastx(
     output_directory: str,
     chunksize: int = 500,
     start_numbering_at: int = 0,
-    fmt: Optional[str] = None,
+    fmt: str | None = None,
 ) -> Iterable[str]:
     """
     Splits a FASTA or FASTQ file into multiple files, each containing a specified number of sequences.
@@ -575,11 +569,11 @@ def split_fastq(
 
 
 def to_fasta(
-    sequences: Union[str, Iterable],
-    fasta_file: Optional[str] = None,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
-    tempfile_dir: Optional[str] = None,
+    sequences: str | Iterable,
+    fasta_file: str | None = None,
+    id_key: str | None = None,
+    sequence_key: str | None = None,
+    tempfile_dir: str | None = None,
     append_chain: bool = True,
     as_string: bool = False,
 ) -> str:
@@ -680,12 +674,12 @@ def to_fasta(
 
 
 def from_polars(
-    df: Union[pl.DataFrame, pl.LazyFrame],
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
+    df: pl.DataFrame | pl.LazyFrame,
+    match: dict | None = None,
+    fields: Iterable | None = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
-) -> Iterable[Union[Sequence, Pair]]:
+) -> Iterable[Sequence | Pair]:
     """
     Reads a Polars DataFrame and returns a list of ``Sequence`` or ``Pair`` objects.
 
@@ -732,16 +726,16 @@ def from_polars(
 
 
 def to_polars(
-    sequences: Iterable[Union[Sequence, Pair]],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    sequences: Iterable[Sequence | Pair],
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
-) -> Optional[pl.DataFrame]:
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
+) -> pl.DataFrame | None:
     """
     Saves a list of ``Pair`` objects to a Polars DataFrame.
 
@@ -822,11 +816,11 @@ def to_polars(
 
 def from_pandas(
     df: pd.DataFrame,
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
+    match: dict | None = None,
+    fields: Iterable | None = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
-) -> Iterable[Union[Sequence, Pair]]:
+) -> Iterable[Sequence | Pair]:
     """
     Reads a Pandas DataFrame and returns a list of ``Sequence`` or ``Pair`` objects.
 
@@ -867,16 +861,16 @@ def from_pandas(
 
 
 def to_pandas(
-    sequences: Iterable[Union[Sequence, Pair]],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    sequences: Iterable[Sequence | Pair],
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
-) -> Optional[pl.DataFrame]:
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
+) -> pl.DataFrame | None:
     """
     Saves a list of ``Pair`` objects to a Pandas DataFrame.
 
@@ -961,12 +955,12 @@ def to_pandas(
 def read_csv(
     csv_file: str,
     separator: str = ",",
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
+    match: dict | None = None,
+    fields: Iterable | None = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
     as_dataframe: bool = False,
-) -> Iterable[Union[Sequence, Pair]]:
+) -> Iterable[Sequence | Pair]:
     """
     Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
 
@@ -1026,18 +1020,18 @@ def read_csv(
 
 
 def to_csv(
-    sequences: Iterable[Union[Sequence, Pair]],
+    sequences: Iterable[Sequence | Pair],
     csv_file: str,
     separator: str = ",",
     header: bool = True,
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Pair`` objects to a CSV file.
@@ -1130,12 +1124,12 @@ def to_csv(
 
 def read_airr(
     airr_file: str,
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
+    match: dict | None = None,
+    fields: Iterable | None = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
     as_dataframe: bool = False,
-) -> Iterable[Union[Sequence, Pair]]:
+) -> Iterable[Sequence | Pair]:
     """
     Reads a CSV file and returns a list of ``Sequence`` or ``Pair`` objects.
 
@@ -1191,16 +1185,16 @@ def read_airr(
 
 
 def to_airr(
-    sequences: Iterable[Union[Sequence, Pair]],
+    sequences: Iterable[Sequence | Pair],
     airr_file: str,
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Pair`` objects to a CSV file.
@@ -1272,12 +1266,12 @@ def to_airr(
 
 def read_parquet(
     parquet_file: str,
-    match: Optional[dict] = None,
-    fields: Optional[Iterable] = None,
+    match: dict | None = None,
+    fields: Iterable | None = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
     as_dataframe: bool = False,
-) -> Iterable[Union[Sequence, Pair]]:
+) -> Iterable[Sequence | Pair]:
     """
     Reads a Parquet file and returns a list of ``Sequence`` or ``Pair`` objects.
 
@@ -1334,16 +1328,16 @@ def read_parquet(
 
 
 def to_parquet(
-    sequences: Iterable[Union[Sequence, Pair]],
+    sequences: Iterable[Sequence | Pair],
     parquet_file: str,
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Pair`` objects to a Parquet file.

@@ -6,15 +6,14 @@ expected types. They do not verify the visual correctness of the plots.
 """
 
 import matplotlib
+
 matplotlib.use("Agg")  # Use non-interactive backend for testing
 
+import matplotlib.axes
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
-
-import matplotlib.pyplot as plt
-import matplotlib.axes
-
 
 # ==================
 #      FIXTURES
@@ -92,7 +91,7 @@ def donut_data():
 
 def test_bar_basic_smoke(categorical_data):
     """Smoke test: bar() with x parameter runs without error."""
-    from ..plots.bar import bar
+    from abutils.plots.bar import bar
 
     ax = bar(x="category", data=categorical_data)
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -101,7 +100,7 @@ def test_bar_basic_smoke(categorical_data):
 
 def test_bar_with_hue_smoke(categorical_data):
     """Smoke test: bar() with hue parameter runs without error."""
-    from ..plots.bar import bar
+    from abutils.plots.bar import bar
 
     ax = bar(x="category", hue="group", data=categorical_data)
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -110,7 +109,7 @@ def test_bar_with_hue_smoke(categorical_data):
 
 def test_bar_horizontal_smoke(categorical_data):
     """Smoke test: bar() with horizontal orientation runs without error."""
-    from ..plots.bar import bar
+    from abutils.plots.bar import bar
 
     ax = bar(y="category", data=categorical_data, orientation="horizontal")
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -124,7 +123,7 @@ def test_bar_horizontal_smoke(categorical_data):
 
 def test_scatter_basic_smoke(scatter_data):
     """Smoke test: scatter() runs without error and returns Axes."""
-    from ..plots.scatter import scatter
+    from abutils.plots.scatter import scatter
 
     ax = scatter(x="x", y="y", data=scatter_data)
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -133,7 +132,7 @@ def test_scatter_basic_smoke(scatter_data):
 
 def test_scatter_with_hue_smoke(scatter_data):
     """Smoke test: scatter() with hue parameter runs without error."""
-    from ..plots.scatter import scatter
+    from abutils.plots.scatter import scatter
 
     ax = scatter(x="x", y="y", hue="category", data=scatter_data)
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -148,7 +147,7 @@ def test_scatter_with_hue_smoke(scatter_data):
 @pytest.mark.xfail(reason="heatmap requires specific data format via PlotData")
 def test_heatmap_basic_smoke(heatmap_data):
     """Smoke test: heatmap() runs without error and returns Axes."""
-    from ..plots.heatmap import heatmap
+    from abutils.plots.heatmap import heatmap
 
     # heatmap expects a simple 2D array/DataFrame of values
     ax = heatmap(data=heatmap_data.values.tolist())
@@ -163,7 +162,7 @@ def test_heatmap_basic_smoke(heatmap_data):
 
 def test_kde_basic_smoke(kde_data):
     """Smoke test: kde() runs without error and returns Axes."""
-    from ..plots.kde import kde
+    from abutils.plots.kde import kde
 
     ax = kde(x="values", data=kde_data)
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -172,7 +171,7 @@ def test_kde_basic_smoke(kde_data):
 
 def test_kde_with_hue_smoke(kde_data):
     """Smoke test: kde() with hue parameter runs without error."""
-    from ..plots.kde import kde
+    from abutils.plots.kde import kde
 
     ax = kde(x="values", hue="category", data=kde_data)
     assert isinstance(ax, matplotlib.axes.Axes)
@@ -186,7 +185,7 @@ def test_kde_with_hue_smoke(kde_data):
 
 def test_ridge_basic_smoke(kde_data):
     """Smoke test: ridge() runs without error."""
-    from ..plots.ridge import ridge
+    from abutils.plots.ridge import ridge
 
     # ridge uses 'categories' and 'values' parameters
     ax = ridge(categories="category", values="values", data=kde_data, show=False)
@@ -202,7 +201,7 @@ def test_ridge_basic_smoke(kde_data):
 
 def test_donut_basic_smoke(donut_data):
     """Smoke test: donut() runs without error."""
-    from ..plots.donut import donut
+    from abutils.plots.donut import donut
 
     # donut uses 'values' for categories and 'counts' for values
     ax = donut(values="category", counts="value", data=donut_data)

@@ -30,15 +30,15 @@ import sys
 import tempfile
 import uuid
 from abc import ABC
+from collections.abc import Callable, Iterable
 from copy import copy, deepcopy
 from io import StringIO
 from itertools import groupby
-from typing import Callable, Iterable, Optional, Union
 
 import parasail
 import pyfamsa
 from Bio import AlignIO
-from Bio.Align import AlignInfo, MultipleSeqAlignment
+from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -76,7 +76,7 @@ __all__ = [
 class MultipleSequenceAlignment:
     def __init__(
         self,
-        input_alignment: Union[str, Iterable, MultipleSeqAlignment],
+        input_alignment: str | Iterable | MultipleSeqAlignment,
         fmt: str = "fasta",
     ):
         """
@@ -349,11 +349,11 @@ class MultipleSequenceAlignment:
 
     def make_consensus(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         threshold: float = 0.51,
-        ambiguous: Optional[str] = None,
+        ambiguous: str | None = None,
         as_string: bool = False,
-    ) -> Union[str, Sequence]:
+    ) -> str | Sequence:
         """
         Make a consensus sequence from the multiple sequence alignment.
 
@@ -424,19 +424,19 @@ class MultipleSequenceAlignment:
 
 
 def mafft(
-    sequences: Union[str, Iterable],
-    alignment_file: Optional[str] = None,
+    sequences: str | Iterable,
+    alignment_file: str | None = None,
     fmt: str = "fasta",
     threads: int = -1,
     as_file: bool = False,
     as_string: bool = False,
     reorder: bool = True,
-    mafft_bin: Optional[str] = None,
-    id_key: Optional[str] = None,
-    seq_key: Optional[str] = None,
+    mafft_bin: str | None = None,
+    id_key: str | None = None,
+    seq_key: str | None = None,
     debug: bool = False,
-    fasta: Optional[str] = None,
-) -> Union[MultipleSeqAlignment, str]:
+    fasta: str | None = None,
+) -> MultipleSeqAlignment | str:
     """
     Performs multiple sequence alignment with `MAFFT`_.
 
@@ -572,17 +572,17 @@ def mafft(
 
 
 def muscle(
-    sequences: Union[str, Iterable],
-    alignment_file: Optional[str] = None,
+    sequences: str | Iterable,
+    alignment_file: str | None = None,
     as_file: bool = False,
     as_string: bool = False,
-    muscle_bin: Optional[str] = None,
-    threads: Optional[int] = None,
-    id_key: Optional[str] = None,
-    seq_key: Optional[str] = None,
+    muscle_bin: str | None = None,
+    threads: int | None = None,
+    id_key: str | None = None,
+    seq_key: str | None = None,
     debug: bool = False,
-    fasta: Optional[str] = None,
-) -> Union[MultipleSeqAlignment, str]:
+    fasta: str | None = None,
+) -> MultipleSeqAlignment | str:
     """
     Performs multiple sequence alignment with `MUSCLE`_ (version 5).
 
@@ -709,23 +709,23 @@ def muscle(
 
 
 def famsa(
-    sequences: Union[str, Iterable],
-    alignment_file: Optional[str] = None,
+    sequences: str | Iterable,
+    alignment_file: str | None = None,
     fmt: str = "fasta",
     as_file: bool = False,
     as_string: bool = False,
     threads: int = 0,
     guide_tree: str = "sl",
-    tree_heuristic: Optional[str] = None,
+    tree_heuristic: str | None = None,
     medoid_threshold: int = 0,
     n_refinements: int = 100,
     keep_duplicates: bool = False,
-    refine: Optional[bool] = None,
-    id_key: Optional[str] = None,
-    seq_key: Optional[str] = None,
+    refine: bool | None = None,
+    id_key: str | None = None,
+    seq_key: str | None = None,
     debug: bool = False,
-    fasta: Optional[str] = None,
-) -> Union[MultipleSeqAlignment, str]:
+    fasta: str | None = None,
+) -> MultipleSeqAlignment | str:
     """
     Performs multiple sequence alignment with `FAMSA`_ using the `pyfamsa`_ package.
 
@@ -848,21 +848,21 @@ def famsa(
 
 
 def muscle_v3(
-    sequences: Union[str, Iterable, None] = None,
-    alignment_file: Optional[str] = None,
+    sequences: str | Iterable | None = None,
+    alignment_file: str | None = None,
     fmt: str = "fasta",
     as_file: bool = False,
     as_string: bool = False,
-    muscle_bin: Optional[str] = None,
-    maxiters: Optional[int] = None,
-    diags: Optional[int] = None,
-    gap_open: Optional[int] = None,
-    gap_extend: Optional[int] = None,
-    id_key: Optional[str] = None,
-    seq_key: Optional[str] = None,
+    muscle_bin: str | None = None,
+    maxiters: int | None = None,
+    diags: int | None = None,
+    gap_open: int | None = None,
+    gap_extend: int | None = None,
+    id_key: str | None = None,
+    seq_key: str | None = None,
     debug: bool = False,
-    fasta: Optional[str] = None,
-) -> Union[MultipleSeqAlignment, str]:
+    fasta: str | None = None,
+) -> MultipleSeqAlignment | str:
     """
     Performs multiple sequence alignment with `MUSCLE`_ (version 3).
 
@@ -975,7 +975,7 @@ def muscle_v3(
         "phylip": "-phyiout",
         "clustal": "-clwstrict -clwout",
     }
-    if fmt.lower() not in aln_lookup.keys():
+    if fmt.lower() not in aln_lookup:
         err = f"\tERROR: invalid alignment format: '{fmt.lower()}'\n"
         err += "Valid formats are 'fasta', 'phylip', and 'clustal'.\n"
         raise ValueError(err)
@@ -1038,15 +1038,15 @@ def muscle_v3(
 
 
 def make_consensus(
-    sequences: Optional[Iterable[Sequence]] = None,
-    alignment: Union[str, MultipleSeqAlignment, MultipleSequenceAlignment, None] = None,
+    sequences: Iterable[Sequence] | None = None,
+    alignment: str | MultipleSeqAlignment | MultipleSequenceAlignment | None = None,
     algo: str = "mafft",
-    alignment_kwargs: Optional[dict] = None,
-    name: Optional[str] = None,
-    downsample_to: Optional[int] = None,
+    alignment_kwargs: dict | None = None,
+    name: str | None = None,
+    downsample_to: int | None = None,
     threshold: float = 0.51,
-    ambiguous: Optional[str] = None,
-    seed: Optional[int] = None,
+    ambiguous: str | None = None,
+    seed: int | None = None,
     as_string: bool = False,
 ) -> Sequence:
     """
@@ -1177,9 +1177,9 @@ class PairwiseAlignment(ABC):
         mismatch: int = -2,
         gap_open: int = 5,
         gap_extend: int = 2,
-        matrix: Optional[parasail.Matrix] = None,
-        gap_open_penalty: Optional[int] = None,
-        gap_extend_penalty: Optional[int] = None,
+        matrix: parasail.Matrix | None = None,
+        gap_open_penalty: int | None = None,
+        gap_extend_penalty: int | None = None,
     ):
         self.query = query
         self.target = target
@@ -1454,9 +1454,9 @@ class LocalAlignment(PairwiseAlignment):
         mismatch: int = -2,
         gap_open: int = 5,
         gap_extend: int = 2,
-        matrix: Union[str, parasail.Matrix, None] = None,
-        gap_open_penalty: Optional[int] = None,
-        gap_extend_penalty: Optional[int] = None,
+        matrix: str | parasail.Matrix | None = None,
+        gap_open_penalty: int | None = None,
+        gap_extend_penalty: int | None = None,
         alignment_function: Callable = parasail.sw_trace_striped_16,
     ):
         super().__init__(
@@ -1487,9 +1487,9 @@ class GlobalAlignment(PairwiseAlignment):
         mismatch: int = -2,
         gap_open: int = 5,
         gap_extend: int = 2,
-        matrix: Union[str, parasail.Matrix, None] = None,
-        gap_open_penalty: Optional[int] = None,
-        gap_extend_penalty: Optional[int] = None,
+        matrix: str | parasail.Matrix | None = None,
+        gap_open_penalty: int | None = None,
+        gap_extend_penalty: int | None = None,
         alignment_function: Callable = parasail.nw_trace_striped_16,
     ):
         super().__init__(
@@ -1520,9 +1520,9 @@ class SemiGlobalAlignment(PairwiseAlignment):
         mismatch: int = -2,
         gap_open: int = 5,
         gap_extend: int = 2,
-        matrix: Union[str, parasail.Matrix, None] = None,
-        gap_open_penalty: Optional[int] = None,
-        gap_extend_penalty: Optional[int] = None,
+        matrix: str | parasail.Matrix | None = None,
+        gap_open_penalty: int | None = None,
+        gap_extend_penalty: int | None = None,
         alignment_function: Callable = parasail.sg_trace_striped_16,
     ):
         super().__init__(
@@ -1614,19 +1614,19 @@ def process_targets(target, targets):
 
 
 def local_alignment(
-    query: Union[str, SeqRecord, Sequence, Iterable],
-    target: Union[str, SeqRecord, Sequence, Iterable, None] = None,
-    targets: Optional[Iterable] = None,
+    query: str | SeqRecord | Sequence | Iterable,
+    target: str | SeqRecord | Sequence | Iterable | None = None,
+    targets: Iterable | None = None,
     match: int = 3,
     mismatch: int = -2,
     gap_open: int = -5,
     gap_extend: int = -2,
-    matrix: Union[str, parasail.Matrix, None] = None,
+    matrix: str | parasail.Matrix | None = None,
     alignment_function: Callable = parasail.sw_trace_striped_16,
     aa: bool = False,
-    gap_open_penalty: Optional[int] = None,
-    gap_extend_penalty: Optional[int] = None,
-) -> Union[LocalAlignment, Iterable]:
+    gap_open_penalty: int | None = None,
+    gap_extend_penalty: int | None = None,
+) -> LocalAlignment | Iterable:
     """
     Striped Smith-Waterman local pairwise sequence alignment.
 
@@ -1714,19 +1714,19 @@ def local_alignment(
 
 
 def global_alignment(
-    query: Union[str, SeqRecord, Sequence, Iterable],
-    target: Union[str, SeqRecord, Sequence, Iterable, None] = None,
-    targets: Optional[Iterable] = None,
+    query: str | SeqRecord | Sequence | Iterable,
+    target: str | SeqRecord | Sequence | Iterable | None = None,
+    targets: Iterable | None = None,
     match: int = 3,
     mismatch: int = -2,
     gap_open: int = -5,
     gap_extend: int = -2,
-    matrix: Union[str, parasail.Matrix, None] = None,
+    matrix: str | parasail.Matrix | None = None,
     alignment_function: Callable = parasail.nw_trace_striped_16,
     aa: bool = False,
-    gap_open_penalty: Optional[int] = None,
-    gap_extend_penalty: Optional[int] = None,
-) -> Union[GlobalAlignment, Iterable]:
+    gap_open_penalty: int | None = None,
+    gap_extend_penalty: int | None = None,
+) -> GlobalAlignment | Iterable:
     """
     Needleman-Wunch global pairwise sequence alignment.
 
@@ -1814,19 +1814,19 @@ def global_alignment(
 
 
 def semiglobal_alignment(
-    query: Union[str, SeqRecord, Sequence, Iterable],
-    target: Union[str, SeqRecord, Sequence, Iterable, None] = None,
-    targets: Optional[Iterable] = None,
+    query: str | SeqRecord | Sequence | Iterable,
+    target: str | SeqRecord | Sequence | Iterable | None = None,
+    targets: Iterable | None = None,
     match: int = 3,
     mismatch: int = -2,
     gap_open: int = -5,
     gap_extend: int = -2,
-    matrix: Union[str, parasail.Matrix, None] = None,
+    matrix: str | parasail.Matrix | None = None,
     alignment_function: Callable = parasail.sg_trace_striped_16,
     aa: bool = False,
-    gap_open_penalty: Optional[int] = None,
-    gap_extend_penalty: Optional[int] = None,
-) -> Union[SemiGlobalAlignment, Iterable]:
+    gap_open_penalty: int | None = None,
+    gap_extend_penalty: int | None = None,
+) -> SemiGlobalAlignment | Iterable:
     """
     Semi-global pairwise sequence alignment.
 

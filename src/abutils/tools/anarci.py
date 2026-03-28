@@ -22,8 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from ..bin import get_path as get_binary_path
 import subprocess as sp
+
+from ..bin import get_path as get_binary_path
 
 
 def numbering(ab, debug: bool = False):

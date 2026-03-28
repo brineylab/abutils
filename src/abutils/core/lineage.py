@@ -25,7 +25,7 @@
 import math
 import subprocess as sp
 from collections import Counter
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -125,7 +125,7 @@ class Lineage:
 
     """
 
-    def __init__(self, pairs: Iterable[Pair], name: Optional[str] = None):
+    def __init__(self, pairs: Iterable[Pair], name: str | None = None):
         """
         Initialize a ``Lineage`` object.
 
@@ -143,7 +143,7 @@ class Lineage:
         self.rmp_alt_allowed_mismatches = 1
 
     def __contains__(self, item):
-        if item in self.pair_dict.keys():
+        if item in self.pair_dict:
             return True
         return False
 
@@ -312,8 +312,8 @@ class Lineage:
     def dot_alignment(
         self,
         seq_field: str = "sequence",
-        name_field: Optional[str] = None,
-        uca: Optional[Sequence] = None,
+        name_field: str | None = None,
+        uca: Sequence | None = None,
         chain: str = "heavy",
         uca_name: str = "UCA",
         as_fasta: bool = False,
@@ -515,7 +515,7 @@ class LineageSummary:
     def __init__(
         self,
         lineage,
-        name: Optional[str] = None,
+        name: str | None = None,
         dot_alignment: bool = True,
         in_color: bool = True,
         pairs_only: bool = False,

@@ -23,8 +23,7 @@
 #
 
 import csv
-import os
-from typing import Callable, Iterable, Optional, Union
+from collections.abc import Callable, Iterable
 
 import pandas as pd
 import polars as pl
@@ -32,7 +31,7 @@ import polars as pl
 from ..core.sequence import Sequence
 
 
-class Pair(object):
+class Pair:
     """
     Holds a one or more ``Sequence`` objects, corresponding to a paired mAb or TCR.
 
@@ -40,10 +39,10 @@ class Pair(object):
 
     def __init__(
         self,
-        sequences: Iterable[Union[dict, Sequence]],
-        name: Optional[str] = None,
-        chain_selection_func: Optional[Callable] = None,
-        properties: Optional[dict] = None,
+        sequences: Iterable[dict | Sequence],
+        name: str | None = None,
+        chain_selection_func: Callable | None = None,
+        properties: dict | None = None,
     ):
         """
         Initialize a Pair object.
@@ -401,7 +400,7 @@ class Pair(object):
                 fastas.append(">{}{}\n{}".format(s[name_field], c, s[sequence_field]))
         return "\n".join(fastas)
 
-    def summarize(self, annotation_format: Optional[str] = None) -> None:
+    def summarize(self, annotation_format: str | None = None) -> None:
         """
         Prints a summary of the pair to the console.
 
@@ -547,13 +546,13 @@ def get_pairs(
 
 
 def assign_pairs(
-    seqs: Iterable[Union[dict, Sequence]],
+    seqs: Iterable[dict | Sequence],
     id_key: str = "sequence_id",
-    delim: Optional[str] = None,
+    delim: str | None = None,
     delim_occurance: int = 1,
     pairs_only: bool = False,
-    chain_selection_func: Optional[Callable] = None,
-    tenx_annot_file: Optional[str] = None,
+    chain_selection_func: Callable | None = None,
+    tenx_annot_file: str | None = None,
 ) -> Iterable[Pair]:
     """
     Assigns sequences to the appropriate mAb pair, based on the sequence name.
@@ -633,14 +632,14 @@ def assign_pairs(
 
 def pairs_to_polars(
     pairs: Iterable[Pair],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> pl.DataFrame:
     """
     Converts a list of ``Pair`` objects to a Polars DataFrame.
@@ -769,8 +768,8 @@ def pairs_to_polars(
 
 
 def pairs_from_polars(
-    df: Union[pl.DataFrame, pl.LazyFrame],
-    match: Optional[dict] = None,
+    df: pl.DataFrame | pl.LazyFrame,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -866,14 +865,14 @@ def pairs_from_polars(
 
 def pairs_to_pandas(
     pairs: Iterable[Pair],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
     Saves a list of ``Pair`` objects to a CSV file.
@@ -938,7 +937,7 @@ def pairs_to_pandas(
 
 def pairs_from_pandas(
     df: pd.DataFrame,
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -991,16 +990,16 @@ def pairs_from_pandas(
 
 def pairs_to_csv(
     pairs: Iterable[Pair],
-    csv_file: Optional[str] = None,
+    csv_file: str | None = None,
     separator: str = ",",
     header: bool = True,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Pair`` objects to a CSV file.
@@ -1064,14 +1063,14 @@ def pairs_to_csv(
 
 def pairs_to_parquet(
     pairs: Iterable[Pair],
-    parquet_file: Optional[str] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
-    sequence_properties: Optional[Iterable[str]] = None,
+    parquet_file: str | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
+    sequence_properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Pair`` objects to a Parquet file.

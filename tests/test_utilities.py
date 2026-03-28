@@ -1,7 +1,7 @@
 #!usr/env/python
 # filename: test_utilities.py
 
-from ..utils import utilities
+from abutils.utils import utilities
 
 
 def test_nested_dict_lookup():

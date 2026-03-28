@@ -32,7 +32,7 @@ import subprocess as sp
 
 # import sys
 import tempfile
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 # from Bio.Align import AlignInfo
 from ..bin import get_path as get_binary_path
@@ -110,7 +110,7 @@ class Cluster:
         self,
         threshold: float = 0.51,
         algo: str = "mafft",
-        ambiguous: Optional[str] = None,
+        ambiguous: str | None = None,
     ) -> Sequence:
         """
         Makes a consensus sequence from the cluster's sequences.
@@ -215,7 +215,7 @@ class Clusters:
 
 
 def cluster(
-    sequences: Union[Iterable, str],
+    sequences: Iterable | str,
     threshold: float = 0.975,
     algo: str = "auto",
     temp_dir: str = "/tmp",
@@ -228,14 +228,14 @@ def cluster(
     vsearch_bin: str = None,
     mmseqs_bin: str = None,
     cdhit_bin: str = None,
-    id_key: Optional[str] = None,
-    seq_key: Optional[str] = None,
-    threads: Optional[int] = None,
+    id_key: str | None = None,
+    seq_key: str | None = None,
+    threads: int | None = None,
     strand: str = "plus",
     as_dict: bool = False,
     quiet: bool = False,
     debug: bool = False,
-) -> Union[dict, Clusters]:
+) -> dict | Clusters:
     """
     Clusters sequences using `CD-HIT`_, `VSEARCH`_ or `MMseqs2`_. By default, sequences will
     be clustered with VSEARCH if there are fewer than 10,000 nucleotide sequences, with
@@ -448,11 +448,11 @@ def cluster_vsearch(
     iddef: int = 0,
     vsearch_bin: str = None,
     strand: str = "plus",
-    threads: Optional[int] = None,
+    threads: int | None = None,
     as_dict: bool = False,
     quiet: bool = False,
     debug: bool = False,
-) -> Union[dict, Clusters]:
+) -> dict | Clusters:
     """
     Clusters sequences using `VSEARCH <https://github.com/torognes/vsearch>`_.
 
@@ -582,7 +582,7 @@ def cluster_mmseqs(
     coverage: float = 0.8,
     alignment_mode: str = "3",
     seq_id_mode: str = "1",
-    threads: Optional[int] = None,
+    threads: int | None = None,
     temp_dir: str = "/tmp",
     mmseqs_bin: str = None,
     as_dict: bool = False,
@@ -896,9 +896,9 @@ def _get_cdhit_wordsize(threshold):
 
 
 def linclust(
-    seqs: Union[str, Iterable[Sequence]],
+    seqs: str | Iterable[Sequence],
     threshold: float = 0.975,
-    cov_mode: Union[str, int] = 0,
+    cov_mode: str | int = 0,
     out_file=None,
     temp_dir=None,
     make_db=True,
@@ -914,10 +914,10 @@ def linclust(
 
 
 def nested_linclust(
-    sequences: Union[str, Iterable[Union[Sequence, Pair]]],
+    sequences: str | Iterable[Sequence | Pair],
     thresholds: Iterable[float],
     project_directory: str,
-    linclust_kwargs: Optional[Union[str, dict]] = None,
+    linclust_kwargs: str | dict | None = None,
     parquet: bool = False,
     verbose: bool = True,
     debug: bool = False,

@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 from matplotlib.path import Path
 
-from ..core.sequence import Sequence
-from ..tools.phylo import Phylogeny, align_marker, fasttree, phylogeny
+from abutils.core.sequence import Sequence
+from abutils.tools.phylo import Phylogeny, align_marker, fasttree, phylogeny
 
 
 @pytest.fixture

@@ -23,7 +23,7 @@
 #
 
 
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 import pandas as pd
 
@@ -31,11 +31,11 @@ from ..core.sequence import Sequence
 
 
 def process_input_data(
-    x: Union[str, Iterable, None] = None,
-    y: Union[str, Iterable, None] = None,
-    hue: Union[str, Iterable, None] = None,
-    sequences: Optional[Iterable[Sequence]] = None,
-    data: Union[pd.DataFrame, dict, None] = None,
+    x: str | Iterable | None = None,
+    y: str | Iterable | None = None,
+    hue: str | Iterable | None = None,
+    sequences: Iterable[Sequence] | None = None,
+    data: pd.DataFrame | dict | None = None,
 ):
     """
     Processes input data for plotting functions.

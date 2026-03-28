@@ -1,4 +1,3 @@
-import platform
 import tempfile
 
 import pytest
@@ -7,16 +6,12 @@ import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence
-from ..tools.alignment import (
+from abutils.core.sequence import Sequence
+from abutils.tools.alignment import (
     CIGAR,
     CIGARElement,
-    GlobalAlignment,
-    LocalAlignment,
     MultipleSequenceAlignment,
     PairwiseAlignment,
-    SemiGlobalAlignment,
-    # consensus,
     famsa,
     global_alignment,
     local_alignment,

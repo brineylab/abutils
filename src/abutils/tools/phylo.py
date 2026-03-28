@@ -28,9 +28,8 @@ import subprocess as sp
 import tempfile
 import uuid
 from collections import Counter
-from copy import deepcopy
+from collections.abc import Callable, Iterable
 from io import StringIO
-from typing import Callable, Iterable, List, Optional, Union
 
 import baltic as bt
 import matplotlib.pyplot as plt
@@ -51,9 +50,9 @@ __all__ = ["fasttree", "Phylogeny", "phylogeny"]
 
 def fasttree(
     aln: str,
-    tree_file: Optional[str] = None,
+    tree_file: str | None = None,
     is_aa: bool = False,
-    fasttree_bin: Optional[str] = None,
+    fasttree_bin: str | None = None,
     debug: bool = False,
     quiet: bool = True,
 ) -> str:
@@ -147,14 +146,14 @@ class Phylogeny:
     def __init__(
         self,
         sequences: Iterable[Sequence],
-        name: Optional[str] = None,
-        root: Optional[Union[str, Sequence]] = None,
+        name: str | None = None,
+        root: str | Sequence | None = None,
         cluster: bool = True,
         clustering_threshold: float = 1.0,
         clustering_algo: str = "auto",
-        rename: Optional[Union[dict, Callable]] = None,
-        id_key: Optional[str] = None,
-        sequence_key: Optional[str] = None,
+        rename: dict | Callable | None = None,
+        id_key: str | None = None,
+        sequence_key: str | None = None,
     ):
         """
         Phylogenetic representation of an antibody lineage.
@@ -240,7 +239,7 @@ class Phylogeny:
         return self._tree
 
     @property
-    def root(self) -> Union[bt.leaf, Sequence, None]:
+    def root(self) -> bt.leaf | Sequence | None:
         """
         Root of the tree.
         """
@@ -428,7 +427,7 @@ class Phylogeny:
             .replace("<quote>", "'")
         )
 
-    def process_sequences(self, sequences: List[Sequence]) -> List[Sequence]:
+    def process_sequences(self, sequences: list[Sequence]) -> list[Sequence]:
         """
         Processes sequences to be used in the tree. Sequence names are sanitized.
 
@@ -474,11 +473,11 @@ class Phylogeny:
     def get_size(
         self,
         name: str,
-        size: Union[Callable, dict, int, float, None] = None,
-        min_size: Union[int, float] = 1,
-        default: Union[int, float] = 1,
-        multiplier: Union[int, float] = 1,
-    ) -> Union[int, float]:
+        size: Callable | dict | int | float | None = None,
+        min_size: int | float = 1,
+        default: int | float = 1,
+        multiplier: int | float = 1,
+    ) -> int | float:
         """
         Get the size of a leaf marker, based on the provided ``size`` argument.
 
@@ -525,9 +524,9 @@ class Phylogeny:
     def get_color(
         self,
         name: str,
-        color: Union[Callable, dict, str, Iterable, None] = None,
-        default: Union[str, Iterable] = "black",
-    ) -> Union[str, Iterable]:
+        color: Callable | dict | str | Iterable | None = None,
+        default: str | Iterable = "black",
+    ) -> str | Iterable:
         """
         Get the color of a leaf marker, based on the provided ``color`` argument.
         If the provided name is a cluster centroid, all sequences in the corresponding
@@ -586,10 +585,10 @@ class Phylogeny:
 
     def get_branch_color(
         self,
-        k: Union[bt.node, bt.leaf],
-        color: Union[Callable, dict, str, Iterable, None] = None,
-        default: Union[str, Iterable] = "black",
-    ) -> Union[str, Iterable]:
+        k: bt.node | bt.leaf,
+        color: Callable | dict | str | Iterable | None = None,
+        default: str | Iterable = "black",
+    ) -> str | Iterable:
         """
         Get the color of a branch, based on the provided ``color`` argument.
 
@@ -633,9 +632,9 @@ class Phylogeny:
     def get_marker_edgewidth(
         self,
         name: str,
-        edgewidth: Union[Callable, dict, int, float, None] = None,
-        default: Union[int, float] = 1,
-    ) -> Union[int, float]:
+        edgewidth: Callable | dict | int | float | None = None,
+        default: int | float = 1,
+    ) -> int | float:
         """
         Get the edge width of a leaf marker, based on the provided ``edgewidth`` argument.
 
@@ -689,12 +688,12 @@ class Phylogeny:
 
     def plot(
         self,
-        size: Union[Callable, dict, int, float, None] = None,
-        color: Union[Callable, dict, Iterable, str, None] = None,
+        size: Callable | dict | int | float | None = None,
+        color: Callable | dict | Iterable | str | None = None,
         alpha: float = 0.75,
         min_size: int = 1,
-        size_multiplier: Union[int, float] = 10,
-        linewidth: Union[int, float] = 2,
+        size_multiplier: int | float = 10,
+        linewidth: int | float = 2,
         color_branches: bool = False,
         x_attr: Callable = lambda k: k.height,
         y_attr: Callable = lambda k: k.y,
@@ -704,15 +703,15 @@ class Phylogeny:
         radial_fraction: float = 1.0,
         inward_space: float = 0.1,
         marker: str = "o",
-        marker_edgewidth: Union[Callable, dict, int, float] = 0,
-        marker_edgecolor: Union[Callable, dict, str, Iterable, None] = None,
+        marker_edgewidth: Callable | dict | int | float = 0,
+        marker_edgecolor: Callable | dict | str | Iterable | None = None,
         marker_halign: str = "left",
         marker_valign: str = "center",
-        figsize: Iterable[Union[int, float]] = [8, 8],
+        figsize: Iterable[int | float] = [8, 8],
         show: bool = False,
-        figfile: Union[str, Path] = None,
+        figfile: str | Path = None,
         **kwargs,
-    ) -> Optional[plt.Axes]:
+    ) -> plt.Axes | None:
         """
         Plot the phylogenetic tree.
 
@@ -808,7 +807,7 @@ class Phylogeny:
         ax = plt.gca()
 
         # plot parameters
-        def size_func(k) -> Union[int, float]:
+        def size_func(k) -> int | float:
             return self.get_size(
                 k.name,
                 size=size,
@@ -817,10 +816,10 @@ class Phylogeny:
                 multiplier=size_multiplier,
             )
 
-        def color_func(k) -> Union[str, Iterable]:
+        def color_func(k) -> str | Iterable:
             return self.get_color(k.name, color=color, default="black")
 
-        def branch_color_func(k) -> Union[str, Iterable]:
+        def branch_color_func(k) -> str | Iterable:
             return self.get_branch_color(k, color=color, default="black")
 
         marker = align_marker(marker, halign=marker_halign, valign=marker_valign)
@@ -828,10 +827,10 @@ class Phylogeny:
             marker_edgecolor_func = color_func
         else:
 
-            def marker_edgecolor_func(k) -> Union[str, Iterable]:
+            def marker_edgecolor_func(k) -> str | Iterable:
                 return self.get_color(k.name, color=marker_edgecolor, default="black")
 
-        def marker_edgewidth_func(k) -> Union[int, float]:
+        def marker_edgewidth_func(k) -> int | float:
             return self.get_marker_edgewidth(
                 k.name, edgewidth=marker_edgewidth, default=0
             )
@@ -891,7 +890,7 @@ class Phylogeny:
                 **kwargs,
             )
         # style the plot
-        for s in ax.spines.keys():
+        for s in ax.spines:
             ax.spines[s].set_visible(False)
         ax.set_xticks([])
         ax.set_yticks([])
@@ -906,7 +905,7 @@ class Phylogeny:
         else:
             return ax
 
-    def _get_top_germline_v(self) -> Union[Sequence, None]:
+    def _get_top_germline_v(self) -> Sequence | None:
         """
         Retrieves the germline V-gene sequence. If sequences were assigned different V-gene
         alleles, the most common V-gene allele is used.
@@ -930,15 +929,15 @@ class Phylogeny:
 
 
 def phylogeny(
-    sequences: Union[str, Iterable[Sequence]],
-    name: Optional[str] = None,
-    root: Optional[Union[str, Sequence]] = None,
+    sequences: str | Iterable[Sequence],
+    name: str | None = None,
+    root: str | Sequence | None = None,
     cluster: bool = True,
     clustering_threshold: float = 1.0,
     clustering_algo: str = "auto",
-    rename: Optional[Union[dict, Callable]] = None,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
+    rename: dict | Callable | None = None,
+    id_key: str | None = None,
+    sequence_key: str | None = None,
 ) -> Phylogeny:
     """
     Phylogenetic representation of an antibody lineage.

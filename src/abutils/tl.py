@@ -22,15 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-from .core.lineage import group_lineages
-from .core.pair import assign_pairs
-from .core.sequence import codon_optimize, reverse_complement, translate
 from .tools.alignment import *
 from .tools.anarci import *
-from .tools.clonify import clonify
 from .tools.cloning import *
 from .tools.cluster import *
 from .tools.phylo import *
 from .tools.search import *
-from .tools.similarity import repertoire_similarity
-from .utils.progbar import progress_bar

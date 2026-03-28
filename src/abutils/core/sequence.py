@@ -23,23 +23,21 @@
 #
 
 
-import csv
+from __future__ import annotations
+
 import gzip
 import json
-import operator
 import os
-import sys
-from pathlib import Path
 import tempfile
 import uuid
 from collections import OrderedDict
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
+from pathlib import Path
 
 import dnachisel as dc
 import pandas as pd
 import polars as pl
 import pyfastx
-from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 from ..utils.codons import codon_lookup
@@ -48,7 +46,7 @@ from ..utils.utilities import nested_dict_lookup
 STR_TYPES = [str]
 
 
-class Sequence(object):
+class Sequence:
     """
     Container for biological (RNA, DNA, or protein) sequences.
 
@@ -127,12 +125,12 @@ class Sequence(object):
 
     def __init__(
         self,
-        sequence: Union[str, Iterable, dict, SeqRecord],
-        id: Optional[str] = None,
-        qual: Optional[str] = None,
-        annotations: Optional[dict] = None,
-        id_key: Optional[str] = None,
-        seq_key: Optional[str] = None,
+        sequence: str | Iterable | dict | SeqRecord,
+        id: str | None = None,
+        qual: str | None = None,
+        annotations: dict | None = None,
+        id_key: str | None = None,
+        seq_key: str | None = None,
     ):
         super().__init__()
         self._input_sequence = None
@@ -192,10 +190,10 @@ class Sequence(object):
 
         """
         if self.annotations:
-            return item in self.annotations.keys()
+            return item in self.annotations
         return item in self.sequence
 
-    def __getitem__(self, key) -> Union[str, dict, None]:
+    def __getitem__(self, key) -> str | dict | None:
         """
         Returns a slice of the ``Sequence`` object.
 
@@ -217,14 +215,14 @@ class Sequence(object):
         """
         if type(key) == slice:
             return self.sequence[key]
-        elif key in self.annotations.keys():
+        elif key in self.annotations:
             return self.annotations.get(key, None)
         elif isinstance(key, int):
             return self.sequence[key]
         return None
 
     def __setitem__(
-        self, key: Union[str, int, float], val: Union[str, int, float]
+        self, key: str | int | float, val: str | int | float
     ) -> None:
         """
         Sets a value in the ``annotations`` property of a ``Sequence`` object.
@@ -240,7 +238,7 @@ class Sequence(object):
         """
         self.annotations[key] = val
 
-    def __eq__(self, other: "Sequence") -> bool:
+    def __eq__(self, other: Sequence) -> bool:
         """
         Returns True if the sequences and IDs of two ``Sequence`` objects are identical.
 
@@ -305,7 +303,7 @@ class Sequence(object):
         return self._fastq
 
     @property
-    def reverse_complement(self) -> Union[str, "Sequence"]:
+    def reverse_complement(self) -> str | Sequence:
         """
         Returns the reverse complement of ``Sequence.sequence``.
 
@@ -358,7 +356,7 @@ class Sequence(object):
     def strand(self, strand):
         self._strand = strand
 
-    def translate(self, sequence_key: Optional[str] = None, frame: int = 1) -> str:
+    def translate(self, sequence_key: str | None = None, frame: int = 1) -> str:
         """
         Translate a nucleotide sequence.
 
@@ -383,9 +381,9 @@ class Sequence(object):
         self,
         sequence_key: str = "sequence_aa",
         id_key: str = "sequence_id",
-        frame: Optional[int] = None,
+        frame: int | None = None,
         as_string: bool = True,
-    ) -> Union[str, "Sequence"]:
+    ) -> str | Sequence:
         """
         Codon optimize a sequence.
 
@@ -408,7 +406,7 @@ class Sequence(object):
 
         Returns
         -------
-        Union[str, Sequence]
+        str | Sequence
             Translated sequence as a ``str`` (if ``as_string`` is ``True``) or
             ``Sequence`` object (if ``as_string`` is ``False``).
 
@@ -422,7 +420,7 @@ class Sequence(object):
         )
 
     def as_fasta(
-        self, name_field: Optional[str] = None, seq_field: Optional[str] = None
+        self, name_field: str | None = None, seq_field: str | None = None
     ) -> str:
         """
         Returns the sequence, as a FASTA-formatted string.
@@ -492,8 +490,8 @@ class Sequence(object):
         return self.annotations.values()
 
     def get(
-        self, key: Union[str, int, float], default: Union[str, int, float, None] = None
-    ) -> Union[str, int, float, None]:
+        self, key: str | int | float, default: str | int | float | None = None
+    ) -> str | int | float | None:
         """
         Returns the value of a key in the ``annotations`` attribute.
 
@@ -579,14 +577,14 @@ class Sequence(object):
 
 
 def reverse_complement(
-    sequence: Union[str, "Sequence"], in_place: bool = False
-) -> Union[str, "Sequence"]:
+    sequence: str | Sequence, in_place: bool = False
+) -> str | Sequence:
     """
     Returns the reverse complement of a nucleotide sequence.
 
     Parameters
     ----------
-    sequence : Union[str, Sequence]
+    sequence : str | Sequence
         Nucleotide sequence to be reverse complemented.
 
     in_place : bool, default=False
@@ -596,7 +594,7 @@ def reverse_complement(
 
     Returns
     --------
-    Union[str, Sequence]
+    str | Sequence
         If ``in_place`` is ``False``, the reverse complemented sequence will be returned as a ``str``.
         If ``in_place`` is ``True``, the input sequence will be reverse complemented in place.
 
@@ -628,7 +626,7 @@ def reverse_complement(
 
 def translate(
     sequence: Sequence,
-    sequence_key: Optional[str] = None,
+    sequence_key: str | None = None,
     frame: int = 1,
     allow_dots: bool = False,
 ) -> str:
@@ -686,18 +684,18 @@ def translate(
 
 def codon_optimize(
     sequence,
-    sequence_key: Optional[str] = None,
-    id_key: Optional[str] = None,
-    frame: Optional[int] = None,
+    sequence_key: str | None = None,
+    id_key: str | None = None,
+    frame: int | None = None,
     as_string: bool = False,
     in_place: bool = False,
-) -> Union[str, "Sequence"]:
+) -> str | Sequence:
     """
     Optimizes the codons of a nucleotide or amino acid sequence.
 
     Parameters
     ----------
-    sequence : Union[str, Sequence]
+    sequence : str | Sequence
         Nucleotide or amino acid sequence to be optimized.
 
     sequence_key : str, default=None
@@ -725,7 +723,7 @@ def codon_optimize(
 
     Returns
     -------
-    Union[str, Sequence]
+    str | Sequence
         If ``in_place`` is ``True``, the input ``Sequence`` object will be returned with the optimized sequence populating
         the ``Sequence.sequence`` property.
         If ``as_string`` is ``True``, the optimized sequence will be returned as a ``str``.
@@ -782,7 +780,7 @@ def codon_optimize(
 
 def read_json(
     json_file: str,
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "seq_id",
     sequence_key: str = "vdj_nt",
@@ -850,8 +848,8 @@ def read_json(
 
 
 def sequences_from_polars(
-    df: Union[pl.DataFrame, pl.LazyFrame],
-    match: Optional[dict] = None,
+    df: pl.DataFrame | pl.LazyFrame,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -916,7 +914,7 @@ def sequences_from_polars(
 
 def sequences_from_pandas(
     df: pd.DataFrame,
-    match: Optional[dict] = None,
+    match: dict | None = None,
     fields: Iterable = None,
     id_key: str = "sequence_id",
     sequence_key: str = "sequence",
@@ -1347,11 +1345,11 @@ def from_mongodb(db, collection, match=None, project=None, limit=None):
 
 
 def to_fastq(
-    sequences: Union[str, Iterable[Sequence], Iterable[SeqRecord], Iterable[Iterable]],
-    fastq_file: Optional[str] = None,
+    sequences: str | Iterable[Sequence] | Iterable[SeqRecord] | Iterable[Iterable],
+    fastq_file: str | None = None,
     as_string: bool = False,
-    id_key: Optional[str] = None,
-    sequence_key: Optional[str] = None,
+    id_key: str | None = None,
+    sequence_key: str | None = None,
     tempfile_dir: str = "/tmp",
 ) -> str:
     """
@@ -1442,13 +1440,13 @@ def to_fastq(
 
 def sequences_to_polars(
     sequences: Iterable[Sequence],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> pl.DataFrame:
     """
     Converts a list of ``Sequence`` objects to a ``polars.DataFrame`` object.
@@ -1542,13 +1540,13 @@ def sequences_to_polars(
 
 def sequences_to_pandas(
     sequences: Iterable[Sequence],
-    annotations: Optional[Iterable[str]] = None,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    annotations: Iterable[str] | None = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
     Converts a list of ``Sequence`` objects to a ``pandas.DataFrame`` object.
@@ -1607,12 +1605,12 @@ def sequences_to_csv(
     csv_file: str,
     separator: str = ",",
     header: bool = True,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a CSV file.
@@ -1673,12 +1671,12 @@ def sequences_to_csv(
 def sequences_to_parquet(
     sequences: Iterable[Sequence],
     parquet_file: str,
-    columns: Optional[Iterable] = None,
-    properties: Optional[Iterable[str]] = None,
+    columns: Iterable | None = None,
+    properties: Iterable[str] | None = None,
     drop_na_columns: bool = True,
-    order: Optional[Iterable[str]] = None,
-    exclude: Optional[Union[str, Iterable[str]]] = None,
-    leading: Optional[Union[str, Iterable[str]]] = None,
+    order: Iterable[str] | None = None,
+    exclude: str | Iterable[str] | None = None,
+    leading: str | Iterable[str] | None = None,
 ) -> None:
     """
     Saves a list of ``Sequence`` objects to a Parquet file.

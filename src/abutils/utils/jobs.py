@@ -25,8 +25,8 @@
 
 import multiprocessing as mp
 import time
+from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Iterable, Optional
 
 from tqdm.auto import tqdm
 
@@ -37,9 +37,9 @@ __all__ = ["monitor_mp_jobs", "monitor_celery_jobs"]
 
 def monitor_mp_jobs(
     results: Iterable,
-    completion_string: Optional[str] = None,
+    completion_string: str | None = None,
     print_progress: bool = True,
-    start_time: Optional[time.time] = None,
+    start_time: time.time | None = None,
 ):
     """
     Monitors the progress of a set of multiprocessing jobs.

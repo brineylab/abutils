@@ -6,9 +6,9 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from ..core.pair import Pair
-from ..core.sequence import Sequence
-from ..io import (
+from abutils.core.pair import Pair
+from abutils.core.sequence import Sequence
+from abutils.io import (
     concatenate_airr,
     concatenate_csv,
     concatenate_parquet,
@@ -22,7 +22,6 @@ from ..io import (
     to_pandas,
     to_polars,
 )
-
 
 # ==================
 #      FIXTURES

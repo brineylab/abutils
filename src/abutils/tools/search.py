@@ -25,7 +25,7 @@
 
 import os
 import subprocess as sp
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 from ..bin import get_path as get_binary_path
 from ..core.sequence import Sequence
@@ -35,22 +35,22 @@ __all__ = ["mmseqs_search"]
 
 
 def mmseqs_search(
-    query: Union[str, Sequence, Iterable[Sequence]],
-    target: Union[str, Sequence, Iterable[Sequence]],
+    query: str | Sequence | Iterable[Sequence],
+    target: str | Sequence | Iterable[Sequence],
     output_path: str,
-    temp_directory: Optional[str] = None,
-    search_type: Optional[int] = None,
-    max_seqs: Optional[int] = None,
-    max_evalue: Optional[float] = None,
-    sensitivity: Optional[float] = None,
-    format_mode: Optional[int] = None,
-    format_output: Optional[str] = None,
-    verbosity: Optional[int] = None,
-    threads: Optional[int] = None,
-    split_memory_limit: Optional[str] = None,
-    additional_cli_args: Optional[str] = None,
-    mmseqs_bin: Optional[str] = None,
-    log_to: Optional[str] = None,
+    temp_directory: str | None = None,
+    search_type: int | None = None,
+    max_seqs: int | None = None,
+    max_evalue: float | None = None,
+    sensitivity: float | None = None,
+    format_mode: int | None = None,
+    format_output: str | None = None,
+    verbosity: int | None = None,
+    threads: int | None = None,
+    split_memory_limit: str | None = None,
+    additional_cli_args: str | None = None,
+    mmseqs_bin: str | None = None,
+    log_to: str | None = None,
     debug: bool = False,
 ) -> str:
     """

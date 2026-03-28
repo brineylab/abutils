@@ -1,7 +1,6 @@
 #!usr/env/python
 # filename: test_sequences.py
 
-import os
 import tempfile
 
 import pandas as pd
@@ -10,8 +9,8 @@ import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence
-from ..io import (
+from abutils.core.sequence import Sequence
+from abutils.io import (
     read_airr,
     read_csv,
     read_fasta,

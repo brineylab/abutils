@@ -1,13 +1,12 @@
 import os
 import tempfile
-import unittest
 
 import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from ..core.sequence import Sequence
-from ..tools.cluster import (
+from abutils.core.sequence import Sequence
+from abutils.tools.cluster import (
     Cluster,
     Clusters,
     cluster,

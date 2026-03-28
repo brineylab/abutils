@@ -24,62 +24,59 @@
 
 
 from collections import Counter
-from typing import Union, Iterable, Optional, Callable
+from collections.abc import Callable, Iterable
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
 import seaborn as sns
-
-from natsort import natsorted, natsort_keygen
+from natsort import natsort_keygen, natsorted
 
 from ..utils.color import get_cmap, monochrome_palette
 
 
 def donut(
-    values: Union[Iterable, str],
-    counts: Union[Iterable, str, None] = None,
-    hue: Union[Iterable, str, None] = None,
-    data: Optional[pd.DataFrame] = None,
-    palette: Optional[dict] = None,
-    color: Union[str, Iterable, None] = None,
-    cmap: Optional[mpl.colors.Colormap] = None,
-    order: Optional[Iterable] = None,
-    hue_order: Optional[Iterable] = None,
-    hue_agg: Union[str, Callable] = "most common",
+    values: Iterable | str,
+    counts: Iterable | str | None = None,
+    hue: Iterable | str | None = None,
+    data: pd.DataFrame | None = None,
+    palette: dict | None = None,
+    color: str | Iterable | None = None,
+    cmap: mpl.colors.Colormap | None = None,
+    order: Iterable | None = None,
+    hue_order: Iterable | None = None,
+    hue_agg: str | Callable = "most common",
     sort_by: str = "count",
     sort_key: Callable = natsort_keygen(),
     sort_descending: bool = False,
     force_categorical_hue: bool = False,
     force_continuous_hue: bool = False,
-    alt_color: Union[str, Iterable] = "#F5F5F5",
-    edgecolor: Union[str, Iterable] = "white",
-    singleton_color: Union[str, Iterable, None] = None,
+    alt_color: str | Iterable = "#F5F5F5",
+    edgecolor: str | Iterable = "white",
+    singleton_color: str | Iterable | None = None,
     group_singletons: bool = True,
     shuffle_colors: bool = False,
-    random_seed: Union[int, float, str] = 1234,
-    title: Optional[str] = None,
-    title_fontsize: Union[int, float] = 36,
-    title_x: Union[int, float] = 0.5,
-    title_y: Union[int, float] = 0.5,
-    subtitle: Optional[str] = None,
-    subtitle_fontsize: Union[int, float] = 20,
-    subtitle_x: Union[int, float] = 0.5,
-    subtitle_y: Union[int, float] = 0.425,
+    random_seed: int | float | str = 1234,
+    title: str | None = None,
+    title_fontsize: int | float = 36,
+    title_x: int | float = 0.5,
+    title_y: int | float = 0.5,
+    subtitle: str | None = None,
+    subtitle_fontsize: int | float = 20,
+    subtitle_x: int | float = 0.5,
+    subtitle_y: int | float = 0.425,
     show_subtitle: bool = True,
-    width: Union[int, float] = 0.55,
-    linewidth: Union[int, float] = 2,
-    plot_kwargs: Optional[dict] = None,
-    text_kwargs: Optional[dict] = None,
-    subtext_kwargs: Optional[dict] = None,
-    ax: Optional[mpl.axes.Axes] = None,
+    width: int | float = 0.55,
+    linewidth: int | float = 2,
+    plot_kwargs: dict | None = None,
+    text_kwargs: dict | None = None,
+    subtext_kwargs: dict | None = None,
+    ax: mpl.axes.Axes | None = None,
     show: bool = False,
-    figsize: Optional[Iterable] = None,
-    figfile: Optional[str] = None,
-) -> Optional[mpl.axes.Axes]:
+    figsize: Iterable | None = None,
+    figfile: str | None = None,
+) -> mpl.axes.Axes | None:
     """
     Creates a donut plot of a population of lineages, with arc widths proportional to lineage size.
 

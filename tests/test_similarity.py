@@ -1,15 +1,12 @@
-import os
-import tempfile
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from ..core.pair import Pair
-from ..core.sequence import Sequence
-from ..tools.similarity import (
-    RepertoireSimilarity,
+from abutils.core.sequence import Sequence
+from abutils.tools.similarity import (
     RepertoireSimilarities,
+    RepertoireSimilarity,
     bray_curtis,
     cosine_similarity,
     jaccard_similarity,
@@ -19,7 +16,6 @@ from ..tools.similarity import (
     renkonen,
     repertoire_similarity,
 )
-
 
 # ==================
 #      FIXTURES

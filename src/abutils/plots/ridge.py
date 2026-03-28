@@ -28,41 +28,39 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import itertools
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 import seaborn as sns
-import matplotlib.pyplot as plt
-
 from natsort import natsorted
 
 
 def ridge(
-    categories: Union[str, Iterable, None] = None,
-    values: Union[str, Iterable, None] = None,
-    data: Optional[pd.DataFrame] = None,
-    order: Optional[Iterable] = None,
-    palette: Union[dict, Iterable, None] = None,
-    alt_color: Union[Iterable, str] = "lightgrey",
+    categories: str | Iterable | None = None,
+    values: str | Iterable | None = None,
+    data: pd.DataFrame | None = None,
+    order: Iterable | None = None,
+    palette: dict | Iterable | None = None,
+    alt_color: Iterable | str = "lightgrey",
     alpha: float = 1.0,
     linewidth: float = 0.0,
     outlinewidth: float = 1.5,
     xaxis_linewidth: float = 1.0,
-    xaxis_linecolor: Union[Iterable, str, None] = None,
+    xaxis_linecolor: Iterable | str | None = None,
     xlabel: str = "UMI count ($\mathregular{log_2}$)",
     xlabel_fontsize: int = 12,
     ylabel_fontsize: int = 11,
-    bw: Union[str, float] = "scott",
+    bw: str | float = "scott",
     adjust_hspace: float = 0.1,
     category_label_fontweight: str = "bold",
     category_label_xoffset: float = 0.25,
-    xmin: Union[int, float, None] = None,
-    xmax: Union[int, float, None] = None,
+    xmin: int | float | None = None,
+    xmax: int | float | None = None,
     aspect: float = 15.0,
     height: float = 0.5,
-    figfile: Optional[str] = None,
+    figfile: str | None = None,
     show: bool = True,
 ):
     """

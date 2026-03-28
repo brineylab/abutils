@@ -24,101 +24,97 @@
 
 
 import itertools
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+import seaborn as sns
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
-
-import seaborn as sns
-
 from natsort import natsorted
 
-from .data import process_input_data
-from .utils import get_inset_axes_bounds
 from ..core.sequence import Sequence
 from ..utils.color import get_cmap
-
+from .data import process_input_data
+from .utils import get_inset_axes_bounds
 
 __all__ = ["kde"]
 
 
 def kde(
-    x: Union[str, Iterable],
-    y: Union[str, Iterable, None] = None,
-    hue: Union[str, Iterable, None] = None,
+    x: str | Iterable,
+    y: str | Iterable | None = None,
+    hue: str | Iterable | None = None,
     marker: str = "o",
-    data: Optional[pd.DataFrame] = None,
-    sequences: Optional[Iterable[Sequence]] = None,
-    hue_order: Optional[Iterable] = None,
+    data: pd.DataFrame | None = None,
+    sequences: Iterable[Sequence] | None = None,
+    hue_order: Iterable | None = None,
     force_categorical_hue: bool = False,
     force_continuous_hue: bool = False,
     only_scatter_hue: bool = False,
-    palette: Union[dict, Iterable, None] = None,
-    color: Union[str, Iterable, None] = None,
-    cmap: Union[str, mpl.colors.Colormap, None] = None,
-    hue_min: Optional[float] = None,
-    hue_max: Optional[float] = None,
-    under_color: Union[str, Iterable, None] = "whitesmoke",
+    palette: dict | Iterable | None = None,
+    color: str | Iterable | None = None,
+    cmap: str | mpl.colors.Colormap | None = None,
+    hue_min: float | None = None,
+    hue_max: float | None = None,
+    under_color: str | Iterable | None = "whitesmoke",
     show_scatter: bool = True,
-    scatter_size: Union[int, float] = 5,
+    scatter_size: int | float = 5,
     scatter_alpha: float = 0.2,
     thresh: float = 0.1,
     fill: bool = False,
     kde_fill_alpha: float = 0.7,
     kde_line_alpha: float = 1.0,
-    highlight_index: Optional[Iterable] = None,
-    highlight_x: Optional[Iterable] = None,
-    highlight_y: Optional[Iterable] = None,
+    highlight_index: Iterable | None = None,
+    highlight_x: Iterable | None = None,
+    highlight_y: Iterable | None = None,
     highlight_marker: str = "x",
-    highlight_size: Union[int, float] = 90,
-    highlight_color: Union[str, Iterable] = "k",
-    highlight_name: Optional[str] = None,
+    highlight_size: int | float = 90,
+    highlight_color: str | Iterable = "k",
+    highlight_name: str | None = None,
     highlight_alpha: float = 0.9,
-    kde_kwargs: Optional[dict] = None,
-    scatter_kwargs: Optional[dict] = None,
-    legend_marker_alpha: Optional[float] = None,
-    legend_fontsize: Union[int, float] = 12,
-    legend_title: Optional[str] = None,
+    kde_kwargs: dict | None = None,
+    scatter_kwargs: dict | None = None,
+    legend_marker_alpha: float | None = None,
+    legend_fontsize: int | float = 12,
+    legend_title: str | None = None,
     legend_title_fontsize: int = 14,
-    legend_kwargs: Optional[dict] = None,
+    legend_kwargs: dict | None = None,
     hide_legend: bool = False,
-    xlabel: Optional[str] = None,
-    ylabel: Optional[str] = None,
-    title: Optional[str] = None,
-    title_fontsize: Union[int, float] = 20,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    title: str | None = None,
+    title_fontsize: int | float = 20,
     title_fontweight: str = "normal",
     title_loc: str = "center",
-    title_pad: Union[int, float, None] = None,
+    title_pad: int | float | None = None,
     show_title: bool = False,
-    xlabel_fontsize: Union[int, float] = 16,
-    ylabel_fontsize: Union[int, float] = 16,
-    xtick_labelsize: Union[int, float] = 14,
-    ytick_labelsize: Union[int, float] = 14,
-    xtick_labelrotation: Union[int, float] = 0,
-    ytick_labelrotation: Union[int, float] = 0,
+    xlabel_fontsize: int | float = 16,
+    ylabel_fontsize: int | float = 16,
+    xtick_labelsize: int | float = 14,
+    ytick_labelsize: int | float = 14,
+    xtick_labelrotation: int | float = 0,
+    ytick_labelrotation: int | float = 0,
     hide_ticks: bool = False,
     cbar_width: float = 0.35,
     cbar_height: float = 0.05,
     cbar_loc: str = "lower right",
     cbar_orientation: str = "horizontal",
-    cbar_bbox_to_anchor: Optional[Iterable] = None,
+    cbar_bbox_to_anchor: Iterable | None = None,
     cbar_flip_ticks: bool = False,
-    cbar_title: Optional[str] = None,
-    cbar_title_fontsize: Union[int, float] = 12,
-    cbar_title_loc: Optional[str] = None,
+    cbar_title: str | None = None,
+    cbar_title_fontsize: int | float = 12,
+    cbar_title_loc: str | None = None,
     cbar_title_labelpad: float = 8.0,
     hide_cbar: bool = False,
     equal_axes: bool = False,
-    ax: Optional[mpl.axes.Axes] = None,
+    ax: mpl.axes.Axes | None = None,
     show: bool = False,
-    figsize: Optional[Iterable] = None,
-    figfile: Optional[str] = None,
-) -> Optional[mpl.axes.Axes]:
+    figsize: Iterable | None = None,
+    figfile: str | None = None,
+) -> mpl.axes.Axes | None:
     """
     Produces a kernel density estimate (KDE) plot.
 

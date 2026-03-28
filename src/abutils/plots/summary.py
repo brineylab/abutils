@@ -23,14 +23,9 @@
 #
 
 
-import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
 import seaborn as sns
-
 from abstar.core.germline import get_germlines
-
 
 __all__ = ["germline_use_plot", "cdr3_length_plot", "vj_heatmap"]
 

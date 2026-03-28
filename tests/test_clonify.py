@@ -2,8 +2,8 @@ from collections import Counter
 
 import pytest
 
-from ..core.sequence import Sequence
-from ..tools.clonify import clonify, pairwise_distance
+from abutils.core.sequence import Sequence
+from abutils.tools.clonify import clonify, pairwise_distance
 
 
 @pytest.fixture

@@ -7,8 +7,8 @@ import tempfile
 
 import pytest
 
-from ..core.pair import Pair, assign_pairs
-from ..core.sequence import Sequence
+from abutils.core.pair import Pair, assign_pairs
+from abutils.core.sequence import Sequence
 
 
 @pytest.fixture

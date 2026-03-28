@@ -1,23 +1,18 @@
-import pytest
-
-import numpy as np
-
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-
+import numpy as np
+import pytest
 import seaborn as sns
 
-from ..utils.color import (
+from abutils.utils.color import (
     get_cmap,
-    truncate_colormap,
     hex_to_rgb,
-    rgb_to_hex,
     hls,
     husl,
     palettes,
+    rgb_to_hex,
     show_palettes,
+    truncate_colormap,
 )
-
 
 # ---------------------------
 #        colormaps

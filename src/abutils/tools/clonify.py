@@ -28,7 +28,7 @@ import os
 import random
 import string
 from collections import Counter
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 import fastcluster
 import pandas as pd
@@ -47,11 +47,11 @@ from ..utils.utilities import generate_batches
 
 
 def clonify(
-    sequences: Union[str, Iterable[Sequence]],
-    output_path: Optional[str] = None,
+    sequences: str | Iterable[Sequence],
+    output_path: str | None = None,
     distance_cutoff: float = 0.35,
     shared_mutation_bonus: float = 0.35,
-    length_penalty_multiplier: Union[int, float] = 2,
+    length_penalty_multiplier: int | float = 2,
     group_by_v: bool = True,
     group_by_j: bool = True,
     group_by_light_chain_vj: bool = True,
@@ -72,13 +72,13 @@ def clonify(
     mnemonic_names: bool = True,
     input_fmt: str = "airr",
     output_fmt: str = "airr",
-    temp_directory: Optional[str] = None,
+    temp_directory: str | None = None,
     return_assignment_dict: bool = False,
     batch_size: int = 100000,
     n_processes: int = None,
     verbose: bool = True,
     concise_logging: bool = False,
-) -> Union[dict, pl.DataFrame, pd.DataFrame, Iterable[Sequence]]:
+) -> dict | pl.DataFrame | pd.DataFrame | Iterable[Sequence]:
     """
     Assigns BCR sequences to clonal lineages using the clonify_ [Briney16]_ algorithm.
 
@@ -495,12 +495,12 @@ def pairwise_distance(
     s1: Sequence,
     s2: Sequence,
     shared_mutation_bonus: float = 0.35,
-    length_penalty_multiplier: Union[int, float] = 2,
+    length_penalty_multiplier: int | float = 2,
     vgene_field: str = "v_gene",
     jgene_field: str = "j_gene",
     cdr3_field: str = "cdr3",
     mutations_field: str = "mutations",
-    likely_allelic_variants: Optional[Iterable] = None,
+    likely_allelic_variants: Iterable | None = None,
     debug: bool = False,
 ) -> float:
     """

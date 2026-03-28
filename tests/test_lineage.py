@@ -1,9 +1,8 @@
 import pytest
 
-from ..core.lineage import Lineage, LineageSummary, group_lineages
-from ..core.pair import Pair
-from ..core.sequence import Sequence
-
+from abutils.core.lineage import Lineage, LineageSummary, group_lineages
+from abutils.core.pair import Pair
+from abutils.core.sequence import Sequence
 
 # ==================
 #      FIXTURES

@@ -1,4 +1,3 @@
-import pytest
 
 from abutils import Sequence
 from abutils.tools.cloning import build_synthesis_constructs

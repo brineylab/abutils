@@ -22,7 +22,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-from seaborn import color_palette as seaborn_palette
-from seaborn import hls_palette, husl_palette
 
 from .utils.color import *
