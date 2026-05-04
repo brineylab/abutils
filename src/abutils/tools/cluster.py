@@ -1083,6 +1083,13 @@ def linclust(
     if mmseqs_bin is None:
         mmseqs_bin = get_binary_path("mmseqs")
 
+    for out_path in (output_tsv, cluster_reps):
+        if out_path is None:
+            continue
+        parent = os.path.dirname(os.path.abspath(out_path))
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+
     # auto-detect input type via the .dbtype sentinel that MMseqs writes
     input_is_db = os.path.isfile(f"{sequences}.dbtype")
     created_input_db = False

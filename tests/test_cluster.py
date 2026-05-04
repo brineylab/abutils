@@ -1,5 +1,6 @@
 import glob
 import os
+import shutil
 import tempfile
 
 import pytest
@@ -344,3 +345,23 @@ def test_linclust_requires_output(aa_fasta_file):
     finally:
         if os.path.exists(aa_fasta_file.name):
             os.unlink(aa_fasta_file.name)
+
+
+def test_linclust_creates_output_directories(aa_fasta_file):
+    out_root = tempfile.mkdtemp()
+    out_tsv = os.path.join(out_root, "a", "b", "c", "clusters.tsv")
+    out_reps = os.path.join(out_root, "x", "y", "reps.fasta")
+    try:
+        linclust(
+            aa_fasta_file.name,
+            output_tsv=out_tsv,
+            cluster_reps=out_reps,
+            threshold=0.9,
+            temp_dir=tempfile.mkdtemp(),
+        )
+        assert os.path.isfile(out_tsv)
+        assert os.path.isfile(out_reps)
+    finally:
+        if os.path.exists(aa_fasta_file.name):
+            os.unlink(aa_fasta_file.name)
+        shutil.rmtree(out_root, ignore_errors=True)
