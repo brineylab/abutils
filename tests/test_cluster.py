@@ -1,3 +1,4 @@
+import glob
 import os
 import tempfile
 
@@ -6,6 +7,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from abutils.core.sequence import Sequence
+from abutils.io import read_fasta
 from abutils.tools.cluster import (
     Cluster,
     Clusters,
@@ -13,6 +15,8 @@ from abutils.tools.cluster import (
     cluster_cdhit,
     cluster_mmseqs,
     cluster_vsearch,
+    create_mmseqs_db,
+    linclust,
 )
 
 
@@ -222,3 +226,121 @@ def test_cluster_with_list_of_lists(nt_sequence_strings):
     assert clusters.count == 2
     assert clusters.clusters[0].size == 3
     assert clusters.clusters[1].size == 2
+
+
+
+def _read_tsv_clusters(tsv_path):
+    pairs = []
+    with open(tsv_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            centroid, member = line.split("\t")
+            pairs.append((centroid, member))
+    return pairs
+
+
+def test_linclust_tsv_only(aa_fasta_file):
+    out_tsv = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv").name
+    try:
+        linclust(
+            aa_fasta_file.name,
+            output_tsv=out_tsv,
+            threshold=0.9,
+            temp_dir=tempfile.mkdtemp(),
+        )
+        pairs = _read_tsv_clusters(out_tsv)
+        assert len(pairs) == 5
+        centroids = {c for c, _ in pairs}
+        assert len(centroids) == 2
+    finally:
+        for p in (aa_fasta_file.name, out_tsv):
+            if os.path.exists(p):
+                os.unlink(p)
+
+
+def test_linclust_reps_only(aa_fasta_file):
+    out_reps = tempfile.NamedTemporaryFile(delete=False, suffix=".fasta").name
+    try:
+        linclust(
+            aa_fasta_file.name,
+            cluster_reps=out_reps,
+            threshold=0.9,
+            temp_dir=tempfile.mkdtemp(),
+        )
+        reps = read_fasta(out_reps)
+        assert len(reps) == 2
+    finally:
+        for p in (aa_fasta_file.name, out_reps):
+            if os.path.exists(p):
+                os.unlink(p)
+
+
+def test_linclust_both_outputs(aa_fasta_file):
+    out_tsv = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv").name
+    out_reps = tempfile.NamedTemporaryFile(delete=False, suffix=".fasta").name
+    try:
+        linclust(
+            aa_fasta_file.name,
+            output_tsv=out_tsv,
+            cluster_reps=out_reps,
+            threshold=0.9,
+            temp_dir=tempfile.mkdtemp(),
+        )
+        pairs = _read_tsv_clusters(out_tsv)
+        tsv_centroids = {c for c, _ in pairs}
+        reps = read_fasta(out_reps)
+        rep_ids = {r.id for r in reps}
+        assert len(pairs) == 5
+        assert tsv_centroids == rep_ids
+        assert len(tsv_centroids) == 2
+    finally:
+        for p in (aa_fasta_file.name, out_tsv, out_reps):
+            if os.path.exists(p):
+                os.unlink(p)
+
+
+def test_linclust_db_input(aa_fasta_file):
+    db_dir = tempfile.mkdtemp()
+    db_path = os.path.join(db_dir, "userdb")
+    out_tsv = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv").name
+    try:
+        create_mmseqs_db(aa_fasta_file.name, db_path)
+        # confirm the DB was actually built
+        assert os.path.isfile(f"{db_path}.dbtype")
+        db_siblings_before = set(glob.glob(f"{db_path}*"))
+
+        linclust(
+            db_path,
+            output_tsv=out_tsv,
+            threshold=0.9,
+            temp_dir=tempfile.mkdtemp(),
+        )
+
+        # user-supplied DB must not be deleted by linclust
+        db_siblings_after = set(glob.glob(f"{db_path}*"))
+        assert db_siblings_before == db_siblings_after
+
+        pairs = _read_tsv_clusters(out_tsv)
+        assert len(pairs) == 5
+        assert len({c for c, _ in pairs}) == 2
+    finally:
+        if os.path.exists(out_tsv):
+            os.unlink(out_tsv)
+        if os.path.exists(aa_fasta_file.name):
+            os.unlink(aa_fasta_file.name)
+        for p in glob.glob(f"{db_path}*"):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
+
+def test_linclust_requires_output(aa_fasta_file):
+    try:
+        with pytest.raises(ValueError):
+            linclust(aa_fasta_file.name)
+    finally:
+        if os.path.exists(aa_fasta_file.name):
+            os.unlink(aa_fasta_file.name)

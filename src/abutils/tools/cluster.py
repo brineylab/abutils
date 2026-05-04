@@ -23,10 +23,12 @@
 #
 
 
+import glob
 import os
 
 # import platform
 import random
+import shutil
 import string
 import subprocess as sp
 
@@ -47,6 +49,7 @@ __all__ = [
     "cluster_mmseqs",
     "cluster_cdhit",
     "create_mmseqs_db",
+    "linclust",
     "Clusters",
     "Cluster",
 ]
@@ -974,21 +977,187 @@ def _get_cdhit_wordsize(threshold):
 
 
 def linclust(
-    seqs: str | Iterable[Sequence],
-    threshold: float = 0.975,
-    cov_mode: str | int = 0,
-    out_file=None,
-    temp_dir=None,
-    make_db=True,
-    linclust_kwargs: str = None,
-    quiet=False,
-    threads=0,
-    debug=False,
-):
+    sequences: str,
+    output_tsv: str | None = None,
+    cluster_reps: str | None = None,
+    *,
+    threshold: float = 0.9,
+    coverage: float = 0.8,
+    cov_mode: int = 0,
+    cluster_mode: int = 0,
+    alignment_mode: int = 3,
+    seq_id_mode: int = 0,
+    kmer_per_seq: int | None = None,
+    kmer_per_seq_scale: float | None = None,
+    threads: int | None = None,
+    temp_dir: str = "/tmp",
+    mmseqs_bin: str | None = None,
+    extra_args: str | None = None,
+    quiet: bool = False,
+    debug: bool = False,
+) -> None:
     """
-    Perform clustering of sequences using ``mmseqs easy-linclust``.
+    Cluster sequences using `MMseqs2 <https://github.com/soedinglab/MMseqs2>`_'s
+    ``mmseqs linclust`` algorithm.
+
+    ``linclust`` is designed for clustering very large datasets in linear time, so
+    results are written to disk rather than returned in memory. At least one of
+    ``output_tsv`` or ``cluster_reps`` must be provided.
+
+    Parameters
+    ----------
+    sequences : str
+        Path to either (a) a FASTA-formatted file or (b) a pre-built MMseqs2
+        sequence database. The two are distinguished by the presence of a
+        ``<sequences>.dbtype`` sentinel file (which MMseqs2 writes alongside
+        every database). Pre-built databases can be created via
+        :func:`create_mmseqs_db`.
+
+    output_tsv : str, optional
+        Path to a two-column TSV (``centroid_id<TAB>member_id``) describing the
+        clustering. Generated via ``mmseqs createtsv``.
+
+    cluster_reps : str, optional
+        Path to a FASTA file containing one representative sequence per cluster.
+        Generated via ``mmseqs createsubdb`` + ``mmseqs convert2fasta``.
+
+    threshold : float, default=0.9
+        Sequence identity threshold (``--min-seq-id``). Must be between 0 and 1.
+
+    coverage : float, default=0.8
+        Coverage threshold (``-c``). Must be between 0 and 1.
+
+    cov_mode : int, default=0
+        Coverage mode (``--cov-mode``). One of ``0`` (bidirectional), ``1``
+        (target), ``2`` (query), or ``3`` (target-in-query length).
+
+    cluster_mode : int, default=0
+        Clustering mode (``--cluster-mode``).
+
+    alignment_mode : int, default=3
+        Alignment mode (``--alignment-mode``).
+
+    seq_id_mode : int, default=0
+        Sequence identity computation mode (``--seq-id-mode``).
+
+    kmer_per_seq : int, optional
+        ``--kmer-per-seq``. Only passed when set; otherwise MMseqs2's default
+        applies.
+
+    kmer_per_seq_scale : float, optional
+        ``--kmer-per-seq-scale``. Only passed when set; otherwise MMseqs2's
+        default applies.
+
+    threads : int, optional
+        Number of threads (``--threads``). MMseqs2's default applies if unset.
+
+    temp_dir : str, default="/tmp"
+        Directory used for the per-run scratch dir and any intermediate
+        databases this function creates.
+
+    mmseqs_bin : str, optional
+        Path to an MMseqs2 executable. Defaults to the binary bundled with
+        ``abutils``.
+
+    extra_args : str, optional
+        Free-form string appended verbatim to the ``mmseqs linclust`` command,
+        for any flag not surfaced as a named parameter.
+
+    quiet : bool, default=False
+        If ``True``, suppresses the ``STDOUT``/``STDERR`` prints that ``debug``
+        enables. ``mmseqs`` itself remains at its default verbosity unless
+        overridden via ``extra_args``.
+
+    debug : bool, default=False
+        If ``True``, prints standard output and standard error from ``mmseqs``
+        and skips cleanup of intermediate files.
+
+    Returns
+    -------
+    None
     """
-    pass
+    if output_tsv is None and cluster_reps is None:
+        raise ValueError(
+            "at least one of `output_tsv` or `cluster_reps` must be provided"
+        )
+    if mmseqs_bin is None:
+        mmseqs_bin = get_binary_path("mmseqs")
+
+    # auto-detect input type via the .dbtype sentinel that MMseqs writes
+    input_is_db = os.path.isfile(f"{sequences}.dbtype")
+    created_input_db = False
+    if input_is_db:
+        input_db = sequences
+    else:
+        input_db = tempfile.NamedTemporaryFile(
+            dir=temp_dir, delete=False, prefix="DB_"
+        ).name
+        create_mmseqs_db(
+            sequences, input_db, mmseqs_bin=mmseqs_bin, debug=debug and not quiet
+        )
+        created_input_db = True
+
+    # paths for the linclust result DB and per-run scratch dir
+    clu_db = tempfile.NamedTemporaryFile(
+        dir=temp_dir, delete=False, prefix="LINCLU_"
+    ).name
+    linclust_tmp = tempfile.mkdtemp(dir=temp_dir, prefix="linclust_tmp_")
+    rep_db: str | None = None
+
+    def _run(cmd: str) -> None:
+        p = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+        stdout, stderr = p.communicate()
+        if debug and not quiet:
+            print("STDOUT:", stdout)
+            print("")
+            print("STDERR:", stderr)
+
+    def _remove_db(prefix: str) -> None:
+        for p in glob.glob(f"{prefix}*"):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
+    try:
+        # mmseqs linclust <inputDB> <outputDB> <tmpDir> [opts]
+        linclust_cmd = f"{mmseqs_bin} linclust {input_db} {clu_db} {linclust_tmp}"
+        linclust_cmd += f" --min-seq-id {threshold}"
+        linclust_cmd += f" -c {coverage}"
+        linclust_cmd += f" --cov-mode {cov_mode}"
+        linclust_cmd += f" --cluster-mode {cluster_mode}"
+        linclust_cmd += f" --alignment-mode {alignment_mode}"
+        linclust_cmd += f" --seq-id-mode {seq_id_mode}"
+        if kmer_per_seq is not None:
+            linclust_cmd += f" --kmer-per-seq {kmer_per_seq}"
+        if kmer_per_seq_scale is not None:
+            linclust_cmd += f" --kmer-per-seq-scale {kmer_per_seq_scale}"
+        if threads is not None:
+            linclust_cmd += f" --threads {threads}"
+        if extra_args:
+            linclust_cmd += f" {extra_args}"
+        _run(linclust_cmd)
+
+        if output_tsv is not None:
+            tsv_cmd = (
+                f"{mmseqs_bin} createtsv {input_db} {input_db} {clu_db} {output_tsv}"
+            )
+            _run(tsv_cmd)
+
+        if cluster_reps is not None:
+            rep_db = tempfile.NamedTemporaryFile(
+                dir=temp_dir, delete=False, prefix="REP_"
+            ).name
+            _run(f"{mmseqs_bin} createsubdb {clu_db} {input_db} {rep_db}")
+            _run(f"{mmseqs_bin} convert2fasta {rep_db} {cluster_reps}")
+    finally:
+        if not debug:
+            _remove_db(clu_db)
+            if rep_db is not None:
+                _remove_db(rep_db)
+            shutil.rmtree(linclust_tmp, ignore_errors=True)
+            if created_input_db:
+                _remove_db(input_db)
 
 
 def nested_linclust(
