@@ -46,6 +46,7 @@ __all__ = [
     "cluster_vsearch",
     "cluster_mmseqs",
     "cluster_cdhit",
+    "create_mmseqs_db",
     "Clusters",
     "Cluster",
 ]
@@ -752,6 +753,83 @@ def cluster_mmseqs(
         return cluster_info
     else:
         return tsv_file
+
+
+def create_mmseqs_db(
+    sequences: str,
+    db_path: str,
+    dbtype: str = "0",
+    shuffle: bool = True,
+    createdb_mode: str = "0",
+    mmseqs_bin: str | None = None,
+    debug: bool = False,
+) -> str:
+    """
+    Builds a persistent `MMseqs2 <https://github.com/soedinglab/MMseqs2>`_ sequence database
+    from a FASTA-formatted file using ``mmseqs createdb``.
+
+    Parameters
+    ----------
+    sequences : str
+        Path to a FASTA-formatted file. Required.
+
+    db_path : str
+        Destination path (basename) for the MMseqs2 database. ``mmseqs`` writes several
+        sibling files alongside it (e.g. ``<db_path>``, ``<db_path>.index``,
+        ``<db_path>.dbtype``, ``<db_path>.lookup``, ``<db_path>_h``, ``<db_path>_h.index``).
+        The parent directory is created if it does not already exist.
+
+    dbtype : str, default="0"
+        Database type. Options are ``"0"``, ``"1"``, or ``"2"``.
+            - ``"0"``: auto
+            - ``"1"``: amino acid
+            - ``"2"``: nucleotide
+
+    shuffle : bool, default=True
+        If ``True``, shuffle input sequences when building the database
+        (``--shuffle 1``). Shuffling spreads similar sequences across the DB and is
+        recommended for downstream clustering performance.
+
+    createdb_mode : str, default="0"
+        Database creation mode. Options are ``"0"`` or ``"1"``.
+            - ``"0"``: copy sequence data into the database (safe; default)
+            - ``"1"``: soft-link sequence data and write a new index (faster for very
+              large inputs, but the resulting database depends on the original FASTA
+              remaining in place)
+
+    mmseqs_bin : str, optional
+        Path to an MMseqs2 executable. If not provided, the MMseqs2 binary bundled
+        with ``abutils`` will be used.
+
+    debug : bool, default=False
+        If ``True``, prints standard output and standard error from ``mmseqs``.
+
+
+    Returns
+    -------
+    db_path : str
+        The path to the created MMseqs2 database (the same value passed in as ``db_path``).
+
+    """
+    # get the mmseqs binary
+    if mmseqs_bin is None:
+        mmseqs_bin = get_binary_path("mmseqs")
+    # ensure parent directory of db_path exists
+    parent = os.path.dirname(os.path.abspath(db_path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    # build the mmseqs DB
+    db_cmd = f"{mmseqs_bin} createdb {sequences} {db_path}"
+    db_cmd += f" --dbtype {dbtype}"
+    db_cmd += f" --shuffle {1 if shuffle else 0}"
+    db_cmd += f" --createdb-mode {createdb_mode}"
+    p = sp.Popen(db_cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+    stdout, stderr = p.communicate()
+    if debug:
+        print("STDOUT:", stdout)
+        print("")
+        print("STDERR:", stderr)
+    return db_path
 
 
 def cluster_cdhit(
