@@ -677,7 +677,7 @@ def _deduplicate_sequences(
     return (
         df.group_by(group_by_cols)
         .agg(
-            pl.count().alias("count"),
+            pl.len().alias("count"),
             pl.col("sequence_id").first(),
         )
         .sort("sequence")
@@ -1030,7 +1030,7 @@ def deduplicate(
             pool_unique = (
                 pool_df.group_by("sequence")
                 .agg(
-                    pl.count().alias("count"),
+                    pl.len().alias("count"),
                     pl.col("sequence_id").first(),
                 )
                 .sort("sequence")
