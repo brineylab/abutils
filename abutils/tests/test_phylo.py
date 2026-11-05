@@ -178,6 +178,13 @@ def test_phylogeny_with_list_input(sequences):
     assert len(phylo.sequences) == 3
 
 
+def test_phylogeny_tree_loads_newick(sequences):
+    phylo = phylogeny(sequences)
+    phylo.tree_string = "(seq1:0.1,seq2:0.2,seq3:0.3);"
+    leaves = [o for o in phylo.tree.Objects if o.branchType == "leaf"]
+    assert sorted(leaf.name for leaf in leaves) == ["seq1", "seq2", "seq3"]
+
+
 def test_phylogeny_with_name(fasta_file):
     name = "test_phylogeny_with_name"
     phylo = phylogeny(fasta_file.name, name=name)

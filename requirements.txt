@@ -1,5 +1,6 @@
 abstar>=0.7
-baltic
+# baltic 1.0 renamed its API (loadNewick -> load_newick, leaf/node/tree are modules)
+baltic<1
 biopython>=1.78
 # celery
 dnachisel
